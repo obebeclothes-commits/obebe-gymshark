@@ -788,6 +788,14 @@ a.product-card {
     color: inherit;
 }
 
+/* Evitar que al volver atrás el enlace se vea morado (estado :visited) */
+a.product-card:visited,
+a.product-card:visited .product-image,
+a.product-image-link:visited,
+a.product-image-link:visited .product-image {
+    color: inherit !important;
+}
+
 .product-image-link {
     display: block;
     text-decoration: none;

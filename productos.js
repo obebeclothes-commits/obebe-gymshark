@@ -813,6 +813,25 @@ function inicializarNavegacion() {
     }
 }
 
+// Al volver atrás (bfcache), refrescar imágenes de productos para evitar "?" o imagen rota en móvil
+window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    const grid = document.getElementById('productsGrid');
+    if (!grid) return;
+    grid.querySelectorAll('.product-card-full .product-image').forEach(container => {
+        const src = container.dataset.img1;
+        const alt = container.dataset.alt;
+        if (src && container.dataset.type === 'img') {
+            container.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = alt || '';
+            img.loading = 'lazy';
+            container.appendChild(img);
+        }
+    });
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     var isProductDetailPage = document.getElementById('productDetailContainer') && !document.getElementById('productsGrid');
     var isProductsGridPage = document.getElementById('productsGrid');

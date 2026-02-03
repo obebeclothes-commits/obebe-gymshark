@@ -701,6 +701,25 @@ function inicializarHeroVideos() {
     }
 }
 
+// Al volver atrás (bfcache), refrescar imágenes de productos para evitar "?" o imagen rota en móvil
+window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    const carousel = document.getElementById('productsCarousel');
+    if (!carousel) return;
+    carousel.querySelectorAll('.product-card .product-image').forEach(container => {
+        const src = container.dataset.img1;
+        const alt = container.dataset.alt;
+        if (src && container.dataset.type === 'img') {
+            container.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = alt || '';
+            img.loading = 'lazy';
+            container.appendChild(img);
+        }
+    });
+});
+
 // Inicializar cuando el DOM esté listo (solo en index; en productos/producto lo hace productos.js)
 document.addEventListener('DOMContentLoaded', () => {
     const isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
