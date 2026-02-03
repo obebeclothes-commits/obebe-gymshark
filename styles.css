@@ -326,7 +326,15 @@ header .logo-link {
     color: var(--out-of-stock-color);
     cursor: pointer;
     font-size: 1.2rem;
-    padding: 0.3rem;
+    padding: 0.5rem;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .cart-total {

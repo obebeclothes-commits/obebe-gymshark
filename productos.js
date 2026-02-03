@@ -279,9 +279,6 @@ function vaciarCarrito() {
     renderizarCarrito();
     const cartModal = document.getElementById('cartModal');
     if (cartModal) cartModal.classList.remove('active');
-    if (typeof mostrarNotificacion === 'function' && window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
-        mostrarNotificacion('Carrito vaciado');
-    }
 }
 
 // Actualizar badge del carrito
@@ -625,7 +622,7 @@ function inicializarCarrito() {
     }
 
     if (cartModal) {
-        cartModal.addEventListener('click', (e) => {
+        function handleRemoveItem(e) {
             const removeBtn = e.target.closest('[data-cart-remove]');
             if (removeBtn) {
                 e.preventDefault();
@@ -639,7 +636,9 @@ function inicializarCarrito() {
             if (e.target === cartModal) {
                 cartModal.classList.remove('active');
             }
-        });
+        }
+        cartModal.addEventListener('click', handleRemoveItem);
+        cartModal.addEventListener('touchend', handleRemoveItem, { passive: false });
     }
 
     if (clearCartBtn) {
