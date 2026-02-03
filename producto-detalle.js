@@ -22,7 +22,7 @@
     const esImagen1 = typeof esRutaImagen === 'function' && esRutaImagen(imagen1);
     const esImagen2 = typeof esRutaImagen === 'function' && esRutaImagen(imagen2);
     function imageHTML(src, esImg) {
-        if (esImg) return '<img src="' + src + '" alt="' + producto.nombre.replace(/"/g, '&quot;') + '">';
+        if (esImg) return '<img src="' + src + '" alt="' + producto.nombre.replace(/"/g, '&quot;') + '" loading="lazy">';
         return '<span>' + (src || '🛍️') + '</span>';
     }
     var agotado = producto.stock === 0;

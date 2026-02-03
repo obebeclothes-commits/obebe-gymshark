@@ -164,7 +164,7 @@ function esRutaImagen(valor) {
 
 function renderizarImagenProducto(contenedor, fuente) {
     if (contenedor.dataset.type === 'img') {
-        contenedor.innerHTML = `<img src="${fuente}" alt="${contenedor.dataset.alt}">`;
+        contenedor.innerHTML = `<img src="${fuente}" alt="${contenedor.dataset.alt}" loading="lazy">`;
         return;
     }
 

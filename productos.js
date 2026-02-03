@@ -5,7 +5,7 @@ function esRutaImagen(valor) {
 
 function renderizarImagenProducto(contenedor, fuente) {
     if (contenedor.dataset.type === 'img') {
-        contenedor.innerHTML = `<img src="${fuente}" alt="${contenedor.dataset.alt}">`;
+        contenedor.innerHTML = `<img src="${fuente}" alt="${contenedor.dataset.alt}" loading="lazy">`;
         return;
     }
     contenedor.textContent = fuente;
@@ -318,7 +318,7 @@ function renderizarCarrito() {
         
         const imagenSrc = esRutaImagen(item.imagen1) ? item.imagen1 : '🛍️';
         const imagenHTML = esRutaImagen(item.imagen1) 
-            ? `<img src="${item.imagen1}" alt="${item.nombre}" class="cart-item-image">`
+            ? `<img src="${item.imagen1}" alt="${item.nombre}" class="cart-item-image" loading="lazy">`
             : `<div class="cart-item-image" style="display: flex; align-items: center; justify-content: center; font-size: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">${imagenSrc}</div>`;
         
         const subtotal = item.precio * item.cantidad;

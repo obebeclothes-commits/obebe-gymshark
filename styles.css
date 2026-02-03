@@ -552,6 +552,23 @@ nav {
     transition: opacity 1s ease-in-out, transform 1s ease-in-out;
     transform: scale(1.1);
     z-index: 0;
+    pointer-events: none;
+}
+
+/* Ocultar controles nativos del video (móvil y desktop) */
+.hero-video::-webkit-media-controls {
+    display: none !important;
+}
+.hero-video::-webkit-media-controls-enclosure {
+    display: none !important;
+}
+.hero-video::-webkit-media-controls-panel {
+    display: none !important;
+}
+.hero-video::-webkit-media-controls-play-button,
+.hero-video::-webkit-media-controls-start-playback-button {
+    display: none !important;
+    pointer-events: none;
 }
 
 .hero-video.active {
