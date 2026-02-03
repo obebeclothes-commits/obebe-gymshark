@@ -437,6 +437,29 @@ function inicializarCarousel() {
         arrowRight.addEventListener('click', () => scrollCarousel('right'));
     }
 
+    // Swipe en móvil: deslizar a la izquierda = siguiente, deslizar a la derecha = anterior
+    const wrapper = document.querySelector('.products-carousel-wrapper');
+    const carousel = document.getElementById('productsCarousel');
+    if (wrapper && carousel) {
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const minSwipe = 50;
+
+        wrapper.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].clientX;
+        }, { passive: true });
+
+        wrapper.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].clientX;
+            const deltaX = touchEndX - touchStartX;
+            if (deltaX < -minSwipe) {
+                scrollCarousel('right');
+            } else if (deltaX > minSwipe) {
+                scrollCarousel('left');
+            }
+        }, { passive: true });
+    }
+
     // El botón "VER TODO" ahora redirige a productos.html
 
     // Actualizar flechas cuando cambie el tamaño de la ventana
