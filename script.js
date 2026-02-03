@@ -615,6 +615,7 @@ function inicializarHeroVideos() {
     const videos = document.querySelectorAll('.hero-video');
     let currentVideoIndex = 0;
     let videoTimer = null;
+    let preloadTimer = null;
 
     // Duración específica para cada video (en milisegundos)
     const duraciones = {
@@ -625,6 +626,23 @@ function inicializarHeroVideos() {
         4: 4000  // Video 5: 4 segundos
     };
 
+    // Precargar el siguiente video N ms antes del cambio (evita pantalla negra al rotar)
+    const PRELOAD_ANTES_MS = 2500;
+
+    function programarPreloadSiguiente(indiceActual, duracionActual) {
+        if (preloadTimer) clearTimeout(preloadTimer);
+        const cuandoPreload = Math.max(0, duracionActual - PRELOAD_ANTES_MS);
+        preloadTimer = setTimeout(() => {
+            const siguienteIndice = (indiceActual + 1) % videos.length;
+            const siguienteVideo = videos[siguienteIndice];
+            if (siguienteVideo && siguienteVideo.readyState < 2) {
+                siguienteVideo.preload = 'auto';
+                siguienteVideo.load();
+            }
+            preloadTimer = null;
+        }, cuandoPreload);
+    }
+
     // Pausar todos los videos excepto el primero
     videos.forEach((video, index) => {
         if (index !== 0) {
@@ -633,10 +651,14 @@ function inicializarHeroVideos() {
     });
 
     function cambiarVideo() {
-        // Limpiar timer anterior si existe
+        // Limpiar timers anteriores
         if (videoTimer) {
             clearTimeout(videoTimer);
             videoTimer = null;
+        }
+        if (preloadTimer) {
+            clearTimeout(preloadTimer);
+            preloadTimer = null;
         }
 
         // Obtener el video actual y el siguiente
@@ -659,16 +681,20 @@ function inicializarHeroVideos() {
         // Configurar duración según el video
         const duracion = duraciones[currentVideoIndex];
         
-        // Usar timer con duración específica para todos los videos
+        // Precargar el que sigue para que al rotar ya esté listo
+        programarPreloadSiguiente(currentVideoIndex, duracion);
+        
+        // Timer para el próximo cambio
         videoTimer = setTimeout(() => {
             cambiarVideo();
         }, duracion);
     }
 
-    // Iniciar el primer video con su duración específica
+    // Iniciar el primer video y precargar el segundo antes del primer cambio
     const primerVideo = videos[0];
     if (primerVideo) {
         const duracionPrimerVideo = duraciones[0];
+        programarPreloadSiguiente(0, duracionPrimerVideo);
         videoTimer = setTimeout(() => {
             cambiarVideo();
         }, duracionPrimerVideo);
