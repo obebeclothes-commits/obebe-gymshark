@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asesorías - Daniel Flores | Obebe</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Página asesorías */
+        .asesorias-page { padding: 0; }
+
+        /* Icono del carrito mismo tamaño que en index/productos (45px) */
+        .cart-icon-btn {
+            width: 45px !important;
+            height: 45px !important;
+            padding: 0.5rem !important;
+        }
+        .cart-icon-btn svg {
+            width: 24px !important;
+            height: 24px !important;
+        }
+
+        /* En desktop: texto de la barra promocional un poco a la derecha */
+        @media (min-width: 769px) {
+            .promo-bar .promo-messages {
+                transform: translateX(2rem);
+            }
+        }
+
+        /* Hero: un solo bloque — imagen de fondo y texto superpuesto a la derecha */
+        .asesorias-hero {
+            min-height: 85vh;
+            min-height: 85dvh;
+            position: relative;
+            color: white;
+            overflow: hidden;
+        }
+        .asesorias-hero-image {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 60%;
+            overflow: hidden;
+        }
+        /* Desvanecido: imagen se funde a negro en el borde derecho para unirse al 1/3 negro */
+        .asesorias-hero-image::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,1) 100%);
+            pointer-events: none;
+        }
+        /* Imagen ocupa 2/3 de pantalla, sin distorsión; contenido encuadrado a la izquierda */
+        .asesorias-hero-image img {
+            width: 100%;
+            height: 100%;
+            min-height: 85vh;
+            min-height: 85dvh;
+            object-fit: cover;
+            object-position: 0% 60%;
+            display: block;
+        }
+        /* 2/5 derecho negro para combinar con el desvanecido */
+        .asesorias-hero-content {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 40%;
+            min-width: 260px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 1.25rem 2.5rem 1.25rem 1.25rem;
+            background: #000;
+            text-align: left;
+        }
+        .asesorias-hero-content h1 {
+            font-size: clamp(1.5rem, 3.2vw, 2.25rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+        .asesorias-hero-content .asesorias-hero-sub {
+            font-size: clamp(0.9rem, 1.8vw, 1.05rem);
+            font-weight: 600;
+            opacity: 0.95;
+            margin-bottom: 1.25rem;
+            line-height: 1.4;
+        }
+        .asesorias-hero-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            padding: 0.75rem 1.5rem;
+            background: #25D366;
+            color: white !important;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 50px;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.45);
+            transition: transform 0.2s, box-shadow 0.2s;
+            align-self: flex-start;
+        }
+        .asesorias-hero-cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.55);
+        }
+        .asesorias-hero-cta svg { width: 26px; height: 26px; flex-shrink: 0; }
+        @media (max-width: 768px) {
+            .asesorias-hero {
+                min-height: 70vh;
+                min-height: 70dvh;
+            }
+            .asesorias-hero-image {
+                width: 100%;
+                height: 100%;
+                position: absolute;
+                inset: 0;
+            }
+            .asesorias-hero-image img {
+                min-height: 70vh;
+                min-height: 70dvh;
+                object-position: 0% 60%;
+            }
+            .asesorias-hero-image::after {
+                /* Gradiente en móvil para que el texto se lea sobre la imagen */
+                background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.9) 100%);
+            }
+            .asesorias-hero-content {
+                width: 100%;
+                min-width: 0;
+                top: auto;
+                bottom: 0;
+                padding: 1.5rem 1.25rem 2rem;
+                background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 70%, transparent 100%);
+                justify-content: flex-end;
+                align-items: center;
+                text-align: center;
+            }
+            .asesorias-hero-content h1 {
+                font-size: 1.5rem;
+                margin-bottom: 0.4rem;
+            }
+            .asesorias-hero-content .asesorias-hero-sub {
+                font-size: 0.95rem;
+                margin-bottom: 1rem;
+            }
+            .asesorias-hero-content .asesorias-hero-cta {
+                align-self: center;
+            }
+        }
+
+        /* Sobre mí */
+        .asesorias-sobre {
+            padding: 4rem 1.5rem;
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .asesorias-sobre::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 50%;
+            margin-left: -50vw;
+            width: 100vw;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color) 0%, #3db8a8 100%);
+        }
+        .asesorias-sobre h2 {
+            font-size: 1.75rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .asesorias-sobre-cert {
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .asesorias-sobre-text {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: #333;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .asesorias-sobre-diploma {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+            color: #888;
+            font-size: 0.95rem;
+        }
+        .asesorias-sobre-diploma img { max-width: 100%; height: auto; border-radius: 8px; }
+        .asesorias-icons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .asesorias-icon-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--primary-color);
+        }
+        .asesorias-icon-item svg { width: 40px; height: 40px; color: var(--accent-color); }
+        /* Contactar por WhatsApp debajo de Certificado, Ciencia, Seguimiento */
+        .asesorias-sobre-cta {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        .asesorias-sobre-cta-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            background: #25D366;
+            color: white !important;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.45);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .asesorias-sobre-cta-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.55);
+        }
+        .asesorias-sobre-cta-link svg { width: 26px; height: 26px; flex-shrink: 0; }
+
+        /* Qué incluye el plan mensual — formato llamativo */
+        .asesorias-incluye {
+            padding: 4.5rem 1.5rem;
+            background: linear-gradient(180deg, #f8f9fa 0%, #eef0f2 100%);
+            position: relative;
+        }
+        .asesorias-incluye::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color) 0%, #3db8a8 100%);
+        }
+        .asesorias-incluye h2 {
+            font-size: clamp(1.6rem, 3.5vw, 2rem);
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 0.75rem;
+            text-align: center;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+        .asesorias-incluye-precio {
+            display: inline-block;
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: white;
+            background: linear-gradient(135deg, var(--accent-color) 0%, #3db8a8 100%);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            margin: 0 auto 2.5rem;
+            box-shadow: 0 4px 20px rgba(78, 205, 196, 0.4);
+            letter-spacing: 0.02em;
+        }
+        .asesorias-incluye-header {
+            text-align: center;
+        }
+        .asesorias-incluye-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .asesorias-incluye-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.75rem 1.5rem;
+            text-align: left;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border-left: 4px solid var(--accent-color);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-left-color 0.25s ease;
+        }
+        .asesorias-incluye-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.1);
+            border-left-color: #3db8a8;
+        }
+        .asesorias-incluye-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .asesorias-incluye-card h3::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .asesorias-incluye-card p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-color);
+            margin: 0;
+            padding-left: 1.25rem;
+        }
+
+        /* Testimonios: paleta del sitio (fondo claro, acentos) */
+        .asesorias-testimonios {
+            padding: 4rem 1.5rem;
+            background: var(--bg-color);
+            color: var(--text-color);
+            width: 100vw;
+            margin-left: calc(-50vw + 50%);
+            margin-right: calc(-50vw + 50%);
+            box-sizing: border-box;
+            position: relative;
+        }
+        .asesorias-testimonios::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color) 0%, #3db8a8 100%);
+        }
+        .asesorias-testimonios h2 {
+            font-size: 1.75rem;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+            text-align: center;
+            max-width: 960px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* Escritorio: 2 por fila, el tercero centrado en la segunda fila */
+        .asesorias-testimonios-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2.5rem;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .asesorias-testimonio:nth-child(3) {
+            grid-column: 1 / -1;
+            justify-self: center;
+            max-width: calc(50% - 0.625rem);
+        }
+        .asesorias-testimonio {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        /* Antes y Después en recuadros separados, fotos más grandes */
+        .asesorias-testimonio-imagenes {
+            display: flex;
+            flex-direction: row;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            align-items: stretch;
+        }
+        .asesorias-testimonio-recuerdo {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        .asesorias-testimonio-recuerdo img {
+            width: 100%;
+            height: 100%;
+            min-height: 400px;
+            object-fit: cover;
+            display: block;
+        }
+        /* Testimonio 2 Antes (testimonio2): encuadre más a la izquierda */
+        .asesorias-testimonio:nth-child(2) .asesorias-testimonio-recuerdo:first-child img {
+            object-position: 10% center;
+        }
+        /* Testimonio 2 Después (testimonio2.1): encuadre hacia arriba para ver más la imagen */
+        .asesorias-testimonio:nth-child(2) .asesorias-testimonio-recuerdo:last-child img {
+            object-position: 25% 75%;
+        }
+        /* Testimonio 3: encuadre un poco más a la derecha */
+        .asesorias-testimonio:nth-child(3) .asesorias-testimonio-recuerdo img {
+            object-position: 75% center;
+        }
+        .asesorias-testimonio-recuerdo .etiqueta {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            z-index: 1;
+        }
+        /* Zona con desvanecido para título y descripción */
+        .asesorias-testimonio-body-wrap {
+            position: relative;
+            margin-top: -3rem;
+            padding: 3.5rem 1.25rem 1.25rem;
+            background: linear-gradient(to top, var(--card-bg) 0%, rgba(255,255,255,0.85) 50%, transparent 100%);
+        }
+        .asesorias-testimonio-body {
+            padding: 0;
+        }
+        .asesorias-testimonio-body h3 {
+            font-size: 1.15rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+        .asesorias-testimonio-body p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-color);
+            margin: 0;
+        }
+        .asesorias-testimonio-etiquetas {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .asesorias-testimonios-grid {
+                grid-template-columns: 1fr;
+            }
+            .asesorias-testimonio:nth-child(3) {
+                grid-column: 1;
+                max-width: none;
+            }
+            .asesorias-testimonio-recuerdo,
+            .asesorias-testimonio-recuerdo img {
+                min-height: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .asesorias-hero h1 { font-size: 1.6rem; }
+            .asesorias-sobre h2, .asesorias-incluye h2 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="promo-bar">
+        <div class="promo-container">
+            <div class="promo-messages">
+                <div class="promo-message active">Repartos en Quéretaro</div>
+                <div class="promo-message">Descuento por mayoreo</div>
+                <div class="promo-message">5% off en referidos</div>
+            </div>
+        </div>
+    </div>
+    <header>
+        <div class="container">
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menú">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="header-left">
+                <nav class="desktop-nav">
+                    <button class="category-btn" data-category="Hombre" id="btnHombre" onclick="window.location.href='productos.html?categoria=Hombre'">Hombre</button>
+                    <button class="category-btn" data-category="Mujer" id="btnMujer" onclick="window.location.href='productos.html?categoria=Mujer'">Mujer</button>
+                    <a href="asesorias.html" class="category-btn nav-link-asesorias">Asesorías</a>
+                </nav>
+            </div>
+            <a href="index.html" class="logo-link" id="logoLink">
+                <div class="logo">
+                    <h1>OBEBE</h1>
+                    <p class="tagline">GymShark Collection</p>
+                </div>
+            </a>
+            <div class="header-right">
+                <div class="social-links">
+                    <a href="https://www.instagram.com/obebeclothes/" target="_blank" class="social-link instagram" aria-label="Instagram">
+                        <svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073z"/><path d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                    </a>
+                    <a href="https://wa.me/524428231138?text=Hola%20bro%2C%20me%20gustar%C3%ADa%20comprar%20algunos%20art%C3%ADculos%20GymShark" target="_blank" class="social-link whatsapp" aria-label="WhatsApp">
+                        <svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                    </a>
+                </div>
+                <button class="cart-icon-btn" id="cartIconBtn" aria-label="Carrito">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+                </button>
+            </div>
+            <nav class="mobile-nav" id="mobileNav">
+                <button class="category-btn" data-category="Hombre" id="btnHombreMobile">Hombre</button>
+                <button class="category-btn" data-category="Mujer" id="btnMujerMobile">Mujer</button>
+                <a href="asesorias.html" class="category-btn nav-link-asesorias">Asesorías</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="asesorias-page">
+        <!-- 1. Hero (primera pantalla): imagen izquierda, texto desvanecido derecha -->
+        <section class="asesorias-hero">
+            <div class="asesorias-hero-image">
+                <img src="yo.jpeg" alt="Daniel Flores">
+            </div>
+            <div class="asesorias-hero-content">
+                <h1>Empieza tu transformación</h1>
+                <p class="asesorias-hero-sub">Entrenamiento personalizado. Resultados reales.</p>
+                <a href="https://wa.me/524428231138?text=Hola%2C%20Daniel%0AQuiero%20contratar%20tu%20plan%20de%20entrenamiento%20personalizado%20de%20%24400%20mensuales.%0AS%C3%A9%20que%20incluye%20plan%20de%20entrenamiento%2C%20explicaci%C3%B3n%20de%20ejercicios%2C%20metodolog%C3%ADa%20de%20trabajo%20y%20seguimiento%20con%20ajustes%20seg%C3%BAn%20avance.%0A%C2%BFPodemos%20agendar%20una%20meet%20para%20platicar%20m%C3%A1s%20y%20comenzar%3F" target="_blank" rel="noopener" class="asesorias-hero-cta" aria-label="Quiero mi plan personalizado por WhatsApp">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                    Quiero mi plan personalizado
+                </a>
+            </div>
+        </section>
+
+        <!-- 2. Qué incluye el plan mensual -->
+        <section class="asesorias-incluye">
+            <div class="asesorias-incluye-header">
+                <h2>¿Qué incluye el plan mensual?</h2>
+                <p class="asesorias-incluye-precio">$400 MXN</p>
+            </div>
+            <div class="asesorias-incluye-grid">
+                <div class="asesorias-incluye-card">
+                    <h3>Plan de entrenamiento personalizado</h3>
+                    <p>Rutina adaptada a tu nivel, objetivos y disponibilidad.</p>
+                </div>
+                <div class="asesorias-incluye-card">
+                    <h3>Explicación de ejercicios</h3>
+                    <p>Indicaciones claras (y/o videos) para ejecutar cada ejercicio correctamente.</p>
+                </div>
+                <div class="asesorias-incluye-card">
+                    <h3>Metodología de entrenamiento</h3>
+                    <p>Explicación del método de trabajo y la progresión del plan.</p>
+                </div>
+                <div class="asesorias-incluye-card">
+                    <h3>Seguimiento y ajustes</h3>
+                    <p>Soporte por WhatsApp y ajustes según tu avance.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Testimonios -->
+        <section class="asesorias-testimonios">
+            <h2>Testimonios</h2>
+            <div class="asesorias-testimonios-grid">
+                <article class="asesorias-testimonio">
+                    <div class="asesorias-testimonio-imagenes">
+                        <div class="asesorias-testimonio-recuerdo">
+                            <span class="etiqueta">Antes</span>
+                            <img src="testimonio1.jpeg" alt="Antes">
+                        </div>
+                        <div class="asesorias-testimonio-recuerdo">
+                            <span class="etiqueta">Después</span>
+                            <img src="testimonio1.1.jpeg" alt="Después">
+                        </div>
+                    </div>
+                    <div class="asesorias-testimonio-body-wrap">
+                        <div class="asesorias-testimonio-body">
+                            <h3>Un año. Más músculo. Más fuerza.</h3>
+                            <p>Eduardo pasó de 17 a 18 años logrando un aumento claro de masa muscular y fuerza gracias a un entrenamiento estructurado y constancia.</p>
+                        </div>
+                    </div>
+                </article>
+                <article class="asesorias-testimonio">
+                    <div class="asesorias-testimonio-imagenes">
+                        <div class="asesorias-testimonio-recuerdo">
+                            <span class="etiqueta">Antes</span>
+                            <img src="testimonio2.jpeg" alt="Antes">
+                        </div>
+                        <div class="asesorias-testimonio-recuerdo">
+                            <span class="etiqueta">Después</span>
+                            <img src="testimonio2.1.jpeg" alt="Después">
+                        </div>
+                    </div>
+                    <div class="asesorias-testimonio-body-wrap">
+                        <div class="asesorias-testimonio-body">
+                            <h3>De delgado a fuerte</h3>
+                            <p>Hugo mide 1.85 m y siempre tuvo dificultad para subir de peso. Pasó de 60 kg a 100 kg, logrando un cambio radical en masa muscular y presencia física mediante entrenamiento estructurado y constancia.</p>
+                        </div>
+                    </div>
+                </article>
+                <article class="asesorias-testimonio">
+                    <div class="asesorias-testimonio-imagenes">
+                        <div class="asesorias-testimonio-recuerdo">
+                            <span class="etiqueta">Antes</span>
+                            <img src="testimonio3.jpeg" alt="Antes">
+                        </div>
+                        <div class="asesorias-testimonio-recuerdo">
+                            <span class="etiqueta">Después</span>
+                            <img src="testimonio3.1.jpeg" alt="Después">
+                        </div>
+                    </div>
+                    <div class="asesorias-testimonio-body-wrap">
+                        <div class="asesorias-testimonio-body">
+                            <h3>Fuerza construida con años de trabajo</h3>
+                            <p>Daniel entrena de los 16 a los 23 años, desarrollando masa muscular y fuerza de forma progresiva con un objetivo claro: competir en powerlifting.</p>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- 4. Sobre mí -->
+        <section class="asesorias-sobre">
+            <h2>Sobre mí</h2>
+            <p class="asesorias-sobre-cert">Certificación AMED — Personal Coach</p>
+            <p class="asesorias-sobre-text">
+                Soy <strong>Daniel Flores</strong>, certificado por la <strong>AMED</strong> en entrenamiento, suplementación y nutrición. Enfocado en planes que se adaptan a tu objetivo y estilo de vida, con base en ciencia y seguimiento constante.
+            </p>
+            <div class="asesorias-sobre-diploma">
+                <img src="certificado.png" alt="Certificación AMED">
+            </div>
+            <div class="asesorias-icons">
+                <div class="asesorias-icon-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                    Certificado
+                </div>
+                <div class="asesorias-icon-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    Ciencia
+                </div>
+                <div class="asesorias-icon-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    Seguimiento
+                </div>
+            </div>
+            <div class="asesorias-sobre-cta">
+                <a href="https://wa.me/524428231138?text=Hola%2C%20Daniel%0AQuiero%20contratar%20tu%20plan%20de%20entrenamiento%20personalizado%20de%20%24400%20mensuales.%0AS%C3%A9%20que%20incluye%20plan%20de%20entrenamiento%2C%20explicaci%C3%B3n%20de%20ejercicios%2C%20metodolog%C3%ADa%20de%20trabajo%20y%20seguimiento%20con%20ajustes%20seg%C3%BAn%20avance.%0A%C2%BFPodemos%20agendar%20una%20meet%20para%20platicar%20m%C3%A1s%20y%20comenzar%3F" target="_blank" rel="noopener" class="asesorias-sobre-cta-link" aria-label="Contactar por WhatsApp">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                    Contactar por WhatsApp
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>OBEBE</h3>
+                    <p class="footer-tagline">Distribuidor de GymShark</p>
+                </div>
+                <div class="footer-social">
+                    <div class="footer-social-links">
+                        <a href="https://www.instagram.com/obebeclothes/" target="_blank" class="footer-social-link instagram" aria-label="Instagram">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="28" height="28"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073z"/><path d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                            <span>@obebeclothes</span>
+                        </a>
+                        <a href="https://wa.me/524428231138?text=%C2%A1Hola!%0AEstoy%20interesado(a)%20en%20un%20plan%20de%20entrenamiento%20personalizado.%0AMe%20puedes%20dar%20m%C3%A1s%20info%2C%20por%20favor%3F" target="_blank" class="footer-social-link whatsapp" aria-label="Asesorías por WhatsApp">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="28" height="28"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                            <span>Asesorías</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Obebe. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal del Carrito -->
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-sidebar">
+            <div class="cart-header">
+                <h2>Carrito de Compras</h2>
+                <button type="button" class="close-cart-btn" id="closeCartBtn" aria-label="Cerrar carrito">&times;</button>
+            </div>
+            <div class="cart-items" id="cartItems"></div>
+            <div class="cart-total">
+                <div class="cart-total-price" id="cartTotal">Total: $0.00</div>
+            </div>
+            <button type="button" class="clear-cart-btn" id="clearCartBtn">Vaciar carrito</button>
+            <button type="button" class="checkout-btn" id="checkoutBtn">Comprar Carrito</button>
+        </div>
+    </div>
+
+    <script src="productos.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
