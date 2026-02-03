@@ -779,9 +779,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 cartModal.classList.remove('active');
             });
-            cartModal.addEventListener('click', (e) => {
+            function handleCartModalClick(e) {
+                const removeBtn = e.target.closest('[data-cart-remove]');
+                if (removeBtn && typeof eliminarDelCarrito === 'function') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const id = parseInt(removeBtn.getAttribute('data-id'), 10);
+                    const talla = removeBtn.getAttribute('data-talla') || '';
+                    const color = removeBtn.getAttribute('data-color') || '';
+                    eliminarDelCarrito(id, talla, color);
+                    return;
+                }
                 if (e.target === cartModal) cartModal.classList.remove('active');
-            });
+            }
+            cartModal.addEventListener('click', handleCartModalClick);
+            cartModal.addEventListener('touchend', handleCartModalClick, { passive: false });
         }
         if (clearCartBtn && typeof vaciarCarrito === 'function') {
             clearCartBtn.addEventListener('click', (e) => {

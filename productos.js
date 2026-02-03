@@ -263,9 +263,11 @@ function agregarAlCarrito(producto, opciones) {
 // Eliminar producto del carrito (identificado por id + talla + color)
 function eliminarDelCarrito(id, talla, color) {
     const carrito = obtenerCarrito();
-    const colorItem = color !== undefined && color !== null ? color : '';
+    const idNum = Number(id);
+    const tallaStr = talla !== undefined && talla !== null ? String(talla) : '';
+    const colorStr = color !== undefined && color !== null ? String(color) : '';
     const nuevoCarrito = carrito.filter(item =>
-        !(item.id === id && item.talla === talla && (item.color || '') === colorItem)
+        !(Number(item.id) === idNum && String(item.talla) === tallaStr && (item.color || '') === colorStr)
     );
     guardarCarrito(nuevoCarrito);
     actualizarBadgeCarrito();
