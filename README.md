@@ -10,7 +10,7 @@ Sitio web de la tienda Obebe - GymShark Collection.
 
 1. Entra en [github.com](https://github.com) e inicia sesión.
 2. Clic en **"New"** (nuevo repositorio).
-3. Nombre del repositorio: por ejemplo **`obebe-gymshark`**.
+3. Nombre del repositorio: **`obebeclothes-commits`** (o el que ya creaste).
 4. Elige **Public**.
 5. **No** marques "Add a README". Deja el repositorio vacío.
 6. Clic en **Create repository**.
@@ -25,11 +25,11 @@ git init
 git add .
 git commit -m "Sitio Obebe Gym Shark"
 git branch -M main
-git remote add origin https://github.com/TU-USUARIO/obebe-gymshark.git
+git remote add origin https://github.com/obebeclothes/obebeclothes-commits.git
 git push -u origin main
 ```
 
-**Importante:** sustituye **TU-USUARIO** por tu nombre de usuario de GitHub y **obebe-gymshark** por el nombre exacto del repositorio que creaste.  
+**Importante:** si tu usuario de GitHub no es `obebeclothes`, cambia la URL: `https://github.com/TU-USUARIO/obebeclothes-commits.git`  
 Si GitHub te pide usuario y contraseña, usa un **Personal Access Token** como contraseña (en GitHub: Settings → Developer settings → Personal access tokens).
 
 ### Paso 3: Activar GitHub Pages
@@ -42,6 +42,6 @@ Si GitHub te pide usuario y contraseña, usa un **Personal Access Token** como c
 
 En 1–2 minutos tu sitio estará en:
 
-**https://TU-USUARIO.github.io/obebe-gymshark/**
+**https://obebeclothes.github.io/obebeclothes-commits/**
 
-(Usa tu usuario y el nombre real del repositorio.)
+(Si tu usuario no es `obebeclothes`, la URL será: `https://TU-USUARIO.github.io/obebeclothes-commits/`)
