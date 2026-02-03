@@ -437,26 +437,32 @@ function inicializarCarousel() {
         arrowRight.addEventListener('click', () => scrollCarousel('right'));
     }
 
-    // Swipe en móvil: deslizar a la izquierda = siguiente, deslizar a la derecha = anterior
+    // Deslizamiento libre en móvil: el carrusel sigue el dedo (arrastre táctil)
     const wrapper = document.querySelector('.products-carousel-wrapper');
     const carousel = document.getElementById('productsCarousel');
     if (wrapper && carousel) {
         let touchStartX = 0;
-        let touchEndX = 0;
-        const minSwipe = 50;
+        let scrollStart = 0;
 
         wrapper.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].clientX;
+            touchStartX = e.touches[0].clientX;
+            scrollStart = currentScroll;
+            carousel.style.transition = 'none';
         }, { passive: true });
 
-        wrapper.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].clientX;
-            const deltaX = touchEndX - touchStartX;
-            if (deltaX < -minSwipe) {
-                scrollCarousel('right');
-            } else if (deltaX > minSwipe) {
-                scrollCarousel('left');
-            }
+        wrapper.addEventListener('touchmove', (e) => {
+            const x = e.touches[0].clientX;
+            const deltaX = x - touchStartX;
+            const maxScroll = Math.max(0, carousel.scrollWidth - wrapper.offsetWidth);
+            currentScroll = Math.max(0, Math.min(maxScroll, scrollStart - deltaX));
+            carousel.style.transform = `translateX(-${currentScroll}px)`;
+            actualizarFlechas();
+            e.preventDefault();
+        }, { passive: false });
+
+        wrapper.addEventListener('touchend', () => {
+            carousel.style.transition = 'transform 0.3s ease-out';
+            actualizarFlechas();
         }, { passive: true });
     }
 
