@@ -1330,6 +1330,21 @@ footer {
     .contact h2 {
         font-size: 2rem;
     }
+
+    /* Carrito: X de cerrar y X de borrar producto más grandes en móvil */
+    .close-cart-btn {
+        font-size: 2.25rem;
+        min-width: 48px;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+    }
+
+    .remove-item-btn {
+        font-size: 2rem;
+    }
 }
 
 @media (max-width: 480px) {
