@@ -114,8 +114,8 @@
         .asesorias-hero-cta svg { width: 26px; height: 26px; flex-shrink: 0; }
         @media (max-width: 768px) {
             .asesorias-hero {
-                min-height: 82vh;
-                min-height: 82dvh;
+                min-height: 90vh;
+                min-height: 90dvh;
             }
             .asesorias-hero-image {
                 width: 100%;
@@ -124,8 +124,8 @@
                 inset: 0;
             }
             .asesorias-hero-image img {
-                min-height: 82vh;
-                min-height: 82dvh;
+                min-height: 90vh;
+                min-height: 90dvh;
                 object-fit: cover;
                 object-position: 0% 55%;
             }
@@ -494,7 +494,7 @@
             <div class="header-left">
                 <nav class="desktop-nav">
                     <button class="category-btn" data-category="Hombre" id="btnHombre" onclick="window.location.href='productos.html?categoria=Hombre'">Hombre</button>
-                    <button class="category-btn" data-category="Mujer" id="btnMujer" onclick="window.location.href='productos.html?categoria=Mujer'">Mujer</button>
+                    <button class="category-btn" data-category="Mujer" id="btnMujer">Mujer</button>
                     <a href="asesorias.html" class="category-btn nav-link-asesorias">Asesorías</a>
                 </nav>
             </div>
@@ -701,6 +701,16 @@
             </div>
             <button type="button" class="clear-cart-btn" id="clearCartBtn">Vaciar carrito</button>
             <button type="button" class="checkout-btn" id="checkoutBtn">Comprar Carrito</button>
+        </div>
+    </div>
+
+    <!-- Modal de Restricción (Mujer no disponible) -->
+    <div class="restriction-modal" id="restrictionModal">
+        <div class="restriction-content">
+            <div class="restriction-icon">🚫</div>
+            <h2>Próximamente</h2>
+            <p>La sección de productos para mujeres estará disponible muy pronto.</p>
+            <button class="restriction-close-btn" id="closeRestrictionBtn">Cerrar</button>
         </div>
     </div>
 
