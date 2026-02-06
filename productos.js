@@ -1,3 +1,12 @@
+// Fijar altura del viewport al cargar para que al hacer scroll no se mueva todo (barra de direcciones, etc.)
+(function() {
+    function setVh() {
+        document.documentElement.style.setProperty('--vh', (window.innerHeight / 100) + 'px');
+    }
+    setVh();
+    window.addEventListener('orientationchange', function() { setTimeout(setVh, 100); });
+})();
+
 // Script para la página de productos completa
 function esRutaImagen(valor) {
     return /\.(png|jpe?g|webp|gif|svg)$/i.test(valor);

@@ -243,8 +243,7 @@ header .logo-link {
 .cart-sidebar {
     width: 400px;
     max-width: 90vw;
-    max-height: 100vh;
-    max-height: 100dvh;
+    max-height: calc(var(--vh, 1vh) * 100);
     background: white;
     height: 100%;
     overflow: hidden;
@@ -514,18 +513,17 @@ nav {
     color: var(--primary-color);
 }
 
-/* Hero Section */
+/* Hero Section (--vh fijado en JS al cargar para que no se mueva todo al hacer scroll) */
 .hero {
     position: relative;
     width: 100%;
-    height: calc(100vh - 130px); /* Resta la altura del header y promo bar */
-    height: calc(100dvh - 130px); /* Altura dinámica del viewport para móviles */
+    height: calc(var(--vh, 1vh) * 100 - 130px);
     overflow: hidden;
     display: flex;
     align-items: flex-end;
     margin: 0;
     padding: 0;
-    max-height: calc(100vh - 130px);
+    max-height: calc(var(--vh, 1vh) * 100 - 130px);
     padding-bottom: 5%;
 }
 
@@ -1260,10 +1258,9 @@ footer {
     }
 
     .hero {
-        height: calc(100vh - 130px);
-        height: calc(100svh - 130px);
-        min-height: calc(100svh - 130px);
-        max-height: calc(100svh - 130px);
+        height: calc(var(--vh, 1vh) * 100 - 130px);
+        min-height: calc(var(--vh, 1vh) * 100 - 130px);
+        max-height: calc(var(--vh, 1vh) * 100 - 130px);
     }
 
     .hero-videos .hero-video:first-child {
@@ -1384,10 +1381,9 @@ footer {
     }
 
     .hero {
-        height: calc(100vh + 52px);
-        height: calc(100svh + 52px);
-        min-height: calc(100svh + 52px);
-        max-height: calc(100svh + 52px);
+        height: calc(var(--vh, 1vh) * 100 + 52px);
+        min-height: calc(var(--vh, 1vh) * 100 + 52px);
+        max-height: calc(var(--vh, 1vh) * 100 + 52px);
     }
 
     .hero-videos .hero-video:first-child {
