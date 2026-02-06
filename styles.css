@@ -1261,7 +1261,9 @@ footer {
 
     .hero {
         height: calc(100vh - 130px);
-        height: calc(100dvh - 130px);
+        height: calc(100svh - 130px);
+        min-height: calc(100svh - 130px);
+        max-height: calc(100svh - 130px);
     }
 
     .hero-videos .hero-video:first-child {
@@ -1383,7 +1385,9 @@ footer {
 
     .hero {
         height: calc(100vh + 52px);
-        height: calc(100dvh + 52px);
+        height: calc(100svh + 52px);
+        min-height: calc(100svh + 52px);
+        max-height: calc(100svh + 52px);
     }
 
     .hero-videos .hero-video:first-child {

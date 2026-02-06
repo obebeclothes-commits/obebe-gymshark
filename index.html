@@ -25,6 +25,8 @@
     </style>
 </head>
 <body>
+    <!-- Pega aquí la URL base de R2 (ej: https://pub-xxxxx.r2.dev) para servir los vídeos desde Cloudflare. Deja vacío '' para usar vídeos locales. -->
+    <script>window.OBEBE_VIDEOS_BASE = '';</script>
     <div class="promo-bar">
         <div class="promo-container">
             <div class="promo-messages">
@@ -106,6 +108,17 @@
                     Tu navegador no soporta videos HTML5.
                 </video>
             </div>
+            <script>
+            (function(){
+                var base = window.OBEBE_VIDEOS_BASE || '';
+                if (!base) return;
+                var sources = document.querySelectorAll('.hero-videos source');
+                var names = ['video1.mp4','video2.mp4','video3.mp4','video4.mp4','video5.mp4'];
+                for (var i = 0; i < sources.length && i < names.length; i++) {
+                    sources[i].src = base.replace(/\/$/, '') + '/' + names[i];
+                }
+            })();
+            </script>
             <div class="hero-content">
                 <div class="hero-text">
                     <h2>Bienvenido a Obebe</h2>
