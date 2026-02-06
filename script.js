@@ -785,10 +785,13 @@ window.addEventListener('pageshow', (event) => {
 document.addEventListener('DOMContentLoaded', () => {
     const isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
     if (isIndexPage) {
-        fijarAlturaHero();
-        setTimeout(function() { fijarAlturaHero(); instalarResizeObserverHero(); }, 150);
-        window.addEventListener('resize', fijarAlturaHero);
-        window.addEventListener('orientationchange', function() { setTimeout(fijarAlturaHero, 100); });
+        var esInstagramInApp = /Instagram|FB_IAB|FBAV/i.test(navigator.userAgent);
+        if (esInstagramInApp) {
+            fijarAlturaHero();
+            setTimeout(function() { fijarAlturaHero(); instalarResizeObserverHero(); }, 150);
+            window.addEventListener('resize', fijarAlturaHero);
+            window.addEventListener('orientationchange', function() { setTimeout(fijarAlturaHero, 100); });
+        }
         inicializarHoverImagenes();
         renderizarProductos('Hombre', false);
         inicializarCarousel();
@@ -853,11 +856,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Al volver atrás (ej. desde productos.html) o abrir desde Instagram, la página puede restaurarse desde bfcache
-// y DOMContentLoaded no se ejecuta de nuevo. pageshow sí se dispara: actualizar badge y altura del hero.
+// y DOMContentLoaded no se ejecuta de nuevo. pageshow sí se dispara: actualizar badge y altura del hero (solo Instagram).
 window.addEventListener('pageshow', (event) => {
     const isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
     if (isIndexPage) {
-        if (typeof fijarAlturaHero === 'function') fijarAlturaHero();
+        if (/Instagram|FB_IAB|FBAV/i.test(navigator.userAgent) && typeof fijarAlturaHero === 'function') fijarAlturaHero();
         if (typeof actualizarBadgeCarrito === 'function') actualizarBadgeCarrito();
     }
 });
