@@ -639,6 +639,18 @@ function inicializarPromoBar() {
     setInterval(cambiarMensaje, 5000);
 }
 
+// Fijar altura del hero en píxeles para que no se estire al hacer scroll (p. ej. en el navegador in-app de Instagram)
+function fijarAlturaHero() {
+    const hero = document.querySelector('section.hero');
+    if (!hero) return;
+    var offset = 130;
+    if (window.innerWidth <= 480) offset = -52;
+    var h = Math.max(200, window.innerHeight - offset);
+    hero.style.height = h + 'px';
+    hero.style.minHeight = h + 'px';
+    hero.style.maxHeight = h + 'px';
+}
+
 // Función para rotar videos del hero
 function inicializarHeroVideos() {
     const videos = document.querySelectorAll('.hero-video');
@@ -753,6 +765,9 @@ window.addEventListener('pageshow', (event) => {
 document.addEventListener('DOMContentLoaded', () => {
     const isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
     if (isIndexPage) {
+        fijarAlturaHero();
+        window.addEventListener('resize', fijarAlturaHero);
+        window.addEventListener('orientationchange', function() { setTimeout(fijarAlturaHero, 100); });
         inicializarHoverImagenes();
         renderizarProductos('Hombre', false);
         inicializarCarousel();
@@ -816,11 +831,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Al volver atrás (ej. desde productos.html), la página puede restaurarse desde bfcache
-// y DOMContentLoaded no se ejecuta de nuevo. pageshow sí se dispara: actualizar badge.
+// Al volver atrás (ej. desde productos.html) o abrir desde Instagram, la página puede restaurarse desde bfcache
+// y DOMContentLoaded no se ejecuta de nuevo. pageshow sí se dispara: actualizar badge y altura del hero.
 window.addEventListener('pageshow', (event) => {
     const isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
-    if (isIndexPage && typeof actualizarBadgeCarrito === 'function') {
-        actualizarBadgeCarrito();
+    if (isIndexPage) {
+        if (typeof fijarAlturaHero === 'function') fijarAlturaHero();
+        if (typeof actualizarBadgeCarrito === 'function') actualizarBadgeCarrito();
     }
 });
