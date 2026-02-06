@@ -639,16 +639,36 @@ function inicializarPromoBar() {
     setInterval(cambiarMensaje, 5000);
 }
 
-// Fijar altura del hero en píxeles para que no se estire al hacer scroll (p. ej. en el navegador in-app de Instagram)
+// Fijar altura del hero en píxeles para que no se estire al hacer scroll (navegador in-app de Instagram, etc.)
+var heroHeightLock = null;
+
 function fijarAlturaHero() {
     const hero = document.querySelector('section.hero');
     if (!hero) return;
+    var vh = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
     var offset = 130;
     if (window.innerWidth <= 480) offset = -52;
-    var h = Math.max(200, window.innerHeight - offset);
-    hero.style.height = h + 'px';
-    hero.style.minHeight = h + 'px';
-    hero.style.maxHeight = h + 'px';
+    var h = Math.max(200, Math.round(vh - offset));
+    heroHeightLock = h;
+    hero.style.setProperty('height', h + 'px', 'important');
+    hero.style.setProperty('min-height', h + 'px', 'important');
+    hero.style.setProperty('max-height', h + 'px', 'important');
+}
+
+// Si el navegador (ej. Instagram in-app) cambia el tamaño del hero al hacer scroll, volver a fijarlo
+function instalarResizeObserverHero() {
+    const hero = document.querySelector('section.hero');
+    if (!hero || heroHeightLock == null || typeof ResizeObserver === 'undefined') return;
+    var ro = new ResizeObserver(function() {
+        if (heroHeightLock == null) return;
+        var current = hero.getBoundingClientRect().height;
+        if (Math.abs(current - heroHeightLock) > 3) {
+            hero.style.setProperty('height', heroHeightLock + 'px', 'important');
+            hero.style.setProperty('min-height', heroHeightLock + 'px', 'important');
+            hero.style.setProperty('max-height', heroHeightLock + 'px', 'important');
+        }
+    });
+    ro.observe(hero);
 }
 
 // Función para rotar videos del hero
@@ -766,6 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
     if (isIndexPage) {
         fijarAlturaHero();
+        setTimeout(function() { fijarAlturaHero(); instalarResizeObserverHero(); }, 150);
         window.addEventListener('resize', fijarAlturaHero);
         window.addEventListener('orientationchange', function() { setTimeout(fijarAlturaHero, 100); });
         inicializarHoverImagenes();
