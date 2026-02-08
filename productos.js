@@ -194,12 +194,15 @@ function aplicarFiltrosYOrdenar(productos) {
         productosFiltrados = productosFiltrados.filter(producto => producto.color && filtros.colores.includes(producto.color));
     }
 
-    // Ordenar por precio
-    if (filtros.ordenarPor === 'price-desc') {
-        productosFiltrados.sort((a, b) => b.precio - a.precio);
-    } else if (filtros.ordenarPor === 'price-asc') {
-        productosFiltrados.sort((a, b) => a.precio - b.precio);
-    }
+    // Ordenar: primero con stock al inicio, agotados (stock 0) al final; dentro de cada grupo por precio si aplica
+    productosFiltrados.sort((a, b) => {
+        const aAgotado = a.stock === 0 ? 1 : 0;
+        const bAgotado = b.stock === 0 ? 1 : 0;
+        if (aAgotado !== bAgotado) return aAgotado - bAgotado;
+        if (filtros.ordenarPor === 'price-desc') return b.precio - a.precio;
+        if (filtros.ordenarPor === 'price-asc') return a.precio - b.precio;
+        return 0;
+    });
 
     return productosFiltrados;
 }
@@ -227,14 +230,37 @@ function guardarCarrito(carrito) {
     localStorage.setItem('carrito', JSON.stringify(carrito));
 }
 
+// Comparación normalizada para id+talla+color (evita que tipo string/number impida encontrar la misma línea)
+function mismoProductoEnCarrito(item, producto) {
+    return Number(item.id) === Number(producto.id) &&
+        String(item.talla) === String(producto.talla) &&
+        (item.color || '') === (producto.color || '');
+}
+
 // Agregar producto al carrito (opciones: { button: elemento } para mostrar palomita en el botón)
 // Un mismo artículo puede estar varias veces si difiere en talla o color (id + talla + color identifican la línea)
+// Respeta el stock: no permite agregar más unidades de las disponibles
 function agregarAlCarrito(producto, opciones) {
+    const stockNum = Number(producto.stock);
+    const stockDisponible = (typeof producto.stock === 'number' && !isNaN(stockNum)) ? stockNum : Infinity;
+    if (stockDisponible <= 0) return;
+
     const carrito = obtenerCarrito();
     const colorProducto = producto.color || '';
-    const itemExistente = carrito.find(item =>
-        item.id === producto.id && item.talla === producto.talla && (item.color || '') === colorProducto
-    );
+
+    // Cantidad ya en el carrito para este producto (misma id+talla+color), sumando todas las líneas por si hubiera duplicados
+    const cantidadEnCarrito = carrito.reduce(function (sum, item) {
+        return mismoProductoEnCarrito(item, producto) ? sum + (item.cantidad || 0) : sum;
+    }, 0);
+
+    if (cantidadEnCarrito >= stockDisponible) {
+        if (typeof mostrarNotificacion === 'function') {
+            mostrarNotificacion('No hay más stock disponible (máx. ' + stockDisponible + ')');
+        }
+        return;
+    }
+
+    const itemExistente = carrito.find(function (item) { return mismoProductoEnCarrito(item, producto); });
 
     if (itemExistente) {
         itemExistente.cantidad += 1;
