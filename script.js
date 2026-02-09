@@ -398,7 +398,7 @@ const productos = [
         stock: 1,
         imagen1: "hombre/28.jpeg",
         imagen2: "hombre/28.1.jpeg",
-        talla: "S - Slim Fit",
+        talla: "S - Regular Fit",
         tallaBase: "S",
         tipo: "Short",
         color: "Negro"
@@ -411,7 +411,7 @@ const productos = [
         stock: 1,
         imagen1: "hombre/29.jpeg",
         imagen2: "hombre/29.1.jpeg",
-        talla: "S - Slim Fit",
+        talla: "S - Regular Fit",
         tallaBase: "S",
         tipo: "Short",
         color: "Azul"
@@ -737,12 +737,39 @@ function inicializarCarouselMujer() {
     const arrowLeft = document.getElementById('arrowLeftMujer');
     const arrowRight = document.getElementById('arrowRightMujer');
     const carousel = document.getElementById('productsCarouselMujer');
+    const wrapper = carousel ? carousel.parentElement : null;
+
     if (arrowLeft) {
         arrowLeft.addEventListener('click', function() { scrollCarouselMujer('left'); });
     }
     if (arrowRight) {
         arrowRight.addEventListener('click', function() { scrollCarouselMujer('right'); });
     }
+
+    // Deslizamiento táctil en móvil: el carrusel sigue el dedo (igual que el de hombre)
+    if (wrapper && carousel) {
+        var touchStartXMujer = 0;
+        var scrollStartMujer = 0;
+        wrapper.addEventListener('touchstart', function(e) {
+            touchStartXMujer = e.touches[0].clientX;
+            scrollStartMujer = currentScrollMujer;
+            carousel.style.transition = 'none';
+        }, { passive: true });
+        wrapper.addEventListener('touchmove', function(e) {
+            var x = e.touches[0].clientX;
+            var deltaX = x - touchStartXMujer;
+            var maxScroll = Math.max(0, carousel.scrollWidth - wrapper.offsetWidth);
+            currentScrollMujer = Math.max(0, Math.min(maxScroll, scrollStartMujer - deltaX));
+            carousel.style.transform = 'translateX(-' + currentScrollMujer + 'px)';
+            actualizarFlechasMujer();
+            e.preventDefault();
+        }, { passive: false });
+        wrapper.addEventListener('touchend', function() {
+            carousel.style.transition = 'transform 0.3s ease-out';
+            actualizarFlechasMujer();
+        }, { passive: true });
+    }
+
     actualizarFlechasMujer();
     window.addEventListener('resize', actualizarFlechasMujer);
 }
