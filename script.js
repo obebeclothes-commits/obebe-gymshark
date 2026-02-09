@@ -7,7 +7,7 @@ const productos = [
         precio: 500.00,
         stock: 0,
         imagen1: "hombre/1.jpeg",
-        imagen2: "1.1.jpeg",
+        imagen2: "hombre/1.1.jpeg",
         talla: "M - Slim Fit",
         tallaBase: "M",
         tipo: "Shorts",
@@ -20,7 +20,7 @@ const productos = [
         precio: 500.00,
         stock: 0,
         imagen1: "hombre/1.jpeg",
-        imagen2: "1.1.jpeg",
+        imagen2: "hombre/1.1.jpeg",
         talla: "L - Slim Fit",
         tallaBase: "M",
         tipo: "Shorts",
@@ -176,7 +176,7 @@ const productos = [
         precio: 500.00,
         stock: 1,
         imagen1: "hombre/13.jpeg",
-        imagen2: "13.1.jpeg",
+        imagen2: "hombre/13.1.jpeg",
         talla: "S - Regular Fit",
         tallaBase: "S",
         tipo: "Short",
@@ -215,7 +215,7 @@ const productos = [
         precio: 500.00,
         stock: 1,
         imagen1: "hombre/15.jpeg",
-        imagen2: "15.1.jpeg",
+        imagen2: "hombre/15.1.jpeg",
         talla: "S - Slim Fit",
         tallaBase: "S",
         tipo: "Short",
@@ -254,7 +254,7 @@ const productos = [
         precio: 500.00,
         stock: 1,
         imagen1: "hombre/18.jpeg",
-        imagen2: "18.1.jpeg",
+        imagen2: "hombre/18.1.jpeg",
         talla: "S - Slim Fit",
         tallaBase: "S",
         tipo: "Short",
@@ -280,7 +280,7 @@ const productos = [
         precio: 500.00,
         stock: 1,
         imagen1: "hombre/20.jpeg",
-        imagen2: "20.1.jpeg",
+        imagen2: "hombre/20.1.jpeg",
         talla: "S - Regular Fit",
         tallaBase: "S",
         tipo: "Short",
@@ -306,9 +306,10 @@ const productos = [
         precio: 600.00,
         stock: 1,
         imagen1: "hombre/22.jpeg",
-        imagen2: "22.1.jpeg",
-        talla: "S - Slim Fit",
+        imagen2: "hombre/22.1.jpeg",
+        talla: "S - Regular Fit",
         tallaBase: "S",
+        tipo: "Short",
         color: "Gris"
     },
     {
@@ -318,8 +319,8 @@ const productos = [
         precio: 600.00,
         stock: 1,
         imagen1: "hombre/22.jpeg",
-        imagen2: "22.1.jpeg",
-        talla: "M - Slim Fit",
+        imagen2: "hombre/22.1.jpeg",
+        talla: "M - Regular Fit",
         tallaBase: "M",
         tipo: "Short",
         color: "Gris"
@@ -332,7 +333,7 @@ const productos = [
         stock: 1,
         imagen1: "hombre/23.jpeg",
         imagen2: "hombre/23.1.jpeg",
-        talla: "S - Slim Fit",
+        talla: "S - Regular Fit",
         tallaBase: "S",
         tipo: "Short",
         color: "Verde"
@@ -345,7 +346,7 @@ const productos = [
         stock: 1,
         imagen1: "hombre/24.jpeg",
         imagen2: "hombre/24.1.jpeg",
-        talla: "S - Slim Fit",
+        talla: "S - Regular Fit",
         tallaBase: "S",
         tipo: "Short",
         color: "Rojo"
@@ -369,8 +370,8 @@ const productos = [
         categoria: "Hombre",
         precio: 600.00,
         stock: 1,
-        imagen1: "hombre/26.jpeg",
-        imagen2: "hombre/26.1.jpeg",
+        imagen1: "hombre/25.jpeg",
+        imagen2: "hombre/25.1.jpeg",
         talla: "M - Regular Fit",
         tallaBase: "M",
         tipo: "Short",
@@ -384,7 +385,7 @@ const productos = [
         stock: 1,
         imagen1: "hombre/27.jpeg",
         imagen2: "hombre/27.1.jpeg",
-        talla: "S - Slim Fit",
+        talla: "S - Regular Fit",
         tallaBase: "S",
         tipo: "Short",
         color: "Gris"
@@ -603,8 +604,10 @@ function renderizarProductosMujer() {
     list.sort(function(a, b) { return (a.stock === 0 ? 1 : 0) - (b.stock === 0 ? 1 : 0); });
     if (list.length > 8) list = list.slice(0, 8);
 
+    currentScrollMujer = 0;
     carousel.innerHTML = '';
     carousel.classList.remove('products-carousel--static');
+    carousel.style.transform = 'translateX(0)';
 
     list.forEach(function(producto) {
         const agotado = producto.stock === 0;
@@ -686,6 +689,62 @@ function renderizarProductosMujer() {
             renderizarImagenProducto(imgContainer, imgContainer.dataset.img1);
         }
     });
+    actualizarFlechasMujer();
+}
+
+// Carrusel mujer: scroll y flechas
+let currentScrollMujer = 0;
+
+function scrollCarouselMujer(direction) {
+    const carousel = document.getElementById('productsCarouselMujer');
+    if (!carousel) return;
+    const wrapper = carousel.parentElement;
+    if (!wrapper) return;
+
+    const gap = 10;
+    const isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+    let scrollAmount;
+    const firstCard = carousel.querySelector('.product-card');
+    if (isMobile && firstCard) {
+        scrollAmount = firstCard.offsetWidth + gap;
+    } else {
+        scrollAmount = (320 + gap) * 4;
+    }
+
+    const maxScroll = Math.max(0, carousel.scrollWidth - wrapper.offsetWidth);
+    if (direction === 'left') {
+        currentScrollMujer = Math.max(0, currentScrollMujer - scrollAmount);
+    } else {
+        currentScrollMujer = Math.min(maxScroll, currentScrollMujer + scrollAmount);
+    }
+    carousel.style.transition = 'transform 0.3s ease-out';
+    carousel.style.transform = 'translateX(-' + currentScrollMujer + 'px)';
+    actualizarFlechasMujer();
+}
+
+function actualizarFlechasMujer() {
+    const carousel = document.getElementById('productsCarouselMujer');
+    const arrowLeft = document.getElementById('arrowLeftMujer');
+    const arrowRight = document.getElementById('arrowRightMujer');
+    if (!carousel || !arrowLeft || !arrowRight) return;
+    const wrapper = carousel.parentElement;
+    const maxScroll = Math.max(0, carousel.scrollWidth - wrapper.offsetWidth);
+    arrowLeft.disabled = currentScrollMujer <= 0;
+    arrowRight.disabled = currentScrollMujer >= maxScroll - 1;
+}
+
+function inicializarCarouselMujer() {
+    const arrowLeft = document.getElementById('arrowLeftMujer');
+    const arrowRight = document.getElementById('arrowRightMujer');
+    const carousel = document.getElementById('productsCarouselMujer');
+    if (arrowLeft) {
+        arrowLeft.addEventListener('click', function() { scrollCarouselMujer('left'); });
+    }
+    if (arrowRight) {
+        arrowRight.addEventListener('click', function() { scrollCarouselMujer('right'); });
+    }
+    actualizarFlechasMujer();
+    window.addEventListener('resize', actualizarFlechasMujer);
 }
 
 // Función para manejar el scroll del carrusel
@@ -1192,6 +1251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderizarProductos('Hombre', false);
         renderizarProductosMujer();
         inicializarCarousel();
+        inicializarCarouselMujer();
         inicializarNavegacion();
         inicializarPromoBar();
         inicializarHeroVideos();

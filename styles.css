@@ -689,6 +689,14 @@ nav {
     font-weight: 600;
 }
 
+a.category-label {
+    text-decoration: none;
+}
+
+a.category-label:hover {
+    opacity: 0.8;
+}
+
 .ver-todo-link {
     color: var(--primary-color);
     text-decoration: underline;

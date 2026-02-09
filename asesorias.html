@@ -52,7 +52,7 @@
             background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,1) 100%);
             pointer-events: none;
         }
-        /* Imagen ocupa 2/3 de pantalla, sin distorsión; contenido encuadrado a la izquierda */
+        /* Imagen ocupa 2/3 de pantalla, sin distorsión; sin animación ni zoom */
         .asesorias-hero-image img {
             width: 100%;
             height: 100%;
@@ -61,6 +61,9 @@
             object-fit: cover;
             object-position: 0% 60%;
             display: block;
+            transform: none;
+            transition: none;
+            will-change: auto;
         }
         /* 2/5 derecho negro para combinar con el desvanecido */
         .asesorias-hero-content {
@@ -129,6 +132,9 @@
                 min-height: 90dvh;
                 object-fit: cover;
                 object-position: 0% 55%;
+                transform: none;
+                transition: none;
+                will-change: auto;
             }
             .asesorias-hero-image::after {
                 /* Gradiente en móvil para que el texto se lea sobre la imagen */
