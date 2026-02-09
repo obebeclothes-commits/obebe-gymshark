@@ -126,7 +126,7 @@
                     <p>Tu destino para ropa deportiva GymShark de calidad</p>
                     <div class="hero-links">
                         <a href="productos.html?categoria=Hombre" class="hero-link" data-category="Hombre">Tienda para Hombres</a>
-                        <a href="#" class="hero-link" data-category="Mujer" id="linkMujer">Tienda para Mujeres</a>
+                        <a href="productos.html?categoria=Mujer" class="hero-link" data-category="Mujer" id="linkMujer">Tienda para Mujeres</a>
                     </div>
                 </div>
             </div>
@@ -170,7 +170,7 @@
                         <h2>PARA NUESTRAS ATLETAS</h2>
                         <div class="inventory-subheader">
                             <span class="category-label">Mujer</span>
-                            <span class="ver-todo-link ver-todo-disabled">PRÓXIMAMENTE</span>
+                            <a href="productos.html?categoria=Mujer" class="ver-todo-link" id="verTodoLinkMujer">VER TODO</a>
                         </div>
                     </div>
                     <div class="inventory-nav-arrows">
@@ -187,47 +187,53 @@
                     </div>
                 </div>
                 <div class="products-carousel-wrapper">
-                    <div class="products-carousel products-carousel--static">
-                        <div class="product-card">
+                    <div class="products-carousel products-carousel--static" id="productsCarouselMujer">
+                        <!-- Placeholder: si hay productos en productosMujer, script.js los pinta aquí con botón Agregar al Carrito -->
+                        <a href="productos.html?categoria=Mujer" class="product-card product-card-link product-card-mujer-placeholder">
                             <div class="product-image">👚</div>
                             <div class="product-info">
                                 <h3 class="product-name">Producto Mujer 1</h3>
-                                <p class="product-size">Talla: Próximamente</p>
-                                <p class="product-price">Próximamente</p>
+                                <p class="product-size">Talla: Ver tienda</p>
+                                <p class="product-price">Ver tienda mujer</p>
+                                <a href="productos.html?categoria=Mujer" class="add-to-cart-carousel" onclick="event.stopPropagation()">Ver tienda</a>
                             </div>
-                        </div>
-                        <div class="product-card">
+                        </a>
+                        <a href="productos.html?categoria=Mujer" class="product-card product-card-link product-card-mujer-placeholder">
                             <div class="product-image">👙</div>
                             <div class="product-info">
                                 <h3 class="product-name">Producto Mujer 2</h3>
-                                <p class="product-size">Talla: Próximamente</p>
-                                <p class="product-price">Próximamente</p>
+                                <p class="product-size">Talla: Ver tienda</p>
+                                <p class="product-price">Ver tienda mujer</p>
+                                <a href="productos.html?categoria=Mujer" class="add-to-cart-carousel" onclick="event.stopPropagation()">Ver tienda</a>
                             </div>
-                        </div>
-                        <div class="product-card">
+                        </a>
+                        <a href="productos.html?categoria=Mujer" class="product-card product-card-link product-card-mujer-placeholder">
                             <div class="product-image">👕</div>
                             <div class="product-info">
                                 <h3 class="product-name">Producto Mujer 3</h3>
-                                <p class="product-size">Talla: Próximamente</p>
-                                <p class="product-price">Próximamente</p>
+                                <p class="product-size">Talla: Ver tienda</p>
+                                <p class="product-price">Ver tienda mujer</p>
+                                <a href="productos.html?categoria=Mujer" class="add-to-cart-carousel" onclick="event.stopPropagation()">Ver tienda</a>
                             </div>
-                        </div>
-                        <div class="product-card">
+                        </a>
+                        <a href="productos.html?categoria=Mujer" class="product-card product-card-link product-card-mujer-placeholder">
                             <div class="product-image">🩳</div>
                             <div class="product-info">
                                 <h3 class="product-name">Producto Mujer 4</h3>
-                                <p class="product-size">Talla: Próximamente</p>
-                                <p class="product-price">Próximamente</p>
+                                <p class="product-size">Talla: Ver tienda</p>
+                                <p class="product-price">Ver tienda mujer</p>
+                                <a href="productos.html?categoria=Mujer" class="add-to-cart-carousel" onclick="event.stopPropagation()">Ver tienda</a>
                             </div>
-                        </div>
-                        <div class="product-card">
+                        </a>
+                        <a href="productos.html?categoria=Mujer" class="product-card product-card-link product-card-mujer-placeholder">
                             <div class="product-image">🧥</div>
                             <div class="product-info">
                                 <h3 class="product-name">Producto Mujer 5</h3>
-                                <p class="product-size">Talla: Próximamente</p>
-                                <p class="product-price">Próximamente</p>
+                                <p class="product-size">Talla: Ver tienda</p>
+                                <p class="product-price">Ver tienda mujer</p>
+                                <a href="productos.html?categoria=Mujer" class="add-to-cart-carousel" onclick="event.stopPropagation()">Ver tienda</a>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -292,6 +298,7 @@
     </div>
 
     <script src="productos.js"></script>
+    <script src="productos-mujer.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

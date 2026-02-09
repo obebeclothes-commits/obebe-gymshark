@@ -5,12 +5,18 @@
 
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
+    const categoriaParam = params.get('categoria');
     if (!id) {
         container.innerHTML = '<div class="product-detail-error"><p>No se especificó ningún producto.</p><p><a href="productos.html?categoria=Hombre">Ver todos los productos</a></p></div>';
         return;
     }
 
-    const producto = typeof productos !== 'undefined' && productos.find(function(p) { return String(p.id) === String(id); });
+    // Si viene categoria=Mujer, buscar primero en mujer para que id 1 mujer no se confunda con id 1 hombre
+    const producto = categoriaParam === 'Mujer'
+        ? (typeof productosMujer !== 'undefined' && productosMujer.find(function(p) { return String(p.id) === String(id); }))
+            || (typeof productos !== 'undefined' && productos.find(function(p) { return String(p.id) === String(id); }))
+        : (typeof productos !== 'undefined' && productos.find(function(p) { return String(p.id) === String(id); }))
+            || (typeof productosMujer !== 'undefined' && productosMujer.find(function(p) { return String(p.id) === String(id); }));
     if (!producto) {
         container.innerHTML = '<div class="product-detail-error"><p>Producto no encontrado.</p><p><a href="productos.html?categoria=Hombre">Ver todos los productos</a></p></div>';
         return;

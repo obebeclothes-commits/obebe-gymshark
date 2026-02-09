@@ -272,7 +272,8 @@ function agregarAlCarrito(producto, opciones) {
             talla: producto.talla,
             color: colorProducto,
             imagen1: producto.imagen1,
-            cantidad: 1
+            cantidad: 1,
+            categoria: producto.categoria || 'Hombre'
         });
     }
     
@@ -425,7 +426,7 @@ function enviarMensajeWhatsApp() {
     carrito.forEach((item, index) => {
         const subtotal = item.precio * item.cantidad;
         total += subtotal;
-        const linkProducto = baseUrl + 'producto.html?id=' + item.id;
+        const linkProducto = baseUrl + 'producto.html?id=' + item.id + (item.categoria === 'Mujer' ? '&categoria=Mujer' : '');
         mensaje += `${index + 1}. ${item.nombre}\n`;
         mensaje += `   Talla: ${item.talla}\n`;
         if (item.color) mensaje += `   Color: ${item.color}\n`;
@@ -454,6 +455,7 @@ function renderizarProductos(productosParaRenderizar) {
         return;
     }
 
+    const categoria = obtenerCategoriaDeURL();
     productosParaRenderizar.forEach(producto => {
         const card = document.createElement('div');
         card.className = 'product-card-full';
@@ -464,10 +466,11 @@ function renderizarProductos(productosParaRenderizar) {
         const esImagen = esRutaImagen(imagen1);
         const agotado = producto.stock === 0;
 
+        const detalleUrl = 'producto.html?id=' + producto.id + (producto.categoria === 'Mujer' ? '&categoria=Mujer' : '');
         const linkProducto = document.createElement(agotado ? 'div' : 'a');
         linkProducto.className = 'product-image-link' + (agotado ? ' product-image-link-agotado' : '');
         if (!agotado) {
-            linkProducto.href = 'producto.html?id=' + producto.id;
+            linkProducto.href = detalleUrl;
             linkProducto.setAttribute('aria-label', 'Ver ' + producto.nombre);
         } else {
             linkProducto.setAttribute('aria-label', producto.nombre + ' (agotado)');
@@ -551,8 +554,10 @@ function renderizarTodosLosProductos() {
         else if (mq.addListener) mq.addListener(actualizarTituloPagina);
     }
 
-    // Filtrar productos por categoría
-    const productosCategoria = productos.filter(p => p.categoria === categoria || p.categoria === 'Unisex');
+    // Filtrar productos por categoría (Mujer usa archivo separado productos-mujer.js)
+    const productosCategoria = categoria === 'Mujer'
+        ? (typeof productosMujer !== 'undefined' ? productosMujer.filter(p => p.categoria === 'Mujer' || p.categoria === 'Unisex') : [])
+        : productos.filter(p => p.categoria === categoria || p.categoria === 'Unisex');
 
     // Generar filtros dinámicamente
     generarFiltros(productosCategoria);
@@ -804,15 +809,16 @@ function inicializarNavegacion() {
         });
     }
 
-    // Botón "Mujer" en el header - mostrar restricción (desktop y mobile)
+    // Botón "Mujer" en el header - ir a tienda mujer en la misma pestaña (desktop y mobile)
     const btnMujer = document.getElementById('btnMujer');
     const btnMujerMobile = document.getElementById('btnMujerMobile');
+    const urlMujer = 'productos.html?categoria=Mujer';
     
     if (btnMujer) {
         btnMujer.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            mostrarRestriccion();
+            window.location.href = urlMujer;
             return false;
         });
     }
@@ -821,7 +827,7 @@ function inicializarNavegacion() {
         btnMujerMobile.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            mostrarRestriccion();
+            window.location.href = urlMujer;
             if (mobileMenuBtn && mobileNav) {
                 mobileMenuBtn.classList.remove('active');
                 mobileNav.classList.remove('active');

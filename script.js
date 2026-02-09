@@ -593,6 +593,101 @@ function renderizarProductos(categoria = 'Hombre', mostrarTodos = false) {
     actualizarFlechas();
 }
 
+// Carrusel de mujer en index: productos con botón Agregar al Carrito (usa productosMujer de productos-mujer.js)
+function renderizarProductosMujer() {
+    const carousel = document.getElementById('productsCarouselMujer');
+    if (!carousel) return;
+    if (typeof productosMujer === 'undefined' || !productosMujer.length) return;
+
+    let list = productosMujer.filter(function(p) { return p.categoria === 'Mujer' || p.categoria === 'Unisex'; });
+    list.sort(function(a, b) { return (a.stock === 0 ? 1 : 0) - (b.stock === 0 ? 1 : 0); });
+    if (list.length > 8) list = list.slice(0, 8);
+
+    carousel.innerHTML = '';
+    carousel.classList.remove('products-carousel--static');
+
+    list.forEach(function(producto) {
+        const agotado = producto.stock === 0;
+        const card = document.createElement('a');
+        card.className = 'product-card' + (agotado ? ' product-card-agotado' : '');
+        if (!agotado) {
+            card.href = 'producto.html?id=' + producto.id + '&categoria=Mujer';
+        } else {
+            card.href = '#';
+            card.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); });
+        }
+        card.setAttribute('aria-label', agotado ? (producto.nombre + ' (agotado)') : 'Ver ' + producto.nombre);
+        card.setAttribute('data-product-id', producto.id);
+
+        const imagen1 = producto.imagen1 || '';
+        const tieneSegundaImagen = producto.imagen2 && String(producto.imagen2).trim() !== '';
+        const esImagen = esRutaImagen(imagen1);
+
+        const imageWrap = document.createElement('div');
+        imageWrap.className = 'product-image-wrap' + (agotado ? ' out-of-stock' : '');
+
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'product-image';
+        imageContainer.dataset.img1 = imagen1;
+        if (tieneSegundaImagen) imageContainer.dataset.img2 = producto.imagen2;
+        imageContainer.dataset.type = esImagen ? 'img' : 'emoji';
+        imageContainer.dataset.alt = producto.nombre;
+        renderizarImagenProducto(imageContainer, imagen1);
+        imageWrap.appendChild(imageContainer);
+
+        if (agotado) {
+            const overlay = document.createElement('div');
+            overlay.className = 'product-out-of-stock-overlay';
+            overlay.setAttribute('aria-hidden', 'true');
+            overlay.innerHTML = '<span>AGOTADO</span>';
+            imageWrap.appendChild(overlay);
+        }
+
+        card.appendChild(imageWrap);
+
+        const info = document.createElement('div');
+        info.className = 'product-info';
+        const btnTexto = agotado ? 'Agotado' : 'Agregar al Carrito';
+        const btnClase = 'add-to-cart-carousel' + (agotado ? ' agotado' : '');
+        info.innerHTML = '<h3 class="product-name">' + producto.nombre + '</h3><p class="product-size">Talla: ' + producto.talla + '</p><p class="product-price">$' + (producto.precio ? producto.precio.toFixed(2) : '0.00') + '</p><button type="button" class="' + btnClase + '" data-product-id="' + producto.id + '" ' + (agotado ? ' disabled' : '') + '>' + btnTexto + '</button>';
+
+        card.appendChild(info);
+
+        const addBtn = info.querySelector('.add-to-cart-carousel');
+        if (addBtn && !agotado && typeof agregarAlCarrito === 'function') {
+            addBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                agregarAlCarrito(producto, { button: addBtn });
+            });
+        }
+
+        carousel.appendChild(card);
+    });
+
+    // Hover segunda imagen en carrusel mujer
+    carousel.addEventListener('mouseover', function(e) {
+        const card = e.target.closest('.product-card');
+        if (!card || card.dataset.hovered === 'true') return;
+        card.dataset.hovered = 'true';
+        const imgContainer = card.querySelector('.product-image');
+        if (imgContainer && imgContainer.dataset.img2) {
+            renderizarImagenProducto(imgContainer, imgContainer.dataset.img2);
+        }
+    });
+    carousel.addEventListener('mouseout', function(e) {
+        const card = e.target.closest('.product-card');
+        if (!card) return;
+        const related = e.relatedTarget;
+        if (related && card.contains(related)) return;
+        card.dataset.hovered = 'false';
+        const imgContainer = card.querySelector('.product-image');
+        if (imgContainer && imgContainer.dataset.img1) {
+            renderizarImagenProducto(imgContainer, imgContainer.dataset.img1);
+        }
+    });
+}
+
 // Función para manejar el scroll del carrusel
 let currentScroll = 0;
 let isDragging = false;
@@ -853,15 +948,16 @@ function inicializarNavegacion() {
         });
     }
 
-    // Botón "Mujer" en el header - mostrar restricción (desktop y mobile)
+    // Botón "Mujer" en el header - ir a tienda mujer en la misma pestaña (desktop y mobile)
     const btnMujer = document.getElementById('btnMujer');
     const btnMujerMobile = document.getElementById('btnMujerMobile');
+    const urlMujer = 'productos.html?categoria=Mujer';
     
     if (btnMujer) {
         btnMujer.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            mostrarRestriccion();
+            window.location.href = urlMujer;
             return false;
         });
     }
@@ -870,7 +966,7 @@ function inicializarNavegacion() {
         btnMujerMobile.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            mostrarRestriccion();
+            window.location.href = urlMujer;
             if (mobileMenuBtn && mobileNav) {
                 mobileMenuBtn.classList.remove('active');
                 mobileNav.classList.remove('active');
@@ -879,22 +975,17 @@ function inicializarNavegacion() {
         });
     }
 
-    // Enlaces del hero
+    // Enlaces del hero: ambos van a la tienda en la misma pestaña
     const heroLinks = document.querySelectorAll('.hero-link');
     
     heroLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             const categoria = link.getAttribute('data-category');
-            
-            // Si es "Mujer", mostrar restricción
             if (categoria === 'Mujer') {
                 e.preventDefault();
-                mostrarRestriccion();
+                window.location.href = 'productos.html?categoria=Mujer';
                 return;
             }
-            
-            // Si es "Hombre", ya tiene href="productos.html?categoria=Hombre" y se maneja automáticamente
-            // No necesitamos prevenir el comportamiento por defecto
         });
     });
 
@@ -1099,6 +1190,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         inicializarHoverImagenes();
         renderizarProductos('Hombre', false);
+        renderizarProductosMujer();
         inicializarCarousel();
         inicializarNavegacion();
         inicializarPromoBar();
