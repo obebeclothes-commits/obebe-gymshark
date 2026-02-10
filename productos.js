@@ -52,6 +52,17 @@ function obtenerCategoriaDeURL() {
     return params.get('categoria') || 'Hombre';
 }
 
+// Devuelve el array de productos según la categoría (Mujer usa productosMujer)
+function obtenerProductosPorCategoria() {
+    const categoria = obtenerCategoriaDeURL();
+    if (categoria === 'Mujer') {
+        return typeof productosMujer !== 'undefined'
+            ? productosMujer.filter(function(p) { return p.categoria === 'Mujer' || p.categoria === 'Unisex'; })
+            : [];
+    }
+    return productos.filter(function(p) { return p.categoria === categoria || p.categoria === 'Unisex'; });
+}
+
 // Función para obtener todas las tallas, tipos y colores únicos de los productos
 function obtenerOpcionesFiltros(productos) {
     const tallas = new Set();
@@ -555,9 +566,7 @@ function renderizarTodosLosProductos() {
     }
 
     // Filtrar productos por categoría (Mujer usa archivo separado productos-mujer.js)
-    const productosCategoria = categoria === 'Mujer'
-        ? (typeof productosMujer !== 'undefined' ? productosMujer.filter(p => p.categoria === 'Mujer' || p.categoria === 'Unisex') : [])
-        : productos.filter(p => p.categoria === categoria || p.categoria === 'Unisex');
+    const productosCategoria = obtenerProductosPorCategoria();
 
     // Generar filtros dinámicamente
     generarFiltros(productosCategoria);
@@ -589,8 +598,7 @@ function inicializarEventosFiltros() {
     function ejecutarLimpiarFiltros() {
         document.querySelectorAll('.filter-checkbox').forEach(cb => { cb.checked = false; });
         if (sortBy) sortBy.value = '';
-        const categoria = obtenerCategoriaDeURL();
-        const productosCategoria = productos.filter(p => p.categoria === categoria || p.categoria === 'Unisex');
+        const productosCategoria = obtenerProductosPorCategoria();
         aplicarBusquedaYRenderizar(productosCategoria);
     }
 
@@ -603,8 +611,7 @@ function inicializarEventosFiltros() {
     const applyFiltersBtn = document.getElementById('applyFiltersBtn');
     if (applyFiltersBtn) {
         applyFiltersBtn.addEventListener('click', () => {
-            const categoria = obtenerCategoriaDeURL();
-            const productosCategoria = productos.filter(p => p.categoria === categoria || p.categoria === 'Unisex');
+            const productosCategoria = obtenerProductosPorCategoria();
             const productosFiltrados = aplicarFiltrosYOrdenar(productosCategoria);
             aplicarBusquedaYRenderizar(productosFiltrados);
             var wrapper = document.getElementById('filtersProductsWrapper');
@@ -615,8 +622,7 @@ function inicializarEventosFiltros() {
     }
 
     function onSearchInput() {
-        const categoria = obtenerCategoriaDeURL();
-        const productosCategoria = productos.filter(p => p.categoria === categoria || p.categoria === 'Unisex');
+        const productosCategoria = obtenerProductosPorCategoria();
         const productosFiltrados = aplicarFiltrosYOrdenar(productosCategoria);
         aplicarBusquedaYRenderizar(productosFiltrados);
     }

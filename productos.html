@@ -575,6 +575,17 @@
                 margin-bottom: 0 !important;
                 min-height: 0 !important;
             }
+            /* Cuando no hay resultados de filtros, el área del grid mantiene altura mínima y el footer no sube */
+            .products-content,
+            #productsGrid {
+                min-height: calc(100vh - 280px) !important;
+            }
+            @supports (min-height: 100dvh) {
+                .products-content,
+                #productsGrid {
+                    min-height: calc(100dvh - 280px) !important;
+                }
+            }
             main + footer,
             footer {
                 margin-top: 1.25rem !important;

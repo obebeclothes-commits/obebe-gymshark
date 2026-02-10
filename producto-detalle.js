@@ -12,11 +12,15 @@
     }
 
     // Si viene categoria=Mujer, buscar primero en mujer para que id 1 mujer no se confunda con id 1 hombre
-    const producto = categoriaParam === 'Mujer'
-        ? (typeof productosMujer !== 'undefined' && productosMujer.find(function(p) { return String(p.id) === String(id); }))
-            || (typeof productos !== 'undefined' && productos.find(function(p) { return String(p.id) === String(id); }))
-        : (typeof productos !== 'undefined' && productos.find(function(p) { return String(p.id) === String(id); }))
-            || (typeof productosMujer !== 'undefined' && productosMujer.find(function(p) { return String(p.id) === String(id); }));
+    function mismoId(p) { return p && String(p.id) === String(id); }
+    var producto = null;
+    if (categoriaParam === 'Mujer') {
+        if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) producto = productosMujer.find(mismoId);
+        if (!producto && typeof productos !== 'undefined' && Array.isArray(productos)) producto = productos.find(mismoId);
+    } else {
+        if (typeof productos !== 'undefined' && Array.isArray(productos)) producto = productos.find(mismoId);
+        if (!producto && typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) producto = productosMujer.find(mismoId);
+    }
     if (!producto) {
         container.innerHTML = '<div class="product-detail-error"><p>Producto no encontrado.</p><p><a href="productos.html?categoria=Hombre">Ver todos los productos</a></p></div>';
         return;
@@ -27,8 +31,29 @@
     const imagen2 = tieneSegundaImagen ? producto.imagen2 : '';
     const esImagen1 = typeof esRutaImagen === 'function' && esRutaImagen(imagen1);
     const esImagen2 = typeof esRutaImagen === 'function' && esRutaImagen(imagen2);
+    function resolverRutaImagen(src) {
+        if (!src || src.indexOf('data:') === 0) return src;
+        if (src.indexOf('/') === 0 || /^https?:\/\//i.test(src)) return src;
+        try {
+            var href = window.location.href;
+            if (href.indexOf('?') !== -1) href = href.split('?')[0];
+            if (href.indexOf('#') !== -1) href = href.split('#')[0];
+            var baseDir = href.substring(0, href.lastIndexOf('/') + 1);
+            return new URL(src, baseDir).href;
+        } catch (e) {
+            var href = window.location.href.split('?')[0].split('#')[0];
+            var baseDir = href.substring(0, href.lastIndexOf('/') + 1);
+            return baseDir + src;
+        }
+    }
     function imageHTML(src, esImg) {
-        if (esImg) return '<img src="' + src + '" alt="' + producto.nombre.replace(/"/g, '&quot;') + '" loading="lazy">';
+        if (esImg && src) {
+            var imgSrc = resolverRutaImagen(src);
+            var alt = (producto.nombre || '').replace(/"/g, '&quot;');
+            var safeSrc = imgSrc.replace(/"/g, '&quot;').replace(/&/g, '&amp;');
+            var fallback = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            return '<img src="' + safeSrc + '" alt="' + alt + '" loading="lazy" onerror="this.onerror=null;this.src=\'' + fallback + '\';this.alt=\'No imagen\';">';
+        }
         return '<span>' + (src || '🛍️') + '</span>';
     }
     var agotado = producto.stock === 0;
