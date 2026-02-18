@@ -161,7 +161,7 @@ const productos = [
         nombre: "Olympic Bar 7 - Short",
         categoria: "Hombre",
         precio: 500.00,
-        stock: 2,
+        stock: 1,
         imagen1: "hombre/12.jpeg",
         imagen2: "hombre/12.1.jpeg",
         talla: "S - Oversized Fit",

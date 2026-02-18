@@ -88,7 +88,7 @@ const productosMujer = [
         nombre: "Waffle - Short",
         categoria: "Mujer",
         precio: 550.00,
-        stock: 1,
+        stock: 0,
         imagen1: "mujer/7.jpeg",
         imagen2: "mujer/7.1.jpeg",
         talla: "S - Regular Fit",
