@@ -96,7 +96,7 @@ const productos = [
         nombre: "Olympic Bar - Tshirt",
         categoria: "Hombre",
         precio: 500.00,
-        stock: 1,
+        stock: 0,
         imagen1: "hombre/7.jpeg",
         imagen2: "",
         talla: "L - Oversized Fit",
