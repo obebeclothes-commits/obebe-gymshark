@@ -490,6 +490,12 @@ nav {
     font-family: inherit;
 }
 
+a.category-btn {
+    text-decoration: none;
+    display: inline-block;
+    box-sizing: border-box;
+}
+
 .category-btn:hover {
     background: white;
     color: var(--primary-color);

@@ -239,7 +239,7 @@ const productos = [
         nombre: "Rest Day - Short",
         categoria: "Hombre",
         precio: 600.00,
-        stock: 2,
+        stock: 1,
         imagen1: "hombre/17.jpeg",
         imagen2: "hombre/17.1.jpeg",
         talla: "S - Regular Fit",
@@ -252,7 +252,7 @@ const productos = [
         nombre: "Studio - Short",
         categoria: "Hombre",
         precio: 500.00,
-        stock: 2,
+        stock: 1,
         imagen1: "hombre/18.jpeg",
         imagen2: "hombre/18.1.jpeg",
         talla: "S - Slim Fit",
@@ -330,7 +330,7 @@ const productos = [
         nombre: "Lifting Mesh - Short",
         categoria: "Hombre",
         precio: 500.00,
-        stock: 0,
+        stock: 1,
         imagen1: "hombre/23.jpeg",
         imagen2: "hombre/23.1.jpeg",
         talla: "S - Regular Fit",
@@ -382,7 +382,7 @@ const productos = [
         nombre: "Lifting Mesh - Short",
         categoria: "Hombre",
         precio: 500.00,
-        stock: 1,
+        stock: 2,
         imagen1: "hombre/27.jpeg",
         imagen2: "hombre/27.1.jpeg",
         talla: "S - Regular Fit",
@@ -408,7 +408,7 @@ const productos = [
         nombre: "Lifting Mesh - Short",
         categoria: "Hombre",
         precio: 500.00,
-        stock: 2,
+        stock: 1,
         imagen1: "hombre/29.jpeg",
         imagen2: "hombre/29.1.jpeg",
         talla: "S - Regular Fit",
@@ -1034,30 +1034,14 @@ function inicializarNavegacion() {
         });
     }
 
-    // Botón "Mujer" en el header - ir a tienda mujer en la misma pestaña (desktop y mobile)
-    const btnMujer = document.getElementById('btnMujer');
+    // Botón "Mujer" es un <a href="productos.html?categoria=Mujer">: no interceptar el clic
+    // para que funcione siempre (localhost y en línea) sin depender de JavaScript.
     const btnMujerMobile = document.getElementById('btnMujerMobile');
-    const urlMujer = 'productos.html?categoria=Mujer';
-    
-    if (btnMujer) {
-        btnMujer.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            window.location.href = urlMujer;
-            return false;
-        });
-    }
-    
-    if (btnMujerMobile) {
-        btnMujerMobile.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            window.location.href = urlMujer;
-            if (mobileMenuBtn && mobileNav) {
-                mobileMenuBtn.classList.remove('active');
-                mobileNav.classList.remove('active');
-            }
-            return false;
+    if (btnMujerMobile && mobileMenuBtn && mobileNav) {
+        btnMujerMobile.addEventListener('click', () => {
+            mobileMenuBtn.classList.remove('active');
+            mobileNav.classList.remove('active');
+            document.body.classList.remove('mobile-menu-open');
         });
     }
 

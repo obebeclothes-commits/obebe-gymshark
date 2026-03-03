@@ -815,31 +815,14 @@ function inicializarNavegacion() {
         });
     }
 
-    // Botón "Mujer" en el header - ir a tienda mujer en la misma pestaña (desktop y mobile)
-    const btnMujer = document.getElementById('btnMujer');
+    // Botón "Mujer" es un <a href="productos.html?categoria=Mujer">: no interceptar el clic
+    // para que funcione siempre (localhost y en línea) sin depender de JavaScript.
     const btnMujerMobile = document.getElementById('btnMujerMobile');
-    const urlMujer = 'productos.html?categoria=Mujer';
-    
-    if (btnMujer) {
-        btnMujer.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            window.location.href = urlMujer;
-            return false;
-        });
-    }
-    
-    if (btnMujerMobile) {
-        btnMujerMobile.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            window.location.href = urlMujer;
-            if (mobileMenuBtn && mobileNav) {
-                mobileMenuBtn.classList.remove('active');
-                mobileNav.classList.remove('active');
-                document.body.classList.remove('mobile-menu-open');
-            }
-            return false;
+    if (btnMujerMobile && mobileMenuBtn && mobileNav) {
+        btnMujerMobile.addEventListener('click', () => {
+            mobileMenuBtn.classList.remove('active');
+            mobileNav.classList.remove('active');
+            document.body.classList.remove('mobile-menu-open');
         });
     }
 
