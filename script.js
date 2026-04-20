@@ -10,7 +10,7 @@ const productos = [
         imagen2: "hombre/1.1.jpeg",
         talla: "M - Slim Fit",
         tallaBase: "M",
-        tipo: "Shorts",
+        tipo: "Shorts", 
         color: "Verde"
     },
     {
