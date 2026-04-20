@@ -1,467 +1,8 @@
-// Base de datos de productos GymShark
-const productos = [
-    {
-        id: 1,
-        nombre: "Fit Repeat 6 - Shorts",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 0,
-        imagen1: "hombre/1.jpeg",
-        imagen2: "hombre/1.1.jpeg",
-        talla: "M - Slim Fit",
-        tallaBase: "M",
-        tipo: "Shorts", 
-        color: "Verde"
-    },
-    {
-        id: 1,
-        nombre: "Fit Repeat 6 - Shorts",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 0,
-        imagen1: "hombre/1.jpeg",
-        imagen2: "hombre/1.1.jpeg",
-        talla: "L - Slim Fit",
-        tallaBase: "M",
-        tipo: "Shorts",
-        color: "Verde"
-    },
-    {
-        id: 2,
-        nombre: "GSLC - Hoodie",
-        categoria: "Hombre",
-        precio: 800.00,
-        stock: 0,
-        imagen1: "hombre/2.jpeg",
-        imagen2: "",
-        talla: "L - Extreme Oversized",
-        tallaBase: "L",
-        tipo: "Hoodie",
-        color: "Gris"
-    },
-    {
-        id: 3,
-        nombre: "Ligthweight Seamless - Tshirt",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "hombre/3.jpeg",
-        imagen2: "",
-        talla: "M - Regular Fit",
-        tallaBase: "M",
-        tipo: "Tshirt",
-        color: "Negro"
-    },
-    {
-        id: 4,
-        nombre: "Sport 5 - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 0,
-        imagen1: "hombre/4.jpeg",
-        imagen2: "",
-        talla: "M - Slim Fit",
-        tallaBase: "M",
-        tipo: "Short",
-        color: "Cafe"
-    },
-    {
-        id: 5,
-        nombre: "Collegiate - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "hombre/5.jpeg",
-        imagen2: "",
-        talla: "L - Regular Fit",
-        tallaBase: "L",
-        tipo: "Short",
-        color: "Gris"
-    },
-    {
-        id: 6,
-        nombre: "Coonditioning - Tshirt",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "hombre/6.jpeg",
-        imagen2: "",
-        talla: "M - Regular Fit",
-        tallaBase: "M",
-        tipo: "Tshirt",
-        color: "Gris"
-    },
-    {
-        id: 7,
-        nombre: "Olympic Bar - Tshirt",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 0,
-        imagen1: "hombre/7.jpeg",
-        imagen2: "",
-        talla: "L - Oversized Fit",
-        tallaBase: "L",
-        tipo: "Tshirt",
-        color: "Negro"
-    },
-    {
-        id: 8,
-        nombre: "Olympic Bar - Tank",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "hombre/8.jpeg",
-        imagen2: "",
-        talla: "M - Oversized",
-        tallaBase: "M",
-        tipo: "Tank",
-        color: "Gris"
-    },
-    {
-        id: 9,
-        nombre: "Conditioning - Tshirt",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 0,
-        imagen1: "hombre/9.jpeg",
-        imagen2: "",
-        talla: "L - Regular Fit",
-        tallaBase: "L",
-        tipo: "Tshirt",
-        color: "Negro"
-    },
-    {
-        id: 10,
-        nombre: "Arrival 7 - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "hombre/10.jpeg",
-        imagen2: "",
-        talla: "L - Slim Fit",
-        tallaBase: "L",
-        tipo: "Short",
-        color: "Blanco"
-    },
-    {
-        id: 11,
-        nombre: "Collegiate - Short",
-        categoria: "Hombre",
-        precio: 600.00,
-        stock: 0,
-        imagen1: "hombre/11.jpeg",
-        imagen2: "",
-        talla: "L - Regular Fit",
-        tallaBase: "L",
-        tipo: "Short",
-        color: "Gris"
-    },
-    {
-        id: 12,
-        nombre: "Olympic Bar 7 - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "hombre/12.jpeg",
-        imagen2: "hombre/12.1.jpeg",
-        talla: "S - Oversized Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Negro"
-    },
-    {
-        id: 13,
-        nombre: "Lifting Men - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 0,
-        imagen1: "hombre/13.jpeg",
-        imagen2: "hombre/13.1.jpeg",
-        talla: "S - Regular Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Negro"
-    },
-    {
-        id: 14,
-        nombre: "Collegiate - Short",
-        categoria: "Hombre",
-        precio: 600.00,
-        stock: 1,
-        imagen1: "hombre/14.jpeg",
-        imagen2: "hombre/14.1.jpeg",
-        talla: "S - Regular Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Verde"
-    },
-    {
-        id: 15,
-        nombre: "Collegiate - Short",
-        categoria: "Hombre",
-        precio: 600.00,
-        stock: 2,
-        imagen1: "hombre/14.jpeg",
-        imagen2: "hombre/14.1.jpeg",
-        talla: "M - Regular Fit",
-        tallaBase: "M",
-        tipo: "Short",
-        color: "Verde"
-    },
-    {
-        id: 16,
-        nombre: "Varsity - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "hombre/15.jpeg",
-        imagen2: "hombre/15.1.jpeg",
-        talla: "S - Slim Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Gris"
-    },
-    {
-        id: 17,
-        nombre: "Sport Panel - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "hombre/16.jpeg",
-        imagen2: "hombre/16.1.jpeg",
-        talla: "S - Slim Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Azul"
-    },
-    {
-        id: 18,
-        nombre: "Rest Day - Short",
-        categoria: "Hombre",
-        precio: 600.00,
-        stock: 1,
-        imagen1: "hombre/17.jpeg",
-        imagen2: "hombre/17.1.jpeg",
-        talla: "S - Regular Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Gris"
-    },
-    {
-        id: 19,
-        nombre: "Studio - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "hombre/18.jpeg",
-        imagen2: "hombre/18.1.jpeg",
-        talla: "S - Slim Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Cafe"
-    },
-    {
-        id: 20,
-        nombre: "Keep Showing - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 2,
-        imagen1: "hombre/19.jpeg",
-        imagen2: "hombre/19.1.jpeg",
-        talla: "S - Slim Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Azul"
-    },
-    {
-        id: 21,
-        nombre: "Lifting Mesh - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 0,
-        imagen1: "hombre/20.jpeg",
-        imagen2: "hombre/20.1.jpeg",
-        talla: "S - Regular Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Gris"
-    },
-    {
-        id: 22,
-        nombre: "Sports Panel - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 2,
-        imagen1: "hombre/21.jpeg",
-        imagen2: "hombre/21.1.jpeg",
-        talla: "S - Slim Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Cafe"
-    },
-    {
-        id: 23,
-        nombre: "Collegiate - Short",
-        categoria: "Hombre",
-        precio: 600.00,
-        stock: 2,
-        imagen1: "hombre/22.jpeg",
-        imagen2: "hombre/22.1.jpeg",
-        talla: "S - Regular Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Gris"
-    },
-    {
-        id: 24,
-        nombre: "Collegiate - Short",
-        categoria: "Hombre",
-        precio: 600.00,
-        stock: 1,
-        imagen1: "hombre/22.jpeg",
-        imagen2: "hombre/22.1.jpeg",
-        talla: "M - Regular Fit",
-        tallaBase: "M",
-        tipo: "Short",
-        color: "Gris"
-    },
-    {
-        id: 25,
-        nombre: "Lifting Mesh - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "hombre/23.jpeg",
-        imagen2: "hombre/23.1.jpeg",
-        talla: "S - Regular Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Verde"
-    },
-    {
-        id: 26,
-        nombre: "Varsity Mesh - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 2,
-        imagen1: "hombre/24.jpeg",
-        imagen2: "hombre/24.1.jpeg",
-        talla: "S - Regular Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Rojo"
-    },
-    {
-        id: 27,
-        nombre: "Collegiate - Short",
-        categoria: "Hombre",
-        precio: 600.00,
-        stock: 1,
-        imagen1: "hombre/25.jpeg",
-        imagen2: "hombre/25.1.jpeg",
-        talla: "S - Regular Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Negro"
-    },
-    {
-        id: 28,
-        nombre: "Collegiate - Short",
-        categoria: "Hombre",
-        precio: 600.00,
-        stock: 2,
-        imagen1: "hombre/25.jpeg",
-        imagen2: "hombre/25.1.jpeg",
-        talla: "M - Regular Fit",
-        tallaBase: "M",
-        tipo: "Short",
-        color: "Negro"
-    },
-    {
-        id: 29,
-        nombre: "Lifting Mesh - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 2,
-        imagen1: "hombre/27.jpeg",
-        imagen2: "hombre/27.1.jpeg",
-        talla: "S - Regular Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Gris"
-    },
-    {
-        id: 30,
-        nombre: "Rest Day - Short",
-        categoria: "Hombre",
-        precio: 600.00,
-        stock: 2,
-        imagen1: "hombre/28.jpeg",
-        imagen2: "hombre/28.1.jpeg",
-        talla: "S - Regular Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Negro"
-    },
-    {
-        id: 31,
-        nombre: "Lifting Mesh - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "hombre/29.jpeg",
-        imagen2: "hombre/29.1.jpeg",
-        talla: "S - Regular Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Azul"
-    },
-    {
-        id: 32,
-        nombre: "Varsity - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "hombre/30.jpeg",
-        imagen2: "hombre/30.1.jpeg",
-        talla: "S - Slim Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Negro"
-    },
-    {
-        id: 33,
-        nombre: "Arrival - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 2,
-        imagen1: "hombre/31.jpeg",
-        imagen2: "hombre/31.1.jpeg",
-        talla: "S - Slim Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Verde"
-    },
-    {
-        id: 34,
-        nombre: "Arrival - Short",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 2,
-        imagen1: "hombre/32.jpeg",
-        imagen2: "hombre/32.1.jpeg",
-        talla: "S - Slim Fit",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Blanco"
-    }
+// Catalogo Hombre: definido en productos-hombre.js (cargar ese script antes que este).
+const productos = (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre))
+    ? productosHombre
+    : [];
 
-
-
-
-
-
-];
 
 function esRutaImagen(valor) {
     return /\.(png|jpe?g|webp|gif|svg)$/i.test(valor);
@@ -493,7 +34,7 @@ function inicializarHoverImagenes() {
     carousel.addEventListener('mouseout', (e) => {
         const card = e.target.closest('.product-card');
         if (!card) return;
-        // Verificar si el mouse realmente salió de la tarjeta
+        // Verificar si el mouse realmente sali�� de la tarjeta
         const related = e.relatedTarget;
         if (related && card.contains(related)) return;
         card.dataset.hovered = 'false';
@@ -504,7 +45,7 @@ function inicializarHoverImagenes() {
     });
 }
 
-// Función para renderizar productos en el carrusel
+// Funci��n para renderizar productos en el carrusel
 function renderizarProductos(categoria = 'Hombre', mostrarTodos = false) {
     const productsCarousel = document.getElementById('productsCarousel');
     if (!productsCarousel) return;
@@ -514,7 +55,7 @@ function renderizarProductos(categoria = 'Hombre', mostrarTodos = false) {
     let productosFiltrados = productos.filter(p => p.categoria === categoria || p.categoria === 'Unisex');
     productosFiltrados.sort((a, b) => (a.stock === 0 ? 1 : 0) - (b.stock === 0 ? 1 : 0));
 
-    // Si no es "mostrar todos", limitar a 8 productos (4 visibles + 4 más)
+    // Si no es "mostrar todos", limitar a 8 productos (4 visibles + 4 m��s)
     if (!mostrarTodos && productosFiltrados.length > 8) {
         productosFiltrados = productosFiltrados.slice(0, 8);
     }
@@ -594,7 +135,7 @@ function renderizarProductos(categoria = 'Hombre', mostrarTodos = false) {
     actualizarFlechas();
 }
 
-// Carrusel de mujer en index: productos con botón Agregar al Carrito (usa productosMujer de productos-mujer.js)
+// Carrusel de mujer en index: productos con bot��n Agregar al Carrito (usa productosMujer de productos-mujer.js)
 function renderizarProductosMujer() {
     const carousel = document.getElementById('productsCarouselMujer');
     if (!carousel) return;
@@ -746,7 +287,7 @@ function inicializarCarouselMujer() {
         arrowRight.addEventListener('click', function() { scrollCarouselMujer('right'); });
     }
 
-    // Deslizamiento táctil en móvil: el carrusel sigue el dedo (igual que el de hombre)
+    // Deslizamiento t��ctil en m��vil: el carrusel sigue el dedo (igual que el de hombre)
     if (wrapper && carousel) {
         var touchStartXMujer = 0;
         var scrollStartMujer = 0;
@@ -774,7 +315,7 @@ function inicializarCarouselMujer() {
     window.addEventListener('resize', actualizarFlechasMujer);
 }
 
-// Función para manejar el scroll del carrusel
+// Funci��n para manejar el scroll del carrusel
 let currentScroll = 0;
 let isDragging = false;
 let startX = 0;
@@ -810,7 +351,7 @@ function scrollCarousel(direction) {
     actualizarFlechas();
 }
 
-// Función para scroll con mouse (drag)
+// Funci��n para scroll con mouse (drag)
 function inicializarScrollMouse() {
     const wrapper = document.querySelector('.products-carousel-wrapper');
     const carousel = document.getElementById('productsCarousel');
@@ -909,9 +450,9 @@ function actualizarFlechas() {
     arrowRight.disabled = currentScroll >= maxScroll - 1; // -1 para evitar problemas de redondeo
 }
 
-// Función para inicializar el carrusel y controles
+// Funci��n para inicializar el carrusel y controles
 function inicializarCarousel() {
-    // Inicializar flechas de navegación
+    // Inicializar flechas de navegaci��n
     const arrowLeft = document.getElementById('arrowLeft');
     const arrowRight = document.getElementById('arrowRight');
     
@@ -923,7 +464,7 @@ function inicializarCarousel() {
         arrowRight.addEventListener('click', () => scrollCarousel('right'));
     }
 
-    // Deslizamiento libre en móvil: el carrusel sigue el dedo (arrastre táctil)
+    // Deslizamiento libre en m��vil: el carrusel sigue el dedo (arrastre t��ctil)
     const wrapper = document.querySelector('.products-carousel-wrapper');
     const carousel = document.getElementById('productsCarousel');
     if (wrapper && carousel) {
@@ -952,15 +493,15 @@ function inicializarCarousel() {
         }, { passive: true });
     }
 
-    // El botón "VER TODO" ahora redirige a productos.html
+    // El bot��n "VER TODO" ahora redirige a productos.html
 
-    // Actualizar flechas cuando cambie el tamaño de la ventana
+    // Actualizar flechas cuando cambie el tama?o de la ventana
     window.addEventListener('resize', () => {
         actualizarFlechas();
     });
 }
 
-// Función para mostrar modal de restricción
+// Funci��n para mostrar modal de restricci��n
 function mostrarRestriccion() {
     const restrictionModal = document.getElementById('restrictionModal');
     if (restrictionModal) {
@@ -968,7 +509,7 @@ function mostrarRestriccion() {
     }
 }
 
-// Función para suavizar el scroll en los enlaces
+// Funci��n para suavizar el scroll en los enlaces
 function inicializarNavegacion() {
     const logoLink = document.getElementById('logoLink') || document.querySelector('.logo-link');
     
@@ -984,7 +525,7 @@ function inicializarNavegacion() {
         });
     }
 
-    // Menú móvil en todas las páginas que tengan el botón (index, productos, producto)
+    // Men�� m��vil en todas las p��ginas que tengan el bot��n (index, productos, producto)
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const mobileNav = document.getElementById('mobileNav');
     
@@ -1004,7 +545,7 @@ function inicializarNavegacion() {
             }
         }, true);
 
-        // Cerrar menú al hacer clic fuera
+        // Cerrar men�� al hacer clic fuera
         document.addEventListener('click', (e) => {
             if (!mobileMenuBtn.contains(e.target) && !mobileNav.contains(e.target)) {
                 mobileMenuBtn.classList.remove('active');
@@ -1014,7 +555,7 @@ function inicializarNavegacion() {
         });
     }
 
-    // Botón "Hombre" en el header (desktop y mobile)
+    // Bot��n "Hombre" en el header (desktop y mobile)
     const btnHombre = document.getElementById('btnHombre');
     const btnHombreMobile = document.getElementById('btnHombreMobile');
     
@@ -1034,8 +575,8 @@ function inicializarNavegacion() {
         });
     }
 
-    // Botón "Mujer" es un <a href="productos.html?categoria=Mujer">: no interceptar el clic
-    // para que funcione siempre (localhost y en línea) sin depender de JavaScript.
+    // Bot��n "Mujer" es un <a href="productos.html?categoria=Mujer">: no interceptar el clic
+    // para que funcione siempre (localhost y en l��nea) sin depender de JavaScript.
     const btnMujerMobile = document.getElementById('btnMujerMobile');
     if (btnMujerMobile && mobileMenuBtn && mobileNav) {
         btnMujerMobile.addEventListener('click', () => {
@@ -1045,7 +586,7 @@ function inicializarNavegacion() {
         });
     }
 
-    // Enlaces del hero: ambos van a la tienda en la misma pestaña
+    // Enlaces del hero: ambos van a la tienda en la misma pesta?a
     const heroLinks = document.querySelectorAll('.hero-link');
     
     heroLinks.forEach(link => {
@@ -1059,7 +600,7 @@ function inicializarNavegacion() {
         });
     });
 
-    // Cerrar modal de restricción
+    // Cerrar modal de restricci��n
     const closeRestrictionBtn = document.getElementById('closeRestrictionBtn');
     const restrictionModal = document.getElementById('restrictionModal');
     
@@ -1077,7 +618,7 @@ function inicializarNavegacion() {
     }
 }
 
-// Función para rotar mensajes promocionales
+// Funci��n para rotar mensajes promocionales
 function inicializarPromoBar() {
     const messages = document.querySelectorAll('.promo-message');
     let currentIndex = 0;
@@ -1094,7 +635,7 @@ function inicializarPromoBar() {
         messages[currentIndex].classList.remove('exit');
         messages[currentIndex].classList.add('active');
         
-        // Limpiar clase exit del mensaje anterior después de la transición
+        // Limpiar clase exit del mensaje anterior despu��s de la transici��n
         setTimeout(() => {
             const previousIndex = (currentIndex - 1 + messages.length) % messages.length;
             messages[previousIndex].classList.remove('exit');
@@ -1105,7 +646,7 @@ function inicializarPromoBar() {
     setInterval(cambiarMensaje, 5000);
 }
 
-// Fijar altura del hero en píxeles para que no se estire al hacer scroll (navegador in-app de Instagram, etc.)
+// Fijar altura del hero en p��xeles para que no se estire al hacer scroll (navegador in-app de Instagram, etc.)
 var heroHeightLock = null;
 
 function fijarAlturaHero() {
@@ -1121,7 +662,7 @@ function fijarAlturaHero() {
     hero.style.setProperty('max-height', h + 'px', 'important');
 }
 
-// Si el navegador (ej. Instagram in-app) cambia el tamaño del hero al hacer scroll, volver a fijarlo
+// Si el navegador (ej. Instagram in-app) cambia el tama?o del hero al hacer scroll, volver a fijarlo
 function instalarResizeObserverHero() {
     const hero = document.querySelector('section.hero');
     if (!hero || heroHeightLock == null || typeof ResizeObserver === 'undefined') return;
@@ -1137,14 +678,14 @@ function instalarResizeObserverHero() {
     ro.observe(hero);
 }
 
-// Función para rotar videos del hero
+// Funci��n para rotar videos del hero
 function inicializarHeroVideos() {
     const videos = document.querySelectorAll('.hero-video');
     let currentVideoIndex = 0;
     let videoTimer = null;
     let preloadTimer = null;
 
-    // Duración específica para cada video (en milisegundos)
+    // Duraci��n espec��fica para cada video (en milisegundos)
     const duraciones = {
         0: 4500, // Video 1: 4.5 segundos
         1: 4100, // Video 2: 4.1 segundos (mantener)
@@ -1205,13 +746,13 @@ function inicializarHeroVideos() {
         nextVideo.currentTime = 0;
         nextVideo.play();
 
-        // Configurar duración según el video
+        // Configurar duraci��n seg��n el video
         const duracion = duraciones[currentVideoIndex];
         
-        // Precargar el que sigue para que al rotar ya esté listo
+        // Precargar el que sigue para que al rotar ya est�� listo
         programarPreloadSiguiente(currentVideoIndex, duracion);
         
-        // Timer para el próximo cambio
+        // Timer para el pr��ximo cambio
         videoTimer = setTimeout(() => {
             cambiarVideo();
         }, duracion);
@@ -1228,7 +769,7 @@ function inicializarHeroVideos() {
     }
 }
 
-// Al volver atrás (bfcache), refrescar imágenes de productos para evitar "?" o imagen rota en móvil
+// Al volver atr��s (bfcache), refrescar im��genes de productos para evitar "?" o imagen rota en m��vil
 window.addEventListener('pageshow', (event) => {
     if (!event.persisted) return;
     const carousel = document.getElementById('productsCarousel');
@@ -1247,7 +788,7 @@ window.addEventListener('pageshow', (event) => {
     });
 });
 
-// Inicializar cuando el DOM esté listo (solo en index; en productos/producto lo hace productos.js)
+// Inicializar cuando el DOM est�� listo (solo en index; en productos/producto lo hace productos.js)
 document.addEventListener('DOMContentLoaded', () => {
     const isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
     if (isIndexPage) {
@@ -1316,15 +857,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 enviarMensajeWhatsApp();
             });
         }
-        // Asegurar que el badge del carrito muestre el número al volver desde productos
+        // Asegurar que el badge del carrito muestre el n��mero al volver desde productos
         if (typeof actualizarBadgeCarrito === 'function') {
             actualizarBadgeCarrito();
         }
     }
 });
 
-// Al volver atrás (ej. desde productos.html) o abrir desde Instagram, la página puede restaurarse desde bfcache
-// y DOMContentLoaded no se ejecuta de nuevo. pageshow sí se dispara: actualizar badge y altura del hero (solo Instagram).
+// Al volver atr��s (ej. desde productos.html) o abrir desde Instagram, la p��gina puede restaurarse desde bfcache
+// y DOMContentLoaded no se ejecuta de nuevo. pageshow s�� se dispara: actualizar badge y altura del hero (solo Instagram).
 window.addEventListener('pageshow', (event) => {
     const isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
     if (isIndexPage) {

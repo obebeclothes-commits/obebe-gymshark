@@ -158,10 +158,15 @@ header .container {
 .mobile-nav .nav-link-asesorias {
     width: 100%;
     margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 .mobile-nav .nav-link-asesorias {
-    display: block;
+    display: flex;
     text-align: center;
     box-sizing: border-box;
 }
@@ -494,6 +499,11 @@ a.category-btn {
     text-decoration: none;
     display: inline-block;
     box-sizing: border-box;
+}
+
+/* En menú móvil desplegable, el enlace debe comportarse como botón a ancho completo */
+.mobile-nav a.category-btn {
+    display: flex;
 }
 
 .category-btn:hover {
@@ -1289,11 +1299,21 @@ footer {
     }
 
     .hero-content {
-        padding: 0 1% 0;
+        padding: 0 1rem 0;
+        justify-content: center;
+        align-items: flex-end;
     }
 
     .hero-text {
         margin-bottom: -2%;
+        max-width: 100%;
+        width: 100%;
+        text-align: center;
+    }
+
+    .hero-links {
+        justify-content: center;
+        width: 100%;
     }
 
     .hero-text h2 {
@@ -1329,6 +1349,20 @@ footer {
     .inventory-header {
         flex-direction: column;
         gap: 1rem;
+    }
+
+    .inventory-title-section {
+        text-align: center;
+        width: 100%;
+    }
+
+    .inventory h2 {
+        text-align: center;
+    }
+
+    .inventory-subheader {
+        justify-content: center;
+        flex-wrap: wrap;
     }
 
     .inventory-nav-arrows {

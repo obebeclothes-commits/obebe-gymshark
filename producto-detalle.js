@@ -117,4 +117,58 @@
     }
 
     if (typeof actualizarBadgeCarrito === 'function') actualizarBadgeCarrito();
+
+    (function initProductImageLightbox() {
+        var lightbox = document.getElementById('productImageLightbox');
+        var lbImg = document.getElementById('productImageLightboxImg');
+        var lbInner = document.getElementById('productImageLightboxInner');
+        var closeBtn = document.getElementById('productImageLightboxClose');
+        if (!lightbox || !lbImg || !lbInner || !closeBtn) return;
+
+        function isMobileDetailView() {
+            return window.matchMedia('(max-width: 768px)').matches;
+        }
+
+        function openLightbox(src, alt) {
+            if (!src) return;
+            lbImg.src = src;
+            lbImg.alt = alt || '';
+            lightbox.classList.add('active');
+            lightbox.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            lightbox.setAttribute('aria-hidden', 'true');
+            lbImg.removeAttribute('src');
+            lbImg.alt = '';
+            document.body.style.overflow = '';
+        }
+
+        container.querySelectorAll('.product-detail-image').forEach(function(wrap) {
+            var img = wrap.querySelector('img');
+            if (!img) return;
+            wrap.addEventListener('click', function() {
+                if (!isMobileDetailView()) return;
+                openLightbox(img.currentSrc || img.src, img.alt);
+            });
+        });
+
+        closeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            closeLightbox();
+        });
+
+        lightbox.addEventListener('click', function(e) {
+            if (e.target === lightbox) closeLightbox();
+        });
+        lbInner.addEventListener('click', function(e) {
+            if (e.target === lbInner) closeLightbox();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && lightbox.classList.contains('active')) closeLightbox();
+        });
+    })();
 })();
