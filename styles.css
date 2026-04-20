@@ -1299,21 +1299,13 @@ footer {
     }
 
     .hero-content {
-        padding: 0 1rem 0;
-        justify-content: center;
-        align-items: flex-end;
+        padding: 0 1% 0;
+        justify-content: flex-start;
     }
 
     .hero-text {
         margin-bottom: -2%;
-        max-width: 100%;
-        width: 100%;
-        text-align: center;
-    }
-
-    .hero-links {
-        justify-content: center;
-        width: 100%;
+        text-align: left;
     }
 
     .hero-text h2 {
@@ -1325,15 +1317,7 @@ footer {
     }
 
     .hero-links {
-        gap: 1rem;
-        margin-top: 0.75rem;
-    }
-
-    .hero-link {
-        font-size: 1.1rem;
-    }
-
-    .hero-links {
+        justify-content: flex-start;
         gap: 1rem;
         margin-top: 0.75rem;
     }
@@ -1349,20 +1333,6 @@ footer {
     .inventory-header {
         flex-direction: column;
         gap: 1rem;
-    }
-
-    .inventory-title-section {
-        text-align: center;
-        width: 100%;
-    }
-
-    .inventory h2 {
-        text-align: center;
-    }
-
-    .inventory-subheader {
-        justify-content: center;
-        flex-wrap: wrap;
     }
 
     .inventory-nav-arrows {
