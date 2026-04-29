@@ -743,11 +743,12 @@ a.category-label:hover {
 
 .brand-filter-title {
     text-align: center;
-    font-size: 1.1rem;
+    font-size: 2rem;
     letter-spacing: 0.12em;
     font-weight: 800;
     color: var(--primary-color);
-    margin: 0 0 0.75rem;
+    margin: 0 0 1rem;
+    text-transform: uppercase;
 }
 
 .brand-pill {
@@ -766,6 +767,15 @@ a.category-label:hover {
     min-height: 58px;
     justify-content: center;
     box-sizing: border-box;
+}
+
+/* Bloque marcas más visible */
+.brand-filter-row {
+    background: #ffffff;
+    border: 2px solid #d8dfe6;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    padding: 1rem;
 }
 
 /* iPhone/Safari: forzar estilo completo en estados link/visited */
@@ -1408,6 +1418,7 @@ footer {
         overflow: visible;
         margin: 0 0 1.1rem;
         gap: 0.7rem;
+        padding: 0.8rem;
     }
     .brand-pill {
         flex: none;
