@@ -53,8 +53,7 @@
             </div>
             <a href="#" class="logo-link" id="logoLink">
                 <div class="logo">
-                    <h1>OBEBE</h1>
-                    <p class="tagline">Clothes</p>
+                    <h1>OBEBE CLOTHES</h1>
                 </div>
             </a>
             <div class="header-right">
@@ -127,9 +126,6 @@
                     <div class="hero-links">
                         <a href="productos.html?categoria=Hombre" class="hero-link" data-category="Hombre">Tienda para Hombres</a>
                         <a href="productos.html?categoria=Mujer" class="hero-link" data-category="Mujer" id="linkMujer">Tienda para Mujeres</a>
-                        <a href="productos.html?categoria=Hombre&marca=Gym%20Shark" class="hero-link">Gym Shark</a>
-                        <a href="productos.html?categoria=Hombre&marca=YoungLA" class="hero-link">YoungLA</a>
-                        <a href="productos.html?categoria=Hombre&marca=Uniqlo" class="hero-link">Uniqlo</a>
                     </div>
                 </div>
             </div>
@@ -137,6 +133,21 @@
 
         <section id="inventario" class="inventory">
             <div class="container">
+                <h3 class="brand-filter-title">MARCAS</h3>
+                <div class="brand-filter-row" aria-label="Marcas">
+                    <a href="productos.html?categoria=Hombre&marca=Gym%20Shark" class="brand-pill">
+                        <span class="brand-pill-text">Gym Shark</span>
+                    </a>
+                    <a href="productos.html?categoria=Hombre&marca=YoungLA" class="brand-pill">
+                        <span class="brand-pill-text">YoungLA</span>
+                    </a>
+                    <a href="productos.html?categoria=Hombre&marca=Uniqlo" class="brand-pill">
+                        <span class="brand-pill-text">Uniqlo</span>
+                    </a>
+                    <a href="productos.html?categoria=Hombre&marca=On%20Cloud" class="brand-pill">
+                        <span class="brand-pill-text">On Cloud</span>
+                    </a>
+                </div>
                 <div class="inventory-header">
                     <div class="inventory-title-section">
                         <h2>PARA NUESTROS ATLETAS</h2>
@@ -160,7 +171,39 @@
                 </div>
                 <div class="products-carousel-wrapper">
                     <div class="products-carousel" id="productsCarousel">
-                        <!-- Los productos se cargarán dinámicamente con JavaScript -->
+                        <!-- Fallback local: si JS falla en file://, estos 8 se muestran -->
+                        <a href="producto.html?id=2" class="product-card">
+                            <div class="product-image-wrap"><div class="product-image"><img src="hombre/2.png" alt="Varsity Hoodie" loading="lazy"></div></div>
+                            <div class="product-info"><h3 class="product-name">Varsity Hoodie</h3><p class="product-size">Talla: L - Oversized Fit</p><p class="product-price">$900.00</p><button type="button" class="add-to-cart-carousel" data-product-id="2">Agregar al Carrito</button></div>
+                        </a>
+                        <a href="producto.html?id=3" class="product-card">
+                            <div class="product-image-wrap"><div class="product-image"><img src="hombre/3.png" alt="Strenght Pants" loading="lazy"></div></div>
+                            <div class="product-info"><h3 class="product-name">Strenght Pants</h3><p class="product-size">Talla: L - Oversized</p><p class="product-price">$850.00</p><button type="button" class="add-to-cart-carousel" data-product-id="3">Agregar al Carrito</button></div>
+                        </a>
+                        <a href="producto.html?id=4" class="product-card">
+                            <div class="product-image-wrap"><div class="product-image"><img src="hombre/4.png" alt="Strenght Hoodie" loading="lazy"></div></div>
+                            <div class="product-info"><h3 class="product-name">Strenght Hoodie</h3><p class="product-size">Talla: M - Regular Fit</p><p class="product-price">$900.00</p><button type="button" class="add-to-cart-carousel" data-product-id="4">Agregar al Carrito</button></div>
+                        </a>
+                        <a href="producto.html?id=5" class="product-card">
+                            <div class="product-image-wrap"><div class="product-image"><img src="hombre/5.png" alt="Prayer Hands Hoodie" loading="lazy"></div></div>
+                            <div class="product-info"><h3 class="product-name">Prayer Hands Hoodie</h3><p class="product-size">Talla: L - Extreme Oversized</p><p class="product-price">$900.00</p><button type="button" class="add-to-cart-carousel" data-product-id="5">Agregar al Carrito</button></div>
+                        </a>
+                        <a href="producto.html?id=6" class="product-card">
+                            <div class="product-image-wrap"><div class="product-image"><img src="hombre/6.png" alt="Collegiate - Short" loading="lazy"></div></div>
+                            <div class="product-info"><h3 class="product-name">Collegiate - Short</h3><p class="product-size">Talla: S - Regular Fit</p><p class="product-price">$600.00</p><button type="button" class="add-to-cart-carousel" data-product-id="6">Agregar al Carrito</button></div>
+                        </a>
+                        <a href="producto.html?id=7" class="product-card">
+                            <div class="product-image-wrap"><div class="product-image"><img src="hombre/7.png" alt="Rest Day" loading="lazy"></div></div>
+                            <div class="product-info"><h3 class="product-name">Rest Day</h3><p class="product-size">Talla: S - Regular Fit</p><p class="product-price">$600.00</p><button type="button" class="add-to-cart-carousel" data-product-id="7">Agregar al Carrito</button></div>
+                        </a>
+                        <a href="producto.html?id=8" class="product-card">
+                            <div class="product-image-wrap"><div class="product-image"><img src="hombre/8.png" alt="Collegiate - Short" loading="lazy"></div></div>
+                            <div class="product-info"><h3 class="product-name">Collegiate - Short</h3><p class="product-size">Talla: M - Regular Fit</p><p class="product-price">$600.00</p><button type="button" class="add-to-cart-carousel" data-product-id="8">Agregar al Carrito</button></div>
+                        </a>
+                        <a href="producto.html?id=9" class="product-card">
+                            <div class="product-image-wrap"><div class="product-image"><img src="hombre/9.png" alt="Sport Panel - Short" loading="lazy"></div></div>
+                            <div class="product-info"><h3 class="product-name">Sport Panel - Short</h3><p class="product-size">Talla: S - Regular Fit</p><p class="product-price">$500.00</p><button type="button" class="add-to-cart-carousel" data-product-id="9">Agregar al Carrito</button></div>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -300,11 +343,12 @@
         </div>
     </div>
 
-    <script src="productos-hombre.js?v=20260424c"></script>
-    <script src="productos-mujer.js?v=20260424c"></script>
-    <script src="script.js?v=20260424c"></script>
-    <script src="productos.js?v=20260424c"></script>
+    <script src="productos-hombre.js"></script>
+    <script src="productos-mujer.js"></script>
+    <script src="script.js"></script>
+    <script src="productos.js"></script>
 </body>
 </html>
+
 
 

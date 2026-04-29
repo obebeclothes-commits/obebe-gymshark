@@ -16,7 +16,8 @@ const productosMujer = [
         talla: "XS - Body Fit",
         tallaBase: "XS",
         tipo: "Short",
-        color: "Gris"
+        color: "Gris",
+        marca: "Gym Shark"
     },
     {
         id: 1002,
@@ -29,7 +30,8 @@ const productosMujer = [
         talla: "XS - Body Fit",
         tallaBase: "XS",
         tipo: "Short",
-        color: "Azul"
+        color: "Azul",
+        marca: "Gym Shark"
     },
     {
         id: 1003,
@@ -42,7 +44,8 @@ const productosMujer = [
         talla: "XS - Body Fit",
         tallaBase: "XS",
         tipo: "Short",
-        color: "Negro"
+        color: "Negro",
+        marca: "Gym Shark"
     },
     {
         id: 1004,
@@ -55,7 +58,8 @@ const productosMujer = [
         talla: "XS - Body Fit",
         tallaBase: "XS",
         tipo: "Leggings",
-        color: "Negro"
+        color: "Negro",
+        marca: "Gym Shark"
     },
     {
         id: 1005,
@@ -68,7 +72,8 @@ const productosMujer = [
         talla: "XS - Body Fit",
         tallaBase: "XS",
         tipo: "Leggings",
-        color: "Negro"
+        color: "Negro",
+        marca: "Gym Shark"
     },
     {
         id: 1006,
@@ -81,7 +86,8 @@ const productosMujer = [
         talla: "XS - Body Fit",
         tallaBase: "XS",
         tipo: "Leggings",
-        color: "Negro"
+        color: "Negro",
+        marca: "Gym Shark"
     },
     {
         id: 1007,
@@ -94,7 +100,8 @@ const productosMujer = [
         talla: "S - Body Fit",
         tallaBase: "S",
         tipo: "Leggings",
-        color: "Negro"
+        color: "Negro",
+        marca: "Gym Shark"
     },
     {
         id: 1008,
@@ -107,7 +114,8 @@ const productosMujer = [
         talla: "S - Regular Fit",
         tallaBase: "S",
         tipo: "Pants",
-        color: "Verde"
+        color: "Verde",
+        marca: "Gym Shark"
     },
     {
         id: 1009,
@@ -120,7 +128,8 @@ const productosMujer = [
         talla: "XS - Medium Support",
         tallaBase: "XS",
         tipo: "Sport Bra",
-        color: "Negro"
+        color: "Negro",
+        marca: "Gym Shark"
     },
     {
         id: 1010,
@@ -133,7 +142,8 @@ const productosMujer = [
         talla: "S - Medium Support",
         tallaBase: "S",
         tipo: "Sport Bra",
-        color: "Negro"
+        color: "Negro",
+        marca: "Gym Shark"
     },
     {
         id: 1011,
@@ -146,7 +156,8 @@ const productosMujer = [
         talla: "S - Light Support",
         tallaBase: "S",
         tipo: "Sport Bra",
-        color: "Negro"
+        color: "Negro",
+        marca: "Gym Shark"
     },
     {
         id: 1012,
@@ -159,7 +170,8 @@ const productosMujer = [
         talla: "XS - Medium Support",
         tallaBase: "XS",
         tipo: "Sport Bra",
-        color: "Morado"
+        color: "Morado",
+        marca: "Gym Shark"
     },
     {
         id: 1013,
@@ -172,7 +184,8 @@ const productosMujer = [
         talla: "XS - Light Support",
         tallaBase: "XS",
         tipo: "Sport Bra",
-        color: "Azul"
+        color: "Azul",
+        marca: "Gym Shark"
     },
     {
         id: 1014,
@@ -185,7 +198,8 @@ const productosMujer = [
         talla: "XS - Light Support",
         tallaBase: "XS",
         tipo: "Sport Bra",
-        color: "Azul"
+        color: "Azul",
+        marca: "Gym Shark"
     },
     {
         id: 1015,
@@ -198,7 +212,8 @@ const productosMujer = [
         talla: "XS - Medium Support",
         tallaBase: "XS",
         tipo: "Sport Bra",
-        color: "Negro"
+        color: "Negro",
+        marca: "Gym Shark"
     },
     {
         id: 1016,
@@ -211,20 +226,8 @@ const productosMujer = [
         talla: "XS - Body Fit",
         tallaBase: "XS",
         tipo: "Crop Top",
-        color: "Azul"
-    },
-    {
-        id: 1017,
-        nombre: "Long Sleeve - Crop top",
-        categoria: "Mujer",
-        precio: 650.00,
-        stock: 1,
-        imagen1: "mujer/17.jpeg",
-        imagen2: "mujer/17.1.jpeg",
-        talla: "XS - Body Fit",
-        tallaBase: "XS",
-        tipo: "Crop Top",
-        color: "Morado"
+        color: "Azul",
+        marca: "Gym Shark"
     },
     {
         id: 1018,
@@ -232,25 +235,13 @@ const productosMujer = [
         categoria: "Mujer",
         precio: 650.00,
         stock: 1,
-        imagen1: "mujer/18.jpeg",
-        imagen2: "mujer/18.1.jpeg",
+        imagen1: "mujer/18.png",
+        imagen2: "mujer/18.1.png",
         talla: "XS - Body Fit",
         tallaBase: "XS",
         tipo: "Crop Top",
-        color: "Naranja"
-    },
-    {
-        id: 1019,
-        nombre: "Long Sleeve - Crop top",
-        categoria: "Mujer",
-        precio: 650.00,
-        stock: 1,
-        imagen1: "mujer/19.jpeg",
-        imagen2: "mujer/19.1.jpeg",
-        talla: "XS - Body Fit",
-        tallaBase: "XS",
-        tipo: "Crop Top",
-        color: "Verde"
+        color: "Naranja",
+        marca: "Gym Shark"
     },
     {
         id: 1020,
@@ -263,7 +254,8 @@ const productosMujer = [
         talla: "S - Body Fit",
         tallaBase: "S",
         tipo: "Crop Top",
-        color: "Rosa"
+        color: "Rosa",
+        marca: "Gym Shark"
     },
     {   
         id: 1021,
@@ -276,7 +268,8 @@ const productosMujer = [
         talla: "L - Body Fit",
         tallaBase: "L",
         tipo: "Crop Top",
-        color: "Rosa"
+        color: "Rosa",
+        marca: "Gym Shark"
     },
     {
         id: 1022,
@@ -289,7 +282,8 @@ const productosMujer = [
         talla: "S - Body Fit",
         tallaBase: "S",
         tipo: "Crop Top",
-        color: "Cafe"
+        color: "Cafe",
+        marca: "Gym Shark"
     },
     {
         id: 1023,
@@ -302,7 +296,8 @@ const productosMujer = [
         talla: "M - Body Fit",
         tallaBase: "M",
         tipo: "Crop Top",
-        color: "Cafe"
+        color: "Cafe",
+        marca: "Gym Shark"
     },
     {
         id: 1024,
@@ -314,7 +309,149 @@ const productosMujer = [
         imagen2: "mujer/24.1.png",
         talla: "XS - Body Fit",
         tallaBase: "XS",
-        tipo: "Mid Tee",
-        color: "Negro"
+        tipo: "Playera",
+        color: "Negro",
+        marca: "Gym Shark"
+    },
+    {
+        id: 1025,
+        nombre: "Rest Day Joggers",
+        categoria: "Mujer",
+        precio: 900.00,
+        stock: 1,
+        imagen1: "mujer/25.png",
+        imagen2: "mujer/25.1.png",
+        talla: "M - Oversized Fit",
+        tallaBase: "M",
+        tipo: "Joggers",
+        color: "Verde",
+        marca: "Gym Shark"
+    },
+    {
+        id: 1026,
+        nombre: "Rest Day Joggers",
+        categoria: "Mujer",
+        precio: 900.00,
+        stock: 1,
+        imagen1: "mujer/26.png",
+        imagen2: "mujer/26.1.png",
+        talla: "S - Oversized Fit",
+        tallaBase: "S",
+        tipo: "Joggers",
+        color: "Verde",
+        marca: "Gym Shark"
+    },
+    {
+        id: 1027,
+        nombre: "Lift Varsity Short",
+        categoria: "Mujer",
+        precio: 850.00,
+        stock: 1,
+        imagen1: "mujer/27.png",
+        imagen2: "mujer/27.1.png",
+        talla: "S - Body Fit",
+        tallaBase: "S",
+        tipo: "Short",
+        color: "Rojo",
+        marca: "Gym Shark"
+    },
+    {
+        id: 1028,
+        nombre: "Campus Classic Short",
+        categoria: "Mujer",
+        precio: 700.00,
+        stock: 1,
+        imagen1: "mujer/28.png",
+        imagen2: "mujer/28.1.png",
+        talla: "S - Body Fit",
+        tallaBase: "S",
+        tipo: "Short",
+        color: "Verde",
+        marca: "Gym Shark"
+    },
+    {
+        id: 1029,
+        nombre: "Lift Varsity Short",
+        categoria: "Mujer",
+        precio: 850.00,
+        stock: 1,
+        imagen1: "mujer/29.png",
+        imagen2: "mujer/29.1.png",
+        talla: "S - Body Fit",
+        tallaBase: "S",
+        tipo: "Short",
+        color: "Negro",
+        marca: "Gym Shark"
+    },
+    {
+        id: 1030,
+        nombre: "Tight Short",
+        categoria: "Mujer",
+        precio: 750.00,
+        stock: 1,
+        imagen1: "mujer/30.png",
+        imagen2: "mujer/30.1.png",
+        talla: "S - Body Fit",
+        tallaBase: "S",
+        tipo: "Short",
+        color: "Negro",
+        marca: "Gym Shark"
+    },
+    {
+        id: 1031,
+        nombre: "Adapt Fleck Leggings",
+        categoria: "Mujer",
+        precio: 900.00,
+        stock: 1,
+        imagen1: "mujer/31.png",
+        imagen2: "mujer/31.1.png",
+        talla: "S - Body Fit",
+        tallaBase: "S",
+        tipo: "Leggings",
+        color: "Verde",
+        marca: "Gym Shark"
+    },
+    {
+        id: 1032,
+        nombre: "Lift Varsity Leggings",
+        categoria: "Mujer",
+        precio: 950.00,
+        stock: 1,
+        imagen1: "mujer/32.png",
+        imagen2: "mujer/32.1.png",
+        talla: "L - Body Fit",
+        tallaBase: "S",
+        tipo: "Leggings",
+        color: "Rojo",
+        marca: "Gym Shark"
+    },
+    {
+        id: 1033,
+        nombre: "Twisted HeadBand",
+        categoria: "Mujer",
+        precio: 250.00,
+        stock: 1,
+        imagen1: "mujer/33.png",
+        imagen2: "mujer/33.1.png",
+        talla: "One Size",
+        tallaBase: "One Size",
+        tipo: "HeandBand",
+        color: "Blanco",
+        marca: "Gym Shark"
+    },
+    {
+        id: 1034,
+        nombre: "Twisted HeadBand",
+        categoria: "Mujer",
+        precio: 250.00,
+        stock: 1,
+        imagen1: "mujer/34.png",
+        imagen2: "mujer/34.1.png",
+        talla: "One Size",
+        tallaBase: "One Size",
+        tipo: "HeandBand",
+        color: "Negro",
+        marca: "Gym Shark"
     }
 ];
+

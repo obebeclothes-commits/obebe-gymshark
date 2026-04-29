@@ -10,7 +10,29 @@ function esRutaImagen(valor) {
 
 function renderizarImagenProducto(contenedor, fuente) {
     if (contenedor.dataset.type === 'img') {
-        contenedor.innerHTML = `<img src="${fuente}" alt="${contenedor.dataset.alt}" loading="lazy">`;
+        var alt = contenedor.dataset.alt || '';
+        var srcPrincipal = fuente;
+        var fallbackToJpg = fuente.replace(/\.png$/i, '.jpeg');
+        var fallbackToPng = fuente.replace(/\.jpe?g$/i, '.png');
+        var img = document.createElement('img');
+        img.src = srcPrincipal;
+        img.alt = alt;
+        img.loading = 'lazy';
+        img.addEventListener('error', function() {
+            if (!img.dataset.fallbackTried) {
+                img.dataset.fallbackTried = '1';
+                img.src = fallbackToJpg;
+                return;
+            }
+            if (!img.dataset.fallbackTriedPng) {
+                img.dataset.fallbackTriedPng = '1';
+                img.src = fallbackToPng;
+                return;
+            }
+            img.style.display = 'none';
+        });
+        contenedor.innerHTML = '';
+        contenedor.appendChild(img);
         return;
     }
 
@@ -52,8 +74,9 @@ function renderizarProductos(categoria = 'Hombre', mostrarTodos = false) {
     
     productsCarousel.innerHTML = '';
 
-    let productosFiltrados = productos.filter(p => p.categoria === categoria || p.categoria === 'Unisex');
-    productosFiltrados.sort((a, b) => (a.stock === 0 ? 1 : 0) - (b.stock === 0 ? 1 : 0));
+    let productosFiltrados = productos.filter(p =>
+        (p.categoria === categoria || p.categoria === 'Unisex') && Number(p.stock) > 0
+    );
 
     // Si no es "mostrar todos", limitar a 8 productos (4 visibles + 4 m��s)
     if (!mostrarTodos && productosFiltrados.length > 8) {
@@ -141,8 +164,9 @@ function renderizarProductosMujer() {
     if (!carousel) return;
     if (typeof productosMujer === 'undefined' || !productosMujer.length) return;
 
-    let list = productosMujer.filter(function(p) { return p.categoria === 'Mujer' || p.categoria === 'Unisex'; });
-    list.sort(function(a, b) { return (a.stock === 0 ? 1 : 0) - (b.stock === 0 ? 1 : 0); });
+    let list = productosMujer.filter(function(p) {
+        return (p.categoria === 'Mujer' || p.categoria === 'Unisex') && Number(p.stock) > 0;
+    });
     if (list.length > 8) list = list.slice(0, 8);
 
     currentScrollMujer = 0;

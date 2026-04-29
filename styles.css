@@ -732,6 +732,58 @@ a.category-label:hover {
     pointer-events: none;
 }
 
+.brand-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin: 0 0 1.25rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.brand-filter-title {
+    text-align: center;
+    font-size: 1.1rem;
+    letter-spacing: 0.12em;
+    font-weight: 800;
+    color: var(--primary-color);
+    margin: 0 0 0.75rem;
+}
+
+.brand-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    padding: 0.82rem 1.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    text-decoration: none;
+    color: var(--primary-color);
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    width: 210px;
+    min-height: 58px;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.brand-pill:hover {
+    transform: translateY(-1px);
+    border-color: #bfc5cb;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.brand-pill-text {
+    font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+    font-size: 1.12rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1;
+}
+
 .inventory-nav-arrows {
     display: flex;
     gap: 0.5rem;
@@ -861,6 +913,15 @@ a.product-image-link:visited .product-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+/* En computadora: mantener el recuadro fijo pero mostrar imagen completa */
+@media (min-width: 769px) {
+    .product-image img {
+        object-fit: contain;
+        object-position: center;
+        background: #f3f3f3;
+    }
 }
 
 /* Productos 6, 7, 8 y 9: mostrar la imagen completa (sin recortar) */
@@ -1320,6 +1381,32 @@ footer {
         justify-content: flex-start;
         gap: 1rem;
         margin-top: 0.75rem;
+    }
+
+    .brand-filter-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        justify-content: stretch;
+        align-items: stretch;
+        overflow: visible;
+        margin: 0 0 1rem;
+        gap: 0.65rem;
+    }
+    .brand-pill {
+        flex: none;
+        justify-content: center;
+        min-width: 0;
+        width: 100%;
+        min-height: 52px;
+        padding: 0.72rem 0.85rem;
+    }
+    .brand-pill-text {
+        font-size: 0.86rem;
+        white-space: nowrap;
+        text-align: center;
+    }
+    .brand-filter-row .brand-pill:last-child {
+        grid-column: 2;
     }
 
     .hero-link {

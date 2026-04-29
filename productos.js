@@ -82,6 +82,7 @@ function obtenerOpcionesFiltros(productos) {
     const tallas = new Set();
     const tipos = new Set();
     const colores = new Set();
+    const marcas = new Set();
 
     productos.forEach(producto => {
         const tallaBase = producto.tallaBase || obtenerTallaBaseFallback(producto.talla);
@@ -89,12 +90,14 @@ function obtenerOpcionesFiltros(productos) {
         const tipo = producto.tipo || obtenerTipoProductoFallback(producto.nombre);
         if (tipo) tipos.add(tipo);
         if (producto.color) colores.add(producto.color);
+        if (producto.marca) marcas.add(producto.marca);
     });
 
     return {
         tallas: Array.from(tallas).sort(),
         tipos: Array.from(tipos).sort(),
-        colores: Array.from(colores).sort()
+        colores: Array.from(colores).sort(),
+        marcas: Array.from(marcas).sort()
     };
 }
 
@@ -172,6 +175,26 @@ function generarFiltros(productos) {
             colorFilters.appendChild(item);
         });
     }
+
+    // Generar filtros de marca
+    const marcaFilters = document.getElementById('marcaFilters');
+    if (marcaFilters) {
+        marcaFilters.innerHTML = '';
+        if (opciones.marcas && opciones.marcas.length > 0) {
+            opciones.marcas.forEach(marca => {
+                const safeId = marca.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+                const item = document.createElement('div');
+                item.className = 'filter-checkbox-item';
+                item.innerHTML = `
+                    <input type="checkbox" id="marca-${safeId}" value="${marca.replace(/"/g, '&quot;')}" class="filter-checkbox">
+                    <label for="marca-${safeId}">${marca}</label>
+                `;
+                marcaFilters.appendChild(item);
+            });
+        } else {
+            marcaFilters.innerHTML = '<p style="font-size:0.85rem;color:#666;">Sin marcas disponibles</p>';
+        }
+    }
 }
 
 // Función para obtener filtros activos
@@ -182,6 +205,10 @@ function obtenerFiltrosActivos() {
     const coloresSeleccionados = colorFiltersEl
         ? Array.from(colorFiltersEl.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value)
         : [];
+    const marcaFiltersEl = document.getElementById('marcaFilters');
+    const marcasSeleccionadas = marcaFiltersEl
+        ? Array.from(marcaFiltersEl.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value)
+        : [];
     const sortByEl = document.getElementById('sortBy');
     const ordenarPor = sortByEl ? sortByEl.value : '';
 
@@ -189,6 +216,7 @@ function obtenerFiltrosActivos() {
         tallas: tallasSeleccionadas,
         tipos: tiposSeleccionados,
         colores: coloresSeleccionados,
+        marcas: marcasSeleccionadas,
         ordenarPor: ordenarPor
     };
 }
@@ -217,6 +245,11 @@ function aplicarFiltrosYOrdenar(productos) {
     // Filtrar por color
     if (filtros.colores && filtros.colores.length > 0) {
         productosFiltrados = productosFiltrados.filter(producto => producto.color && filtros.colores.includes(producto.color));
+    }
+
+    // Filtrar por marca
+    if (filtros.marcas && filtros.marcas.length > 0) {
+        productosFiltrados = productosFiltrados.filter(producto => producto.marca && filtros.marcas.includes(producto.marca));
     }
 
     // Ordenar: primero con stock al inicio, agotados (stock 0) al final; dentro de cada grupo por precio si aplica
