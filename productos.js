@@ -52,15 +52,29 @@ function obtenerCategoriaDeURL() {
     return params.get('categoria') || 'Hombre';
 }
 
+function obtenerMarcaDeURL() {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get('marca') || '').trim();
+}
+
 // Devuelve el array de productos según la categoría (Mujer usa productosMujer)
 function obtenerProductosPorCategoria() {
     const categoria = obtenerCategoriaDeURL();
+    const marca = obtenerMarcaDeURL().toLowerCase();
+    function filtrarMarca(lista) {
+        if (!marca) return lista;
+        return lista.filter(function(p) {
+            return String(p.marca || '').toLowerCase() === marca;
+        });
+    }
     if (categoria === 'Mujer') {
-        return typeof productosMujer !== 'undefined'
+        const listaMujer = typeof productosMujer !== 'undefined'
             ? productosMujer.filter(function(p) { return p.categoria === 'Mujer' || p.categoria === 'Unisex'; })
             : [];
+        return filtrarMarca(listaMujer);
     }
-    return productos.filter(function(p) { return p.categoria === categoria || p.categoria === 'Unisex'; });
+    const lista = productos.filter(function(p) { return p.categoria === categoria || p.categoria === 'Unisex'; });
+    return filtrarMarca(lista);
 }
 
 // Función para obtener todas las tallas, tipos y colores únicos de los productos
@@ -541,22 +555,15 @@ function renderizarProductos(productosParaRenderizar) {
 // Función principal para renderizar todos los productos
 function renderizarTodosLosProductos() {
     const categoria = obtenerCategoriaDeURL();
+    const marca = obtenerMarcaDeURL();
     const pageTitle = document.getElementById('pageTitle');
     
     function actualizarTituloPagina() {
         if (!pageTitle) return;
+        var tituloBase = categoria === 'Hombre' ? 'PARA NUESTROS ATLETAS' : (categoria === 'Mujer' ? 'PARA NUESTRAS ATLETAS' : 'Productos');
+        var titulo = marca ? (tituloBase + ' · ' + marca.toUpperCase()) : tituloBase;
         var esMovil = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
-        if (esMovil) {
-            pageTitle.textContent = categoria === 'Hombre' ? 'PARA NUESTROS ATLETAS' : (categoria === 'Mujer' ? 'PARA NUESTRAS ATLETAS' : 'Productos');
-        } else {
-            if (categoria === 'Hombre') {
-                pageTitle.textContent = 'PARA NUESTROS ATLETAS';
-            } else if (categoria === 'Mujer') {
-                pageTitle.textContent = 'PARA NUESTRAS ATLETAS';
-            } else {
-                pageTitle.textContent = 'Productos';
-            }
-        }
+        pageTitle.textContent = esMovil ? tituloBase : titulo;
     }
     actualizarTituloPagina();
     if (pageTitle && window.matchMedia) {

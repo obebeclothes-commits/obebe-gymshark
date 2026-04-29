@@ -15,7 +15,8 @@ const productosHombre = [
         talla: "M - Oversized Fit",
         tallaBase: "M",
         tipo: "Polo",
-        color: "Blanco"
+        color: "Blanco",
+        marca: "Gym Shark"
     },
     {
         id: 2,
@@ -28,7 +29,8 @@ const productosHombre = [
         talla: "L - Oversized Fit",
         tallaBase: "L",
         tipo: "Hoodie",
-        color: "Negro"
+        color: "Negro",
+        marca: "Gym Shark"
     },
     {
         id: 3,
@@ -41,7 +43,8 @@ const productosHombre = [
         talla: "L - Oversized",
         tallaBase: "L",
         tipo: "Pants",
-        color: "Beige"
+        color: "Beige",
+        marca: "Gym Shark"
     },
     {
         id: 4,
@@ -54,7 +57,8 @@ const productosHombre = [
         talla: "M - Regular Fit",
         tallaBase: "M",
         tipo: "Hoodie",
-        color: "Beige"
+        color: "Beige",
+        marca: "Gym Shark"
     },
     {
         id: 5,
@@ -67,7 +71,8 @@ const productosHombre = [
         talla: "L - Extreme Oversized",
         tallaBase: "L",
         tipo: "Hoodie",
-        color: "Gris"
+        color: "Gris",
+        marca: "Gym Shark"
     },
     {
         id: 6,
@@ -80,7 +85,8 @@ const productosHombre = [
         talla: "S - Regular Fit",
         tallaBase: "S",
         tipo: "Short",
-        color: "Verde"
+        color: "Verde",
+        marca: "YoungLA"
     },
     {
         id: 7,
@@ -93,7 +99,8 @@ const productosHombre = [
         talla: "S - Regular Fit",
         tallaBase: "S",
         tipo: "Short",
-        color: "Gris"
+        color: "Gris",
+        marca: "YoungLA"
     },
     {
         id: 8,
@@ -106,7 +113,8 @@ const productosHombre = [
         talla: "M - Regular Fit",
         tallaBase: "M",
         tipo: "Short",
-        color: "Verde"
+        color: "Verde",
+        marca: "YoungLA"
     },
     {
         id: 9,
@@ -119,7 +127,8 @@ const productosHombre = [
         talla: "S - Regular Fit",
         tallaBase: "S",
         tipo: "Short",
-        color: "Gris"
+        color: "Gris",
+        marca: "YoungLA"
     },
     {
         id: 10,
@@ -132,7 +141,8 @@ const productosHombre = [
         talla: "S - Slim Fit",
         tallaBase: "S",
         tipo: "Short",
-        color: "Cafe"
+        color: "Cafe",
+        marca: "YoungLA"
     },
     {
         id: 11,
@@ -145,7 +155,8 @@ const productosHombre = [
         talla: "M - Slim Fit",
         tallaBase: "M",
         tipo: "Short",
-        color: "Gris"
+        color: "Gris",
+        marca: "Uniqlo"
     },
     {
         id: 12,
@@ -158,7 +169,8 @@ const productosHombre = [
         talla: "M - Slim Fit",
         tallaBase: "M",
         tipo: "Short",
-        color: "Negro"
+        color: "Negro",
+        marca: "Uniqlo"
     },
     {
         id: 13,
@@ -171,7 +183,8 @@ const productosHombre = [
         talla: "S - Slim Fit",
         tallaBase: "S",
         tipo: "Short",
-        color: "Rojo"
+        color: "Rojo",
+        marca: "Uniqlo"
     },
     {
         id: 14,
@@ -184,7 +197,8 @@ const productosHombre = [
         talla: "S - Slim Fit",
         tallaBase: "S",
         tipo: "Short",
-        color: "Negro"
+        color: "Negro",
+        marca: "Uniqlo"
     },
     {
         id: 15,
@@ -197,7 +211,8 @@ const productosHombre = [
         talla: "S - Regular Fit",
         tallaBase: "S",
         tipo: "Short",
-        color: "Negro"
+        color: "Negro",
+        marca: "Uniqlo"
     },  
 ];
 
