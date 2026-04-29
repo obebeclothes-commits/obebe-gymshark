@@ -768,6 +768,23 @@ a.category-label:hover {
     box-sizing: border-box;
 }
 
+/* iPhone/Safari: forzar estilo completo en estados link/visited */
+a.brand-pill,
+a.brand-pill:link,
+a.brand-pill:visited,
+a.brand-pill:hover,
+a.brand-pill:active {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+    color: var(--primary-color) !important;
+    background: #fff !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 999px !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+
 .brand-pill:hover {
     transform: translateY(-1px);
     border-color: #bfc5cb;
