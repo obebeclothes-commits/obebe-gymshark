@@ -61,7 +61,7 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
     contenedor.textContent = fuente;
 }
 
-function inicializarHoverImagenes() {
+function inicializarHoverCarruselHombre() {
     const carousel = document.getElementById('productsCarousel');
     if (!carousel) return;
 
@@ -90,7 +90,7 @@ function inicializarHoverImagenes() {
 }
 
 // Funci��n para renderizar productos en el carrusel
-function renderizarProductos(categoria = 'Hombre', mostrarTodos = false) {
+function renderizarCarruselHombre(categoria = 'Hombre', mostrarTodos = false) {
     const productsCarousel = document.getElementById('productsCarousel');
     if (!productsCarousel) return;
     
@@ -854,8 +854,8 @@ document.addEventListener('DOMContentLoaded', () => {
             window.addEventListener('resize', fijarAlturaHero);
             window.addEventListener('orientationchange', function() { setTimeout(fijarAlturaHero, 100); });
         }
-        inicializarHoverImagenes();
-        renderizarProductos('Hombre', false);
+        inicializarHoverCarruselHombre();
+        renderizarCarruselHombre('Hombre', false);
         renderizarProductosMujer();
         inicializarCarousel();
         inicializarCarouselMujer();
