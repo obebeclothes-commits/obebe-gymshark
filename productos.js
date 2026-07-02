@@ -705,6 +705,7 @@ function inicializarEventosFiltros() {
             var toggleBtn = document.getElementById('filtersToggleBtn');
             if (wrapper) wrapper.classList.remove('filters-panel-open');
             if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('filters-mobile-open');
         });
     }
 
@@ -806,11 +807,13 @@ function inicializarFiltrosToggle() {
     function abrirFiltros() {
         wrapper.classList.add('filters-panel-open');
         toggleBtn.setAttribute('aria-expanded', 'true');
+        document.body.classList.add('filters-mobile-open');
     }
 
     function cerrarFiltros() {
         wrapper.classList.remove('filters-panel-open');
         toggleBtn.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('filters-mobile-open');
     }
 
     function toggleFiltros() {
@@ -841,11 +844,8 @@ function inicializarFiltrosToggle() {
         backdrop.addEventListener('click', cerrarFiltros);
     }
 
-    document.addEventListener('click', (e) => {
-        if (!wrapper.classList.contains('filters-panel-open')) return;
-        if (wrapper.contains(e.target)) return;
-        cerrarFiltros();
-    });
+    // Evitar listener global de "click fuera": el botón Filtros está fuera del wrapper
+    // y en móvil cerraba el panel al instante de abrirlo.
 }
 
 // Función para mostrar modal de restricción
