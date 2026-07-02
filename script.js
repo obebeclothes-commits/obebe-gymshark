@@ -8,10 +8,13 @@ function esRutaImagen(valor) {
     return /\.(png|jpe?g|webp|gif|svg)$/i.test(valor);
 }
 
-/** Solo usa rutas guardadas en productos-hombre.js (generadas al importar). */
+/** Usa rutas del catálogo o convención hombre|mujer/{id}.webp si faltan. */
 function obtenerRutaImagenProducto(producto, numero) {
     var guardada = numero === 2 ? (producto.imagen2 || '') : (producto.imagen1 || '');
-    return guardada && esRutaImagen(guardada) ? guardada : '';
+    if (guardada && esRutaImagen(guardada)) return guardada;
+    if (numero !== 1 || !producto || !producto.id) return '';
+    var carpeta = (producto.categoria === 'Mujer') ? 'mujer' : 'hombre';
+    return carpeta + '/' + producto.id + '.webp';
 }
 
 function candidatosImagen(fuente) {

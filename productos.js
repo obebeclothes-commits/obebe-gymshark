@@ -803,6 +803,8 @@ function inicializarFiltrosToggle() {
     const sidebar = document.getElementById('filtersSidebar');
 
     if (!toggleBtn || !wrapper || !sidebar) return;
+    if (toggleBtn.dataset.filtersInit === 'true') return;
+    toggleBtn.dataset.filtersInit = 'true';
 
     function abrirFiltros() {
         wrapper.classList.add('filters-panel-open');

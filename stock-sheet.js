@@ -116,9 +116,8 @@
                 p.stock = datos.stock;
                 if (datos.precio > 0) p.precio = datos.precio;
                 actualizados += 1;
-            } else {
-                p.stock = 0;
             }
+            // Sin coincidencia en el sheet: conservar stock del catálogo local.
         });
         return actualizados;
     }

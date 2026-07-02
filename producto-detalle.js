@@ -26,8 +26,12 @@ window.iniciarDetalleProducto = function() {
         return;
     }
 
-    const imagen1 = (producto.imagen1 || '').trim();
-    const imagen2 = (producto.imagen2 || '').trim();
+    const imagen1 = typeof obtenerRutaImagenProducto === 'function'
+        ? obtenerRutaImagenProducto(producto, 1)
+        : (producto.imagen1 || '').trim();
+    const imagen2 = typeof obtenerRutaImagenProducto === 'function'
+        ? obtenerRutaImagenProducto(producto, 2)
+        : (producto.imagen2 || '').trim();
     var agotado = producto.stock === 0;
     var imageWrapClass = 'product-detail-image' + (agotado ? ' product-image-wrap out-of-stock' : '');
     var tieneImagenes = !!(imagen1 || imagen2);
