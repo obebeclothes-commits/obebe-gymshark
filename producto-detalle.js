@@ -1,5 +1,5 @@
 // Página de detalle de producto (producto.html?id=X)
-(function() {
+window.iniciarDetalleProducto = function() {
     const container = document.getElementById('productDetailContainer');
     if (!container) return;
 
@@ -26,64 +26,61 @@
         return;
     }
 
-    const imagen1 = producto.imagen1 || '';
-    const tieneSegundaImagen = producto.imagen2 && String(producto.imagen2).trim() !== '';
-    const imagen2 = tieneSegundaImagen ? producto.imagen2 : '';
-    const esImagen1 = typeof esRutaImagen === 'function' && esRutaImagen(imagen1);
-    const esImagen2 = typeof esRutaImagen === 'function' && esRutaImagen(imagen2);
-    function resolverRutaImagen(src) {
-        if (!src || src.indexOf('data:') === 0) return src;
-        if (src.indexOf('/') === 0 || /^https?:\/\//i.test(src)) return src;
-        try {
-            var href = window.location.href;
-            if (href.indexOf('?') !== -1) href = href.split('?')[0];
-            if (href.indexOf('#') !== -1) href = href.split('#')[0];
-            var baseDir = href.substring(0, href.lastIndexOf('/') + 1);
-            return new URL(src, baseDir).href;
-        } catch (e) {
-            var href = window.location.href.split('?')[0].split('#')[0];
-            var baseDir = href.substring(0, href.lastIndexOf('/') + 1);
-            return baseDir + src;
-        }
-    }
-    function imageHTML(src, esImg) {
-        if (esImg && src) {
-            var imgSrc = resolverRutaImagen(src);
-            var alt = (producto.nombre || '').replace(/"/g, '&quot;');
-            var safeSrc = imgSrc.replace(/"/g, '&quot;').replace(/&/g, '&amp;');
-            var fallback = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-            return '<img src="' + safeSrc + '" alt="' + alt + '" loading="lazy" onerror="this.onerror=null;this.src=\'' + fallback + '\';this.alt=\'No imagen\';">';
-        }
-        return '<span>' + (src || '🛍️') + '</span>';
-    }
+    const imagen1 = (producto.imagen1 || '').trim();
+    const imagen2 = (producto.imagen2 || '').trim();
     var agotado = producto.stock === 0;
-    var showFullImage = producto.id === 6 || producto.id === 7 || producto.id === 8 || producto.id === 9;
     var imageWrapClass = 'product-detail-image' + (agotado ? ' product-image-wrap out-of-stock' : '');
-    var overlayBlock = agotado ? '<div class="product-out-of-stock-overlay" aria-hidden="true"><span>AGOTADO</span></div>' : '';
-    var imagesBlock = '<div class="product-detail-images' + (showFullImage ? ' product-detail-show-full-image' : '') + '">';
-    imagesBlock += '<div class="' + imageWrapClass + '">' + imageHTML(imagen1, esImagen1) + overlayBlock + '</div>';
-    if (tieneSegundaImagen) {
-        imagesBlock += '<div class="' + imageWrapClass + '">' + imageHTML(imagen2, esImagen2) + overlayBlock + '</div>';
-    }
-    imagesBlock += '</div>';
+    var tieneImagenes = !!(imagen1 || imagen2);
 
     const backHref = 'productos.html?categoria=' + encodeURIComponent(producto.categoria || 'Hombre');
     document.title = producto.nombre + ' - Obebe GymShark Collection';
 
-    var colorLine = producto.color ? '<p class="product-color">Color: ' + producto.color + '</p>' : '';
-    var btnHtml = agotado
-        ? '<button type="button" class="add-to-cart-detail agotado" id="addToCartDetailBtn" disabled>Agotado</button>'
-        : '<button type="button" class="add-to-cart-detail" id="addToCartDetailBtn">Agregar al Carrito</button>';
-    container.innerHTML = ''
-        + '<a href="' + backHref + '" class="back-link">← Volver a productos</a>'
-        + imagesBlock
-        + '<div class="product-detail-info">'
+    container.innerHTML = '';
+    var backLink = document.createElement('a');
+    backLink.href = backHref;
+    backLink.className = 'back-link';
+    backLink.textContent = '← Volver a productos';
+    container.appendChild(backLink);
+
+    var imagesBlock = document.createElement('div');
+    imagesBlock.className = 'product-detail-images' + (tieneImagenes ? ' product-detail-show-full-image' : '');
+
+    function crearBloqueImagen(ruta) {
+        var wrap = document.createElement('div');
+        wrap.className = imageWrapClass;
+        if (ruta && typeof renderizarImagenProducto === 'function') {
+            wrap.dataset.type = 'img';
+            wrap.dataset.alt = producto.nombre;
+            renderizarImagenProducto(wrap, ruta);
+        } else {
+            wrap.textContent = '🛍️';
+        }
+        if (agotado) {
+            var overlay = document.createElement('div');
+            overlay.className = 'product-out-of-stock-overlay';
+            overlay.setAttribute('aria-hidden', 'true');
+            overlay.innerHTML = '<span>AGOTADO</span>';
+            wrap.appendChild(overlay);
+        }
+        return wrap;
+    }
+
+    if (imagen1) imagesBlock.appendChild(crearBloqueImagen(imagen1));
+    if (imagen2) imagesBlock.appendChild(crearBloqueImagen(imagen2));
+    if (!imagen1 && !imagen2) imagesBlock.appendChild(crearBloqueImagen(''));
+    container.appendChild(imagesBlock);
+
+    var info = document.createElement('div');
+    info.className = 'product-detail-info';
+    info.innerHTML = ''
         + '<h1>' + producto.nombre + '</h1>'
         + '<p class="product-size">Talla: ' + producto.talla + '</p>'
-        + colorLine
+        + (producto.color ? '<p class="product-color">Color: ' + producto.color + '</p>' : '')
         + '<p class="product-price">$' + producto.precio.toFixed(2) + '</p>'
-        + btnHtml
-        + '</div>';
+        + (agotado
+            ? '<button type="button" class="add-to-cart-detail agotado" id="addToCartDetailBtn" disabled>Agotado</button>'
+            : '<button type="button" class="add-to-cart-detail" id="addToCartDetailBtn">Agregar al Carrito</button>');
+    container.appendChild(info);
 
     var btn = document.getElementById('addToCartDetailBtn');
     var fixedBar = document.getElementById('addToCartFixedBar');
@@ -171,4 +168,4 @@
             if (e.key === 'Escape' && lightbox.classList.contains('active')) closeLightbox();
         });
     })();
-})();
+};

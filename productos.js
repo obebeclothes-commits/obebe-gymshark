@@ -12,9 +12,44 @@ function esRutaImagen(valor) {
     return /\.(png|jpe?g|webp|gif|svg)$/i.test(valor);
 }
 
-function renderizarImagenProducto(contenedor, fuente) {
-    if (contenedor.dataset.type === 'img') {
-        contenedor.innerHTML = `<img src="${fuente}" alt="${contenedor.dataset.alt}" loading="lazy">`;
+function candidatosImagen(fuente) {
+    if (!fuente) return [];
+    var base = fuente.replace(/\.(png|jpe?g|webp)$/i, '');
+    return [fuente, base + '.webp', base + '.png', base + '.jpeg', base + '.jpg']
+        .filter(function(v, i, a) { return v && a.indexOf(v) === i; });
+}
+
+function renderizarImagenProducto(contenedor, fuente, opciones) {
+    opciones = opciones || {};
+    var candidatos = candidatosImagen(fuente);
+    if (!candidatos.length) {
+        contenedor.dataset.type = 'emoji';
+        contenedor.textContent = '🛍️';
+        return;
+    }
+    if (contenedor.dataset.type === 'img' || !contenedor.dataset.type) {
+        contenedor.dataset.type = 'img';
+        var alt = contenedor.dataset.alt || '';
+        var img = document.createElement('img');
+        img.alt = alt;
+        img.loading = 'lazy';
+        var intento = 0;
+        img.addEventListener('error', function() {
+            intento += 1;
+            if (intento < candidatos.length) {
+                img.src = candidatos[intento];
+                return;
+            }
+            if (opciones.noOcultarSiFalla && contenedor.dataset.img1) {
+                renderizarImagenProducto(contenedor, contenedor.dataset.img1);
+                return;
+            }
+            contenedor.dataset.type = 'emoji';
+            contenedor.textContent = '🛍️';
+        });
+        img.src = candidatos[0];
+        contenedor.innerHTML = '';
+        contenedor.appendChild(img);
         return;
     }
     contenedor.textContent = fuente;
@@ -30,7 +65,7 @@ function inicializarHoverImagenes() {
         card.dataset.hovered = 'true';
         const imgContainer = card.querySelector('.product-image');
         if (imgContainer && imgContainer.dataset.img2) {
-            renderizarImagenProducto(imgContainer, imgContainer.dataset.img2);
+            renderizarImagenProducto(imgContainer, imgContainer.dataset.img2, { noOcultarSiFalla: true });
         }
     });
 
@@ -69,11 +104,15 @@ function obtenerProductosPorCategoria() {
     }
     if (categoria === 'Mujer') {
         const listaMujer = typeof productosMujer !== 'undefined'
-            ? productosMujer.filter(function(p) { return p.categoria === 'Mujer' || p.categoria === 'Unisex'; })
+            ? productosMujer.filter(function(p) {
+                return (p.categoria === 'Mujer' || p.categoria === 'Unisex') && Number(p.stock) > 0;
+            })
             : [];
         return filtrarMarca(listaMujer);
     }
-    const lista = productos.filter(function(p) { return p.categoria === categoria || p.categoria === 'Unisex'; });
+    const lista = productos.filter(function(p) {
+        return (p.categoria === categoria || p.categoria === 'Unisex') && Number(p.stock) > 0;
+    });
     return filtrarMarca(lista);
 }
 
@@ -519,9 +558,12 @@ function renderizarProductos(productosParaRenderizar) {
         card.className = 'product-card-full';
         card.setAttribute('data-product-id', producto.id);
 
-        const imagen1 = producto.imagen1 || '';
-        const tieneSegundaImagen = producto.imagen2 && String(producto.imagen2).trim() !== '';
-        const esImagen = esRutaImagen(imagen1);
+        const imagen1 = typeof obtenerRutaImagenProducto === 'function'
+            ? obtenerRutaImagenProducto(producto, 1)
+            : (producto.imagen1 || '');
+        const imagen2 = typeof obtenerRutaImagenProducto === 'function'
+            ? obtenerRutaImagenProducto(producto, 2)
+            : (producto.imagen2 || '');
         const agotado = producto.stock === 0;
 
         const detalleUrl = 'producto.html?id=' + producto.id + (producto.categoria === 'Mujer' ? '&categoria=Mujer' : '');
@@ -539,11 +581,16 @@ function renderizarProductos(productosParaRenderizar) {
 
         const imageContainer = document.createElement('div');
         imageContainer.className = 'product-image';
-        imageContainer.dataset.img1 = imagen1;
-        if (tieneSegundaImagen) imageContainer.dataset.img2 = producto.imagen2;
-        imageContainer.dataset.type = esImagen ? 'img' : 'emoji';
         imageContainer.dataset.alt = producto.nombre;
-        renderizarImagenProducto(imageContainer, imagen1);
+        if (imagen1) {
+            imageContainer.dataset.type = 'img';
+            imageContainer.dataset.img1 = imagen1;
+            if (imagen2) imageContainer.dataset.img2 = imagen2;
+            renderizarImagenProducto(imageContainer, imagen1);
+        } else {
+            imageContainer.dataset.type = 'emoji';
+            imageContainer.textContent = '🛍️';
+        }
         imageWrap.appendChild(imageContainer);
 
         if (agotado) {
@@ -907,24 +954,31 @@ document.addEventListener('DOMContentLoaded', () => {
     var isProductDetailPage = document.getElementById('productDetailContainer') && !document.getElementById('productsGrid');
     var isProductsGridPage = document.getElementById('productsGrid');
 
-    if (isProductDetailPage) {
-        inicializarCarrito();
-        inicializarNavegacion();
-    } else if (isProductsGridPage) {
-        renderizarTodosLosProductos();
-        inicializarHoverImagenes();
-        inicializarEventosFiltros();
-        inicializarFiltrosToggle();
-        inicializarCarrito();
-        inicializarNavegacion();
-    } else {
-        // Páginas sin grid de productos (ej. asesorias.html): solo menú móvil y carrito.
-        // No ejecutar en index.html (ahí script.js ya lo hace; duplicar causaría doble toggle).
-        var isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
-        if (!isIndexPage) {
+    const iniciarPagina = () => {
+        if (isProductDetailPage) {
             inicializarCarrito();
             inicializarNavegacion();
+            if (typeof iniciarDetalleProducto === 'function') iniciarDetalleProducto();
+        } else if (isProductsGridPage) {
+            renderizarTodosLosProductos();
+            inicializarHoverImagenes();
+            inicializarEventosFiltros();
+            inicializarFiltrosToggle();
+            inicializarCarrito();
+            inicializarNavegacion();
+        } else {
+            var isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
+            if (!isIndexPage) {
+                inicializarCarrito();
+                inicializarNavegacion();
+            }
         }
+    };
+
+    if (typeof sincronizarStockDesdeSheets === 'function') {
+        sincronizarStockDesdeSheets().then(iniciarPagina);
+    } else {
+        iniciarPagina();
     }
 
     var messages = document.querySelectorAll('.promo-message');
