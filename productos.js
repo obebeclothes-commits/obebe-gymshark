@@ -236,6 +236,83 @@ function generarFiltros(productos) {
     }
 }
 
+function leerFiltrosDesdeURL() {
+    var params = new URLSearchParams(window.location.search);
+
+    function valoresMulti(nombre) {
+        var todos = params.getAll(nombre);
+        if (todos.length > 1) return todos;
+        var uno = params.get(nombre);
+        if (!uno) return [];
+        return uno.split(',').map(function(v) { return v.trim(); }).filter(Boolean);
+    }
+
+    return {
+        tallas: valoresMulti('talla'),
+        tipos: valoresMulti('tipo'),
+        colores: valoresMulti('color'),
+        marcas: valoresMulti('marcas'),
+        ordenarPor: params.get('orden') || '',
+        busqueda: params.get('q') || ''
+    };
+}
+
+function restaurarFiltrosDesdeURL() {
+    var f = leerFiltrosDesdeURL();
+
+    document.querySelectorAll('#tallaFilters .filter-checkbox').forEach(function(cb) {
+        cb.checked = f.tallas.indexOf(cb.value) !== -1;
+    });
+    document.querySelectorAll('#tipoFilters .filter-checkbox').forEach(function(cb) {
+        cb.checked = f.tipos.indexOf(cb.value) !== -1;
+    });
+    var colorFiltersEl = document.getElementById('colorFilters');
+    if (colorFiltersEl) {
+        colorFiltersEl.querySelectorAll('.filter-checkbox').forEach(function(cb) {
+            cb.checked = f.colores.indexOf(cb.value) !== -1;
+        });
+    }
+    var marcaFiltersEl = document.getElementById('marcaFilters');
+    if (marcaFiltersEl) {
+        marcaFiltersEl.querySelectorAll('.filter-checkbox').forEach(function(cb) {
+            cb.checked = f.marcas.indexOf(cb.value) !== -1;
+        });
+    }
+
+    var sortBy = document.getElementById('sortBy');
+    if (sortBy) sortBy.value = f.ordenarPor;
+
+    var searchMobile = document.getElementById('productSearchInput');
+    var searchDesktop = document.getElementById('productSearchInputDesktop');
+    if (searchMobile) searchMobile.value = f.busqueda;
+    if (searchDesktop) searchDesktop.value = f.busqueda;
+}
+
+function sincronizarFiltrosConURL() {
+    var filtros = obtenerFiltrosActivos();
+    var searchEl = document.getElementById('productSearchInput');
+    var busqueda = searchEl && searchEl.value.trim() ? searchEl.value.trim() : '';
+    var params = new URLSearchParams(window.location.search);
+
+    ['talla', 'tipo', 'color', 'marcas', 'orden', 'q'].forEach(function(k) { params.delete(k); });
+    filtros.tallas.forEach(function(v) { params.append('talla', v); });
+    filtros.tipos.forEach(function(v) { params.append('tipo', v); });
+    filtros.colores.forEach(function(v) { params.append('color', v); });
+    filtros.marcas.forEach(function(v) { params.append('marcas', v); });
+    if (filtros.ordenarPor) params.set('orden', filtros.ordenarPor);
+    if (busqueda) params.set('q', busqueda);
+
+    var qs = params.toString();
+    history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
+}
+
+function limpiarFiltrosEnURL() {
+    var params = new URLSearchParams(window.location.search);
+    ['talla', 'tipo', 'color', 'marcas', 'orden', 'q'].forEach(function(k) { params.delete(k); });
+    var qs = params.toString();
+    history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
+}
+
 // Función para obtener filtros activos
 function obtenerFiltrosActivos() {
     const tallasSeleccionadas = Array.from(document.querySelectorAll('#tallaFilters .filter-checkbox:checked')).map(cb => cb.value);
@@ -657,6 +734,7 @@ function renderizarTodosLosProductos() {
 
     // Generar filtros dinámicamente
     generarFiltros(productosCategoria);
+    restaurarFiltrosDesdeURL();
 
     // Aplicar filtros y ordenamiento inicial
     const productosFiltrados = aplicarFiltrosYOrdenar(productosCategoria);
@@ -685,6 +763,11 @@ function inicializarEventosFiltros() {
     function ejecutarLimpiarFiltros() {
         document.querySelectorAll('.filter-checkbox').forEach(cb => { cb.checked = false; });
         if (sortBy) sortBy.value = '';
+        var searchMobile = document.getElementById('productSearchInput');
+        var searchDesktop = document.getElementById('productSearchInputDesktop');
+        if (searchMobile) searchMobile.value = '';
+        if (searchDesktop) searchDesktop.value = '';
+        limpiarFiltrosEnURL();
         const productosCategoria = obtenerProductosPorCategoria();
         aplicarBusquedaYRenderizar(productosCategoria);
     }
@@ -700,6 +783,7 @@ function inicializarEventosFiltros() {
         applyFiltersBtn.addEventListener('click', () => {
             const productosCategoria = obtenerProductosPorCategoria();
             const productosFiltrados = aplicarFiltrosYOrdenar(productosCategoria);
+            sincronizarFiltrosConURL();
             aplicarBusquedaYRenderizar(productosFiltrados);
             var wrapper = document.getElementById('filtersProductsWrapper');
             var toggleBtn = document.getElementById('filtersToggleBtn');
@@ -712,6 +796,7 @@ function inicializarEventosFiltros() {
     function onSearchInput() {
         const productosCategoria = obtenerProductosPorCategoria();
         const productosFiltrados = aplicarFiltrosYOrdenar(productosCategoria);
+        sincronizarFiltrosConURL();
         aplicarBusquedaYRenderizar(productosFiltrados);
     }
     var productSearchInput = document.getElementById('productSearchInput');
@@ -933,11 +1018,19 @@ function inicializarNavegacion() {
     }
 }
 
-// Al volver atrás (bfcache), refrescar imágenes de productos para evitar "?" o imagen rota en móvil
+// Al volver atrás (bfcache), restaurar filtros y refrescar imágenes
 window.addEventListener('pageshow', (event) => {
-    if (!event.persisted) return;
     const grid = document.getElementById('productsGrid');
     if (!grid) return;
+
+    if (event.persisted) {
+        var productosCategoria = obtenerProductosPorCategoria();
+        generarFiltros(productosCategoria);
+        restaurarFiltrosDesdeURL();
+        var productosFiltrados = aplicarFiltrosYOrdenar(productosCategoria);
+        aplicarBusquedaYRenderizar(productosFiltrados);
+    }
+
     grid.querySelectorAll('.product-card-full .product-image').forEach(container => {
         const src = container.dataset.img1;
         const alt = container.dataset.alt;

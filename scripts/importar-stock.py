@@ -189,6 +189,8 @@ def normalizar_tipo(valor: str) -> str:
         "SHORT": "Short",
         "JERSEY": "Jersey",
         "POLO": "Polo",
+        "CAP": "Cap",
+        "CAPS": "Cap",
     }
     clave = texto.upper()
     return mapa.get(clave, texto.title())

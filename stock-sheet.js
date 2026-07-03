@@ -1,4 +1,4 @@
-// Sincroniza stock (y precio) desde Google Sheets al cargar la página.
+// Sincroniza stock, precio y tipo desde Google Sheets al cargar la página.
 // Si columna C (CANTIDAD) es 0, el producto queda con stock 0 y se oculta en la tienda.
 (function() {
     var SPREADSHEET_ID = '195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko';
@@ -33,6 +33,29 @@
         var clave = String(valor || '').trim().toUpperCase();
         if (!clave) return '';
         return COLORES[clave] || String(valor || '').trim().replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+    }
+
+    function normalizarTipo(valor) {
+        var texto = String(valor || '').trim();
+        if (!texto) return '';
+        var mapa = {
+            'T-SHIRT': 'T-Shirt',
+            'TSHIRT': 'T-Shirt',
+            'TEE': 'T-Shirt',
+            'TANK TOP': 'Tank Top',
+            'TANK': 'Tank Top',
+            'HOODIE': 'Hoodie',
+            'JOGGERS': 'Joggers',
+            'PANTS': 'Pants',
+            'SHORT': 'Short',
+            'JERSEY': 'Jersey',
+            'POLO': 'Polo',
+            'CAP': 'Cap',
+            'CAPS': 'Cap'
+        };
+        var clave = texto.toUpperCase();
+        if (mapa[clave]) return mapa[clave];
+        return texto.toLowerCase().replace(/\b\w/g, function(c) { return c.toUpperCase(); });
     }
 
     function parsearStock(valor) {
@@ -97,10 +120,11 @@
             var stock = parsearStock(f[2]);
             var talla = (f[3] || '').trim();
             var color = normalizarColor(f[4]);
+            var tipo = normalizarTipo(f[5]);
             var marca = normalizarMarca(f[6]);
             var precio = parsearPrecio(f[7]);
             var clave = claveProducto(nombre, talla, color, marca);
-            mapa.set(clave, { stock: stock, precio: precio });
+            mapa.set(clave, { stock: stock, precio: precio, tipo: tipo });
         }
         return mapa;
     }
@@ -115,6 +139,7 @@
             if (datos) {
                 p.stock = datos.stock;
                 if (datos.precio > 0) p.precio = datos.precio;
+                if (datos.tipo) p.tipo = datos.tipo;
                 actualizados += 1;
             }
             // Sin coincidencia en el sheet: conservar stock del catálogo local.
