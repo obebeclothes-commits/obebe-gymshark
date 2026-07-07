@@ -13,3 +13,21 @@ desktop.ini
 # Logs
 *.log
 npm-debug.log*
+
+# -----------------------------------------------------------------------------
+# Local / no subir a GitHub
+# -----------------------------------------------------------------------------
+
+# Imágenes con etiqueta (nombre, talla, precio) — solo uso local / redes
+hombre-etiquetado/
+mujer-etiquetado/
+
+# Scripts de automatización local (Sheets, Selenium, etiquetado, etc.)
+scripts/*
+!scripts/importar-stock.py
+scripts/.chrome-sheet-profile/
+scripts/__pycache__/
+
+# Atajos .bat de tareas locales
+actualizar-columna-a.bat
+etiquetar-fotos-hombre-prueba.bat
