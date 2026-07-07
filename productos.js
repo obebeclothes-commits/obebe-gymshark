@@ -92,28 +92,19 @@ function obtenerMarcaDeURL() {
     return (params.get('marca') || '').trim();
 }
 
-// Devuelve el array de productos según la categoría (Mujer usa productosMujer)
+// Devuelve el array de productos según la categoría (sin filtrar por marca; eso va en el panel de filtros)
 function obtenerProductosPorCategoria() {
     const categoria = obtenerCategoriaDeURL();
-    const marca = obtenerMarcaDeURL().toLowerCase();
-    function filtrarMarca(lista) {
-        if (!marca) return lista;
-        return lista.filter(function(p) {
-            return String(p.marca || '').toLowerCase() === marca;
-        });
-    }
     if (categoria === 'Mujer') {
-        const listaMujer = typeof productosMujer !== 'undefined'
+        return typeof productosMujer !== 'undefined'
             ? productosMujer.filter(function(p) {
                 return (p.categoria === 'Mujer' || p.categoria === 'Unisex') && Number(p.stock) > 0;
             })
             : [];
-        return filtrarMarca(listaMujer);
     }
-    const lista = productos.filter(function(p) {
+    return productos.filter(function(p) {
         return (p.categoria === categoria || p.categoria === 'Unisex') && Number(p.stock) > 0;
     });
-    return filtrarMarca(lista);
 }
 
 // Función para obtener todas las tallas, tipos y colores únicos de los productos
@@ -247,14 +238,24 @@ function leerFiltrosDesdeURL() {
         return uno.split(',').map(function(v) { return v.trim(); }).filter(Boolean);
     }
 
+    var marcas = valoresMulti('marcas');
+    var marcaPill = (params.get('marca') || '').trim();
+    if (marcaPill && marcas.indexOf(marcaPill) === -1) {
+        marcas.push(marcaPill);
+    }
+
     return {
         tallas: valoresMulti('talla'),
         tipos: valoresMulti('tipo'),
         colores: valoresMulti('color'),
-        marcas: valoresMulti('marcas'),
+        marcas: marcas,
         ordenarPor: params.get('orden') || '',
         busqueda: params.get('q') || ''
     };
+}
+
+function marcaCoincideFiltro(a, b) {
+    return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
 }
 
 function restaurarFiltrosDesdeURL() {
@@ -275,7 +276,7 @@ function restaurarFiltrosDesdeURL() {
     var marcaFiltersEl = document.getElementById('marcaFilters');
     if (marcaFiltersEl) {
         marcaFiltersEl.querySelectorAll('.filter-checkbox').forEach(function(cb) {
-            cb.checked = f.marcas.indexOf(cb.value) !== -1;
+            cb.checked = f.marcas.some(function(m) { return marcaCoincideFiltro(m, cb.value); });
         });
     }
 
@@ -294,7 +295,7 @@ function sincronizarFiltrosConURL() {
     var busqueda = searchEl && searchEl.value.trim() ? searchEl.value.trim() : '';
     var params = new URLSearchParams(window.location.search);
 
-    ['talla', 'tipo', 'color', 'marcas', 'orden', 'q'].forEach(function(k) { params.delete(k); });
+    ['talla', 'tipo', 'color', 'marcas', 'marca', 'orden', 'q'].forEach(function(k) { params.delete(k); });
     filtros.tallas.forEach(function(v) { params.append('talla', v); });
     filtros.tipos.forEach(function(v) { params.append('tipo', v); });
     filtros.colores.forEach(function(v) { params.append('color', v); });
@@ -308,7 +309,7 @@ function sincronizarFiltrosConURL() {
 
 function limpiarFiltrosEnURL() {
     var params = new URLSearchParams(window.location.search);
-    ['talla', 'tipo', 'color', 'marcas', 'orden', 'q'].forEach(function(k) { params.delete(k); });
+    ['talla', 'tipo', 'color', 'marcas', 'marca', 'orden', 'q'].forEach(function(k) { params.delete(k); });
     var qs = params.toString();
     history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
 }
@@ -718,7 +719,9 @@ function renderizarTodosLosProductos() {
     function actualizarTituloPagina() {
         if (!pageTitle) return;
         var tituloBase = categoria === 'Hombre' ? 'PARA NUESTROS ATLETAS' : (categoria === 'Mujer' ? 'PARA NUESTRAS ATLETAS' : 'Productos');
-        var titulo = marca ? (tituloBase + ' · ' + marca.toUpperCase()) : tituloBase;
+        var filtrosUrl = leerFiltrosDesdeURL();
+        var marcaTitulo = filtrosUrl.marcas.length === 1 ? filtrosUrl.marcas[0] : (marca || '');
+        var titulo = marcaTitulo ? (tituloBase + ' · ' + marcaTitulo.toUpperCase()) : tituloBase;
         var esMovil = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
         pageTitle.textContent = esMovil ? tituloBase : titulo;
     }

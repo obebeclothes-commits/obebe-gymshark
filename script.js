@@ -706,14 +706,10 @@ var heroHeightLock = null;
 function fijarAlturaHero() {
     const hero = document.querySelector('section.hero');
     if (!hero) return;
-    var vh = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
-    var offset = 130;
-    if (window.innerWidth <= 480) offset = -52;
-    var h = Math.max(200, Math.round(vh - offset));
-    heroHeightLock = h;
-    hero.style.setProperty('height', h + 'px', 'important');
-    hero.style.setProperty('min-height', h + 'px', 'important');
-    hero.style.setProperty('max-height', h + 'px', 'important');
+    hero.style.removeProperty('height');
+    hero.style.removeProperty('min-height');
+    hero.style.removeProperty('max-height');
+    heroHeightLock = null;
 }
 
 // Si el navegador (ej. Instagram in-app) cambia el tama?o del hero al hacer scroll, volver a fijarlo
@@ -733,93 +729,63 @@ function instalarResizeObserverHero() {
 }
 
 // Funci��n para rotar videos del hero
-function inicializarHeroVideos() {
-    const videos = document.querySelectorAll('.hero-video');
-    let currentVideoIndex = 0;
-    let videoTimer = null;
-    let preloadTimer = null;
+function inicializarHeroCarrusel() {
+    var slides = document.querySelectorAll('.hero-slide');
+    if (!slides.length) return;
 
-    // Duraci��n espec��fica para cada video (en milisegundos)
-    const duraciones = {
-        0: 4500, // Video 1: 4.5 segundos
-        1: 4100, // Video 2: 4.1 segundos (mantener)
-        2: 3500, // Video 3: 3.5 segundos
-        3: 4000, // Video 4: 4 segundos
-        4: 4000  // Video 5: 4 segundos
-    };
-
-    // Precargar el siguiente video N ms antes del cambio (evita pantalla negra al rotar)
-    const PRELOAD_ANTES_MS = 2500;
-
-    function programarPreloadSiguiente(indiceActual, duracionActual) {
-        if (preloadTimer) clearTimeout(preloadTimer);
-        const cuandoPreload = Math.max(0, duracionActual - PRELOAD_ANTES_MS);
-        preloadTimer = setTimeout(() => {
-            const siguienteIndice = (indiceActual + 1) % videos.length;
-            const siguienteVideo = videos[siguienteIndice];
-            if (siguienteVideo && siguienteVideo.readyState < 2) {
-                siguienteVideo.preload = 'auto';
-                siguienteVideo.load();
-            }
-            preloadTimer = null;
-        }, cuandoPreload);
+    var navArrows = document.getElementById('heroNavArrows');
+    if (slides.length <= 1) {
+        if (navArrows) {
+            navArrows.classList.add('hero-nav-arrows--hidden');
+            navArrows.setAttribute('aria-hidden', 'true');
+        }
+        return;
     }
 
-    // Pausar todos los videos excepto el primero
-    videos.forEach((video, index) => {
-        if (index !== 0) {
-            video.pause();
-        }
-    });
-
-    function cambiarVideo() {
-        // Limpiar timers anteriores
-        if (videoTimer) {
-            clearTimeout(videoTimer);
-            videoTimer = null;
-        }
-        if (preloadTimer) {
-            clearTimeout(preloadTimer);
-            preloadTimer = null;
-        }
-
-        // Obtener el video actual y el siguiente
-        const currentVideo = videos[currentVideoIndex];
-        currentVideoIndex = (currentVideoIndex + 1) % videos.length;
-        const nextVideo = videos[currentVideoIndex];
-
-        // Remover clase active del video actual
-        currentVideo.classList.remove('active');
-        
-        // Pausar el video actual
-        currentVideo.pause();
-        currentVideo.removeEventListener('ended', cambiarVideo);
-
-        // Agregar clase active al siguiente video y reproducirlo
-        nextVideo.classList.add('active');
-        nextVideo.currentTime = 0;
-        nextVideo.play();
-
-        // Configurar duraci��n seg��n el video
-        const duracion = duraciones[currentVideoIndex];
-        
-        // Precargar el que sigue para que al rotar ya est�� listo
-        programarPreloadSiguiente(currentVideoIndex, duracion);
-        
-        // Timer para el pr��ximo cambio
-        videoTimer = setTimeout(() => {
-            cambiarVideo();
-        }, duracion);
+    if (navArrows) {
+        navArrows.classList.remove('hero-nav-arrows--hidden');
+        navArrows.setAttribute('aria-hidden', 'false');
     }
 
-    // Iniciar el primer video y precargar el segundo antes del primer cambio
-    const primerVideo = videos[0];
-    if (primerVideo) {
-        const duracionPrimerVideo = duraciones[0];
-        programarPreloadSiguiente(0, duracionPrimerVideo);
-        videoTimer = setTimeout(() => {
-            cambiarVideo();
-        }, duracionPrimerVideo);
+    var indice = 0;
+    var arrowLeft = document.getElementById('heroArrowLeft');
+    var arrowRight = document.getElementById('heroArrowRight');
+
+    function mostrar(nuevoIndice) {
+        slides[indice].classList.remove('active');
+        indice = (nuevoIndice + slides.length) % slides.length;
+        slides[indice].classList.add('active');
+    }
+
+    if (arrowLeft) {
+        arrowLeft.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            mostrar(indice - 1);
+        });
+    }
+
+    if (arrowRight) {
+        arrowRight.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            mostrar(indice + 1);
+        });
+    }
+
+    var hero = document.querySelector('section.hero');
+    if (hero) {
+        var touchStartX = 0;
+        hero.addEventListener('touchstart', function(e) {
+            if (e.touches.length === 1) touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+        hero.addEventListener('touchend', function(e) {
+            if (!e.changedTouches.length) return;
+            var delta = e.changedTouches[0].clientX - touchStartX;
+            if (Math.abs(delta) < 50) return;
+            if (delta < 0) mostrar(indice + 1);
+            else mostrar(indice - 1);
+        }, { passive: true });
     }
 }
 
@@ -861,7 +827,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inicializarCarouselMujer();
         inicializarNavegacion();
         inicializarPromoBar();
-        inicializarHeroVideos();
+        inicializarHeroCarrusel();
         // Asegurar eventos del modal del carrito en index (complementa productos.js)
         const cartIconBtn = document.getElementById('cartIconBtn');
         const cartModal = document.getElementById('cartModal');

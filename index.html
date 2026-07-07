@@ -26,8 +26,6 @@
     </style>
 </head>
 <body>
-    <!-- Pega aquí la URL base de R2 (ej: https://pub-xxxxx.r2.dev) para servir los vídeos desde Cloudflare. Deja vacío '' para usar vídeos locales. -->
-    <script>window.OBEBE_VIDEOS_BASE = '';</script>
     <div class="promo-bar">
         <div class="promo-container">
             <div class="promo-messages">
@@ -86,39 +84,23 @@
 
     <main>
         <section id="inicio" class="hero">
-            <div class="hero-videos">
-                <video class="hero-video active" autoplay muted loop playsinline disablePictureInPicture disableRemotePlayback preload="metadata">
-                    <source src="video1.mp4" type="video/mp4">
-                    Tu navegador no soporta videos HTML5.
-                </video>
-                <video class="hero-video" autoplay muted loop playsinline disablePictureInPicture disableRemotePlayback preload="none">
-                    <source src="video2.mp4" type="video/mp4">
-                    Tu navegador no soporta videos HTML5.
-                </video>
-                <video class="hero-video" autoplay muted loop playsinline disablePictureInPicture disableRemotePlayback preload="none">
-                    <source src="video3.mp4" type="video/mp4">
-                    Tu navegador no soporta videos HTML5.
-                </video>
-                <video class="hero-video" autoplay muted loop playsinline disablePictureInPicture disableRemotePlayback preload="none">
-                    <source src="video4.mp4" type="video/mp4">
-                    Tu navegador no soporta videos HTML5.
-                </video>
-                <video class="hero-video" autoplay muted loop playsinline disablePictureInPicture disableRemotePlayback preload="none">
-                    <source src="video5.mp4" type="video/mp4">
-                    Tu navegador no soporta videos HTML5.
-                </video>
+            <div class="hero-slides" aria-live="polite">
+                <div class="hero-slide active">
+                    <img src="PORTADA1.jpeg" alt="Obebe Clothes" fetchpriority="high">
+                </div>
             </div>
-            <script>
-            (function(){
-                var base = window.OBEBE_VIDEOS_BASE || '';
-                if (!base) return;
-                var sources = document.querySelectorAll('.hero-videos source');
-                var names = ['video1.mp4','video2.mp4','video3.mp4','video4.mp4','video5.mp4'];
-                for (var i = 0; i < sources.length && i < names.length; i++) {
-                    sources[i].src = base.replace(/\/$/, '') + '/' + names[i];
-                }
-            })();
-            </script>
+            <div class="hero-nav-arrows hero-nav-arrows--hidden" id="heroNavArrows" aria-hidden="true">
+                <button type="button" class="hero-arrow hero-arrow-left" id="heroArrowLeft" aria-label="Imagen anterior">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24" aria-hidden="true">
+                        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                    </svg>
+                </button>
+                <button type="button" class="hero-arrow hero-arrow-right" id="heroArrowRight" aria-label="Imagen siguiente">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24" aria-hidden="true">
+                        <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                    </svg>
+                </button>
+            </div>
             <div class="hero-content">
                 <div class="hero-text">
                     <h2>Bienvenido a Obebe</h2>
