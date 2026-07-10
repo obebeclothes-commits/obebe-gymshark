@@ -67,6 +67,28 @@
         return COLORES[clave] || String(valor || '').trim().replace(/\b\w/g, function(c) { return c.toUpperCase(); });
     }
 
+    function normalizarTalla(valor) {
+        var texto = String(valor || '').trim();
+        if (!texto) return '';
+        var clave = texto.toUpperCase().replace(/\s+/g, ' ');
+        var alias = {
+            'UNI': 'UNI',
+            'U': 'UNI',
+            'OS': 'UNI',
+            'ONE SIZE': 'UNI',
+            'ONE-SIZE': 'UNI',
+            'ONESIZE': 'UNI',
+            'FREE SIZE': 'UNI',
+            'FREE-SIZE': 'UNI',
+            'TALLA UNICA': 'UNI',
+            'TALLA ÚNICA': 'UNI',
+            'UNICA': 'UNI',
+            'ÚNICA': 'UNI',
+            'UNIQUE': 'UNI'
+        };
+        return alias[clave] || texto;
+    }
+
     function normalizarTipo(valor) {
         var texto = String(valor || '').trim();
         if (!texto) return '';
@@ -83,7 +105,8 @@
             'JERSEY': 'Jersey',
             'POLO': 'Polo',
             'CAP': 'Cap',
-            'CAPS': 'Cap'
+            'CAPS': 'Cap',
+            'BACKPACK': 'Backpack'
         };
         var clave = texto.toUpperCase();
         if (mapa[clave]) return mapa[clave];
@@ -130,14 +153,26 @@
         var iso = texto.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
         if (iso) return fechaStockAISO(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10));
 
-        var dmyTexto = texto.match(/^(\d{1,2})[-\/]([a-zA-Z]{3,})[-\/](\d{4})$/);
-        if (dmyTexto) {
-            var mesTexto = dmyTexto[2].toLowerCase().replace(/\./g, '');
+        function parsearDmyTexto(partes) {
+            var mesTexto = partes[2].toLowerCase().replace(/\./g, '');
             var mes = MESES_FECHA_STOCK[mesTexto];
             if (mes === undefined) mes = MESES_FECHA_STOCK[mesTexto.slice(0, 3)];
-            if (mes !== undefined) {
-                return fechaStockAISO(parseInt(dmyTexto[3], 10), mes, parseInt(dmyTexto[1], 10));
-            }
+            if (mes === undefined) return '';
+            var anio = parseInt(partes[3], 10);
+            if (anio < 100) anio += 2000;
+            return fechaStockAISO(anio, mes, parseInt(partes[1], 10));
+        }
+
+        var dmyTexto = texto.match(/^(\d{1,2})[-\/]([a-zA-Z]{3,})[-\/](\d{4})$/);
+        if (dmyTexto) {
+            var isoTexto = parsearDmyTexto(dmyTexto);
+            if (isoTexto) return isoTexto;
+        }
+
+        var dmyTextoCorto = texto.match(/^(\d{1,2})[-\/]([a-zA-Z]{3,})[-\/](\d{2})$/);
+        if (dmyTextoCorto) {
+            var isoCorto = parsearDmyTexto(dmyTextoCorto);
+            if (isoCorto) return isoCorto;
         }
 
         var dmyNum = texto.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
@@ -224,7 +259,7 @@
     function claveProducto(nombre, talla, color, marca) {
         return [
             normTexto(nombre),
-            normTexto(talla),
+            normTexto(normalizarTalla(talla)),
             normColorClave(color),
             normTexto(normalizarMarca(marca))
         ].join('|');
@@ -283,7 +318,7 @@
             if (!nombre || nombre.toUpperCase() === 'NOMBRE') continue;
             if (!filaPerteneceCategoria(f, categoria, usarSegmento)) continue;
             var stock = parsearStock(f[2]);
-            var talla = (f[3] || '').trim();
+            var talla = normalizarTalla(f[3]);
             var color = normalizarColor(f[4]);
             var tipo = normalizarTipo(f[5]);
             var marca = normalizarMarca(f[6]);
@@ -334,7 +369,7 @@
         var clave = claveProducto(nombre, talla, color, marca);
         if (mapa.has(clave)) return mapa.get(clave);
 
-        var prefijo = normTexto(nombre) + '|' + normTexto(talla) + '|';
+        var prefijo = normTexto(nombre) + '|' + normTexto(normalizarTalla(talla)) + '|';
         var sufijo = '|' + normTexto(normalizarMarca(marca));
         var candidato = null;
         var coincidencias = 0;
@@ -351,7 +386,7 @@
         if (!Array.isArray(catalogo)) return 0;
         var actualizados = 0;
         catalogo.forEach(function(p) {
-            var talla = p.tallaBase || String(p.talla || '').split('-')[0].trim();
+            var talla = normalizarTalla(p.tallaBase || String(p.talla || '').split('-')[0].trim());
             var datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca);
             if (datos) {
                 p.stock = datos.stock;

@@ -1,5 +1,5 @@
 // =============================================================================
-// STOCK HOMBRE — Generado automáticamente con scripts/importar-stock.py
+// STOCK HOMBRE ? Generado autom?ticamente con scripts/importar-stock.py
 // Fuente: Google Sheets (hoja HOMBRE, columna T = HOMBRE/MUJER)
 // Edita el sheet y vuelve a ejecutar el script para actualizar.
 // =============================================================================
@@ -253,7 +253,7 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "Short",
-        color: "Marrón",
+        color: "Marr?n",
         marca: "Gym Shark"
     },
     {
@@ -393,7 +393,7 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "T-Shirt",
-        color: "Marrón",
+        color: "Marr?n",
         marca: "Gym Shark"
     },
     {
@@ -407,7 +407,7 @@ const productosHombre = [
         talla: "M",
         tallaBase: "M",
         tipo: "T-Shirt",
-        color: "Marrón",
+        color: "Marr?n",
         marca: "Gym Shark"
     },
     {
@@ -421,7 +421,7 @@ const productosHombre = [
         talla: "L",
         tallaBase: "L",
         tipo: "T-Shirt",
-        color: "Marrón",
+        color: "Marr?n",
         marca: "Gym Shark"
     },
     {
@@ -1191,7 +1191,7 @@ const productosHombre = [
         talla: "M",
         tallaBase: "M",
         tipo: "T-Shirt",
-        color: "Marrón",
+        color: "Marr?n",
         marca: "Gym Shark"
     },
     {
@@ -1205,7 +1205,7 @@ const productosHombre = [
         talla: "L",
         tallaBase: "L",
         tipo: "T-Shirt",
-        color: "Marrón",
+        color: "Marr?n",
         marca: "Gym Shark"
     },
     {
@@ -1261,7 +1261,7 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "T-Shirt",
-        color: "Marrón",
+        color: "Marr?n",
         marca: "Gym Shark"
     },
     {
@@ -1317,7 +1317,7 @@ const productosHombre = [
         talla: "M",
         tallaBase: "M",
         tipo: "Pants",
-        color: "Marrón",
+        color: "Marr?n",
         marca: "Gym Shark"
     },
     {
@@ -1891,7 +1891,7 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "Short",
-        color: "Marrón",
+        color: "Marr?n",
         marca: "Gym Shark"
     },
     {
@@ -2193,7 +2193,7 @@ const productosHombre = [
         nombre: "ACTIVE BACKPACK",
         categoria: "Hombre",
         precio: 600.00,
-        stock: 1,
+        stock: 0,
         imagen1: "hombre/159.webp",
         imagen2: "hombre/159.1.webp",
         talla: "UNI",
@@ -2787,7 +2787,7 @@ const productosHombre = [
         talla: "L",
         tallaBase: "L",
         tipo: "T-Shirt",
-        color: "Marrón",
+        color: "Marr?n",
         marca: "Gym Shark"
     },
     {
