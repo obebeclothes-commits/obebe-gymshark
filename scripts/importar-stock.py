@@ -48,8 +48,8 @@ HOJAS = {
 }
 
 # Mapeo de columnas del sheet (letras de Google Sheets, base 1)
-# Columna A suele estar oculta/vacía; los datos visibles empiezan en B.
 COLUMNAS = {
+    "imagen": "A",
     "nombre": "B",
     "stock": "C",
     "talla": "D",
@@ -159,6 +159,29 @@ def parsear_stock(valor: str) -> int:
         return 0
 
 
+def parsear_numero_imagen(valor: str) -> int | None:
+    texto = str(valor or "").strip()
+    if not texto or not texto.isdigit():
+        return None
+    numero = int(texto)
+    return numero if numero > 0 else None
+
+
+def elegir_numero_imagen(
+    imagen_num: int | None,
+    nuevo_id: int,
+    numeros_usados: set[int],
+) -> int:
+    if imagen_num is not None:
+        numero = imagen_num
+    else:
+        numero = nuevo_id
+        while numero in numeros_usados:
+            numero += 1
+    numeros_usados.add(numero)
+    return numero
+
+
 def normalizar_marca(valor: str) -> str:
     clave = re.sub(r"\s+", " ", str(valor or "").strip()).upper()
     return MARCAS.get(clave, valor.strip().title())
@@ -202,13 +225,13 @@ def obtener_valor(fila: list[str], indice: int) -> str:
     return str(fila[indice]).strip()
 
 
-def resolver_imagenes(carpeta: Path, carpeta_rel: str, producto_id: int) -> tuple[str, str]:
+def resolver_imagenes(carpeta: Path, carpeta_rel: str, numero_imagen: int) -> tuple[str, str]:
     extensiones = (".webp", ".png", ".jpg", ".jpeg")
 
     def buscar(sufijo: str) -> str:
         for ext in extensiones:
-            if (carpeta / f"{producto_id}{sufijo}{ext}").exists():
-                return f"{carpeta_rel}/{producto_id}{sufijo}{ext}"
+            if (carpeta / f"{numero_imagen}{sufijo}{ext}").exists():
+                return f"{carpeta_rel}/{numero_imagen}{sufijo}{ext}"
         return ""
 
     return buscar(""), buscar(".1")
@@ -228,6 +251,7 @@ def leer_productos_desde_csv(
     productos: list[dict] = []
     omitidos = 0
     nuevo_id = 1
+    numeros_imagen_usados: set[int] = set()
 
     for num_fila, fila in enumerate(filas[FILA_INICIO_DATOS - 1 :], start=FILA_INICIO_DATOS):
         nombre = obtener_valor(fila, idx["nombre"])
@@ -246,7 +270,9 @@ def leer_productos_desde_csv(
             omitidos += 1
             continue
 
-        imagen1, imagen2 = resolver_imagenes(carpeta_imagenes, carpeta_rel, nuevo_id)
+        imagen_num = parsear_numero_imagen(obtener_valor(fila, idx["imagen"]))
+        ref_imagen = elegir_numero_imagen(imagen_num, nuevo_id, numeros_imagen_usados)
+        imagen1, imagen2 = resolver_imagenes(carpeta_imagenes, carpeta_rel, ref_imagen)
 
         productos.append(
             {
