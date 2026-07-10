@@ -9,7 +9,7 @@ Uso:
 
 Requisitos:
   - La hoja debe estar compartida como "Cualquier persona con el enlace puede ver".
-  - Las imágenes deben llamarse {id}.png y {id}.1.png dentro de hombre/ o mujer/.
+  - La hoja HOMBRE unifica hombre y mujer; columna T = HOMBRE o MUJER.
   - Solo se importan filas con CANTIDAD > 0 y nombre no vacío.
 """
 
@@ -29,17 +29,18 @@ from pathlib import Path
 # Configuración del Google Sheet
 # -----------------------------------------------------------------------------
 SPREADSHEET_ID = "195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko"
+HOJA_INVENTARIO = "HOMBRE"
 
 HOJAS = {
     "hombre": {
-        "sheet": "HOMBRE",
+        "sheet": HOJA_INVENTARIO,
         "categoria": "Hombre",
         "carpeta_imagenes": "hombre",
         "archivo_salida": "productos-hombre.js",
         "variable_js": "productosHombre",
     },
     "mujer": {
-        "sheet": "MUJER",
+        "sheet": HOJA_INVENTARIO,
         "categoria": "Mujer",
         "carpeta_imagenes": "mujer",
         "archivo_salida": "productos-mujer.js",
@@ -57,6 +58,7 @@ COLUMNAS = {
     "tipo": "F",
     "marca": "G",
     "precio": "H",
+    "segmento": "T",
 }
 
 FILA_INICIO_DATOS = 3  # Primera fila de producto (fila 1 = título, fila 2 = encabezados)
@@ -196,6 +198,40 @@ def normalizar_color(valor: str) -> str:
     return valor.strip().title()
 
 
+def normalizar_segmento(valor: str) -> str:
+    clave = re.sub(r"\s+", " ", str(valor or "").strip()).upper()
+    if clave in {"MUJER", "WOMAN", "WOMEN", "FEMENINO", "F"}:
+        return "Mujer"
+    return "Hombre"
+
+
+def hoja_usa_columna_segmento(filas: list[list[str]], idx: dict[str, int]) -> bool:
+    indice = idx["segmento"]
+    for fila in filas[FILA_INICIO_DATOS - 1 :]:
+        if not obtener_valor(fila, idx["nombre"]):
+            continue
+        if obtener_valor(fila, indice):
+            return True
+    return False
+
+
+def debe_filtrar_por_segmento(nombre_hoja: str, filas: list[list[str]], idx: dict[str, int]) -> bool:
+    if nombre_hoja.strip().upper() != HOJA_INVENTARIO:
+        return False
+    return hoja_usa_columna_segmento(filas, idx)
+
+
+def fila_pertenece_categoria(
+    fila: list[str],
+    idx: dict[str, int],
+    categoria: str,
+    usar_segmento: bool,
+) -> bool:
+    if not usar_segmento:
+        return True
+    return normalizar_segmento(obtener_valor(fila, idx["segmento"])) == categoria
+
+
 def normalizar_tipo(valor: str) -> str:
     texto = str(valor or "").strip()
     if not texto:
@@ -242,14 +278,17 @@ def leer_productos_desde_csv(
     categoria: str,
     carpeta_imagenes: Path,
     carpeta_rel: str,
+    nombre_hoja: str = HOJA_INVENTARIO,
 ) -> list[dict]:
     filas = list(csv.reader(io.StringIO(csv_texto)))
     if len(filas) < FILA_INICIO_DATOS:
         raise RuntimeError("La hoja no tiene suficientes filas.")
 
     idx = {nombre: columna_a_indice(letra) for nombre, letra in COLUMNAS.items()}
+    usar_segmento = debe_filtrar_por_segmento(nombre_hoja, filas, idx)
     productos: list[dict] = []
     omitidos = 0
+    omitidos_segmento = 0
     nuevo_id = 1
     numeros_imagen_usados: set[int] = set()
 
@@ -258,6 +297,9 @@ def leer_productos_desde_csv(
         stock = parsear_stock(obtener_valor(fila, idx["stock"]))
 
         if not nombre:
+            continue
+        if not fila_pertenece_categoria(fila, idx, categoria, usar_segmento):
+            omitidos_segmento += 1
             continue
         if stock <= 0:
             omitidos += 1
@@ -292,6 +334,8 @@ def leer_productos_desde_csv(
         )
         nuevo_id += 1
 
+    if omitidos_segmento:
+        print(f"  Filas de otra categoría (columna T): {omitidos_segmento}")
     print(f"  Filas omitidas (sin stock o sin datos): {omitidos}")
     return productos
 
@@ -328,7 +372,7 @@ def generar_archivo_js(productos: list[dict], variable_js: str, categoria: str) 
     bloques = ",\n".join(producto_a_js(p) for p in productos)
     return f"""// =============================================================================
 // STOCK {categoria.upper()} — Generado automáticamente con scripts/importar-stock.py
-// Fuente: Google Sheets (hoja {categoria.upper()})
+// Fuente: Google Sheets (hoja {HOJA_INVENTARIO}, columna T = HOMBRE/MUJER)
 // Edita el sheet y vuelve a ejecutar el script para actualizar.
 // =============================================================================
 const {variable_js} = [
@@ -379,6 +423,7 @@ def main() -> int:
         config["categoria"],
         carpeta_img,
         config["carpeta_imagenes"],
+        nombre_hoja,
     )
 
     if not productos:

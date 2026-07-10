@@ -2,7 +2,9 @@
 // Si columna C (CANTIDAD) es 0, el producto queda con stock 0 y se oculta en la tienda.
 (function() {
     var SPREADSHEET_ID = '195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko';
+    var HOJA_INVENTARIO = 'HOMBRE';
     var FILA_INICIO = 2; // fila 3 del sheet (0-based en CSV)
+    var IDX_SEGMENTO = 19; // columna T
 
     var MARCAS = {
         'GYMSHARK': 'Gym Shark',
@@ -101,22 +103,55 @@
         return filas;
     }
 
+    function normColorClave(color) {
+        var texto = normalizarColor(color);
+        return normTexto(texto)
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\?/g, '');
+    }
+
     function claveProducto(nombre, talla, color, marca) {
         return [
             normTexto(nombre),
             normTexto(talla),
-            normTexto(color),
-            normTexto(marca)
+            normColorClave(color),
+            normTexto(normalizarMarca(marca))
         ].join('|');
     }
 
-    function leerFilasSheet(csvTexto) {
+    function normalizarSegmento(valor) {
+        var clave = String(valor || '').trim().toUpperCase().replace(/\s+/g, ' ');
+        if (clave === 'MUJER' || clave === 'WOMAN' || clave === 'WOMEN' || clave === 'FEMENINO' || clave === 'F') {
+            return 'Mujer';
+        }
+        return 'Hombre';
+    }
+
+    function hojaUsaColumnaSegmento(filas) {
+        for (var i = FILA_INICIO; i < filas.length; i++) {
+            var f = filas[i];
+            var nombre = (f[1] || '').trim();
+            if (!nombre) continue;
+            if ((f[IDX_SEGMENTO] || '').trim()) return true;
+        }
+        return false;
+    }
+
+    function filaPerteneceCategoria(fila, categoria, usarSegmento) {
+        if (!usarSegmento) return true;
+        return normalizarSegmento(fila[IDX_SEGMENTO]) === categoria;
+    }
+
+    function leerFilasSheet(csvTexto, categoria) {
         var filas = parseCSV(csvTexto);
+        var usarSegmento = hojaUsaColumnaSegmento(filas);
         var mapa = new Map();
         for (var i = FILA_INICIO; i < filas.length; i++) {
             var f = filas[i];
             var nombre = (f[1] || '').trim();
             if (!nombre) continue;
+            if (!filaPerteneceCategoria(f, categoria, usarSegmento)) continue;
             var stock = parsearStock(f[2]);
             var talla = (f[3] || '').trim();
             var color = normalizarColor(f[4]);
@@ -156,23 +191,59 @@
         });
     }
 
+    function hojaTieneFilasMujer(filas) {
+        for (var i = FILA_INICIO; i < filas.length; i++) {
+            var f = filas[i];
+            var nombre = (f[1] || '').trim();
+            if (!nombre) continue;
+            if (normalizarSegmento(f[IDX_SEGMENTO]) === 'Mujer') return true;
+        }
+        return false;
+    }
+
+    function sincronizarMujerDesdeSheets() {
+        return descargarHoja(HOJA_INVENTARIO).then(function(csv) {
+            if (!csv) return;
+            var filas = parseCSV(csv);
+            if (hojaTieneFilasMujer(filas)) {
+                sincronizarCatalogo(productosMujer, leerFilasSheet(csv, 'Mujer'));
+                return;
+            }
+            console.warn('[stock-sheet] Sin filas MUJER en hoja HOMBRE; usando pestaña MUJER legacy.');
+            return descargarHoja('MUJER').then(function(csvMujer) {
+                if (csvMujer) sincronizarCatalogo(productosMujer, leerFilasSheet(csvMujer, 'Mujer'));
+            }).catch(function(err) {
+                console.warn('[stock-sheet] MUJER (legacy):', err);
+            });
+        });
+    }
+
     window.sincronizarStockDesdeSheets = function() {
         var tareas = [];
+        var tieneHombre = typeof productosHombre !== 'undefined' && Array.isArray(productosHombre);
+        var tieneMujer = typeof productosMujer !== 'undefined' && Array.isArray(productosMujer);
 
-        if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) {
+        if (!tieneHombre && !tieneMujer) {
+            return Promise.resolve();
+        }
+
+        var promesaCsv = descargarHoja(HOJA_INVENTARIO).catch(function(err) {
+            console.warn('[stock-sheet] ' + HOJA_INVENTARIO + ':', err);
+            return null;
+        });
+
+        if (tieneHombre) {
             tareas.push(
-                descargarHoja('HOMBRE')
-                    .then(function(csv) { sincronizarCatalogo(productosHombre, leerFilasSheet(csv)); })
-                    .catch(function(err) { console.warn('[stock-sheet] HOMBRE:', err); })
+                promesaCsv.then(function(csv) {
+                    if (csv) sincronizarCatalogo(productosHombre, leerFilasSheet(csv, 'Hombre'));
+                })
             );
         }
 
-        if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) {
-            tareas.push(
-                descargarHoja('MUJER')
-                    .then(function(csv) { sincronizarCatalogo(productosMujer, leerFilasSheet(csv)); })
-                    .catch(function(err) { console.warn('[stock-sheet] MUJER:', err); })
-            );
+        if (tieneMujer) {
+            tareas.push(sincronizarMujerDesdeSheets().catch(function(err) {
+                console.warn('[stock-sheet] Mujer:', err);
+            }));
         }
 
         return Promise.all(tareas);

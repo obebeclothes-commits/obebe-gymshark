@@ -314,6 +314,35 @@ function limpiarFiltrosEnURL() {
     history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
 }
 
+function construirQueryRetornoProductos() {
+    var qs = window.location.search.replace(/^\?/, '');
+    return qs ? encodeURIComponent(qs) : '';
+}
+
+function construirUrlDetalleProducto(producto) {
+    var url = 'producto.html?id=' + encodeURIComponent(producto.id);
+    if (producto.categoria === 'Mujer') url += '&categoria=Mujer';
+    var retorno = construirQueryRetornoProductos();
+    if (retorno) url += '&retorno=' + retorno;
+    return url;
+}
+
+function construirUrlVolverProductos(params) {
+    var retorno = params.get('retorno');
+    if (retorno) {
+        try {
+            return 'productos.html?' + decodeURIComponent(retorno);
+        } catch (err) {
+            console.warn('No se pudo leer retorno de filtros:', err);
+        }
+    }
+    var categoria = params.get('categoria') || 'Hombre';
+    return 'productos.html?categoria=' + encodeURIComponent(categoria);
+}
+
+window.construirUrlDetalleProducto = construirUrlDetalleProducto;
+window.construirUrlVolverProductos = construirUrlVolverProductos;
+
 // Función para obtener filtros activos
 function obtenerFiltrosActivos() {
     const tallasSeleccionadas = Array.from(document.querySelectorAll('#tallaFilters .filter-checkbox:checked')).map(cb => cb.value);
@@ -644,7 +673,9 @@ function renderizarProductos(productosParaRenderizar) {
             : (producto.imagen2 || '');
         const agotado = producto.stock === 0;
 
-        const detalleUrl = 'producto.html?id=' + producto.id + (producto.categoria === 'Mujer' ? '&categoria=Mujer' : '');
+        const detalleUrl = typeof construirUrlDetalleProducto === 'function'
+            ? construirUrlDetalleProducto(producto)
+            : 'producto.html?id=' + producto.id + (producto.categoria === 'Mujer' ? '&categoria=Mujer' : '');
         const linkProducto = document.createElement(agotado ? 'div' : 'a');
         linkProducto.className = 'product-image-link' + (agotado ? ' product-image-link-agotado' : '');
         if (!agotado) {

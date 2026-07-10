@@ -36,7 +36,9 @@ window.iniciarDetalleProducto = function() {
     var imageWrapClass = 'product-detail-image' + (agotado ? ' product-image-wrap out-of-stock' : '');
     var tieneImagenes = !!(imagen1 || imagen2);
 
-    const backHref = 'productos.html?categoria=' + encodeURIComponent(producto.categoria || 'Hombre');
+    const backHref = typeof construirUrlVolverProductos === 'function'
+        ? construirUrlVolverProductos(params)
+        : 'productos.html?categoria=' + encodeURIComponent(producto.categoria || 'Hombre');
     document.title = producto.nombre + ' - Obebe GymShark Collection';
 
     container.innerHTML = '';

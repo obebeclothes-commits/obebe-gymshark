@@ -1,6 +1,6 @@
 // =============================================================================
-// STOCK HOMBRE ? Generado autom?ticamente con scripts/importar-stock.py
-// Fuente: Google Sheets (hoja HOMBRE)
+// STOCK HOMBRE — Generado automáticamente con scripts/importar-stock.py
+// Fuente: Google Sheets (hoja HOMBRE, columna T = HOMBRE/MUJER)
 // Edita el sheet y vuelve a ejecutar el script para actualizar.
 // =============================================================================
 const productosHombre = [
@@ -253,7 +253,7 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "Short",
-        color: "Marr?n",
+        color: "Marrón",
         marca: "Gym Shark"
     },
     {
@@ -393,7 +393,7 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "T-Shirt",
-        color: "Marr?n",
+        color: "Marrón",
         marca: "Gym Shark"
     },
     {
@@ -407,7 +407,7 @@ const productosHombre = [
         talla: "M",
         tallaBase: "M",
         tipo: "T-Shirt",
-        color: "Marr?n",
+        color: "Marrón",
         marca: "Gym Shark"
     },
     {
@@ -421,7 +421,7 @@ const productosHombre = [
         talla: "L",
         tallaBase: "L",
         tipo: "T-Shirt",
-        color: "Marr?n",
+        color: "Marrón",
         marca: "Gym Shark"
     },
     {
@@ -1191,7 +1191,7 @@ const productosHombre = [
         talla: "M",
         tallaBase: "M",
         tipo: "T-Shirt",
-        color: "Marr?n",
+        color: "Marrón",
         marca: "Gym Shark"
     },
     {
@@ -1205,7 +1205,7 @@ const productosHombre = [
         talla: "L",
         tallaBase: "L",
         tipo: "T-Shirt",
-        color: "Marr?n",
+        color: "Marrón",
         marca: "Gym Shark"
     },
     {
@@ -1261,7 +1261,7 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "T-Shirt",
-        color: "Marr?n",
+        color: "Marrón",
         marca: "Gym Shark"
     },
     {
@@ -1317,7 +1317,7 @@ const productosHombre = [
         talla: "M",
         tallaBase: "M",
         tipo: "Pants",
-        color: "Marr?n",
+        color: "Marrón",
         marca: "Gym Shark"
     },
     {
@@ -1476,15 +1476,15 @@ const productosHombre = [
     },
     {
         id: 106,
-        nombre: "DARK WAVE WIFE LOVERS",
+        nombre: "DIVINE SWEATS",
         categoria: "Hombre",
-        precio: 750.00,
+        precio: 1600.00,
         stock: 1,
-        imagen1: "hombre/106.webp",
-        imagen2: "hombre/106.1.webp",
-        talla: "XL",
-        tallaBase: "XL",
-        tipo: "Tank Top",
+        imagen1: "hombre/109.webp",
+        imagen2: "hombre/109.1.webp",
+        talla: "L",
+        tallaBase: "L",
+        tipo: "Pants",
         color: "Negro",
         marca: "YoungLA"
     },
@@ -1891,7 +1891,7 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "Short",
-        color: "Marr?n",
+        color: "Marrón",
         marca: "Gym Shark"
     },
     {
@@ -1980,17 +1980,17 @@ const productosHombre = [
     },
     {
         id: 142,
-        nombre: "ARRIVAL CONTRAST PANTS",
+        nombre: "DARK WAVE WIFE LOVERS",
         categoria: "Hombre",
         precio: 750.00,
         stock: 1,
         imagen1: "hombre/145.webp",
         imagen2: "hombre/145.1.webp",
-        talla: "L",
-        tallaBase: "L",
-        tipo: "Pants",
+        talla: "XL",
+        tallaBase: "XL",
+        tipo: "Tank Top",
         color: "Negro",
-        marca: "Gym Shark"
+        marca: "YoungLA"
     },
     {
         id: 143,
@@ -2787,7 +2787,7 @@ const productosHombre = [
         talla: "L",
         tallaBase: "L",
         tipo: "T Shirt",
-        color: "Marr?n",
+        color: "Marrón",
         marca: "Gym Shark"
     },
     {
@@ -2836,7 +2836,7 @@ const productosHombre = [
         id: 203,
         nombre: "RIBBED TANK 1PK",
         categoria: "Hombre",
-        precio: 400.00,
+        precio: 500.00,
         stock: 1,
         imagen1: "hombre/205.webp",
         imagen2: "hombre/205.1.webp",
