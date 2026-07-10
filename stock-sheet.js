@@ -6,6 +6,17 @@
     var HOJA_INVENTARIO_LEGACY = 'HOMBRE';
     var FILA_INICIO = 2; // fila 3 del sheet (0-based en CSV)
     var IDX_SEGMENTO = 19; // columna T
+    var IDX_PRECIO_MAYOREO = 15; // columna P
+    var IDX_MAYOREO = 17; // columna R
+    var IDX_CARRUSEL = 20; // columna U
+    var IDX_FECHA_STOCK = 10; // columna K
+
+    var MESES_FECHA_STOCK = {
+        ene: 0, enero: 0, feb: 1, febrero: 1, mar: 2, marzo: 2, abr: 3, abril: 3,
+        may: 4, mayo: 4, jun: 5, junio: 5, jul: 6, julio: 6, ago: 7, agosto: 7,
+        sep: 8, sept: 8, septiembre: 8, oct: 9, octubre: 9, nov: 10, noviembre: 10,
+        dic: 11, diciembre: 11
+    };
 
     var MARCAS = {
         'GYMSHARK': 'Gym Shark',
@@ -91,6 +102,84 @@
         if (/^\d{1,3}(\.\d{3})+$/.test(texto)) texto = texto.replace(/\./g, '');
         var n = parseFloat(texto.replace(',', '.'));
         return isNaN(n) ? 0 : Math.round(n * 100) / 100;
+    }
+
+    function parsearMayoreo(valor) {
+        var clave = String(valor || '').trim().toLowerCase().replace(/í/g, 'i');
+        return clave === 'si' || clave === 'yes' || clave === '1' || clave === 'true';
+    }
+
+    function parsearPosicionCarrusel(valor) {
+        var n = parseInt(String(valor || '').trim(), 10);
+        return (n >= 1 && n <= 8) ? n : 0;
+    }
+
+    function pad2(num) {
+        return String(num).padStart(2, '0');
+    }
+
+    function fechaStockAISO(anio, mes, dia) {
+        if (!anio || mes < 0 || mes > 11 || !dia) return '';
+        return String(anio) + '-' + pad2(mes + 1) + '-' + pad2(dia);
+    }
+
+    function parsearFechaStock(valor) {
+        var texto = String(valor || '').trim();
+        if (!texto) return '';
+
+        var iso = texto.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        if (iso) return fechaStockAISO(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10));
+
+        var dmyTexto = texto.match(/^(\d{1,2})[-\/]([a-zA-Z]{3,})[-\/](\d{4})$/);
+        if (dmyTexto) {
+            var mesTexto = dmyTexto[2].toLowerCase().replace(/\./g, '');
+            var mes = MESES_FECHA_STOCK[mesTexto];
+            if (mes === undefined) mes = MESES_FECHA_STOCK[mesTexto.slice(0, 3)];
+            if (mes !== undefined) {
+                return fechaStockAISO(parseInt(dmyTexto[3], 10), mes, parseInt(dmyTexto[1], 10));
+            }
+        }
+
+        var dmyNum = texto.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        if (dmyNum) {
+            return fechaStockAISO(parseInt(dmyNum[3], 10), parseInt(dmyNum[2], 10) - 1, parseInt(dmyNum[1], 10));
+        }
+
+        var parsed = Date.parse(texto);
+        if (!isNaN(parsed)) {
+            var d = new Date(parsed);
+            return fechaStockAISO(d.getFullYear(), d.getMonth(), d.getDate());
+        }
+        return '';
+    }
+
+    function formatearFechaStockEtiqueta(iso) {
+        if (!iso) return '';
+        var partes = iso.split('-');
+        if (partes.length !== 3) return iso;
+        var etiquetas = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        var mes = parseInt(partes[1], 10) - 1;
+        if (mes < 0 || mes > 11) return iso;
+        return pad2(parseInt(partes[2], 10)) + '-' + etiquetas[mes] + '-' + partes[0];
+    }
+
+    function extraerFechaStockMasReciente(csvTexto) {
+        var filas = parseCSV(csvTexto);
+        var maxTime = 0;
+        var maxFecha = '';
+        for (var i = FILA_INICIO; i < filas.length; i++) {
+            var f = filas[i];
+            var nombre = (f[1] || '').trim();
+            if (!nombre || nombre.toUpperCase() === 'NOMBRE') continue;
+            var fecha = parsearFechaStock(f[IDX_FECHA_STOCK]);
+            if (!fecha) continue;
+            var time = new Date(fecha + 'T00:00:00').getTime();
+            if (!isNaN(time) && time >= maxTime) {
+                maxTime = time;
+                maxFecha = fecha;
+            }
+        }
+        return maxFecha;
     }
 
     function parseCSV(texto) {
@@ -199,6 +288,10 @@
             var tipo = normalizarTipo(f[5]);
             var marca = normalizarMarca(f[6]);
             var precio = parsearPrecio(f[7]);
+            var precioMayoreo = parsearPrecio(f[IDX_PRECIO_MAYOREO]);
+            var mayoreo = parsearMayoreo(f[IDX_MAYOREO]);
+            var posicionCarrusel = parsearPosicionCarrusel(f[IDX_CARRUSEL]);
+            var fechaStock = parsearFechaStock(f[IDX_FECHA_STOCK]);
             if (stock > 0) {
                 if (talla) opciones.tallas.add(talla);
                 if (color) opciones.colores.add(color);
@@ -206,11 +299,26 @@
                 if (marca) opciones.marcas.add(marca);
             }
             var clave = claveProducto(nombre, talla, color, marca);
-            var datosFila = { stock: stock, precio: precio, tipo: tipo, color: color, marca: marca, talla: talla };
+            var datosFila = {
+                stock: stock,
+                precio: precio,
+                precioMayoreo: precioMayoreo,
+                mayoreo: mayoreo,
+                posicionCarrusel: posicionCarrusel,
+                fechaStock: fechaStock,
+                tipo: tipo,
+                color: color,
+                marca: marca,
+                talla: talla
+            };
             var previo = mapa.get(clave);
             if (previo) {
                 previo.stock = Math.min(previo.stock, stock);
                 if (precio > 0) previo.precio = precio;
+                if (precioMayoreo > 0) previo.precioMayoreo = precioMayoreo;
+                previo.mayoreo = previo.mayoreo || mayoreo;
+                if (posicionCarrusel > 0) previo.posicionCarrusel = posicionCarrusel;
+                if (fechaStock) previo.fechaStock = fechaStock;
                 if (tipo) previo.tipo = tipo;
                 if (color) previo.color = color;
                 if (marca) previo.marca = marca;
@@ -248,6 +356,10 @@
             if (datos) {
                 p.stock = datos.stock;
                 if (datos.precio > 0) p.precio = datos.precio;
+                if (datos.precioMayoreo > 0) p.precioMayoreo = datos.precioMayoreo;
+                p.mayoreo = !!datos.mayoreo;
+                p.posicionCarrusel = datos.posicionCarrusel || 0;
+                p.fechaStock = datos.fechaStock || '';
                 if (datos.tipo) p.tipo = datos.tipo;
                 if (datos.color) p.color = datos.color;
                 if (datos.marca) p.marca = datos.marca;
@@ -273,6 +385,10 @@
     }
 
     function sincronizarDesdeCsv(csv) {
+        var fechaReciente = extraerFechaStockMasReciente(csv);
+        window.fechaStockMasReciente = fechaReciente;
+        window.fechaStockMasRecienteEtiqueta = formatearFechaStockEtiqueta(fechaReciente);
+
         var opcionesSheet = {};
         if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) {
             var datosHombre = leerFilasSheet(csv, 'Hombre');

@@ -61,8 +61,12 @@ COLUMNAS = {
     "tipo": "F",
     "marca": "G",
     "precio": "H",
+    "fecha_stock": "K",
     "vista_imagen": "J",
+    "precio_mayoreo": "P",
+    "mayoreo": "R",
     "segmento": "T",
+    "carrusel": "U",
 }
 
 FILA_INICIO_DATOS = 3  # Primera fila de producto (fila 1 = título, fila 2 = encabezados)
@@ -169,6 +173,19 @@ def formula_imagen_celda(url: str) -> str:
     return f'=IMAGE("{url_segura}", 1)'
 
 
+def url_imagen_vista_sheet(url: str, ancho: int = 200) -> str:
+    """URL en JPG para vista previa en Google Sheets (no admite WebP)."""
+    from urllib.parse import quote
+
+    if not url:
+        return ""
+    path = url.split("?", 1)[0].lower()
+    if path.endswith((".png", ".jpg", ".jpeg", ".gif")):
+        return url
+    host_path = url.replace("https://", "").replace("http://", "")
+    return f"https://images.weserv.nl/?url={quote(host_path, safe='')}&w={ancho}&output=jpg"
+
+
 def parsear_precio(valor: str) -> float:
     if not valor or not str(valor).strip():
         return 0.0
@@ -199,6 +216,11 @@ def parsear_stock(valor: str) -> int:
         return int(float(str(valor).strip().replace(",", ".")))
     except ValueError:
         return 0
+
+
+def parsear_mayoreo(valor: str) -> bool:
+    clave = str(valor or "").strip().lower().replace("í", "i")
+    return clave in ("si", "yes", "1", "true")
 
 
 def parsear_numero_imagen(valor: str) -> int | None:
@@ -347,6 +369,8 @@ def leer_productos_desde_csv(
 
         talla_raw = obtener_valor(fila, idx["talla"])
         precio = parsear_precio(obtener_valor(fila, idx["precio"]))
+        precio_mayoreo = parsear_precio(obtener_valor(fila, idx["precio_mayoreo"]))
+        mayoreo = parsear_mayoreo(obtener_valor(fila, idx["mayoreo"]))
         if precio <= 0:
             print(f"  [!] Fila {num_fila}: '{nombre}' sin precio válido, se omite.")
             omitidos += 1
@@ -370,6 +394,8 @@ def leer_productos_desde_csv(
                 "tipo": normalizar_tipo(obtener_valor(fila, idx["tipo"])),
                 "color": normalizar_color(obtener_valor(fila, idx["color"])),
                 "marca": normalizar_marca(obtener_valor(fila, idx["marca"])),
+                "precioMayoreo": precio_mayoreo,
+                "mayoreo": mayoreo,
             }
         )
         nuevo_id += 1
@@ -382,26 +408,30 @@ def leer_productos_desde_csv(
 
 def producto_a_js(producto: dict, indent: str = "    ") -> str:
     campos = [
-        ("id", producto["id"], False),
-        ("nombre", producto["nombre"], True),
-        ("categoria", producto["categoria"], True),
-        ("precio", f"{producto['precio']:.2f}", False),
-        ("stock", producto["stock"], False),
-        ("imagen1", producto["imagen1"], True),
-        ("imagen2", producto["imagen2"], True),
-        ("talla", producto["talla"], True),
-        ("tallaBase", producto["tallaBase"], True),
-        ("tipo", producto["tipo"], True),
-        ("color", producto["color"], True),
-        ("marca", producto["marca"], True),
+        ("id", producto["id"], "num"),
+        ("nombre", producto["nombre"], "str"),
+        ("categoria", producto["categoria"], "str"),
+        ("precio", f"{producto['precio']:.2f}", "num"),
+        ("stock", producto["stock"], "num"),
+        ("imagen1", producto["imagen1"], "str"),
+        ("imagen2", producto["imagen2"], "str"),
+        ("talla", producto["talla"], "str"),
+        ("tallaBase", producto["tallaBase"], "str"),
+        ("tipo", producto["tipo"], "str"),
+        ("color", producto["color"], "str"),
+        ("marca", producto["marca"], "str"),
+        ("precioMayoreo", f"{producto.get('precioMayoreo', 0):.2f}", "num"),
+        ("mayoreo", producto.get("mayoreo", False), "bool"),
     ]
 
     lineas = [f"{indent}{{"]
-    for i, (clave, valor, es_texto) in enumerate(campos):
+    for i, (clave, valor, tipo) in enumerate(campos):
         coma = "," if i < len(campos) - 1 else ""
-        if es_texto:
+        if tipo == "str":
             valor_js = json.dumps(valor, ensure_ascii=False)
             lineas.append(f'{indent}    {clave}: {valor_js}{coma}')
+        elif tipo == "bool":
+            lineas.append(f"{indent}    {clave}: {'true' if valor else 'false'}{coma}")
         else:
             lineas.append(f"{indent}    {clave}: {valor}{coma}")
     lineas.append(f"{indent}}}")

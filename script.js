@@ -1,3 +1,10 @@
+﻿function actualizarEtiquetaNuevoStock() {
+    var el = document.getElementById('nuevoStockFechaLabel');
+    if (!el) return;
+    var etiqueta = window.fechaStockMasRecienteEtiqueta || '';
+    el.textContent = etiqueta ? ('Llegada ' + etiqueta) : 'Última llegada';
+}
+
 // Catalogo Hombre: definido en productos-hombre.js (cargar ese script antes que este).
 const productos = (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre))
     ? productosHombre
@@ -61,6 +68,23 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
     contenedor.textContent = fuente;
 }
 
+/** Productos con columna U = 1..8, ordenados por posición (máx. 8 por carrusel). */
+function obtenerProductosParaCarrusel(catalogo, categoria) {
+    var slots = new Array(8);
+    if (!Array.isArray(catalogo)) return [];
+    catalogo.forEach(function(p) {
+        if (p.categoria !== categoria && p.categoria !== 'Unisex') return;
+        if (Number(p.stock) <= 0) return;
+        var pos = parseInt(p.posicionCarrusel, 10);
+        if (pos >= 1 && pos <= 8) slots[pos - 1] = p;
+    });
+    var resultado = [];
+    for (var i = 0; i < slots.length; i++) {
+        if (slots[i]) resultado.push(slots[i]);
+    }
+    return resultado;
+}
+
 function inicializarHoverCarruselHombre() {
     const carousel = document.getElementById('productsCarousel');
     if (!carousel) return;
@@ -96,14 +120,7 @@ function renderizarCarruselHombre(categoria = 'Hombre', mostrarTodos = false) {
     
     productsCarousel.innerHTML = '';
 
-    let productosFiltrados = productos.filter(p =>
-        (p.categoria === categoria || p.categoria === 'Unisex') && Number(p.stock) > 0
-    );
-
-    // Si no es "mostrar todos", limitar a 8 productos (4 visibles + 4 m��s)
-    if (!mostrarTodos && productosFiltrados.length > 8) {
-        productosFiltrados = productosFiltrados.slice(0, 8);
-    }
+    let productosFiltrados = obtenerProductosParaCarrusel(productos, categoria);
 
     if (productosFiltrados.length === 0) {
         productsCarousel.innerHTML = '<p style="padding: 2rem; color: #666;">No hay productos disponibles.</p>';
@@ -190,15 +207,17 @@ function renderizarProductosMujer() {
     if (!carousel) return;
     if (typeof productosMujer === 'undefined' || !productosMujer.length) return;
 
-    let list = productosMujer.filter(function(p) {
-        return (p.categoria === 'Mujer' || p.categoria === 'Unisex') && Number(p.stock) > 0;
-    });
-    if (list.length > 8) list = list.slice(0, 8);
+    let list = obtenerProductosParaCarrusel(productosMujer, 'Mujer');
 
     currentScrollMujer = 0;
     carousel.innerHTML = '';
     carousel.classList.remove('products-carousel--static');
     carousel.style.transform = 'translateX(0)';
+
+    if (list.length === 0) {
+        carousel.innerHTML = '<p style="padding: 2rem; color: #666;">No hay productos disponibles.</p>';
+        return;
+    }
 
     list.forEach(function(producto) {
         const agotado = producto.stock === 0;
@@ -821,6 +840,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.addEventListener('orientationchange', function() { setTimeout(fijarAlturaHero, 100); });
         }
         inicializarHoverCarruselHombre();
+        actualizarEtiquetaNuevoStock();
         renderizarCarruselHombre('Hombre', false);
         renderizarProductosMujer();
         inicializarCarousel();
