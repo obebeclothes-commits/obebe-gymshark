@@ -98,7 +98,6 @@ COLORES = {
     "MARRON": "Marrón",
     "MARRÓN": "Marrón",
     "BEIGE": "Beige",
-    "TEAL": "Verde azulado",
     "PINK": "Rosa",
     "ROSA": "Rosa",
     "YELLOW": "Amarillo",
@@ -107,10 +106,8 @@ COLORES = {
     "NARANJA": "Naranja",
     "PURPLE": "Morado",
     "MORADO": "Morado",
-    "NAVY": "Azul marino",
-    "AZUL MARINO": "Azul marino",
-    "BURGUNDY": "Burgundy",
-    "BURDEOS": "Burgundy",
+    "BURGUNDY": "Burdeos",
+    "BURDEOS": "Burdeos",
 }
 
 

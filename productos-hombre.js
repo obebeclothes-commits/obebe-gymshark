@@ -15,12 +15,12 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "T-Shirt",
-        color: "Verde azulado",
+        color: "Verde",
         marca: "Gym Shark"
     },
     {
         id: 2,
-        nombre: "ARRIVAL REGULAR FIT (FER)",
+        nombre: "ARRIVAL REGULAR FIT",
         categoria: "Hombre",
         precio: 550.00,
         stock: 1,
@@ -34,7 +34,7 @@ const productosHombre = [
     },
     {
         id: 3,
-        nombre: "COLLEGIATE 9 SHORT (1 FER)",
+        nombre: "COLLEGIATE 9 SHORT",
         categoria: "Hombre",
         precio: 600.00,
         stock: 3,
@@ -62,7 +62,7 @@ const productosHombre = [
     },
     {
         id: 5,
-        nombre: "COLLEGIATE 9 SHORT (FER)",
+        nombre: "COLLEGIATE 9 SHORT",
         categoria: "Hombre",
         precio: 600.00,
         stock: 1,
@@ -76,7 +76,7 @@ const productosHombre = [
     },
     {
         id: 6,
-        nombre: "COLLEGIATE 9 SHORT (1 FER)",
+        nombre: "COLLEGIATE 9 SHORT",
         categoria: "Hombre",
         precio: 600.00,
         stock: 2,
@@ -244,7 +244,7 @@ const productosHombre = [
     },
     {
         id: 18,
-        nombre: "SPORT PANEL 7 (FER)",
+        nombre: "SPORT PANEL 7",
         categoria: "Hombre",
         precio: 500.00,
         stock: 1,
@@ -258,7 +258,7 @@ const productosHombre = [
     },
     {
         id: 19,
-        nombre: "SPORT PANEL 7 (FER)",
+        nombre: "SPORT PANEL 7",
         categoria: "Hombre",
         precio: 500.00,
         stock: 2,
@@ -314,7 +314,7 @@ const productosHombre = [
     },
     {
         id: 23,
-        nombre: "INTERLOCK TECH JOGGERS (FER)",
+        nombre: "INTERLOCK TECH JOGGERS",
         categoria: "Hombre",
         precio: 900.00,
         stock: 1,
@@ -519,7 +519,7 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "Joggers",
-        color: "Azul marino",
+        color: "Azul",
         marca: "Gym Shark"
     },
     {
@@ -538,7 +538,7 @@ const productosHombre = [
     },
     {
         id: 39,
-        nombre: "VARSITY HOODIE (FER)",
+        nombre: "VARSITY HOODIE",
         categoria: "Hombre",
         precio: 900.00,
         stock: 1,
@@ -650,7 +650,7 @@ const productosHombre = [
     },
     {
         id: 47,
-        nombre: "ARRIVAL SHORT (FER)",
+        nombre: "ARRIVAL SHORT",
         categoria: "Hombre",
         precio: 550.00,
         stock: 1,
@@ -743,7 +743,7 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "Short",
-        color: "Onyx Grey",
+        color: "Gris",
         marca: "Gym Shark"
     },
     {
@@ -799,7 +799,7 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "Jersey",
-        color: "Black Tree Camo",
+        color: "Negro",
         marca: "YoungLA"
     },
     {
@@ -896,7 +896,7 @@ const productosHombre = [
         imagen2: "hombre/65.1.webp",
         talla: "ONE SIZE",
         tallaBase: "ONE SIZE",
-        tipo: "Beanie",
+        tipo: "Cap",
         color: "Rosa",
         marca: "Gym Shark"
     },
@@ -2101,7 +2101,7 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "Hoodie",
-        color: "Burgundy",
+        color: "Rojo",
         marca: "Gym Shark"
     },
     {
@@ -2115,7 +2115,7 @@ const productosHombre = [
         talla: "M",
         tallaBase: "M",
         tipo: "Hoodie",
-        color: "Burgundy",
+        color: "Rojo",
         marca: "Gym Shark"
     },
     {
@@ -2129,7 +2129,7 @@ const productosHombre = [
         talla: "L",
         tallaBase: "L",
         tipo: "Hoodie",
-        color: "Burgundy",
+        color: "Rojo",
         marca: "Gym Shark"
     },
     {
@@ -2240,7 +2240,7 @@ const productosHombre = [
         imagen2: "hombre/162.1.webp",
         talla: "L",
         tallaBase: "L",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Rosa",
         marca: "Gym Shark"
     },
@@ -2254,7 +2254,7 @@ const productosHombre = [
         imagen2: "hombre/163.1.webp",
         talla: "L",
         tallaBase: "L",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Azul",
         marca: "Gym Shark"
     },
@@ -2268,7 +2268,7 @@ const productosHombre = [
         imagen2: "hombre/164.1.webp",
         talla: "M",
         tallaBase: "M",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Rosa",
         marca: "Gym Shark"
     },
@@ -2282,7 +2282,7 @@ const productosHombre = [
         imagen2: "hombre/165.1.webp",
         talla: "M",
         tallaBase: "M",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Azul",
         marca: "Gym Shark"
     },
@@ -2296,7 +2296,7 @@ const productosHombre = [
         imagen2: "hombre/166.1.webp",
         talla: "S",
         tallaBase: "S",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Rosa",
         marca: "Gym Shark"
     },
@@ -2310,7 +2310,7 @@ const productosHombre = [
         imagen2: "hombre/167.1.webp",
         talla: "S",
         tallaBase: "S",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Azul",
         marca: "Gym Shark"
     },
@@ -2408,7 +2408,7 @@ const productosHombre = [
         imagen2: "hombre/174.1.webp",
         talla: "M",
         tallaBase: "M",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Blanco",
         marca: "Gym Shark"
     },
@@ -2422,7 +2422,7 @@ const productosHombre = [
         imagen2: "hombre/175.1.webp",
         talla: "XL",
         tallaBase: "XL",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Blanco",
         marca: "Gym Shark"
     },
@@ -2436,7 +2436,7 @@ const productosHombre = [
         imagen2: "hombre/176.1.webp",
         talla: "L",
         tallaBase: "L",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Blanco",
         marca: "Gym Shark"
     },
@@ -2450,7 +2450,7 @@ const productosHombre = [
         imagen2: "hombre/177.1.webp",
         talla: "S",
         tallaBase: "S",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Negro",
         marca: "Gym Shark"
     },
@@ -2464,7 +2464,7 @@ const productosHombre = [
         imagen2: "hombre/178.1.webp",
         talla: "L",
         tallaBase: "L",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Negro",
         marca: "Gym Shark"
     },
@@ -2478,7 +2478,7 @@ const productosHombre = [
         imagen2: "hombre/179.1.jpg",
         talla: "M",
         tallaBase: "M",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Negro",
         marca: "Gym Shark"
     },
@@ -2492,8 +2492,8 @@ const productosHombre = [
         imagen2: "hombre/180.1.webp",
         talla: "L",
         tallaBase: "L",
-        tipo: "T Shirt",
-        color: "Azul marino",
+        tipo: "T-Shirt",
+        color: "Azul",
         marca: "Gym Shark"
     },
     {
@@ -2506,8 +2506,8 @@ const productosHombre = [
         imagen2: "hombre/181.1.webp",
         talla: "M",
         tallaBase: "M",
-        tipo: "T Shirt",
-        color: "Azul marino",
+        tipo: "T-Shirt",
+        color: "Azul",
         marca: "Gym Shark"
     },
     {
@@ -2604,7 +2604,7 @@ const productosHombre = [
         imagen2: "hombre/188.1.webp",
         talla: "L",
         tallaBase: "L",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Azul",
         marca: "Gym Shark"
     },
@@ -2618,7 +2618,7 @@ const productosHombre = [
         imagen2: "hombre/189.1.webp",
         talla: "M",
         tallaBase: "M",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Azul",
         marca: "Gym Shark"
     },
@@ -2758,7 +2758,7 @@ const productosHombre = [
         imagen2: "hombre/199.1.webp",
         talla: "L",
         tallaBase: "L",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Gris",
         marca: "Gym Shark"
     },
@@ -2786,7 +2786,7 @@ const productosHombre = [
         imagen2: "hombre/201.1.webp",
         talla: "L",
         tallaBase: "L",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Marrón",
         marca: "Gym Shark"
     },
@@ -2800,7 +2800,7 @@ const productosHombre = [
         imagen2: "hombre/202.1.webp",
         talla: "L",
         tallaBase: "L",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Negro",
         marca: "Gym Shark"
     },
@@ -2814,7 +2814,7 @@ const productosHombre = [
         imagen2: "hombre/203.1.webp",
         talla: "L",
         tallaBase: "L",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Verde",
         marca: "Gym Shark"
     },
@@ -2884,7 +2884,7 @@ const productosHombre = [
         imagen2: "hombre/208.1.webp",
         talla: "L",
         tallaBase: "L",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Gris",
         marca: "Gym Shark"
     },
@@ -2926,7 +2926,7 @@ const productosHombre = [
         imagen2: "hombre/211.1.webp",
         talla: "L",
         tallaBase: "L",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Negro",
         marca: "Gym Shark"
     },
@@ -3080,7 +3080,7 @@ const productosHombre = [
         imagen2: "hombre/222.1.webp",
         talla: "M",
         tallaBase: "M",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Negro",
         marca: "Gym Shark"
     },
@@ -3094,7 +3094,7 @@ const productosHombre = [
         imagen2: "hombre/223.1.webp",
         talla: "S",
         tallaBase: "S",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Negro",
         marca: "Gym Shark"
     },
@@ -3108,7 +3108,7 @@ const productosHombre = [
         imagen2: "hombre/224.1.webp",
         talla: "L",
         tallaBase: "L",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Gris",
         marca: "Gym Shark"
     },
@@ -3122,7 +3122,7 @@ const productosHombre = [
         imagen2: "hombre/225.1.webp",
         talla: "S",
         tallaBase: "S",
-        tipo: "T Shirt",
+        tipo: "T-Shirt",
         color: "Gris",
         marca: "Gym Shark"
     },
@@ -3137,7 +3137,7 @@ const productosHombre = [
         talla: "M",
         tallaBase: "M",
         tipo: "Joggers",
-        color: "Azul marino",
+        color: "Azul",
         marca: "Gym Shark"
     },
     {
@@ -3178,7 +3178,7 @@ const productosHombre = [
         imagen2: "hombre/229.1.webp",
         talla: "UNI",
         tallaBase: "UNI",
-        tipo: "Tote Bag",
+        tipo: "Bag",
         color: "Azul",
         marca: "Gym Shark"
     },
@@ -3193,7 +3193,7 @@ const productosHombre = [
         talla: "S",
         tallaBase: "S",
         tipo: "Joggers",
-        color: "Azul marino",
+        color: "Azul",
         marca: "Gym Shark"
     },
     {

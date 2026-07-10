@@ -1,5 +1,5 @@
-// Sincroniza stock, precio y tipo desde Google Sheets al cargar la página.
-// Si columna C (CANTIDAD) es 0, el producto queda con stock 0 y se oculta en la tienda.
+// Sincroniza stock, precio, tipo, color, talla y marca desde Google Sheets al cargar la página.
+// Los filtros de la tienda usan los valores del sheet (solo filas con stock > 0).
 (function() {
     var SPREADSHEET_ID = '195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko';
     var HOJA_INVENTARIO = 'HOMBRE';
@@ -24,13 +24,11 @@
         'RED': 'Rojo', 'ROJO': 'Rojo',
         'BROWN': 'Marrón', 'CAFE': 'Marrón', 'CAFÉ': 'Marrón', 'MARRON': 'Marrón', 'MARRÓN': 'Marrón',
         'BEIGE': 'Beige',
-        'TEAL': 'Verde azulado',
         'PINK': 'Rosa', 'ROSA': 'Rosa',
         'YELLOW': 'Amarillo', 'AMARILLO': 'Amarillo',
         'ORANGE': 'Naranja', 'NARANJA': 'Naranja',
         'PURPLE': 'Morado', 'MORADO': 'Morado',
-        'NAVY': 'Azul marino', 'AZUL MARINO': 'Azul marino',
-        'BURGUNDY': 'Burgundy', 'BURDEOS': 'Burgundy'
+        'BURGUNDY': 'Burdeos', 'BURDEOS': 'Burdeos'
     };
 
     var COLOR_CLAVE_ALIAS = {
@@ -38,12 +36,8 @@
         marrn: 'marron',
         brown: 'marron',
         cafe: 'marron',
-        verdeazulado: 'verdeazulado',
-        teal: 'verdeazulado',
-        azulmarino: 'azulmarino',
-        navy: 'azulmarino',
-        burgundy: 'burgundy',
-        burdeos: 'burgundy'
+        burgundy: 'burdeos',
+        burdeos: 'burdeos'
     };
 
     function normTexto(valor) {
@@ -169,14 +163,34 @@
         return normalizarSegmento(fila[IDX_SEGMENTO]) === categoria;
     }
 
+    function setsToSortedArrays(opciones) {
+        function ordenar(arr) {
+            return arr.slice().sort(function(a, b) {
+                return String(a).localeCompare(String(b), 'es', { sensitivity: 'base' });
+            });
+        }
+        return {
+            tallas: ordenar(Array.from(opciones.tallas)),
+            tipos: ordenar(Array.from(opciones.tipos)),
+            colores: ordenar(Array.from(opciones.colores)),
+            marcas: ordenar(Array.from(opciones.marcas))
+        };
+    }
+
     function leerFilasSheet(csvTexto, categoria) {
         var filas = parseCSV(csvTexto);
         var usarSegmento = hojaUsaColumnaSegmento(filas);
         var mapa = new Map();
+        var opciones = {
+            tallas: new Set(),
+            tipos: new Set(),
+            colores: new Set(),
+            marcas: new Set()
+        };
         for (var i = FILA_INICIO; i < filas.length; i++) {
             var f = filas[i];
             var nombre = (f[1] || '').trim();
-            if (!nombre) continue;
+            if (!nombre || nombre.toUpperCase() === 'NOMBRE') continue;
             if (!filaPerteneceCategoria(f, categoria, usarSegmento)) continue;
             var stock = parsearStock(f[2]);
             var talla = (f[3] || '').trim();
@@ -184,17 +198,27 @@
             var tipo = normalizarTipo(f[5]);
             var marca = normalizarMarca(f[6]);
             var precio = parsearPrecio(f[7]);
+            if (stock > 0) {
+                if (talla) opciones.tallas.add(talla);
+                if (color) opciones.colores.add(color);
+                if (tipo) opciones.tipos.add(tipo);
+                if (marca) opciones.marcas.add(marca);
+            }
             var clave = claveProducto(nombre, talla, color, marca);
+            var datosFila = { stock: stock, precio: precio, tipo: tipo, color: color, marca: marca, talla: talla };
             var previo = mapa.get(clave);
             if (previo) {
                 previo.stock = Math.min(previo.stock, stock);
                 if (precio > 0) previo.precio = precio;
                 if (tipo) previo.tipo = tipo;
+                if (color) previo.color = color;
+                if (marca) previo.marca = marca;
+                if (talla) previo.talla = talla;
             } else {
-                mapa.set(clave, { stock: stock, precio: precio, tipo: tipo });
+                mapa.set(clave, datosFila);
             }
         }
-        return mapa;
+        return { mapa: mapa, opciones: setsToSortedArrays(opciones) };
     }
 
     function buscarEnMapa(mapa, nombre, talla, color, marca) {
@@ -224,6 +248,12 @@
                 p.stock = datos.stock;
                 if (datos.precio > 0) p.precio = datos.precio;
                 if (datos.tipo) p.tipo = datos.tipo;
+                if (datos.color) p.color = datos.color;
+                if (datos.marca) p.marca = datos.marca;
+                if (datos.talla) {
+                    p.talla = datos.talla;
+                    p.tallaBase = datos.talla;
+                }
                 actualizados += 1;
             }
             // Sin coincidencia en el sheet: conservar stock del catálogo local.
@@ -242,16 +272,19 @@
     }
 
     function sincronizarDesdeCsv(csv) {
-        var tareas = [];
+        var opcionesSheet = {};
         if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) {
-            var nH = sincronizarCatalogo(productosHombre, leerFilasSheet(csv, 'Hombre'));
-            tareas.push(nH);
+            var datosHombre = leerFilasSheet(csv, 'Hombre');
+            sincronizarCatalogo(productosHombre, datosHombre.mapa);
+            opcionesSheet.Hombre = datosHombre.opciones;
         }
         if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) {
-            var nM = sincronizarCatalogo(productosMujer, leerFilasSheet(csv, 'Mujer'));
-            tareas.push(nM);
+            var datosMujer = leerFilasSheet(csv, 'Mujer');
+            sincronizarCatalogo(productosMujer, datosMujer.mapa);
+            opcionesSheet.Mujer = datosMujer.opciones;
         }
-        return tareas;
+        window.opcionesInventarioSheet = opcionesSheet;
+        return opcionesSheet;
     }
 
     window.sincronizarStockDesdeSheets = function() {

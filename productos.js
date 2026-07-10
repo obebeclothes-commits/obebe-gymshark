@@ -109,6 +109,11 @@ function obtenerProductosPorCategoria() {
 
 // Función para obtener todas las tallas, tipos y colores únicos de los productos
 function obtenerOpcionesFiltros(productos) {
+    var categoria = obtenerCategoriaDeURL();
+    if (typeof window.opcionesInventarioSheet !== 'undefined' && window.opcionesInventarioSheet[categoria]) {
+        return window.opcionesInventarioSheet[categoria];
+    }
+
     const tallas = new Set();
     const tipos = new Set();
     const colores = new Set();
