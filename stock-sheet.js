@@ -2,7 +2,8 @@
 // Los filtros de la tienda usan los valores del sheet (solo filas con stock > 0).
 (function() {
     var SPREADSHEET_ID = '195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko';
-    var HOJA_INVENTARIO = 'HOMBRE';
+    var HOJA_INVENTARIO = 'INVENTARIO';
+    var HOJA_INVENTARIO_LEGACY = 'HOMBRE';
     var FILA_INICIO = 2; // fila 3 del sheet (0-based en CSV)
     var IDX_SEGMENTO = 19; // columna T
 
@@ -296,11 +297,15 @@
         }
 
         return descargarHoja(HOJA_INVENTARIO)
+            .catch(function() {
+                console.warn('[stock-sheet] Probando hoja legacy ' + HOJA_INVENTARIO_LEGACY);
+                return descargarHoja(HOJA_INVENTARIO_LEGACY);
+            })
             .then(function(csv) {
                 sincronizarDesdeCsv(csv);
             })
             .catch(function(err) {
-                console.warn('[stock-sheet] ' + HOJA_INVENTARIO + ':', err);
+                console.warn('[stock-sheet] inventario:', err);
             });
     };
 })();

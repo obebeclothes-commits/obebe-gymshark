@@ -9,7 +9,8 @@ Uso:
 
 Requisitos:
   - La hoja debe estar compartida como "Cualquier persona con el enlace puede ver".
-  - La hoja HOMBRE unifica hombre y mujer; columna T = HOMBRE o MUJER.
+  - La hoja INVENTARIO unifica hombre y mujer; columna T = HOMBRE o MUJER.
+  - Columna J puede mostrar vista previa con scripts/actualizar-columna-j-imagenes.py
   - Solo se importan filas con CANTIDAD > 0 y nombre no vacío.
 """
 
@@ -29,7 +30,9 @@ from pathlib import Path
 # Configuración del Google Sheet
 # -----------------------------------------------------------------------------
 SPREADSHEET_ID = "195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko"
-HOJA_INVENTARIO = "HOMBRE"
+HOJA_INVENTARIO = "INVENTARIO"
+HOJA_INVENTARIO_LEGACY = "HOMBRE"
+BASE_URL_IMAGENES = "https://obebeclothes-commits.github.io/obebe-gymshark"
 
 HOJAS = {
     "hombre": {
@@ -58,6 +61,7 @@ COLUMNAS = {
     "tipo": "F",
     "marca": "G",
     "precio": "H",
+    "vista_imagen": "J",
     "segmento": "T",
 }
 
@@ -138,6 +142,31 @@ def descargar_csv(spreadsheet_id: str, nombre_hoja: str) -> str:
         ) from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(f"Error de conexión al descargar el sheet: {exc}") from exc
+
+
+def descargar_hoja_inventario(spreadsheet_id: str = SPREADSHEET_ID) -> str:
+    try:
+        return descargar_csv(spreadsheet_id, HOJA_INVENTARIO)
+    except RuntimeError:
+        return descargar_csv(spreadsheet_id, HOJA_INVENTARIO_LEGACY)
+
+
+def carpeta_imagen_por_segmento(valor_segmento: str) -> str:
+    return "mujer" if normalizar_segmento(valor_segmento) == "Mujer" else "hombre"
+
+
+def url_imagen_publica(carpeta: str, numero_imagen: int, raiz: Path, base_url: str = BASE_URL_IMAGENES) -> str:
+    extensiones = (".webp", ".png", ".jpg", ".jpeg")
+    carpeta_path = raiz / carpeta
+    for ext in extensiones:
+        if (carpeta_path / f"{numero_imagen}{ext}").exists():
+            return f"{base_url.rstrip('/')}/{carpeta}/{numero_imagen}{ext}"
+    return f"{base_url.rstrip('/')}/{carpeta}/{numero_imagen}.webp"
+
+
+def formula_imagen_celda(url: str) -> str:
+    url_segura = str(url).replace('"', '""')
+    return f'=IMAGE("{url_segura}", 1)'
 
 
 def parsear_precio(valor: str) -> float:
@@ -426,7 +455,15 @@ def main() -> int:
     archivo_salida = raiz / config["archivo_salida"]
 
     print(f"Descargando hoja '{nombre_hoja}'...")
-    csv_texto = descargar_csv(SPREADSHEET_ID, nombre_hoja)
+    try:
+        csv_texto = descargar_csv(SPREADSHEET_ID, nombre_hoja)
+    except RuntimeError:
+        if nombre_hoja == HOJA_INVENTARIO:
+            print(f"  No se encontró '{HOJA_INVENTARIO}', probando '{HOJA_INVENTARIO_LEGACY}'...")
+            csv_texto = descargar_csv(SPREADSHEET_ID, HOJA_INVENTARIO_LEGACY)
+            nombre_hoja = HOJA_INVENTARIO_LEGACY
+        else:
+            raise
 
     print("Procesando filas...")
     productos = leer_productos_desde_csv(
