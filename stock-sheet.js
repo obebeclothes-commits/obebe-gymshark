@@ -16,10 +16,34 @@
     };
 
     var COLORES = {
-        'BLACK': 'Negro', 'WHITE': 'Blanco', 'GREY': 'Gris', 'GRAY': 'Gris', 'GRIS': 'Gris',
-        'GREEN': 'Verde', 'VERDE': 'Verde', 'BLUE': 'Azul', 'RED': 'Rojo', 'BROWN': 'Marrón',
-        'BEIGE': 'Beige', 'TEAL': 'Verde azulado', 'PINK': 'Rosa', 'ROSA': 'Rosa',
-        'YELLOW': 'Amarillo', 'ORANGE': 'Naranja', 'PURPLE': 'Morado', 'NAVY': 'Azul marino'
+        'BLACK': 'Negro', 'NEGRO': 'Negro',
+        'WHITE': 'Blanco', 'BLANCO': 'Blanco',
+        'GREY': 'Gris', 'GRAY': 'Gris', 'GRIS': 'Gris',
+        'GREEN': 'Verde', 'VERDE': 'Verde',
+        'BLUE': 'Azul', 'AZUL': 'Azul',
+        'RED': 'Rojo', 'ROJO': 'Rojo',
+        'BROWN': 'Marrón', 'CAFE': 'Marrón', 'CAFÉ': 'Marrón', 'MARRON': 'Marrón', 'MARRÓN': 'Marrón',
+        'BEIGE': 'Beige',
+        'TEAL': 'Verde azulado',
+        'PINK': 'Rosa', 'ROSA': 'Rosa',
+        'YELLOW': 'Amarillo', 'AMARILLO': 'Amarillo',
+        'ORANGE': 'Naranja', 'NARANJA': 'Naranja',
+        'PURPLE': 'Morado', 'MORADO': 'Morado',
+        'NAVY': 'Azul marino', 'AZUL MARINO': 'Azul marino',
+        'BURGUNDY': 'Burgundy', 'BURDEOS': 'Burgundy'
+    };
+
+    var COLOR_CLAVE_ALIAS = {
+        marron: 'marron',
+        marrn: 'marron',
+        brown: 'marron',
+        cafe: 'marron',
+        verdeazulado: 'verdeazulado',
+        teal: 'verdeazulado',
+        azulmarino: 'azulmarino',
+        navy: 'azulmarino',
+        burgundy: 'burgundy',
+        burdeos: 'burgundy'
     };
 
     function normTexto(valor) {
@@ -105,10 +129,12 @@
 
     function normColorClave(color) {
         var texto = normalizarColor(color);
-        return normTexto(texto)
+        var base = normTexto(texto)
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')
             .replace(/\?/g, '');
+        var compact = base.replace(/\s+/g, '');
+        return COLOR_CLAVE_ALIAS[compact] || COLOR_CLAVE_ALIAS[base] || compact || base;
     }
 
     function claveProducto(nombre, talla, color, marca) {
@@ -159,9 +185,33 @@
             var marca = normalizarMarca(f[6]);
             var precio = parsearPrecio(f[7]);
             var clave = claveProducto(nombre, talla, color, marca);
-            mapa.set(clave, { stock: stock, precio: precio, tipo: tipo });
+            var previo = mapa.get(clave);
+            if (previo) {
+                previo.stock = Math.min(previo.stock, stock);
+                if (precio > 0) previo.precio = precio;
+                if (tipo) previo.tipo = tipo;
+            } else {
+                mapa.set(clave, { stock: stock, precio: precio, tipo: tipo });
+            }
         }
         return mapa;
+    }
+
+    function buscarEnMapa(mapa, nombre, talla, color, marca) {
+        var clave = claveProducto(nombre, talla, color, marca);
+        if (mapa.has(clave)) return mapa.get(clave);
+
+        var prefijo = normTexto(nombre) + '|' + normTexto(talla) + '|';
+        var sufijo = '|' + normTexto(normalizarMarca(marca));
+        var candidato = null;
+        var coincidencias = 0;
+        mapa.forEach(function(valor, key) {
+            if (key.indexOf(prefijo) === 0 && key.slice(-sufijo.length) === sufijo) {
+                coincidencias += 1;
+                candidato = valor;
+            }
+        });
+        return coincidencias === 1 ? candidato : null;
     }
 
     function sincronizarCatalogo(catalogo, mapaSheet) {
@@ -169,8 +219,7 @@
         var actualizados = 0;
         catalogo.forEach(function(p) {
             var talla = p.tallaBase || String(p.talla || '').split('-')[0].trim();
-            var clave = claveProducto(p.nombre, talla, p.color, p.marca);
-            var datos = mapaSheet.get(clave);
+            var datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca);
             if (datos) {
                 p.stock = datos.stock;
                 if (datos.precio > 0) p.precio = datos.precio;
@@ -184,42 +233,28 @@
 
     function descargarHoja(nombreHoja) {
         var url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
-            '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(nombreHoja);
-        return fetch(url).then(function(res) {
+            '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(nombreHoja) +
+            '&_=' + Date.now();
+        return fetch(url, { cache: 'no-store' }).then(function(res) {
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return res.text();
         });
     }
 
-    function hojaTieneFilasMujer(filas) {
-        for (var i = FILA_INICIO; i < filas.length; i++) {
-            var f = filas[i];
-            var nombre = (f[1] || '').trim();
-            if (!nombre) continue;
-            if (normalizarSegmento(f[IDX_SEGMENTO]) === 'Mujer') return true;
+    function sincronizarDesdeCsv(csv) {
+        var tareas = [];
+        if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) {
+            var nH = sincronizarCatalogo(productosHombre, leerFilasSheet(csv, 'Hombre'));
+            tareas.push(nH);
         }
-        return false;
-    }
-
-    function sincronizarMujerDesdeSheets() {
-        return descargarHoja(HOJA_INVENTARIO).then(function(csv) {
-            if (!csv) return;
-            var filas = parseCSV(csv);
-            if (hojaTieneFilasMujer(filas)) {
-                sincronizarCatalogo(productosMujer, leerFilasSheet(csv, 'Mujer'));
-                return;
-            }
-            console.warn('[stock-sheet] Sin filas MUJER en hoja HOMBRE; usando pestaña MUJER legacy.');
-            return descargarHoja('MUJER').then(function(csvMujer) {
-                if (csvMujer) sincronizarCatalogo(productosMujer, leerFilasSheet(csvMujer, 'Mujer'));
-            }).catch(function(err) {
-                console.warn('[stock-sheet] MUJER (legacy):', err);
-            });
-        });
+        if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) {
+            var nM = sincronizarCatalogo(productosMujer, leerFilasSheet(csv, 'Mujer'));
+            tareas.push(nM);
+        }
+        return tareas;
     }
 
     window.sincronizarStockDesdeSheets = function() {
-        var tareas = [];
         var tieneHombre = typeof productosHombre !== 'undefined' && Array.isArray(productosHombre);
         var tieneMujer = typeof productosMujer !== 'undefined' && Array.isArray(productosMujer);
 
@@ -227,25 +262,12 @@
             return Promise.resolve();
         }
 
-        var promesaCsv = descargarHoja(HOJA_INVENTARIO).catch(function(err) {
-            console.warn('[stock-sheet] ' + HOJA_INVENTARIO + ':', err);
-            return null;
-        });
-
-        if (tieneHombre) {
-            tareas.push(
-                promesaCsv.then(function(csv) {
-                    if (csv) sincronizarCatalogo(productosHombre, leerFilasSheet(csv, 'Hombre'));
-                })
-            );
-        }
-
-        if (tieneMujer) {
-            tareas.push(sincronizarMujerDesdeSheets().catch(function(err) {
-                console.warn('[stock-sheet] Mujer:', err);
-            }));
-        }
-
-        return Promise.all(tareas);
+        return descargarHoja(HOJA_INVENTARIO)
+            .then(function(csv) {
+                sincronizarDesdeCsv(csv);
+            })
+            .catch(function(err) {
+                console.warn('[stock-sheet] ' + HOJA_INVENTARIO + ':', err);
+            });
     };
 })();
