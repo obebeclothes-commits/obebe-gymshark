@@ -360,15 +360,51 @@ function obtenerTipoProductoFallback(nombre) {
     return 'Otro';
 }
 
+// Orden preferido de tallas: S, M, L, XL, UNI y luego numéricas (30, 32...)
+var ORDEN_TALLAS = ['S', 'M', 'L', 'XL', 'UNI'];
+
+function ordenarTallas(tallas) {
+    return (tallas || []).slice().sort(function(a, b) {
+        var ia = ORDEN_TALLAS.indexOf(String(a).toUpperCase());
+        var ib = ORDEN_TALLAS.indexOf(String(b).toUpperCase());
+        var numA = parseFloat(a);
+        var numB = parseFloat(b);
+        var esNumA = !isNaN(numA);
+        var esNumB = !isNaN(numB);
+
+        // 1) Las de la lista preferida primero, en su orden
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+
+        // 2) Luego las numéricas ordenadas de menor a mayor
+        if (esNumA && esNumB) return numA - numB;
+        if (esNumA) return -1;
+        if (esNumB) return 1;
+
+        // 3) El resto, alfabético
+        return String(a).localeCompare(String(b), 'es', { sensitivity: 'base' });
+    });
+}
+
+function ordenarAlfabetico(valores) {
+    return (valores || []).slice().sort(function(a, b) {
+        return String(a).localeCompare(String(b), 'es', { sensitivity: 'base' });
+    });
+}
+
 // Función para generar los checkboxes de filtros
 function generarFiltros(productos) {
     const opciones = obtenerOpcionesFiltros(productos);
-    
+    const tallasOrdenadas = ordenarTallas(opciones.tallas);
+    const tiposOrdenados = ordenarAlfabetico(opciones.tipos);
+    const marcasOrdenadas = ordenarAlfabetico(opciones.marcas);
+
     // Generar filtros de talla
     const tallaFilters = document.getElementById('tallaFilters');
     if (tallaFilters) {
         tallaFilters.innerHTML = '';
-        opciones.tallas.forEach(talla => {
+        tallasOrdenadas.forEach(talla => {
             const item = document.createElement('div');
             item.className = 'filter-checkbox-item';
             item.innerHTML = `
@@ -383,7 +419,7 @@ function generarFiltros(productos) {
     const tipoFilters = document.getElementById('tipoFilters');
     if (tipoFilters) {
         tipoFilters.innerHTML = '';
-        opciones.tipos.forEach(tipo => {
+        tiposOrdenados.forEach(tipo => {
             const item = document.createElement('div');
             item.className = 'filter-checkbox-item';
             item.innerHTML = `
@@ -414,8 +450,8 @@ function generarFiltros(productos) {
     const marcaFilters = document.getElementById('marcaFilters');
     if (marcaFilters) {
         marcaFilters.innerHTML = '';
-        if (opciones.marcas && opciones.marcas.length > 0) {
-            opciones.marcas.forEach(marca => {
+        if (marcasOrdenadas && marcasOrdenadas.length > 0) {
+            marcasOrdenadas.forEach(marca => {
                 const safeId = marca.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
                 const item = document.createElement('div');
                 item.className = 'filter-checkbox-item';
