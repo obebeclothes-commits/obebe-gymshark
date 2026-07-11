@@ -634,6 +634,10 @@ function textoContadorArticulos(cantidad) {
 function actualizarContadorArticulos(cantidad) {
     var el = document.getElementById('pageProductCount');
     if (!el) return;
+    if (cantidad === 0 && marcaFiltroActiva()) {
+        el.textContent = '';
+        return;
+    }
     el.textContent = textoContadorArticulos(cantidad);
 }
 
@@ -873,6 +877,28 @@ function enviarMensajeWhatsApp() {
 }
 
 // Función para renderizar productos
+function marcaFiltroActiva() {
+    var filtros = leerFiltrosDesdeURL();
+    if (filtros.marcas && filtros.marcas.length === 1) return filtros.marcas[0];
+    var pill = obtenerMarcaDeURL();
+    return pill || '';
+}
+
+function htmlEstadoVacio() {
+    var marca = marcaFiltroActiva();
+    if (marca) {
+        var marcaSegura = String(marca).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return ''
+            + '<div class="coming-soon" role="status">'
+            + '  <span class="coming-soon-tag">' + marcaSegura.toUpperCase() + '</span>'
+            + '  <span class="coming-soon-title">COMING<span class="coming-soon-amp"> </span>SOON</span>'
+            + '  <span class="coming-soon-sub">Nuevo drop en camino</span>'
+            + '  <span class="coming-soon-bar"></span>'
+            + '</div>';
+    }
+    return '<p style="padding: 2rem; color: #666; text-align: center; grid-column: 1 / -1;">No hay productos que coincidan con los filtros seleccionados.</p>';
+}
+
 function renderizarProductos(productosParaRenderizar) {
     const productsGrid = document.getElementById('productsGrid');
     if (!productsGrid) return;
@@ -880,7 +906,7 @@ function renderizarProductos(productosParaRenderizar) {
     productsGrid.innerHTML = '';
 
     if (productosParaRenderizar.length === 0) {
-        productsGrid.innerHTML = '<p style="padding: 2rem; color: #666; text-align: center; grid-column: 1 / -1;">No hay productos que coincidan con los filtros seleccionados.</p>';
+        productsGrid.innerHTML = htmlEstadoVacio();
         return;
     }
 
