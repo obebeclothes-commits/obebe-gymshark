@@ -1168,6 +1168,29 @@ a.add-to-cart-carousel {
     box-shadow: 0 3px 10px rgba(160, 36, 126, 0.4);
 }
 
+/* Badge secundario del +20 dentro de la comparativa +50 (menos protagonista) */
+.product-price-mayoreo50 .product-discount-badge-20 {
+    background: linear-gradient(135deg, #5a2ea6 0%, #b57bff 100%);
+    box-shadow: 0 2px 7px rgba(90, 46, 166, 0.3);
+    font-size: 0.72rem;
+    animation: none;
+    transform: rotate(-3deg);
+    opacity: 0.92;
+}
+
+/* Agrupa cada nivel de precio con su badge para una comparativa clara */
+.product-price-mayoreo50 {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+}
+
+.price-tier {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
 @keyframes discountPop {
     0%, 100% { transform: rotate(-3deg) scale(1); }
     50% { transform: rotate(-3deg) scale(1.08); }

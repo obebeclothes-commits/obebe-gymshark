@@ -216,10 +216,11 @@ function precioVigenteProducto(producto) {
     return Number(producto && producto.precio) || 0;
 }
 
-function htmlBadgeDescuento(porcentaje) {
+function htmlBadgeDescuento(porcentaje, extraClase) {
     if (!porcentaje) return '';
     var texto = String(porcentaje).indexOf('%') !== -1 ? String(porcentaje) : (porcentaje + '%');
-    return '<span class="product-discount-badge">-' + texto + '</span>';
+    var cls = 'product-discount-badge' + (extraClase ? ' ' + extraClase : '');
+    return '<span class="' + cls + '">-' + texto + '</span>';
 }
 
 function htmlPrecioProducto(producto) {
@@ -230,13 +231,18 @@ function htmlPrecioProducto(producto) {
     if (esModoMayoreo50() && mayor50 > 0) {
         var partes = '';
         if (retail > 0) {
-            partes += '<span class="product-price-retail">$' + formatearPrecio(retail) + '</span>';
+            partes += '<span class="price-tier"><span class="product-price-retail">$' + formatearPrecio(retail) + '</span></span>';
         }
         if (mayor > 0 && Math.abs(mayor - mayor50) > 0.009) {
-            partes += '<span class="product-price-retail">$' + formatearPrecio(mayor) + '</span>';
+            partes += '<span class="price-tier">'
+                + '<span class="product-price-retail">$' + formatearPrecio(mayor) + '</span>'
+                + htmlBadgeDescuento(producto.descuentoMayoreo, 'product-discount-badge-20')
+                + '</span>';
         }
-        partes += '<span class="product-price-wholesale">$' + formatearPrecio(mayor50) + '</span>';
-        partes += htmlBadgeDescuento(producto.descuentoMayoreo50);
+        partes += '<span class="price-tier">'
+            + '<span class="product-price-wholesale">$' + formatearPrecio(mayor50) + '</span>'
+            + htmlBadgeDescuento(producto.descuentoMayoreo50)
+            + '</span>';
         return '<p class="product-price product-price-mayoreo product-price-mayoreo50">' + partes + '</p>';
     }
 
