@@ -1145,6 +1145,34 @@ a.add-to-cart-carousel {
     color: #2f9e44;
 }
 
+/* Badge de porcentaje de descuento (mayoreo) */
+.product-discount-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.4rem;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ff3d3d 0%, #ff7a18 100%);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    line-height: 1;
+    box-shadow: 0 3px 10px rgba(255, 61, 61, 0.35);
+    transform: rotate(-3deg);
+    animation: discountPop 1.6s ease-in-out infinite;
+}
+
+.product-price-mayoreo50 .product-discount-badge {
+    background: linear-gradient(135deg, #0e8f8f 0%, #a0247e 100%);
+    box-shadow: 0 3px 10px rgba(160, 36, 126, 0.4);
+}
+
+@keyframes discountPop {
+    0%, 100% { transform: rotate(-3deg) scale(1); }
+    50% { transform: rotate(-3deg) scale(1.08); }
+}
+
 .mayoreo-filter-block {
     margin: 0 auto 1.25rem;
     max-width: 860px;

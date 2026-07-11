@@ -8,8 +8,10 @@
     var IDX_IMAGEN = 0; // columna A (número de imagen / referencia de producto)
     var IDX_SEGMENTO = 19; // columna T
     var IDX_PRECIO_MAYOREO = 15; // columna P (mayoreo +20)
+    var IDX_DESCUENTO_MAYOREO = 16; // columna Q (% mayoreo +20)
     var IDX_MAYOREO = 17; // columna R
     var IDX_PRECIO_MAYOREO_50 = 21; // columna V (mayoreo +50)
+    var IDX_DESCUENTO_MAYOREO_50 = 22; // columna W (% mayoreo +50)
     var IDX_CARRUSEL = 20; // columna U
     var IDX_FECHA_STOCK = 10; // columna K
 
@@ -127,6 +129,17 @@
         if (/^\d{1,3}(\.\d{3})+$/.test(texto)) texto = texto.replace(/\./g, '');
         var n = parseFloat(texto.replace(',', '.'));
         return isNaN(n) ? 0 : Math.round(n * 100) / 100;
+    }
+
+    function parsearPorcentaje(valor) {
+        var texto = String(valor || '').trim();
+        if (!texto) return '';
+        var limpio = texto.replace(/%/g, '').replace(',', '.').trim();
+        var n = parseFloat(limpio);
+        if (isNaN(n) || n <= 0) return '';
+        var redondeado = Math.round(n * 100) / 100;
+        var str = Number.isInteger(redondeado) ? String(redondeado) : String(redondeado);
+        return str + '%';
     }
 
     function parsearMayoreo(valor) {
@@ -351,6 +364,8 @@
             var precio = parsearPrecio(f[7]);
             var precioMayoreo = parsearPrecio(f[IDX_PRECIO_MAYOREO]);
             var precioMayoreo50 = parsearPrecio(f[IDX_PRECIO_MAYOREO_50]);
+            var descuentoMayoreo = parsearPorcentaje(f[IDX_DESCUENTO_MAYOREO]);
+            var descuentoMayoreo50 = parsearPorcentaje(f[IDX_DESCUENTO_MAYOREO_50]);
             var mayoreo = parsearMayoreo(f[IDX_MAYOREO]);
             var posicionCarrusel = parsearPosicionCarrusel(f[IDX_CARRUSEL]);
             var fechaStock = parsearFechaStock(f[IDX_FECHA_STOCK]);
@@ -367,6 +382,8 @@
                 precio: precio,
                 precioMayoreo: precioMayoreo,
                 precioMayoreo50: precioMayoreo50,
+                descuentoMayoreo: descuentoMayoreo,
+                descuentoMayoreo50: descuentoMayoreo50,
                 mayoreo: mayoreo,
                 posicionCarrusel: posicionCarrusel,
                 fechaStock: fechaStock,
@@ -382,6 +399,8 @@
                 if (precio > 0) previo.precio = precio;
                 if (precioMayoreo > 0) previo.precioMayoreo = precioMayoreo;
                 if (precioMayoreo50 > 0) previo.precioMayoreo50 = precioMayoreo50;
+                if (descuentoMayoreo) previo.descuentoMayoreo = descuentoMayoreo;
+                if (descuentoMayoreo50) previo.descuentoMayoreo50 = descuentoMayoreo50;
                 previo.mayoreo = previo.mayoreo || mayoreo;
                 if (posicionCarrusel > 0) previo.posicionCarrusel = posicionCarrusel;
                 if (fechaStock) previo.fechaStock = fechaStock;
@@ -421,6 +440,8 @@
                 if (datos.precio > 0) p.precio = datos.precio;
                 if (datos.precioMayoreo > 0) p.precioMayoreo = datos.precioMayoreo;
                 p.precioMayoreo50 = datos.precioMayoreo50 || 0;
+                p.descuentoMayoreo = datos.descuentoMayoreo || '';
+                p.descuentoMayoreo50 = datos.descuentoMayoreo50 || '';
                 p.mayoreo = !!datos.mayoreo;
                 p.posicionCarrusel = datos.posicionCarrusel || 0;
                 p.fechaStock = datos.fechaStock || '';
