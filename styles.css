@@ -1168,14 +1168,15 @@ a.add-to-cart-carousel {
     box-shadow: 0 3px 10px rgba(160, 36, 126, 0.4);
 }
 
-/* Badge secundario del +20 dentro de la comparativa +50 (menos protagonista) */
+/* Badge secundario del +20 dentro de la comparativa +50 (rojo, para diferenciarlo del +50) */
 .product-price-mayoreo50 .product-discount-badge-20 {
-    background: linear-gradient(135deg, #5a2ea6 0%, #b57bff 100%);
-    box-shadow: 0 2px 7px rgba(90, 46, 166, 0.3);
+    background: #e03131;
+    color: #fff;
+    box-shadow: 0 2px 7px rgba(224, 49, 49, 0.35);
     font-size: 0.72rem;
     animation: none;
     transform: rotate(-3deg);
-    opacity: 0.92;
+    opacity: 1;
 }
 
 /* Agrupa cada nivel de precio con su badge para una comparativa clara */
