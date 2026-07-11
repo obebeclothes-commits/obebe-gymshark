@@ -1742,7 +1742,13 @@ footer {
     }
 
     .hero-slides {
-        height: min(84vh, 880px);
+        height: auto;
+        aspect-ratio: 819 / 1024;
+        max-height: 92vh;
+    }
+
+    .hero-slide img {
+        object-position: center top;
     }
 
     .hero-nav-arrows {
@@ -1755,12 +1761,12 @@ footer {
     }
 
     .hero-content {
-        padding: 0 1% 0;
+        padding: 0 4% 1.1rem;
         justify-content: flex-start;
     }
 
     .hero-text {
-        margin-bottom: -2%;
+        margin-bottom: 0;
         text-align: left;
     }
 
@@ -1904,7 +1910,9 @@ footer {
     }
 
     .hero-slides {
-        height: min(96vh, 960px);
+        height: auto;
+        aspect-ratio: 819 / 1024;
+        max-height: 96vh;
     }
 
     .hero-arrow {
@@ -1918,11 +1926,11 @@ footer {
     }
 
     .hero-content {
-        padding: 0 2% 0;
+        padding: 0 5% 1rem;
     }
 
     .hero-text {
-        margin-bottom: -2%;
+        margin-bottom: 0;
     }
 
     .hero-text h2 {
