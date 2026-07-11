@@ -7,8 +7,9 @@
     var FILA_INICIO = 2; // fila 3 del sheet (0-based en CSV)
     var IDX_IMAGEN = 0; // columna A (número de imagen / referencia de producto)
     var IDX_SEGMENTO = 19; // columna T
-    var IDX_PRECIO_MAYOREO = 15; // columna P
+    var IDX_PRECIO_MAYOREO = 15; // columna P (mayoreo +20)
     var IDX_MAYOREO = 17; // columna R
+    var IDX_PRECIO_MAYOREO_50 = 21; // columna V (mayoreo +50)
     var IDX_CARRUSEL = 20; // columna U
     var IDX_FECHA_STOCK = 10; // columna K
 
@@ -349,6 +350,7 @@
             var marca = normalizarMarca(f[6]);
             var precio = parsearPrecio(f[7]);
             var precioMayoreo = parsearPrecio(f[IDX_PRECIO_MAYOREO]);
+            var precioMayoreo50 = parsearPrecio(f[IDX_PRECIO_MAYOREO_50]);
             var mayoreo = parsearMayoreo(f[IDX_MAYOREO]);
             var posicionCarrusel = parsearPosicionCarrusel(f[IDX_CARRUSEL]);
             var fechaStock = parsearFechaStock(f[IDX_FECHA_STOCK]);
@@ -364,6 +366,7 @@
                 stock: stock,
                 precio: precio,
                 precioMayoreo: precioMayoreo,
+                precioMayoreo50: precioMayoreo50,
                 mayoreo: mayoreo,
                 posicionCarrusel: posicionCarrusel,
                 fechaStock: fechaStock,
@@ -378,6 +381,7 @@
                 previo.stock = Math.min(previo.stock, stock);
                 if (precio > 0) previo.precio = precio;
                 if (precioMayoreo > 0) previo.precioMayoreo = precioMayoreo;
+                if (precioMayoreo50 > 0) previo.precioMayoreo50 = precioMayoreo50;
                 previo.mayoreo = previo.mayoreo || mayoreo;
                 if (posicionCarrusel > 0) previo.posicionCarrusel = posicionCarrusel;
                 if (fechaStock) previo.fechaStock = fechaStock;
@@ -416,6 +420,7 @@
                 p.stock = datos.stock;
                 if (datos.precio > 0) p.precio = datos.precio;
                 if (datos.precioMayoreo > 0) p.precioMayoreo = datos.precioMayoreo;
+                p.precioMayoreo50 = datos.precioMayoreo50 || 0;
                 p.mayoreo = !!datos.mayoreo;
                 p.posicionCarrusel = datos.posicionCarrusel || 0;
                 p.fechaStock = datos.fechaStock || '';

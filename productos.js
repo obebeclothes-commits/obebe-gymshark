@@ -125,6 +125,27 @@ function esModoNuevoStock() {
     return false;
 }
 
+function esModoMayoreo50() {
+    var params = new URLSearchParams(window.location.search);
+    var valor = (params.get('mayoreo50') || '').trim().toLowerCase();
+    if (valor === '1' || valor === 'si' || valor === 'true') return true;
+    var retorno = params.get('retorno');
+    if (retorno) {
+        try {
+            var retornoParams = new URLSearchParams(decodeURIComponent(retorno));
+            var rv = (retornoParams.get('mayoreo50') || '').trim().toLowerCase();
+            if (rv === '1' || rv === 'si' || rv === 'true') return true;
+        } catch (err) {
+            // ignorar retorno mal formado
+        }
+    }
+    return false;
+}
+
+function esProductoMayoreo50(producto) {
+    return !!producto && Number(producto.precioMayoreo50) > 0;
+}
+
 function esProductoNuevoStock(producto) {
     if (!producto || !producto.fechaStock || !window.fechaStockMasReciente) return false;
     return producto.fechaStock === window.fechaStockMasReciente;
@@ -179,6 +200,9 @@ function inicializarFiltroGeneroNuevoStock() {
 }
 
 function precioVigenteProducto(producto) {
+    if (esModoMayoreo50() && esProductoMayoreo50(producto)) {
+        return Number(producto.precioMayoreo50);
+    }
     if (esModoMayoreo() && producto && producto.mayoreo && Number(producto.precioMayoreo) > 0) {
         return Number(producto.precioMayoreo);
     }
@@ -188,6 +212,20 @@ function precioVigenteProducto(producto) {
 function htmlPrecioProducto(producto) {
     var retail = Number(producto.precio) || 0;
     var mayor = Number(producto.precioMayoreo) || 0;
+    var mayor50 = Number(producto.precioMayoreo50) || 0;
+
+    if (esModoMayoreo50() && mayor50 > 0) {
+        var partes = '';
+        if (retail > 0) {
+            partes += '<span class="product-price-retail">$' + retail.toFixed(2) + '</span>';
+        }
+        if (mayor > 0 && Math.abs(mayor - mayor50) > 0.009) {
+            partes += '<span class="product-price-retail">$' + mayor.toFixed(2) + '</span>';
+        }
+        partes += '<span class="product-price-wholesale">$' + mayor50.toFixed(2) + '</span>';
+        return '<p class="product-price product-price-mayoreo product-price-mayoreo50">' + partes + '</p>';
+    }
+
     if (esModoMayoreo() && producto.mayoreo && mayor > 0) {
         if (retail > 0 && Math.abs(retail - mayor) > 0.009) {
             return '<p class="product-price product-price-mayoreo">'
@@ -201,6 +239,8 @@ function htmlPrecioProducto(producto) {
 }
 
 window.esModoMayoreo = esModoMayoreo;
+window.esModoMayoreo50 = esModoMayoreo50;
+window.esProductoMayoreo50 = esProductoMayoreo50;
 window.esModoNuevoStock = esModoNuevoStock;
 window.esProductoNuevoStock = esProductoNuevoStock;
 window.precioVigenteProducto = precioVigenteProducto;
@@ -215,6 +255,7 @@ function obtenerMarcaDeURL() {
 function obtenerProductosPorCategoria() {
     var params = new URLSearchParams(window.location.search);
     var modoMayoreo = esModoMayoreo();
+    var modoMayoreo50 = esModoMayoreo50();
     var modoNuevoStock = esModoNuevoStock();
     var categoria = params.get('categoria') || 'Hombre';
 
@@ -223,12 +264,13 @@ function obtenerProductosPorCategoria() {
             if (!(p.categoria === cat || p.categoria === 'Unisex')) return false;
             if (Number(p.stock) <= 0) return false;
             if (modoNuevoStock) return esProductoNuevoStock(p);
+            if (modoMayoreo50) return esProductoMayoreo50(p);
             if (modoMayoreo) return !!p.mayoreo;
             return true;
         });
     }
 
-    if ((modoMayoreo || modoNuevoStock) && !tieneCategoriaEnURL()) {
+    if ((modoMayoreo || modoMayoreo50 || modoNuevoStock) && !tieneCategoriaEnURL()) {
         var todos = [];
         if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) {
             todos = todos.concat(productosHombre);
@@ -241,6 +283,7 @@ function obtenerProductosPorCategoria() {
         return todos.filter(function(p) {
             if (Number(p.stock) <= 0) return false;
             if (modoNuevoStock) return esProductoNuevoStock(p);
+            if (modoMayoreo50) return esProductoMayoreo50(p);
             return !!p.mayoreo;
         });
     }
@@ -474,6 +517,7 @@ function construirUrlDetalleProducto(producto) {
     var url = 'producto.html?id=' + encodeURIComponent(producto.id);
     if (producto.categoria === 'Mujer') url += '&categoria=Mujer';
     if (esModoMayoreo()) url += '&mayoreo=1';
+    if (esModoMayoreo50()) url += '&mayoreo50=1';
     if (esModoNuevoStock()) url += '&nuevoStock=1';
     var retorno = construirQueryRetornoProductos();
     if (retorno) url += '&retorno=' + retorno;
@@ -490,6 +534,7 @@ function construirUrlVolverProductos(params) {
         }
     }
     if (esModoMayoreo()) return 'productos.html?mayoreo=1';
+    if (esModoMayoreo50()) return 'productos.html?mayoreo50=1';
     if (esModoNuevoStock()) return 'productos.html?nuevoStock=1';
     var categoria = params.get('categoria') || 'Hombre';
     return 'productos.html?categoria=' + encodeURIComponent(categoria);
@@ -652,7 +697,7 @@ function agregarAlCarrito(producto, opciones) {
             nombre: producto.nombre,
             precio: precioVigenteProducto(producto),
             precioMenudeo: producto.precio,
-            esMayoreo: esModoMayoreo() && !!producto.mayoreo,
+            esMayoreo: (esModoMayoreo() && !!producto.mayoreo) || (esModoMayoreo50() && esProductoMayoreo50(producto)),
             talla: producto.talla,
             color: colorProducto,
             imagen1: producto.imagen1,
@@ -930,7 +975,8 @@ function renderizarTodosLosProductos() {
     function actualizarTituloPagina() {
         if (!pageTitle) return;
         var tituloBase = categoria === 'Hombre' ? 'PARA NUESTROS ATLETAS' : (categoria === 'Mujer' ? 'PARA NUESTRAS ATLETAS' : 'Productos');
-        if (esModoMayoreo()) tituloBase = 'MAYOREO';
+        if (esModoMayoreo50()) tituloBase = 'MAYOREO +50';
+        else if (esModoMayoreo()) tituloBase = 'MAYOREO +20';
         else if (esModoNuevoStock()) {
             tituloBase = 'NUEVO STOCK';
             if (window.fechaStockMasRecienteEtiqueta) {
