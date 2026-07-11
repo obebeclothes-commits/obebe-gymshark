@@ -1144,19 +1144,83 @@ a.add-to-cart-carousel {
     gap: 0.85rem;
 }
 
+/* ===== Colores por marca / mayoreo ===== */
+
+/* Gym Shark: azul */
+.brand-pill-gymshark,
+a.brand-pill-gymshark,
+a.brand-pill-gymshark:link,
+a.brand-pill-gymshark:visited,
+a.brand-pill-gymshark:hover,
+a.brand-pill-gymshark:active {
+    border-left: 5px solid #4da3ff !important;
+    background: linear-gradient(135deg, #0b2545 0%, #1d5fb8 100%) !important;
+    box-shadow: 0 8px 22px rgba(13, 71, 161, 0.3) !important;
+    color: #fff !important;
+}
+
+/* Uniqlo: gris */
+.brand-pill-uniqlo,
+a.brand-pill-uniqlo,
+a.brand-pill-uniqlo:link,
+a.brand-pill-uniqlo:visited,
+a.brand-pill-uniqlo:hover,
+a.brand-pill-uniqlo:active {
+    border-left: 5px solid #b0b0b0 !important;
+    background: linear-gradient(135deg, #3a3a3a 0%, #6e6e6e 100%) !important;
+    box-shadow: 0 8px 22px rgba(60, 60, 60, 0.3) !important;
+    color: #fff !important;
+}
+
+/* On Cloud: blanco */
+.brand-pill-oncloud,
+a.brand-pill-oncloud,
+a.brand-pill-oncloud:link,
+a.brand-pill-oncloud:visited,
+a.brand-pill-oncloud:hover,
+a.brand-pill-oncloud:active {
+    border-left: 5px solid #d0d0d0 !important;
+    background: linear-gradient(135deg, #ffffff 0%, #eef1f5 100%) !important;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14) !important;
+    color: #1a1a1a !important;
+}
+
+.brand-pill-oncloud .brand-pill-text {
+    color: #1a1a1a;
+}
+
+/* Mayoreo +20: morado */
+.mayoreo-cta-20,
+a.mayoreo-cta-20,
+a.mayoreo-cta-20:link,
+a.mayoreo-cta-20:visited,
+a.mayoreo-cta-20:hover,
+a.mayoreo-cta-20:active {
+    border-left: 5px solid #b57bff !important;
+    background: linear-gradient(135deg, #1a1030 0%, #5a2ea6 100%) !important;
+    box-shadow: 0 8px 22px rgba(90, 46, 166, 0.3) !important;
+    color: #fff !important;
+}
+
+.mayoreo-cta-20:hover {
+    box-shadow: 0 12px 26px rgba(90, 46, 166, 0.38);
+}
+
+/* Mayoreo +50: exótico (turquesa → magenta) */
 .mayoreo-cta-50,
 a.mayoreo-cta-50,
 a.mayoreo-cta-50:link,
 a.mayoreo-cta-50:visited,
 a.mayoreo-cta-50:hover,
 a.mayoreo-cta-50:active {
-    border-left: 5px solid #f2c14e !important;
-    background: linear-gradient(135deg, #1a1a1a 0%, #4a3410 100%) !important;
-    box-shadow: 0 8px 22px rgba(74, 52, 16, 0.3) !important;
+    border-left: 5px solid #2af5c8 !important;
+    background: linear-gradient(135deg, #06403b 0%, #0e8f8f 45%, #a0247e 100%) !important;
+    box-shadow: 0 8px 22px rgba(160, 36, 126, 0.3) !important;
+    color: #fff !important;
 }
 
 .mayoreo-cta-50:hover {
-    box-shadow: 0 12px 26px rgba(74, 52, 16, 0.36);
+    box-shadow: 0 12px 26px rgba(160, 36, 126, 0.4);
 }
 
 .product-price-mayoreo50 .product-price-wholesale {
