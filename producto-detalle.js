@@ -82,7 +82,7 @@ window.iniciarDetalleProducto = function() {
         + '<h1>' + producto.nombre + '</h1>'
         + '<p class="product-size">Talla: ' + producto.talla + '</p>'
         + (producto.color ? '<p class="product-color">Color: ' + producto.color + '</p>' : '')
-        + (typeof htmlPrecioProducto === 'function' ? htmlPrecioProducto(producto) : '<p class="product-price">$' + producto.precio.toFixed(2) + '</p>')
+        + (typeof htmlPrecioProducto === 'function' ? htmlPrecioProducto(producto) : '<p class="product-price">$' + (typeof formatearPrecio === 'function' ? formatearPrecio(producto.precio) : producto.precio.toFixed(2)) + '</p>')
         + (agotado
             ? '<button type="button" class="add-to-cart-detail agotado" id="addToCartDetailBtn" disabled>Agotado</button>'
             : '<button type="button" class="add-to-cart-detail" id="addToCartDetailBtn">Agregar al Carrito</button>');

@@ -1,4 +1,10 @@
-﻿function actualizarEtiquetaNuevoStock() {
+﻿function formatearPrecio(valor) {
+    var n = Number(valor) || 0;
+    return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
+window.formatearPrecio = formatearPrecio;
+
+function actualizarEtiquetaNuevoStock() {
     var el = document.getElementById('nuevoStockFechaLabel');
     if (!el) return;
     var etiqueta = window.fechaStockMasRecienteEtiqueta || '';
@@ -177,7 +183,7 @@ function renderizarCarruselHombre(categoria = 'Hombre', mostrarTodos = false) {
         info.innerHTML = `
             <h3 class="product-name">${producto.nombre}</h3>
             <p class="product-size">Talla: ${producto.talla}</p>
-            <p class="product-price">$${producto.precio.toFixed(2)}</p>
+            <p class="product-price">$${formatearPrecio(producto.precio)}</p>
             <button type="button" class="${btnClase}" data-product-id="${producto.id}" ${agotado ? ' disabled' : ''}>${btnTexto}</button>
         `;
 
@@ -266,7 +272,7 @@ function renderizarProductosMujer() {
         info.className = 'product-info';
         const btnTexto = agotado ? 'Agotado' : 'Agregar al Carrito';
         const btnClase = 'add-to-cart-carousel' + (agotado ? ' agotado' : '');
-        info.innerHTML = '<h3 class="product-name">' + producto.nombre + '</h3><p class="product-size">Talla: ' + producto.talla + '</p><p class="product-price">$' + (producto.precio ? producto.precio.toFixed(2) : '0.00') + '</p><button type="button" class="' + btnClase + '" data-product-id="' + producto.id + '" ' + (agotado ? ' disabled' : '') + '>' + btnTexto + '</button>';
+        info.innerHTML = '<h3 class="product-name">' + producto.nombre + '</h3><p class="product-size">Talla: ' + producto.talla + '</p><p class="product-price">$' + (producto.precio ? formatearPrecio(producto.precio) : '0') + '</p><button type="button" class="' + btnClase + '" data-product-id="' + producto.id + '" ' + (agotado ? ' disabled' : '') + '>' + btnTexto + '</button>';
 
         card.appendChild(info);
 

@@ -217,25 +217,25 @@ function htmlPrecioProducto(producto) {
     if (esModoMayoreo50() && mayor50 > 0) {
         var partes = '';
         if (retail > 0) {
-            partes += '<span class="product-price-retail">$' + retail.toFixed(2) + '</span>';
+            partes += '<span class="product-price-retail">$' + formatearPrecio(retail) + '</span>';
         }
         if (mayor > 0 && Math.abs(mayor - mayor50) > 0.009) {
-            partes += '<span class="product-price-retail">$' + mayor.toFixed(2) + '</span>';
+            partes += '<span class="product-price-retail">$' + formatearPrecio(mayor) + '</span>';
         }
-        partes += '<span class="product-price-wholesale">$' + mayor50.toFixed(2) + '</span>';
+        partes += '<span class="product-price-wholesale">$' + formatearPrecio(mayor50) + '</span>';
         return '<p class="product-price product-price-mayoreo product-price-mayoreo50">' + partes + '</p>';
     }
 
     if (esModoMayoreo() && producto.mayoreo && mayor > 0) {
         if (retail > 0 && Math.abs(retail - mayor) > 0.009) {
             return '<p class="product-price product-price-mayoreo">'
-                + '<span class="product-price-retail">$' + retail.toFixed(2) + '</span>'
-                + '<span class="product-price-wholesale">$' + mayor.toFixed(2) + '</span>'
+                + '<span class="product-price-retail">$' + formatearPrecio(retail) + '</span>'
+                + '<span class="product-price-wholesale">$' + formatearPrecio(mayor) + '</span>'
                 + '</p>';
         }
-        return '<p class="product-price">$' + mayor.toFixed(2) + '</p>';
+        return '<p class="product-price">$' + formatearPrecio(mayor) + '</p>';
     }
-    return '<p class="product-price">$' + retail.toFixed(2) + '</p>';
+    return '<p class="product-price">$' + formatearPrecio(retail) + '</p>';
 }
 
 window.esModoMayoreo = esModoMayoreo;
@@ -593,9 +593,17 @@ function aplicarFiltrosYOrdenar(productos) {
         productosFiltrados = productosFiltrados.filter(producto => producto.color && filtros.colores.includes(producto.color));
     }
 
-    // Filtrar por marca
-    if (filtros.marcas && filtros.marcas.length > 0) {
-        productosFiltrados = productosFiltrados.filter(producto => producto.marca && filtros.marcas.includes(producto.marca));
+    // Filtrar por marca (incluye la marca de la URL aunque no tenga checkbox, p. ej. marcas sin stock)
+    var marcasEfectivas = (filtros.marcas || []).slice();
+    (leerFiltrosDesdeURL().marcas || []).forEach(function(m) {
+        if (!marcasEfectivas.some(function(x) { return marcaCoincideFiltro(x, m); })) {
+            marcasEfectivas.push(m);
+        }
+    });
+    if (marcasEfectivas.length > 0) {
+        productosFiltrados = productosFiltrados.filter(function(producto) {
+            return producto.marca && marcasEfectivas.some(function(m) { return marcaCoincideFiltro(m, producto.marca); });
+        });
     }
 
     // Ordenar: primero con stock al inicio, agotados (stock 0) al final; dentro de cada grupo por precio si aplica
@@ -800,7 +808,7 @@ function renderizarCarrito() {
             <div class="cart-item-info">
                 <div class="cart-item-name">${item.nombre}</div>
                 <div class="cart-item-details">Talla: ${item.talla}${colorItem ? ' | Color: ' + colorItem : ''} | Cantidad: ${item.cantidad}</div>
-                <div class="cart-item-price">$${subtotal.toFixed(2)}</div>
+                <div class="cart-item-price">$${formatearPrecio(subtotal)}</div>
             </div>
             <button class="remove-item-btn" data-cart-remove data-id="${item.id}" data-talla="${tallaEscaped.replace(/"/g, '&quot;')}" data-color="${colorEscaped.replace(/"/g, '&quot;')}" aria-label="Eliminar">×</button>
         `;
@@ -808,7 +816,7 @@ function renderizarCarrito() {
         cartItems.appendChild(itemDiv);
     });
 
-    cartTotal.textContent = `Total: $${total.toFixed(2)}`;
+    cartTotal.textContent = `Total: $${formatearPrecio(total)}`;
 }
 
 // Mostrar notificación
@@ -864,11 +872,11 @@ function enviarMensajeWhatsApp() {
         mensaje += `   Talla: ${item.talla}\n`;
         if (item.color) mensaje += `   Color: ${item.color}\n`;
         mensaje += `   Cantidad: ${item.cantidad}\n`;
-        mensaje += `   Precio: $${subtotal.toFixed(2)}\n`;
+        mensaje += `   Precio: $${formatearPrecio(subtotal)}\n`;
         mensaje += `   Link: ${linkProducto}\n\n`;
     });
 
-    mensaje += `Total: $${total.toFixed(2)}\n\n`;
+    mensaje += `Total: $${formatearPrecio(total)}\n\n`;
     mensaje += 'Gracias!';
 
     const numeroWhatsApp = '524462207365';
@@ -1075,9 +1083,9 @@ function inicializarEventosFiltros() {
     const applyFiltersBtn = document.getElementById('applyFiltersBtn');
     if (applyFiltersBtn) {
         applyFiltersBtn.addEventListener('click', () => {
+            sincronizarFiltrosConURL();
             const productosCategoria = obtenerProductosPorCategoria();
             const productosFiltrados = aplicarFiltrosYOrdenar(productosCategoria);
-            sincronizarFiltrosConURL();
             aplicarBusquedaYRenderizar(productosFiltrados);
             var wrapper = document.getElementById('filtersProductsWrapper');
             var toggleBtn = document.getElementById('filtersToggleBtn');
@@ -1088,9 +1096,9 @@ function inicializarEventosFiltros() {
     }
 
     function onSearchInput() {
+        sincronizarFiltrosConURL();
         const productosCategoria = obtenerProductosPorCategoria();
         const productosFiltrados = aplicarFiltrosYOrdenar(productosCategoria);
-        sincronizarFiltrosConURL();
         aplicarBusquedaYRenderizar(productosFiltrados);
     }
     var productSearchInput = document.getElementById('productSearchInput');

@@ -1123,14 +1123,26 @@ a.add-to-cart-carousel {
 
 .product-price-retail {
     text-decoration: line-through;
-    color: #888;
-    font-weight: 500;
+    text-decoration-color: #e03131;
+    color: #e03131;
+    font-weight: 600;
     font-size: 0.9rem;
 }
 
 .product-price-wholesale {
-    color: #b71c1c;
+    color: #2f9e44;
     font-weight: 800;
+    font-size: 1.05rem;
+}
+
+/* Mayoreo +50: la comparativa muestra normal y +20 tachados en rojo, +50 resaltado */
+.product-price-mayoreo50 .product-price-retail {
+    color: #e03131;
+    text-decoration-color: #e03131;
+}
+
+.product-price-mayoreo50 .product-price-wholesale {
+    color: #2f9e44;
 }
 
 .mayoreo-filter-block {
@@ -1221,10 +1233,6 @@ a.mayoreo-cta-50:active {
 
 .mayoreo-cta-50:hover {
     box-shadow: 0 12px 26px rgba(160, 36, 126, 0.4);
-}
-
-.product-price-mayoreo50 .product-price-wholesale {
-    color: #b8860b;
 }
 
 /* Estado vacío deportivo: COMING SOON */
