@@ -5,6 +5,7 @@
     var HOJA_INVENTARIO = 'INVENTARIO';
     var HOJA_INVENTARIO_LEGACY = 'HOMBRE';
     var FILA_INICIO = 2; // fila 3 del sheet (0-based en CSV)
+    var IDX_IMAGEN = 0; // columna A (número de imagen / referencia de producto)
     var IDX_SEGMENTO = 19; // columna T
     var IDX_PRECIO_MAYOREO = 15; // columna P
     var IDX_MAYOREO = 17; // columna R
@@ -256,13 +257,37 @@
         return COLOR_CLAVE_ALIAS[compact] || COLOR_CLAVE_ALIAS[base] || compact || base;
     }
 
-    function claveProducto(nombre, talla, color, marca) {
-        return [
+    function parsearNumeroImagen(valor) {
+        var texto = String(valor || '').trim();
+        if (!texto) return 0;
+        var n = parseInt(texto, 10);
+        return isNaN(n) || n <= 0 ? 0 : n;
+    }
+
+    function extraerRefImagenProducto(producto) {
+        if (!producto) return 0;
+        var fuentes = [producto.imagen1, producto.imagen2, producto.id];
+        for (var i = 0; i < fuentes.length; i++) {
+            var valor = fuentes[i];
+            if (valor === undefined || valor === null || valor === '') continue;
+            var texto = String(valor);
+            var match = texto.match(/(\d+)(?:\.\d+)?\.(?:webp|jpe?g|png|gif)$/i);
+            if (match) return parseInt(match[1], 10);
+            if (/^\d+$/.test(texto.trim())) return parseInt(texto.trim(), 10);
+        }
+        return 0;
+    }
+
+    function claveProducto(nombre, talla, color, marca, refImagen) {
+        var partes = [
             normTexto(nombre),
             normTexto(normalizarTalla(talla)),
             normColorClave(color),
             normTexto(normalizarMarca(marca))
-        ].join('|');
+        ];
+        var ref = parsearNumeroImagen(refImagen);
+        if (ref > 0) partes.push(String(ref));
+        return partes.join('|');
     }
 
     function normalizarSegmento(valor) {
@@ -327,13 +352,14 @@
             var mayoreo = parsearMayoreo(f[IDX_MAYOREO]);
             var posicionCarrusel = parsearPosicionCarrusel(f[IDX_CARRUSEL]);
             var fechaStock = parsearFechaStock(f[IDX_FECHA_STOCK]);
+            var refImagen = parsearNumeroImagen(f[IDX_IMAGEN]);
             if (stock > 0) {
                 if (talla) opciones.tallas.add(talla);
                 if (color) opciones.colores.add(color);
                 if (tipo) opciones.tipos.add(tipo);
                 if (marca) opciones.marcas.add(marca);
             }
-            var clave = claveProducto(nombre, talla, color, marca);
+            var clave = claveProducto(nombre, talla, color, marca, refImagen);
             var datosFila = {
                 stock: stock,
                 precio: precio,
@@ -344,7 +370,8 @@
                 tipo: tipo,
                 color: color,
                 marca: marca,
-                talla: talla
+                talla: talla,
+                refImagen: refImagen
             };
             var previo = mapa.get(clave);
             if (previo) {
@@ -365,21 +392,17 @@
         return { mapa: mapa, opciones: setsToSortedArrays(opciones) };
     }
 
-    function buscarEnMapa(mapa, nombre, talla, color, marca) {
-        var clave = claveProducto(nombre, talla, color, marca);
-        if (mapa.has(clave)) return mapa.get(clave);
+    function buscarEnMapa(mapa, nombre, talla, color, marca, refImagen) {
+        var ref = parsearNumeroImagen(refImagen);
+        var intentos = [];
+        if (ref > 0) intentos.push(ref);
+        intentos.push(0);
 
-        var prefijo = normTexto(nombre) + '|' + normTexto(normalizarTalla(talla)) + '|';
-        var sufijo = '|' + normTexto(normalizarMarca(marca));
-        var candidato = null;
-        var coincidencias = 0;
-        mapa.forEach(function(valor, key) {
-            if (key.indexOf(prefijo) === 0 && key.slice(-sufijo.length) === sufijo) {
-                coincidencias += 1;
-                candidato = valor;
-            }
-        });
-        return coincidencias === 1 ? candidato : null;
+        for (var i = 0; i < intentos.length; i++) {
+            var clave = claveProducto(nombre, talla, color, marca, intentos[i]);
+            if (mapa.has(clave)) return mapa.get(clave);
+        }
+        return null;
     }
 
     function sincronizarCatalogo(catalogo, mapaSheet) {
@@ -387,7 +410,8 @@
         var actualizados = 0;
         catalogo.forEach(function(p) {
             var talla = normalizarTalla(p.tallaBase || String(p.talla || '').split('-')[0].trim());
-            var datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca);
+            var refImagen = extraerRefImagenProducto(p);
+            var datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca, refImagen);
             if (datos) {
                 p.stock = datos.stock;
                 if (datos.precio > 0) p.precio = datos.precio;
