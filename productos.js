@@ -151,8 +151,16 @@ function esProductoNuevoStock(producto) {
     return producto.fechaStock === window.fechaStockMasReciente;
 }
 
-function obtenerCategoriaFiltroNuevoStock() {
-    if (!esModoNuevoStock()) return null;
+function hayMarcaActivaEnURL() {
+    return (leerFiltrosDesdeURL().marcas || []).length > 0;
+}
+
+// El filtro Hombre/Mujer aparece en Nuevo stock, Mayoreo +20/+50 y al filtrar por marca.
+function debeMostrarFiltroGenero() {
+    return esModoNuevoStock() || esModoMayoreo() || esModoMayoreo50() || hayMarcaActivaEnURL();
+}
+
+function obtenerCategoriaFiltroGenero() {
     var params = new URLSearchParams(window.location.search);
     if (!params.has('categoria')) return '';
     return (params.get('categoria') || '').trim();
@@ -161,10 +169,10 @@ function obtenerCategoriaFiltroNuevoStock() {
 function actualizarFiltroGeneroNuevoStockUI() {
     var cont = document.getElementById('nuevoStockGenderFilter');
     if (!cont) return;
-    var activo = esModoNuevoStock();
+    var activo = debeMostrarFiltroGenero();
     cont.hidden = !activo;
     if (!activo) return;
-    var cat = obtenerCategoriaFiltroNuevoStock();
+    var cat = obtenerCategoriaFiltroGenero();
     cont.querySelectorAll('.nuevo-stock-gender-btn').forEach(function(btn) {
         var val = btn.getAttribute('data-categoria') || '';
         var seleccionado = val === (cat || '');
@@ -175,7 +183,6 @@ function actualizarFiltroGeneroNuevoStockUI() {
 
 function navegarFiltroGeneroNuevoStock(categoria) {
     var params = new URLSearchParams(window.location.search);
-    params.set('nuevoStock', '1');
     if (categoria) {
         params.set('categoria', categoria);
     } else {
@@ -270,7 +277,9 @@ function obtenerProductosPorCategoria() {
         });
     }
 
-    if ((modoMayoreo || modoMayoreo50 || modoNuevoStock) && !tieneCategoriaEnURL()) {
+    // "Todos" (sin categoría en la URL) combina Hombre + Mujer cuando el filtro de género está activo
+    // (Nuevo stock, Mayoreo +20/+50 o filtro por marca). La marca se aplica luego en aplicarFiltrosYOrdenar.
+    if (!tieneCategoriaEnURL() && debeMostrarFiltroGenero()) {
         var todos = [];
         if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) {
             todos = todos.concat(productosHombre);
@@ -284,7 +293,8 @@ function obtenerProductosPorCategoria() {
             if (Number(p.stock) <= 0) return false;
             if (modoNuevoStock) return esProductoNuevoStock(p);
             if (modoMayoreo50) return esProductoMayoreo50(p);
-            return !!p.mayoreo;
+            if (modoMayoreo) return !!p.mayoreo;
+            return true;
         });
     }
 
@@ -654,6 +664,7 @@ function aplicarBusquedaYRenderizar(productosFiltrados) {
     var visibles = aplicarBusquedaNombre(productosFiltrados);
     actualizarContadorArticulos(visibles.length);
     renderizarProductos(visibles);
+    actualizarFiltroGeneroNuevoStockUI();
 }
 
 // ========== FUNCIONALIDAD DEL CARRITO ==========
