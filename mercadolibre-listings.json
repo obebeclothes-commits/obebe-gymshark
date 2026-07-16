@@ -1,5 +1,11 @@
 {
-  "actualizado": null,
-  "vendedor": null,
-  "por_clave": {}
+  "actualizado": "2026-07-16T04:05:33Z",
+  "vendedor": {
+    "id": 668834175,
+    "nickname": "RODRIGUEZFLORESDANIEL1234",
+    "permalink": "http://perfil.mercadolibre.com.mx/RODRIGUEZFLORESDANIEL1234"
+  },
+  "por_clave": {},
+  "total_activos": 1,
+  "total_mapeados": 0
 }
