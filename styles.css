@@ -1587,6 +1587,51 @@ footer {
     color: #25D366;
 }
 
+.footer-social-link.mercadolibre:hover,
+.social-link.mercadolibre:hover {
+    background: #ffe600;
+    color: #1a1a1a;
+}
+
+.btn-mercadolibre {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.85rem 1.25rem;
+    background: #ffe600;
+    color: #1a1a1a;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    text-align: center;
+    transition: background 0.2s ease, transform 0.2s ease;
+    box-sizing: border-box;
+}
+
+.btn-mercadolibre:hover {
+    background: #f2d900;
+    color: #1a1a1a;
+}
+
+.btn-mercadolibre-compact {
+    width: auto;
+    margin-top: 0.5rem;
+    padding: 0.55rem 1rem;
+    font-size: 0.85rem;
+}
+
+.product-ml-actions {
+    margin-top: 0.75rem;
+}
+
+.product-detail-info .btn-mercadolibre {
+    margin-top: 1rem;
+}
+
 /* En vista de computadora: ocultar WhatsApp solo en el header (footer WhatsApp siempre visible) */
 @media (min-width: 769px) {
     .social-link.whatsapp {

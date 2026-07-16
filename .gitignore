@@ -22,12 +22,30 @@ npm-debug.log*
 hombre-etiquetado/
 mujer-etiquetado/
 
+# Paquetes listos para Facebook Marketplace (local)
+marketplace-pendientes/
+
+# Mercado Libre (OAuth + paquetes locales)
+mercadolibre-pendientes/
+scripts/mercadolibre-config.json
+publicar-mercadolibre-prueba.bat
+publicar-mercadolibre-todo.bat
+login-mercadolibre.bat
+sincronizar-mercadolibre.bat
+
 # Scripts de automatización local (Sheets, Selenium, etiquetado, etc.)
 scripts/*
 !scripts/importar-stock.py
 scripts/.chrome-sheet-profile/
+scripts/.chrome-marketplace-profile/
 scripts/__pycache__/
 
 # Atajos .bat de tareas locales
 actualizar-columna-a.bat
 etiquetar-fotos-hombre-prueba.bat
+publicar-marketplace-prueba.bat
+publicar-marketplace-selenium-prueba.bat
+publicar-marketplace-auto.bat
+publicar-marketplace-todo.bat
+borrar-marketplace-todas.bat
+login-facebook-marketplace.bat

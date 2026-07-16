@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conectar Mercado Libre - Obebe</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .ml-callback {
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+        .ml-callback-card {
+            max-width: 560px;
+            width: 100%;
+            background: #fff;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        }
+        .ml-callback-card h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary-color);
+        }
+        .ml-callback-card p {
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        .ml-code-box {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+        .ml-code-box input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .ml-copy-btn, .ml-home-btn {
+            display: inline-block;
+            padding: 0.75rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .ml-copy-btn {
+            background: #ffe600;
+            color: #1a1a1a;
+        }
+        .ml-copy-btn:hover { background: #f2d900; }
+        .ml-home-btn {
+            background: var(--primary-color);
+            color: #fff;
+            margin-top: 0.5rem;
+        }
+        .ml-command {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+            margin: 1rem 0;
+        }
+        .ml-status-ok { color: #1b7a1b; font-weight: 600; }
+        .ml-status-warn { color: #b45309; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="index.html" class="logo-link">
+                <div class="logo"><h1>OBEBE CLOTHES</h1></div>
+            </a>
+        </div>
+    </header>
+
+    <main class="ml-callback">
+        <div class="ml-callback-card">
+            <h1>Conectar Mercado Libre</h1>
+            <p id="mlStatusText">Procesando autorización...</p>
+            <div id="mlCodeSection" hidden>
+                <p>Tu código de autorización (cópialo y pégalo en la terminal de tu PC):</p>
+                <div class="ml-code-box">
+                    <input type="text" id="mlCodeInput" readonly>
+                    <button type="button" class="ml-copy-btn" id="mlCopyBtn">Copiar</button>
+                </div>
+                <p>Luego ejecuta en la carpeta del proyecto:</p>
+                <div class="ml-command" id="mlCommand"></div>
+                <p>Después de guardar el token, sincroniza los enlaces con la web:</p>
+                <div class="ml-command">python scripts/sincronizar-mercadolibre.py</div>
+            </div>
+            <a href="index.html" class="ml-home-btn">Volver al inicio</a>
+        </div>
+    </main>
+
+    <script>
+        (function() {
+            var params = new URLSearchParams(window.location.search);
+            var code = params.get('code');
+            var error = params.get('error');
+            var status = document.getElementById('mlStatusText');
+            var section = document.getElementById('mlCodeSection');
+            var input = document.getElementById('mlCodeInput');
+            var command = document.getElementById('mlCommand');
+            var copyBtn = document.getElementById('mlCopyBtn');
+
+            if (error) {
+                status.textContent = 'Autorización cancelada o fallida: ' + error;
+                status.className = 'ml-status-warn';
+                return;
+            }
+
+            if (!code) {
+                status.textContent = 'No se recibió código. Abre login-mercadolibre.bat y autoriza de nuevo.';
+                status.className = 'ml-status-warn';
+                return;
+            }
+
+            status.textContent = 'Autorización recibida. Copia el código y completa la conexión en tu PC.';
+            status.className = 'ml-status-ok';
+            section.hidden = false;
+            input.value = code;
+            command.textContent = 'python scripts/publicar-mercadolibre.py --guardar-token ' + code;
+
+            copyBtn.addEventListener('click', function() {
+                input.select();
+                input.setSelectionRange(0, 99999);
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(code).then(function() {
+                        copyBtn.textContent = 'Copiado';
+                        setTimeout(function() { copyBtn.textContent = 'Copiar'; }, 2000);
+                    });
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

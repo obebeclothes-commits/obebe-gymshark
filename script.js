@@ -914,8 +914,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isIndexPage) return;
 
     const run = () => iniciarIndex();
-    if (typeof sincronizarStockDesdeSheets === 'function') {
-        sincronizarStockDesdeSheets().then(run);
+    var promesas = [];
+    if (typeof sincronizarStockDesdeSheets === 'function') promesas.push(sincronizarStockDesdeSheets());
+    if (typeof cargarListadosMercadoLibre === 'function') promesas.push(cargarListadosMercadoLibre());
+    if (promesas.length) {
+        Promise.all(promesas).then(run);
     } else {
         run();
     }
