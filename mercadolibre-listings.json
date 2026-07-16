@@ -1,11 +1,20 @@
 {
-  "actualizado": "2026-07-16T04:12:03Z",
+  "actualizado": "2026-07-16T04:15:00Z",
   "vendedor": {
     "id": 668834175,
     "nickname": "RODRIGUEZFLORESDANIEL1234",
     "permalink": "http://perfil.mercadolibre.com.mx/RODRIGUEZFLORESDANIEL1234"
   },
-  "por_clave": {},
+  "por_clave": {
+    "hombre-1": {
+      "item_id": "MLM5725302806",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725302806-arrival-regular-fit-gymshark-verde-_JM",
+      "title": "ARRIVAL REGULAR FIT · GYMSHARK · VERDE",
+      "price": 750,
+      "stock": 1,
+      "status": "under_review"
+    }
+  },
   "total_activos": 0,
-  "total_mapeados": 0
+  "total_mapeados": 1
 }
