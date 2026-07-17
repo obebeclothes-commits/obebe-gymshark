@@ -345,6 +345,7 @@
         var filas = parseCSV(csvTexto);
         var usarSegmento = hojaUsaColumnaSegmento(filas);
         var mapa = new Map();
+        var mapaPorRef = new Map();
         var opciones = {
             tallas: new Set(),
             tipos: new Set(),
@@ -378,6 +379,7 @@
             }
             var clave = claveProducto(nombre, talla, color, marca, refImagen);
             var datosFila = {
+                nombre: nombre,
                 stock: stock,
                 precio: precio,
                 precioMayoreo: precioMayoreo,
@@ -411,8 +413,28 @@
             } else {
                 mapa.set(clave, datosFila);
             }
+            if (refImagen > 0) {
+                var prevRef = mapaPorRef.get(refImagen);
+                if (!prevRef) {
+                    mapaPorRef.set(refImagen, Object.assign({}, datosFila));
+                } else {
+                    prevRef.stock = Math.min(prevRef.stock, stock);
+                    if (precio > 0) prevRef.precio = precio;
+                    if (precioMayoreo > 0) prevRef.precioMayoreo = precioMayoreo;
+                    if (precioMayoreo50 > 0) prevRef.precioMayoreo50 = precioMayoreo50;
+                    if (descuentoMayoreo) prevRef.descuentoMayoreo = descuentoMayoreo;
+                    if (descuentoMayoreo50) prevRef.descuentoMayoreo50 = descuentoMayoreo50;
+                    prevRef.mayoreo = prevRef.mayoreo || mayoreo;
+                    if (posicionCarrusel > 0) prevRef.posicionCarrusel = posicionCarrusel;
+                    if (fechaStock) prevRef.fechaStock = fechaStock;
+                    if (tipo) prevRef.tipo = tipo;
+                    if (color) prevRef.color = color;
+                    if (marca) prevRef.marca = marca;
+                    if (talla) prevRef.talla = talla;
+                }
+            }
         }
-        return { mapa: mapa, opciones: setsToSortedArrays(opciones) };
+        return { mapa: mapa, mapaPorRef: mapaPorRef, opciones: setsToSortedArrays(opciones) };
     }
 
     function buscarEnMapa(mapa, nombre, talla, color, marca, refImagen) {
@@ -428,13 +450,35 @@
         return null;
     }
 
-    function sincronizarCatalogo(catalogo, mapaSheet) {
+    function nombresParecidos(nombreA, nombreB) {
+        var a = normTexto(nombreA).replace(/[^a-z0-9]+/g, ' ').trim();
+        var b = normTexto(nombreB).replace(/[^a-z0-9]+/g, ' ').trim();
+        if (!a || !b) return false;
+        if (a === b) return true;
+        if (a.indexOf(b) >= 0 || b.indexOf(a) >= 0) return true;
+        var wa = a.split(' ').filter(Boolean);
+        var wb = b.split(' ').filter(Boolean);
+        var n = Math.min(3, wa.length, wb.length);
+        if (n < 2) return false;
+        for (var i = 0; i < n; i++) {
+            if (wa[i] !== wb[i]) return false;
+        }
+        return true;
+    }
+
+    function sincronizarCatalogo(catalogo, mapaSheet, mapaPorRef) {
         if (!Array.isArray(catalogo)) return 0;
         var actualizados = 0;
         catalogo.forEach(function(p) {
             var talla = normalizarTalla(p.tallaBase || String(p.talla || '').split('-')[0].trim());
             var refImagen = extraerRefImagenProducto(p);
             var datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca, refImagen);
+            if (!datos && refImagen > 0 && mapaPorRef && mapaPorRef.has(refImagen)) {
+                var porRef = mapaPorRef.get(refImagen);
+                if (porRef && nombresParecidos(p.nombre, porRef.nombre || '')) {
+                    datos = porRef;
+                }
+            }
             if (datos) {
                 p.stock = datos.stock;
                 if (datos.precio > 0) p.precio = datos.precio;
@@ -453,8 +497,11 @@
                     p.tallaBase = datos.talla;
                 }
                 actualizados += 1;
+            } else {
+                // Ya no está en el sheet (eliminado o sin coincidencia): ocultar en la tienda.
+                p.stock = 0;
+                p.posicionCarrusel = 0;
             }
-            // Sin coincidencia en el sheet: conservar stock del catálogo local.
         });
         return actualizados;
     }
@@ -477,12 +524,12 @@
         var opcionesSheet = {};
         if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) {
             var datosHombre = leerFilasSheet(csv, 'Hombre');
-            sincronizarCatalogo(productosHombre, datosHombre.mapa);
+            sincronizarCatalogo(productosHombre, datosHombre.mapa, datosHombre.mapaPorRef);
             opcionesSheet.Hombre = datosHombre.opciones;
         }
         if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) {
             var datosMujer = leerFilasSheet(csv, 'Mujer');
-            sincronizarCatalogo(productosMujer, datosMujer.mapa);
+            sincronizarCatalogo(productosMujer, datosMujer.mapa, datosMujer.mapaPorRef);
             opcionesSheet.Mujer = datosMujer.opciones;
         }
         window.opcionesInventarioSheet = opcionesSheet;

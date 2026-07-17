@@ -1495,12 +1495,19 @@ window.addEventListener('pageshow', (event) => {
     if (!grid) return;
 
     if (event.persisted) {
-        var productosCategoria = obtenerProductosPorCategoria();
-        generarFiltros(productosCategoria);
-        restaurarFiltrosDesdeURL();
-        var productosFiltrados = aplicarFiltrosYOrdenar(productosCategoria);
-        aplicarBusquedaYRenderizar(productosFiltrados);
-        actualizarFiltroGeneroNuevoStockUI();
+        var refrescarDesdeCache = function() {
+            var productosCategoria = obtenerProductosPorCategoria();
+            generarFiltros(productosCategoria);
+            restaurarFiltrosDesdeURL();
+            var productosFiltrados = aplicarFiltrosYOrdenar(productosCategoria);
+            aplicarBusquedaYRenderizar(productosFiltrados);
+            actualizarFiltroGeneroNuevoStockUI();
+        };
+        if (typeof sincronizarStockDesdeSheets === 'function') {
+            sincronizarStockDesdeSheets().then(refrescarDesdeCache);
+        } else {
+            refrescarDesdeCache();
+        }
     }
 
     grid.querySelectorAll('.product-card-full .product-image').forEach(container => {
