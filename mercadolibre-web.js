@@ -49,13 +49,8 @@
         return PROMESA;
     };
 
-    window.obtenerEnlaceMercadoLibre = function(producto) {
-        if (!CACHE || !producto) return null;
-        if (String(producto.nombre || '').trim().toUpperCase() === 'ARRIVAL REGULAR FIT') return null;
-        var clave = claveProductoML(producto);
-        if (!clave) return null;
-        var item = CACHE.por_clave[clave];
-        return item && item.permalink ? item : null;
+    window.obtenerEnlaceMercadoLibre = function() {
+        return null;
     };
 
     window.htmlBotonMercadoLibre = function(permalink, texto) {

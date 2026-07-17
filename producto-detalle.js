@@ -85,17 +85,8 @@ window.iniciarDetalleProducto = function() {
         + (typeof htmlPrecioProducto === 'function' ? htmlPrecioProducto(producto) : '<p class="product-price">$' + (typeof formatearPrecio === 'function' ? formatearPrecio(producto.precio) : producto.precio.toFixed(2)) + '</p>')
         + (agotado
             ? '<button type="button" class="add-to-cart-detail agotado" id="addToCartDetailBtn" disabled>Agotado</button>'
-            : '<button type="button" class="add-to-cart-detail" id="addToCartDetailBtn">Agregar al Carrito</button>')
-        + '<div class="product-ml-actions" id="productMlActions"></div>';
+            : '<button type="button" class="add-to-cart-detail" id="addToCartDetailBtn">Agregar al Carrito</button>');
     container.appendChild(info);
-
-    var mlItem = typeof obtenerEnlaceMercadoLibre === 'function' ? obtenerEnlaceMercadoLibre(producto) : null;
-    var mlActions = document.getElementById('productMlActions');
-    if (mlActions && mlItem && mlItem.permalink) {
-        mlActions.innerHTML = typeof htmlBotonMercadoLibre === 'function'
-            ? htmlBotonMercadoLibre(mlItem.permalink)
-            : '<a class="btn-mercadolibre" href="' + mlItem.permalink + '" target="_blank" rel="noopener noreferrer">Comprar en Mercado Libre</a>';
-    }
 
     var btn = document.getElementById('addToCartDetailBtn');
     var fixedBar = document.getElementById('addToCartFixedBar');

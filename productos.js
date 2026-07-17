@@ -1027,19 +1027,12 @@ function crearTarjetaProducto(producto) {
     const colorLine = producto.color ? `<p class="product-color">Color: ${producto.color}</p>` : '';
     const btnTexto = agotado ? 'Agotado' : 'Agregar al Carrito';
     const btnClase = 'add-to-cart-btn' + (agotado ? ' agotado' : '');
-    const mlItem = typeof obtenerEnlaceMercadoLibre === 'function' ? obtenerEnlaceMercadoLibre(producto) : null;
-    const mlBtn = mlItem && mlItem.permalink
-        ? (typeof htmlBotonMercadoLibre === 'function'
-            ? htmlBotonMercadoLibre(mlItem.permalink, 'Mercado Libre')
-            : '<a class="btn-mercadolibre btn-mercadolibre-compact" href="' + mlItem.permalink + '" target="_blank" rel="noopener noreferrer">Mercado Libre</a>')
-        : '';
     info.innerHTML = `
         <h3 class="product-name">${producto.nombre}</h3>
         <p class="product-size">Talla: ${producto.talla}</p>
         ${colorLine}
         ${htmlPrecioProducto(producto)}
         <button type="button" class="${btnClase}" data-product-id="${producto.id}" data-product-talla="${producto.talla}" data-product-color="${(producto.color || '').replace(/"/g, '&quot;')}" ${agotado ? ' disabled' : ''}>${btnTexto}</button>
-        ${mlBtn}
     `;
 
     card.appendChild(linkProducto);
