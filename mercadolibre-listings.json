@@ -1,20 +1,2380 @@
 {
-  "actualizado": "2026-07-16T04:15:00Z",
+  "actualizado": "2026-07-16T17:40:36Z",
   "vendedor": {
     "id": 668834175,
     "nickname": "RODRIGUEZFLORESDANIEL1234",
     "permalink": "http://perfil.mercadolibre.com.mx/RODRIGUEZFLORESDANIEL1234"
   },
   "por_clave": {
+    "mujer-67": {
+      "item_id": "MLM5730071400",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730071400-chainstitch-graphic-hoodie-rosa-talla-s-_JM",
+      "title": "Chainstitch Graphic Hoodie Rosa Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-16": {
+      "item_id": "MLM5730072744",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730072744-flex-shorts-negro-talla-s-_JM",
+      "title": "Flex Shorts Negro Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-19": {
+      "item_id": "MLM5730122308",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730122308-gymshark-x-whitney-simmons-azul-talla-s-_JM",
+      "title": "Gymshark X Whitney Simmons Azul Talla S",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-37": {
+      "item_id": "MLM5730121342",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730121342-straight-headband-blanco-talla-one-size-_JM",
+      "title": "Straight Headband Blanco Talla One Size",
+      "price": 626.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-130": {
+      "item_id": "MLM5730123926",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730123926-piping-midi-crew-neck-rojo-talla-l-_JM",
+      "title": "Piping Midi Crew Neck Rojo Talla L",
+      "price": 1398.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-106": {
+      "item_id": "MLM5730121448",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730121448-piping-midi-crew-neck-azul-talla-s-_JM",
+      "title": "Piping Midi Crew Neck Azul Talla S",
+      "price": 1398.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-118": {
+      "item_id": "MLM5730122544",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730122544-everyday-foldover-leggings-negro-talla-s-_JM",
+      "title": "Everyday Foldover Leggings Negro Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-129": {
+      "item_id": "MLM5730071556",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730071556-flex-shorts-gris-talla-s-_JM",
+      "title": "Flex Shorts Gris Talla S",
+      "price": 1205.0,
+      "stock": 3,
+      "status": "active"
+    },
+    "mujer-26": {
+      "item_id": "MLM5730121322",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730121322-rest-day-seamless-modal-boat-neck-crop-top-rosa-talla-l-_JM",
+      "title": "Rest Day Seamless Modal Boat Neck Crop Top Rosa Talla L",
+      "price": 1398.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-128": {
+      "item_id": "MLM5730122602",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730122602-supersoft-straight-leg-pant-gris-talla-s-_JM",
+      "title": "Supersoft Straight Leg Pant Gris Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-114": {
+      "item_id": "MLM5730121536",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730121536-piping-bandeau-with-shelf-azul-talla-l-_JM",
+      "title": "Piping Bandeau With Shelf Azul Talla L",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-105": {
+      "item_id": "MLM5730121436",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730121436-piping-midi-crew-neck-azul-talla-m-_JM",
+      "title": "Piping Midi Crew Neck Azul Talla M",
+      "price": 1398.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-107": {
+      "item_id": "MLM5730121452",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730121452-piping-long-sleeve-crop-top-rojo-talla-s-_JM",
+      "title": "Piping Long Sleeve Crop Top Rojo Talla S",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-125": {
+      "item_id": "MLM5730071492",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730071492-legacy-regular-leggings-negro-talla-s-_JM",
+      "title": "Legacy Regular Leggings Negro Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-66": {
+      "item_id": "MLM5730122436",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730122436-cosy-luxe-zip-through-hoodie-azul-talla-s-_JM",
+      "title": "Cosy Luxe Zip Through Hoodie Azul Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-74": {
+      "item_id": "MLM5730122498",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730122498-everyday-seamless-leggings-azul-talla-s-_JM",
+      "title": "Everyday Seamless Leggings Azul Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-133": {
+      "item_id": "MLM5730121606",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730121606-vital-soft-short-negro-talla-s-_JM",
+      "title": "Vital Soft Short Negro Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-30": {
+      "item_id": "MLM5730122334",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730122334-training-leggings-negro-talla-s-_JM",
+      "title": "Training Leggings Negro Talla S",
+      "price": 1495.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-111": {
+      "item_id": "MLM5730121492",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730121492-piping-bandeau-with-shelf-rojo-talla-m-_JM",
+      "title": "Piping Bandeau With Shelf Rojo Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-11": {
+      "item_id": "MLM5730121292",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730121292-corset-seamless-crop-top-azul-talla-xs-_JM",
+      "title": "Corset Seamless Crop Top Azul Talla Xs",
+      "price": 1398.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-10": {
+      "item_id": "MLM5730071178",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730071178-contrat-seamless-midi-tee-negro-talla-s-_JM",
+      "title": "Contrat Seamless Midi Tee Negro Talla S",
+      "price": 1398.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-122": {
+      "item_id": "MLM5725972334",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725972334-ruched-strappy-sports-bra-morado-talla-xs-_JM",
+      "title": "Ruched Strappy Sports Bra Morado Talla Xs",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-131": {
+      "item_id": "MLM5730070572",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730070572-piping-midi-crew-neck-rojo-talla-m-_JM",
+      "title": "Piping Midi Crew Neck Rojo Talla M",
+      "price": 1398.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-27": {
+      "item_id": "MLM5730070354",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730070354-rest-day-seamless-modal-boat-neck-crop-top-rosa-talla-s-_JM",
+      "title": "Rest Day Seamless Modal Boat Neck Crop Top Rosa Talla S",
+      "price": 1398.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-108": {
+      "item_id": "MLM5730070470",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730070470-piping-bandeau-with-shelf-rojo-talla-s-_JM",
+      "title": "Piping Bandeau With Shelf Rojo Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-83": {
+      "item_id": "MLM5730070410",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730070410-vital-crop-top-negro-talla-xs-_JM",
+      "title": "Vital Crop Top Negro Talla Xs",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-39": {
+      "item_id": "MLM5725672858",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725672858-varsity-hoodie-negro-talla-l-_JM",
+      "title": "Varsity Hoodie Negro Talla L",
+      "price": 1881.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-116": {
+      "item_id": "MLM5730070540",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730070540-piping-bandeau-with-shelf-azul-talla-m-_JM",
+      "title": "Piping Bandeau With Shelf Azul Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-93": {
+      "item_id": "MLM5725972104",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725972104-piping-sports-bra-rojo-talla-xs-_JM",
+      "title": "Piping Sports Bra Rojo Talla Xs",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-109": {
+      "item_id": "MLM5730070482",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730070482-piping-bandeau-with-shelf-rojo-talla-l-_JM",
+      "title": "Piping Bandeau With Shelf Rojo Talla L",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-64": {
+      "item_id": "MLM5725672922",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725672922-deep-knit-beanie-rosa-talla-one-size-_JM",
+      "title": "Deep Knit Beanie Rosa Talla One Size",
+      "price": 819.0,
+      "stock": 3,
+      "status": "active"
+    },
+    "mujer-96": {
+      "item_id": "MLM5725972152",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725972152-double-up-sports-bra-blanco-talla-s-_JM",
+      "title": "Double Up Sports Bra Blanco Talla S",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-116": {
+      "item_id": "MLM5725672998",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725672998-gymshark-x-cbum-hockey-jersey-rojo-talla-m-_JM",
+      "title": "Gymshark X Cbum Hockey Jersey Rojo Talla M",
+      "price": 3039.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-100": {
+      "item_id": "MLM5725972206",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725972206-back-gains-sports-bra-azul-talla-xs-_JM",
+      "title": "Back Gains Sports Bra Azul Talla Xs",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-75": {
+      "item_id": "MLM5730070406",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730070406-light-hold-leggings-negro-talla-l-_JM",
+      "title": "Light Hold Leggings Negro Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-115": {
+      "item_id": "MLM5725972274",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725972274-vital-seamless-2-0-crop-top-negro-talla-s-_JM",
+      "title": "Vital Seamless 2 0 Crop Top Negro Talla S",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-112": {
+      "item_id": "MLM5730070500",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730070500-piping-long-sleeve-crop-top-azul-talla-m-_JM",
+      "title": "Piping Long Sleeve Crop Top Azul Talla M",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-97": {
+      "item_id": "MLM5730070422",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730070422-everyday-seamless-crop-tank-azul-talla-m-_JM",
+      "title": "Everyday Seamless Crop Tank Azul Talla M",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-31": {
+      "item_id": "MLM5730071336",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5730071336-vital-seamless-7-inch-negro-talla-s-_JM",
+      "title": "Vital Seamless 7 Inch Negro Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-192": {
+      "item_id": "MLM5725671928",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671928-eagle-band-style-graphic-straight-leg-pants-negro-talla-m-_JM",
+      "title": "Eagle Band Style Graphic Straight Leg Pants Negro Talla M",
+      "price": 2460.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-213": {
+      "item_id": "MLM5725672010",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725672010-arrival-contrast-pants-gris-talla-m-_JM",
+      "title": "Arrival Contrast Pants Gris Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-198": {
+      "item_id": "MLM5725671002",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671002-legacy-drop-arm-tank-negro-talla-l-_JM",
+      "title": "Legacy Drop Arm Tank Negro Talla L",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-52": {
+      "item_id": "MLM5725671486",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671486-crest-joggers-gris-talla-l-_JM",
+      "title": "Crest Joggers Gris Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-206": {
+      "item_id": "MLM5725671080",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671080-geo-seamless-t-shirt-gris-talla-l-_JM",
+      "title": "Geo Seamless T Shirt Gris Talla L",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-203": {
+      "item_id": "MLM5725671056",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671056-ribbed-tank-1pk-negro-talla-l-_JM",
+      "title": "Ribbed Tank 1pk Negro Talla L",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-50": {
+      "item_id": "MLM5725671456",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671456-crest-joggers-negro-talla-m-_JM",
+      "title": "Crest Joggers Negro Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-111": {
+      "item_id": "MLM5725671668",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671668-flagship-track-pants-verde-talla-m-_JM",
+      "title": "Flagship Track Pants Verde Talla M",
+      "price": 2749.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-210": {
+      "item_id": "MLM5725671114",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671114-power-cut-off-tank-gris-talla-m-_JM",
+      "title": "Power Cut Off Tank Gris Talla M",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-215": {
+      "item_id": "MLM5725671156",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671156-arrival-contrast-1-4-zip-gris-talla-m-_JM",
+      "title": "Arrival Contrast 1 4 Zip Gris Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-200": {
+      "item_id": "MLM5725671016",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671016-shadow-seamless-t-shirt-negro-talla-l-_JM",
+      "title": "Shadow Seamless T Shirt Negro Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-209": {
+      "item_id": "MLM5725671104",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671104-element-baselayyer-t-shirt-negro-talla-l-_JM",
+      "title": "Element Baselayyer T Shirt Negro Talla L",
+      "price": 1495.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-223": {
+      "item_id": "MLM5725671238",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671238-arrival-contrast-t-shirt-gris-talla-s-_JM",
+      "title": "Arrival Contrast T Shirt Gris Talla S",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-214": {
+      "item_id": "MLM5725671140",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671140-arrival-contrast-1-4-zip-gris-talla-l-_JM",
+      "title": "Arrival Contrast 1 4 Zip Gris Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-216": {
+      "item_id": "MLM5725672018",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725672018-crest-tall-joggers-negro-talla-m-_JM",
+      "title": "Crest Tall Joggers Negro Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-221": {
+      "item_id": "MLM5725671210",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671210-arrival-contrast-t-shirt-negro-talla-s-_JM",
+      "title": "Arrival Contrast T Shirt Negro Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-166": {
+      "item_id": "MLM5725671878",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671878-global-lifting-oversized-essential-joggers-negro-talla-l-_JM",
+      "title": "Global Lifting Oversized Essential Joggers Negro Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-226": {
+      "item_id": "MLM5725672050",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725672050-2012-strength-joggers-gris-talla-m-_JM",
+      "title": "2012 Strength Joggers Gris Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-228": {
+      "item_id": "MLM5725672072",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725672072-essential-overssized-joggers-azul-talla-s-_JM",
+      "title": "Essential Overssized Joggers Azul Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-217": {
+      "item_id": "MLM5725671176",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725671176-versatile-seamless-tank-gris-talla-m-_JM",
+      "title": "Versatile Seamless Tank Gris Talla M",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-163": {
+      "item_id": "MLM5725670716",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670716-arrival-t-shirt-azul-talla-m-_JM",
+      "title": "Arrival T Shirt Azul Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-23": {
+      "item_id": "MLM5725666310",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725666310-waffle-short-gris-talla-m-_JM",
+      "title": "Waffle Short Gris Talla M",
+      "price": 1495.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-83": {
+      "item_id": "MLM5725670242",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670242-built-for-more-t-shirt-blanco-talla-l-_JM",
+      "title": "Built For More T Shirt Blanco Talla L",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-31": {
+      "item_id": "MLM5725669758",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725669758-ribbed-tank-1pk-blanco-talla-l-_JM",
+      "title": "Ribbed Tank 1pk Blanco Talla L",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-119": {
+      "item_id": "MLM5725670478",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670478-gymshark-x-cbum-t-shirt-negro-talla-m-_JM",
+      "title": "Gymshark X Cbum T Shirt Negro Talla M",
+      "price": 2460.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-21": {
+      "item_id": "MLM5725666266",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725666266-varsity-mesh-rojo-talla-s-_JM",
+      "title": "Varsity Mesh Rojo Talla S",
+      "price": 1109.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-174": {
+      "item_id": "MLM5725670814",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670814-ribbed-t-shirt-blanco-talla-l-_JM",
+      "title": "Ribbed T Shirt Blanco Talla L",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-92": {
+      "item_id": "MLM5725670302",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670302-chaos-tees-negro-talla-l-_JM",
+      "title": "Chaos Tees Negro Talla L",
+      "price": 2170.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-25": {
+      "item_id": "MLM5725669702",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725669702-crest-t-shirt-azul-talla-s-_JM",
+      "title": "Crest T Shirt Azul Talla S",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-78": {
+      "item_id": "MLM5725670186",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670186-arrival-oversized-tank-rosa-talla-m-_JM",
+      "title": "Arrival Oversized Tank Rosa Talla M",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-139": {
+      "item_id": "MLM5725670634",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670634-sport-7-2-in-1-shorts-azul-talla-s-_JM",
+      "title": "Sport 7 2 In 1 Shorts Azul Talla S",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-87": {
+      "item_id": "MLM5725670268",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670268-built-for-more-t-shirt-blanco-talla-m-_JM",
+      "title": "Built For More T Shirt Blanco Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-74": {
+      "item_id": "MLM5725670158",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670158-arrival-contrast-t-shirt-verde-talla-s-_JM",
+      "title": "Arrival Contrast T Shirt Verde Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-120": {
+      "item_id": "MLM5725670492",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670492-gymshark-x-cbum-t-shirt-blanco-talla-m-_JM",
+      "title": "Gymshark X Cbum T Shirt Blanco Talla M",
+      "price": 2460.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-104": {
+      "item_id": "MLM5725670360",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670360-distressed-script-tees-negro-talla-l-_JM",
+      "title": "Distressed Script Tees Negro Talla L",
+      "price": 2170.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-125": {
+      "item_id": "MLM5725670538",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670538-legacy-drop-arm-tank-blanco-talla-m-_JM",
+      "title": "Legacy Drop Arm Tank Blanco Talla M",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-20": {
+      "item_id": "MLM5725666244",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725666244-sport-panel-7-azul-talla-s-_JM",
+      "title": "Sport Panel 7 Azul Talla S",
+      "price": 1109.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-137": {
+      "item_id": "MLM5725670604",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670604-sport-7-2-in-1-shorts-gris-talla-m-_JM",
+      "title": "Sport 7 2 In 1 Shorts Gris Talla M",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-173": {
+      "item_id": "MLM5725670798",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670798-ribbed-t-shirt-blanco-talla-xl-_JM",
+      "title": "Ribbed T Shirt Blanco Talla Xl",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-79": {
+      "item_id": "MLM5725670206",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725670206-arrival-tank-verde-talla-l-_JM",
+      "title": "Arrival Tank Verde Talla L",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-73": {
+      "item_id": "MLM5725633448",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725633448-arrival-contrast-t-shirt-azul-talla-s-_JM",
+      "title": "Arrival Contrast T Shirt Azul Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-8": {
+      "item_id": "MLM5725666128",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725666128-collegiate-9-short-negro-talla-s-_JM",
+      "title": "Collegiate 9 Short Negro Talla S",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-11": {
+      "item_id": "MLM5725665458",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725665458-element-baselayer-tank-rojo-talla-s-_JM",
+      "title": "Element Baselayer Tank Rojo Talla S",
+      "price": 1784.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-56": {
+      "item_id": "MLM5725633316",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725633316-dark-magician-tee-4152-negro-talla-m-_JM",
+      "title": "Dark Magician Tee 4152 Negro Talla M",
+      "price": 2460.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-43": {
+      "item_id": "MLM5725633170",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725633170-fit-repeat-6-azul-talla-s-_JM",
+      "title": "Fit Repeat 6 Azul Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-12": {
+      "item_id": "MLM5725629264",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725629264-fit-elite-5-verde-talla-s-_JM",
+      "title": "Fit Elite 5 Verde Talla S",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-88": {
+      "item_id": "MLM5725633576",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725633576-built-for-more-t-shirt-gris-talla-m-_JM",
+      "title": "Built For More T Shirt Gris Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-16": {
+      "item_id": "MLM5725632956",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725632956-lifting-mesh-5-negro-talla-m-_JM",
+      "title": "Lifting Mesh 5 Negro Talla M",
+      "price": 1109.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-2": {
+      "item_id": "MLM5725662514",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725662514-arrival-regular-fit-verde-talla-s-_JM",
+      "title": "Arrival Regular Fit Verde Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-6": {
+      "item_id": "MLM5725629192",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725629192-collegiate-9-short-verde-talla-s-_JM",
+      "title": "Collegiate 9 Short Verde Talla S",
+      "price": 1302.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-110": {
+      "item_id": "MLM5725633706",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725633706-fit-repeat-6-shorts-verde-talla-m-_JM",
+      "title": "Fit Repeat 6 Shorts Verde Talla M",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-4": {
+      "item_id": "MLM5725629162",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725629162-collegiate-9-short-gris-talla-s-_JM",
+      "title": "Collegiate 9 Short Gris Talla S",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-72": {
+      "item_id": "MLM5725633432",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725633432-arrival-contrast-t-shirt-verde-talla-l-_JM",
+      "title": "Arrival Contrast T Shirt Verde Talla L",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-17": {
+      "item_id": "MLM5725629328",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725629328-lifting-mesh-5-negro-talla-m-_JM",
+      "title": "Lifting Mesh 5 Negro Talla M",
+      "price": 1109.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-108": {
+      "item_id": "MLM5725633690",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725633690-element-baselayer-t-shirt-rojo-talla-m-_JM",
+      "title": "Element Baselayer T Shirt Rojo Talla M",
+      "price": 1688.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-121": {
+      "item_id": "MLM5725633792",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725633792-gymshark-x-cbum-t-shirt-negro-talla-s-_JM",
+      "title": "Gymshark X Cbum T Shirt Negro Talla S",
+      "price": 2460.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-102": {
+      "item_id": "MLM5725633626",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725633626-critical-cut-off-tank-blanco-talla-m-_JM",
+      "title": "Critical Cut Off Tank Blanco Talla M",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
     "hombre-1": {
-      "item_id": "MLM5725302806",
-      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725302806-arrival-regular-fit-gymshark-verde-_JM",
-      "title": "ARRIVAL REGULAR FIT · GYMSHARK · VERDE",
-      "price": 750,
+      "item_id": "MLM5725660110",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725660110-arrival-regular-fit-verde-talla-s-_JM",
+      "title": "Arrival Regular Fit Verde Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-19": {
+      "item_id": "MLM5725629360",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725629360-sport-panel-7-cafe-talla-s-_JM",
+      "title": "Sport Panel 7 Cafe Talla S",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-93": {
+      "item_id": "MLM5725633596",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725633596-chaos-tees-negro-talla-m-_JM",
+      "title": "Chaos Tees Negro Talla M",
+      "price": 2170.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-9": {
+      "item_id": "MLM5725628470",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725628470-element-baselayer-blanco-talla-s-_JM",
+      "title": "Element Baselayer Blanco Talla S",
+      "price": 2074.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-12": {
+      "item_id": "MLM3143801307",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3143801307-elevate-leggings-2-0-negro-talla-s-_JM",
+      "title": "Elevate Leggings 2 0 Negro Talla S",
+      "price": 1495.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-113": {
+      "item_id": "MLM3143800631",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3143800631-piping-bandeau-with-shelf-azul-talla-s-_JM",
+      "title": "Piping Bandeau With Shelf Azul Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-10": {
+      "item_id": "MLM5725628490",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-5725628490-element-baselayer-blanco-talla-m-_JM",
+      "title": "Element Baselayer Blanco Talla M",
+      "price": 2074.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-88": {
+      "item_id": "MLM3143801591",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3143801591-training-cami-tank-with-shelf-rojo-talla-s-_JM",
+      "title": "Training Cami Tank With Shelf Rojo Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-127": {
+      "item_id": "MLM3141131989",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131989-legacy-regular-leggings-negro-talla-s-_JM",
+      "title": "Legacy Regular Leggings Negro Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-90": {
+      "item_id": "MLM3141131747",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131747-light-hold-shorts-rosa-talla-m-_JM",
+      "title": "Light Hold Shorts Rosa Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-104": {
+      "item_id": "MLM3143800569",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3143800569-piping-midi-crew-neck-azul-talla-l-_JM",
+      "title": "Piping Midi Crew Neck Azul Talla L",
+      "price": 1398.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-85": {
+      "item_id": "MLM3143800551",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3143800551-vital-crop-top-negro-talla-s-_JM",
+      "title": "Vital Crop Top Negro Talla S",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-87": {
+      "item_id": "MLM3141131703",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131703-training-baby-tee-blanco-talla-s-_JM",
+      "title": "Training Baby Tee Blanco Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-84": {
+      "item_id": "MLM3143800541",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3143800541-vital-crop-top-negro-talla-m-_JM",
+      "title": "Vital Crop Top Negro Talla M",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-89": {
+      "item_id": "MLM3141131723",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131723-light-hold-shorts-rosa-talla-l-_JM",
+      "title": "Light Hold Shorts Rosa Talla L",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-39": {
+      "item_id": "MLM3143800489",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3143800489-twist-headband-blanco-talla-one-size-_JM",
+      "title": "Twist Headband Blanco Talla One Size",
+      "price": 626.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-71": {
+      "item_id": "MLM3143800507",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3143800507-chainstitch-graphic-hoodie-rosa-talla-l-_JM",
+      "title": "Chainstitch Graphic Hoodie Rosa Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-33": {
+      "item_id": "MLM3143801473",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3143801473-vital-seamless-sleeve-cut-out-top-rojo-talla-s-_JM",
+      "title": "Vital Seamless Sleeve Cut Out Top Rojo Talla S",
+      "price": 1398.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-38": {
+      "item_id": "MLM3143800475",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3143800475-twist-headband-negro-talla-one-size-_JM",
+      "title": "Twist Headband Negro Talla One Size",
+      "price": 626.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-126": {
+      "item_id": "MLM3141131973",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131973-adapt-animal-seamless-leggings-negro-talla-s-_JM",
+      "title": "Adapt Animal Seamless Leggings Negro Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-110": {
+      "item_id": "MLM3143800607",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3143800607-piping-long-sleeve-crop-top-rojo-talla-m-_JM",
+      "title": "Piping Long Sleeve Crop Top Rojo Talla M",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-57": {
+      "item_id": "MLM3141131165",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131165-retro-stripe-snap-pants-azul-talla-l-_JM",
+      "title": "Retro Stripe Snap Pants Azul Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-47": {
+      "item_id": "MLM3141130983",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130983-juicy-peach-long-sleeve-t-shirt-blanco-talla-m-_JM",
+      "title": "Juicy Peach Long Sleeve T Shirt Blanco Talla M",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-14": {
+      "item_id": "MLM3141130543",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130543-everywear-warp-knit-flare-azul-talla-m-_JM",
+      "title": "Everywear Warp Knit Flare Azul Talla M",
+      "price": 3039.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-78": {
+      "item_id": "MLM3141131557",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131557-everyday-seamless-tight-fit-crew-neck-tee-blanco-talla-l-_JM",
+      "title": "Everyday Seamless Tight Fit Crew Neck Tee Blanco Talla L",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-29": {
+      "item_id": "MLM3141130725",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130725-sport-seamless-sports-bra-gris-talla-xs-_JM",
+      "title": "Sport Seamless Sports Bra Gris Talla Xs",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-70": {
+      "item_id": "MLM3141131389",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131389-training-oversized-fleece-hoodie-morado-talla-s-_JM",
+      "title": "Training Oversized Fleece Hoodie Morado Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-6": {
+      "item_id": "MLM3141130413",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130413-adapt-fleck-sports-bra-morado-talla-xs-_JM",
+      "title": "Adapt Fleck Sports Bra Morado Talla Xs",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-22": {
+      "item_id": "MLM3141130617",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130617-lift-varsity-short-rojo-talla-s-_JM",
+      "title": "Lift Varsity Short Rojo Talla S",
+      "price": 1784.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-81": {
+      "item_id": "MLM3141131619",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131619-ruched-strappy-sports-bra-azul-talla-xs-_JM",
+      "title": "Ruched Strappy Sports Bra Azul Talla Xs",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-59": {
+      "item_id": "MLM3141131217",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131217-strength-graphic-joggers-morado-talla-l-_JM",
+      "title": "Strength Graphic Joggers Morado Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-25": {
+      "item_id": "MLM3141130685",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130685-rest-day-jogger-verde-talla-s-_JM",
+      "title": "Rest Day Jogger Verde Talla S",
+      "price": 1881.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-77": {
+      "item_id": "MLM3141131519",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131519-light-hold-leggings-negro-talla-s-_JM",
+      "title": "Light Hold Leggings Negro Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-34": {
+      "item_id": "MLM3141130763",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130763-waffle-short-amarillo-talla-s-_JM",
+      "title": "Waffle Short Amarillo Talla S",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-23": {
+      "item_id": "MLM3141130639",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130639-power-tight-shorts-negro-talla-s-_JM",
+      "title": "Power Tight Shorts Negro Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-80": {
+      "item_id": "MLM3141131595",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131595-everyday-seamless-tight-fit-crew-neck-tee-blanco-talla-s-_JM",
+      "title": "Everyday Seamless Tight Fit Crew Neck Tee Blanco Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-79": {
+      "item_id": "MLM3141131575",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131575-everyday-seamless-tight-fit-crew-neck-tee-blanco-talla-m-_JM",
+      "title": "Everyday Seamless Tight Fit Crew Neck Tee Blanco Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-51": {
+      "item_id": "MLM3141131081",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141131081-juicy-peach-long-sleeve-t-shirt-blanco-talla-s-_JM",
+      "title": "Juicy Peach Long Sleeve T Shirt Blanco Talla S",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-229": {
+      "item_id": "MLM3141130325",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130325-rest-day-essentials-cargo-joggers-gris-talla-s-_JM",
+      "title": "Rest Day Essentials Cargo Joggers Gris Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-60": {
+      "item_id": "MLM3141094445",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094445-strength-graphic-joggers-morado-talla-m-_JM",
+      "title": "Strength Graphic Joggers Morado Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-128": {
+      "item_id": "MLM3141130115",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130115-numerlas-hoodie-negro-talla-s-_JM",
+      "title": "Numerlas Hoodie Negro Talla S",
+      "price": 1688.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-126": {
+      "item_id": "MLM3141130091",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130091-numerals-hoodie-negro-talla-l-_JM",
+      "title": "Numerals Hoodie Negro Talla L",
+      "price": 1881.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-208": {
+      "item_id": "MLM3141130305",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130305-geo-seamless-long-sleeve-t-shirt-negro-talla-l-_JM",
+      "title": "Geo Seamless Long Sleeve T Shirt Negro Talla L",
+      "price": 1688.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-76": {
+      "item_id": "MLM3141094695",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094695-light-hold-leggings-negro-talla-m-_JM",
+      "title": "Light Hold Leggings Negro Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-121": {
+      "item_id": "MLM3141095115",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141095115-peek-a-boo-sports-bra-negro-talla-xs-_JM",
+      "title": "Peek A Boo Sports Bra Negro Talla Xs",
+      "price": 1109.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-61": {
+      "item_id": "MLM3141094467",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094467-supersoft-straight-leg-pant-rosa-talla-m-_JM",
+      "title": "Supersoft Straight Leg Pant Rosa Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-117": {
+      "item_id": "MLM3141095093",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141095093-vital-seamless-2-0-crop-top-negro-talla-m-_JM",
+      "title": "Vital Seamless 2 0 Crop Top Negro Talla M",
+      "price": 1302.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-205": {
+      "item_id": "MLM3141130267",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130267-shadow-seamless-long-sleeve-t-shirt-negro-talla-l-_JM",
+      "title": "Shadow Seamless Long Sleeve T Shirt Negro Talla L",
+      "price": 1688.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-94": {
+      "item_id": "MLM3141094929",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094929-piping-sports-bra-rojo-talla-m-_JM",
+      "title": "Piping Sports Bra Rojo Talla M",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-152": {
+      "item_id": "MLM3141130185",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130185-collegiate-tech-hoodie-rojo-talla-l-_JM",
+      "title": "Collegiate Tech Hoodie Rojo Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-62": {
+      "item_id": "MLM3141094485",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094485-supersoft-straight-leg-pant-rosa-talla-l-_JM",
+      "title": "Supersoft Straight Leg Pant Rosa Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-63": {
+      "item_id": "MLM3141094497",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094497-supersoft-straight-leg-pant-rosa-talla-s-_JM",
+      "title": "Supersoft Straight Leg Pant Rosa Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-151": {
+      "item_id": "MLM3141130177",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130177-collegiate-tech-hoodie-rojo-talla-m-_JM",
+      "title": "Collegiate Tech Hoodie Rojo Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-68": {
+      "item_id": "MLM3141094561",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094561-cosy-luxe-zip-through-hoodie-azul-talla-m-_JM",
+      "title": "Cosy Luxe Zip Through Hoodie Azul Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-73": {
+      "item_id": "MLM3141094665",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094665-chainstitch-graphic-hoodie-rosa-talla-s-_JM",
+      "title": "Chainstitch Graphic Hoodie Rosa Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-98": {
+      "item_id": "MLM3141094967",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094967-peek-a-boo-sports-bra-blanco-talla-s-_JM",
+      "title": "Peek A Boo Sports Bra Blanco Talla S",
+      "price": 1109.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-154": {
+      "item_id": "MLM3141130209",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130209-crest-hoodie-negro-talla-s-_JM",
+      "title": "Crest Hoodie Negro Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-127": {
+      "item_id": "MLM3141130103",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130103-numerals-hoodie-negro-talla-m-_JM",
+      "title": "Numerals Hoodie Negro Talla M",
+      "price": 1881.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-153": {
+      "item_id": "MLM3141130197",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130197-crest-hoodie-negro-talla-m-_JM",
+      "title": "Crest Hoodie Negro Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-123": {
+      "item_id": "MLM3141093345",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093345-gymshark-x-cbum-washed-hoodie-gris-talla-m-_JM",
+      "title": "Gymshark X Cbum Washed Hoodie Gris Talla M",
+      "price": 4004.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-40": {
+      "item_id": "MLM3141094035",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094035-pleat-crossbody-verde-talla-one-size-_JM",
+      "title": "Pleat Crossbody Verde Talla One Size",
+      "price": 819.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-42": {
+      "item_id": "MLM3141094081",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094081-vital-soft-short-negro-talla-m-_JM",
+      "title": "Vital Soft Short Negro Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-4": {
+      "item_id": "MLM3141093647",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093647-adapt-fleck-sports-bra-negro-talla-xs-_JM",
+      "title": "Adapt Fleck Sports Bra Negro Talla Xs",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-52": {
+      "item_id": "MLM3141094299",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094299-juicy-peach-short-sleeve-t-shirt-blanco-talla-m-_JM",
+      "title": "Juicy Peach Short Sleeve T Shirt Blanco Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-21": {
+      "item_id": "MLM3141093839",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093839-lift-varsity-short-negro-talla-s-_JM",
+      "title": "Lift Varsity Short Negro Talla S",
+      "price": 1784.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-56": {
+      "item_id": "MLM3141094345",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094345-juicy-peach-short-sleeve-t-shirt-blanco-talla-s-_JM",
+      "title": "Juicy Peach Short Sleeve T Shirt Blanco Talla S",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-49": {
+      "item_id": "MLM3141094243",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094243-juicy-peach-long-sleeve-t-shirt-blanco-talla-l-_JM",
+      "title": "Juicy Peach Long Sleeve T Shirt Blanco Talla L",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-50": {
+      "item_id": "MLM3141094265",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094265-juicy-peach-long-sleeve-t-shirt-rosa-talla-m-_JM",
+      "title": "Juicy Peach Long Sleeve T Shirt Rosa Talla M",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-45": {
+      "item_id": "MLM3141094151",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094151-collegiate-graphic-joggers-azul-talla-l-_JM",
+      "title": "Collegiate Graphic Joggers Azul Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-5": {
+      "item_id": "MLM3141093673",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093673-adapt-fleck-sports-bra-negro-talla-s-_JM",
+      "title": "Adapt Fleck Sports Bra Negro Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-20": {
+      "item_id": "MLM3141093823",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093823-lift-varsity-leggings-rojo-talla-l-_JM",
+      "title": "Lift Varsity Leggings Rojo Talla L",
+      "price": 1977.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-48": {
+      "item_id": "MLM3141094213",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094213-juicy-peach-long-sleeve-t-shirt-rosa-talla-s-_JM",
+      "title": "Juicy Peach Long Sleeve T Shirt Rosa Talla S",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-124": {
+      "item_id": "MLM3141093353",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093353-gymshark-x-cbum-washed-hoodie-morado-talla-m-_JM",
+      "title": "Gymshark X Cbum Washed Hoodie Morado Talla M",
+      "price": 4004.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-141": {
+      "item_id": "MLM3141093427",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093427-yugioh-jersey-negro-talla-l-_JM",
+      "title": "Yugioh Jersey Negro Talla L",
+      "price": 2267.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-55": {
+      "item_id": "MLM3141094313",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094313-juicy-peach-short-sleeve-t-shirt-negro-talla-l-_JM",
+      "title": "Juicy Peach Short Sleeve T Shirt Negro Talla L",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-9": {
+      "item_id": "MLM3141093749",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093749-campus-classic-verde-talla-m-_JM",
+      "title": "Campus Classic Verde Talla M",
+      "price": 1495.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-3": {
+      "item_id": "MLM3141093627",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093627-adapt-fleck-leggings-verde-talla-s-_JM",
+      "title": "Adapt Fleck Leggings Verde Talla S",
+      "price": 1881.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-46": {
+      "item_id": "MLM3141094169",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141094169-juicy-peach-long-sleeve-t-shirt-rosa-talla-l-_JM",
+      "title": "Juicy Peach Long Sleeve T Shirt Rosa Talla L",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-32": {
+      "item_id": "MLM3141093951",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093951-vital-sculpt-seamless-short-negro-talla-m-_JM",
+      "title": "Vital Sculpt Seamless Short Negro Talla M",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-225": {
+      "item_id": "MLM3141092319",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141092319-crest-tall-joggers-gris-talla-m-_JM",
+      "title": "Crest Tall Joggers Gris Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-143": {
+      "item_id": "MLM3141092007",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141092007-arrival-contrast-pants-negro-talla-l-_JM",
+      "title": "Arrival Contrast Pants Negro Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-37": {
+      "item_id": "MLM3141091673",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091673-essential-oversized-joggers-azul-talla-s-_JM",
+      "title": "Essential Oversized Joggers Azul Talla S",
+      "price": 1398.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-144": {
+      "item_id": "MLM3141092029",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141092029-arrival-contrast-pants-negro-talla-s-_JM",
+      "title": "Arrival Contrast Pants Negro Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-57": {
+      "item_id": "MLM3141093199",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093199-venom-jerseys-negro-talla-s-_JM",
+      "title": "Venom Jerseys Negro Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-41": {
+      "item_id": "MLM3141093185",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093185-crest-sweatshirt-negro-talla-s-_JM",
+      "title": "Crest Sweatshirt Negro Talla S",
+      "price": 1533.0,
+      "stock": 3,
+      "status": "active"
+    },
+    "hombre-140": {
+      "item_id": "MLM3141091983",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091983-straight-leg-pumper-pants-gris-talla-l-_JM",
+      "title": "Straight Leg Pumper Pants Gris Talla L",
+      "price": 3715.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-51": {
+      "item_id": "MLM3141091741",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091741-crest-joggers-gris-talla-m-_JM",
+      "title": "Crest Joggers Gris Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-100": {
+      "item_id": "MLM3141093255",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093255-crest-oversized-track-jacket-negro-talla-m-_JM",
+      "title": "Crest Oversized Track Jacket Negro Talla M",
+      "price": 1688.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-194": {
+      "item_id": "MLM3141092221",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141092221-carlos-belcast-track-pant-gris-talla-l-_JM",
+      "title": "Carlos Belcast Track Pant Gris Talla L",
+      "price": 2556.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-145": {
+      "item_id": "MLM3141092043",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141092043-tactical-joggers-negro-talla-l-_JM",
+      "title": "Tactical Joggers Negro Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-58": {
+      "item_id": "MLM3141093211",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093211-oly-lifting-straps-azul-talla-one-size-_JM",
+      "title": "Oly Lifting Straps Azul Talla One Size",
+      "price": 819.0,
+      "stock": 5,
+      "status": "active"
+    },
+    "hombre-107": {
+      "item_id": "MLM3141091889",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091889-dynasty-sweats-negro-talla-l-_JM",
+      "title": "Dynasty Sweats Negro Talla L",
+      "price": 3039.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-36": {
+      "item_id": "MLM3141093161",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093161-knitted-scarf-beanie-gift-set-blanco-talla-one-size-_JM",
+      "title": "Knitted Scarf Beanie Gift Set Blanco Talla One Size",
+      "price": 877.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-55": {
+      "item_id": "MLM3141091765",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091765-aot-x-yla-baggy-joggers-2128-negro-talla-m-_JM",
+      "title": "Aot X Yla Baggy Joggers 2128 Negro Talla M",
+      "price": 3039.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-42": {
+      "item_id": "MLM3141093193",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093193-retake-anorak-negro-talla-l-_JM",
+      "title": "Retake Anorak Negro Talla L",
+      "price": 2074.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-48": {
+      "item_id": "MLM3141091717",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091717-2012-strenght-joggers-gris-talla-m-_JM",
+      "title": "2012 Strenght Joggers Gris Talla M",
+      "price": 1495.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-122": {
+      "item_id": "MLM3141093329",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093329-gymshark-x-cbum-washed-hoodie-negro-talla-l-_JM",
+      "title": "Gymshark X Cbum Washed Hoodie Negro Talla L",
+      "price": 4004.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-168": {
+      "item_id": "MLM3141092163",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141092163-global-lifting-oversized-essential-joggers-gris-talla-m-_JM",
+      "title": "Global Lifting Oversized Essential Joggers Gris Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-170": {
+      "item_id": "MLM3141091073",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091073-critical-2-0-drop-arm-tank-blanco-talla-m-_JM",
+      "title": "Critical 2 0 Drop Arm Tank Blanco Talla M",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-171": {
+      "item_id": "MLM3141091083",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091083-critical-2-0-drop-arm-tank-negro-talla-m-_JM",
+      "title": "Critical 2 0 Drop Arm Tank Negro Talla M",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-176": {
+      "item_id": "MLM3141091131",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091131-built-for-more-t-shirt-negro-talla-l-_JM",
+      "title": "Built For More T Shirt Negro Talla L",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-41": {
+      "item_id": "MLM3140947237",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140947237-peek-a-boo-sports-bra-negro-talla-s-_JM",
+      "title": "Peek A Boo Sports Bra Negro Talla S",
+      "price": 1109.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-86": {
+      "item_id": "MLM3140947993",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140947993-training-baby-tee-blanco-talla-m-_JM",
+      "title": "Training Baby Tee Blanco Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-65": {
+      "item_id": "MLM3140947673",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140947673-velocy-sports-bra-negro-talla-l-_JM",
+      "title": "Velocy Sports Bra Negro Talla L",
+      "price": 1784.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-222": {
+      "item_id": "MLM3141091499",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091499-arrival-contrast-t-shirt-gris-talla-l-_JM",
+      "title": "Arrival Contrast T Shirt Gris Talla L",
+      "price": 1205.0,
+      "stock": 3,
+      "status": "active"
+    },
+    "mujer-64": {
+      "item_id": "MLM3140947651",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140947651-velocity-shorts-negro-talla-l-_JM",
+      "title": "Velocity Shorts Negro Talla L",
+      "price": 1881.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-82": {
+      "item_id": "MLM3140947965",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140947965-ruched-strappy-sports-bra-azul-talla-s-_JM",
+      "title": "Ruched Strappy Sports Bra Azul Talla S",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-72": {
+      "item_id": "MLM3140947767",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140947767-chainstitch-graphic-hoodie-rosa-talla-m-_JM",
+      "title": "Chainstitch Graphic Hoodie Rosa Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-186": {
+      "item_id": "MLM3141091219",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091219-crest-oversized-t-shirt-azul-talla-l-_JM",
+      "title": "Crest Oversized T Shirt Azul Talla L",
+      "price": 1205.0,
+      "stock": 3,
+      "status": "active"
+    },
+    "hombre-220": {
+      "item_id": "MLM3141091477",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091477-arrival-contrast-t-shirt-negro-talla-m-_JM",
+      "title": "Arrival Contrast T Shirt Negro Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-185": {
+      "item_id": "MLM3141091203",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091203-ribbed-tank-1pk-negro-talla-s-_JM",
+      "title": "Ribbed Tank 1pk Negro Talla S",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-69": {
+      "item_id": "MLM3140947713",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140947713-cosy-luxe-zip-through-hoodie-azul-talla-s-_JM",
+      "title": "Cosy Luxe Zip Through Hoodie Azul Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-44": {
+      "item_id": "MLM3140947333",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140947333-collegiate-graphic-joggers-azul-talla-m-_JM",
+      "title": "Collegiate Graphic Joggers Azul Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-175": {
+      "item_id": "MLM3141091113",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091113-built-for-more-t-shirt-negro-talla-s-_JM",
+      "title": "Built For More T Shirt Negro Talla S",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-180": {
+      "item_id": "MLM3141091155",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141091155-arrival-contrast-tank-gris-talla-s-_JM",
+      "title": "Arrival Contrast Tank Gris Talla S",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-58": {
+      "item_id": "MLM3140947555",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140947555-retro-stripe-snap-pants-azul-talla-m-_JM",
+      "title": "Retro Stripe Snap Pants Azul Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-43": {
+      "item_id": "MLM3140947301",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140947301-back-gains-sports-bra-rojo-talla-m-_JM",
+      "title": "Back Gains Sports Bra Rojo Talla M",
+      "price": 1109.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-35": {
+      "item_id": "MLM3140947137",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140947137-women-cargo-pants-verde-talla-s-_JM",
+      "title": "Women Cargo Pants Verde Talla S",
+      "price": 1591.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-15": {
+      "item_id": "MLM3140946901",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946901-everywear-warp-knit-flare-negro-talla-m-_JM",
+      "title": "Everywear Warp Knit Flare Negro Talla M",
+      "price": 3039.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-63": {
+      "item_id": "MLM3140946287",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946287-collegiate-cap-azul-talla-one-size-_JM",
+      "title": "Collegiate Cap Azul Talla One Size",
+      "price": 1109.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-113": {
+      "item_id": "MLM3140946343",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946343-gymshark-x-cbum-cap-negro-talla-one-size-_JM",
+      "title": "Gymshark X Cbum Cap Negro Talla One Size",
+      "price": 1881.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-8": {
+      "item_id": "MLM3140946811",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946811-campus-classic-verde-talla-s-_JM",
+      "title": "Campus Classic Verde Talla S",
+      "price": 1495.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-35": {
+      "item_id": "MLM3140946223",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946223-find-your-speed-jacket-gris-talla-s-_JM",
+      "title": "Find Your Speed Jacket Gris Talla S",
+      "price": 2055.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-115": {
+      "item_id": "MLM3140946365",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946365-gymshark-x-cbum-hockey-jersey-negro-talla-m-_JM",
+      "title": "Gymshark X Cbum Hockey Jersey Negro Talla M",
+      "price": 3039.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-28": {
+      "item_id": "MLM3140947059",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140947059-sport-seamless-sports-bra-gris-talla-s-_JM",
+      "title": "Sport Seamless Sports Bra Gris Talla S",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-224": {
+      "item_id": "MLM3140945447",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140945447-crest-joggers-azul-talla-m-_JM",
+      "title": "Crest Joggers Azul Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-114": {
+      "item_id": "MLM3140946353",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946353-gymshark-x-cbum-hockey-jersey-rojo-talla-l-_JM",
+      "title": "Gymshark X Cbum Hockey Jersey Rojo Talla L",
+      "price": 3039.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-150": {
+      "item_id": "MLM3140946513",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946513-collegiate-tech-hoodie-rojo-talla-s-_JM",
+      "title": "Collegiate Tech Hoodie Rojo Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-191": {
+      "item_id": "MLM3140946611",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946611-carlos-belcast-track-jacket-gris-talla-l-_JM",
+      "title": "Carlos Belcast Track Jacket Gris Talla L",
+      "price": 2460.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-18": {
+      "item_id": "MLM3140946923",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946923-flex-shorts-gris-talla-s-_JM",
+      "title": "Flex Shorts Gris Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-13": {
+      "item_id": "MLM3140946863",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946863-elevate-leggings-2-0-negro-talla-s-_JM",
+      "title": "Elevate Leggings 2 0 Negro Talla S",
+      "price": 1495.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-156": {
+      "item_id": "MLM3140946599",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946599-weekend-zip-through-shell-jacket-gris-talla-m-_JM",
+      "title": "Weekend Zip Through Shell Jacket Gris Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-24": {
+      "item_id": "MLM3140946181",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946181-strenght-of-tomorrow-zip-up-hoodie-negro-talla-l-_JM",
+      "title": "Strenght Of Tomorrow Zip Up Hoodie Negro Talla L",
+      "price": 2055.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-24": {
+      "item_id": "MLM3140946997",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946997-rest-day-jogger-verde-talla-m-_JM",
+      "title": "Rest Day Jogger Verde Talla M",
+      "price": 1881.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-207": {
+      "item_id": "MLM3140946653",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946653-geo-seamless-long-sleeve-t-shirt-gris-talla-l-_JM",
+      "title": "Geo Seamless Long Sleeve T Shirt Gris Talla L",
+      "price": 1495.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-33": {
+      "item_id": "MLM3140946209",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946209-running-long-sleeve-t-shirt-verde-talla-m-_JM",
+      "title": "Running Long Sleeve T Shirt Verde Talla M",
+      "price": 1302.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-155": {
+      "item_id": "MLM3140946579",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946579-weekend-zip-through-shell-jacket-gris-talla-l-_JM",
+      "title": "Weekend Zip Through Shell Jacket Gris Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-204": {
+      "item_id": "MLM3140946621",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140946621-shadow-seamless-long-sleeve-t-shirt-negro-talla-xl-_JM",
+      "title": "Shadow Seamless Long Sleeve T Shirt Negro Talla Xl",
+      "price": 1688.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-106": {
+      "item_id": "MLM3140945049",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140945049-divine-sweats-negro-talla-l-_JM",
+      "title": "Divine Sweats Negro Talla L",
+      "price": 3232.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-49": {
+      "item_id": "MLM3140944869",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944869-2012-strenght-joggers-gris-talla-s-_JM",
+      "title": "2012 Strenght Joggers Gris Talla S",
+      "price": 1495.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-190": {
+      "item_id": "MLM3140945341",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140945341-baselayer-legging-negro-talla-m-_JM",
+      "title": "Baselayer Legging Negro Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-196": {
+      "item_id": "MLM3140944451",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944451-collegiate-tech-tank-azul-talla-l-_JM",
+      "title": "Collegiate Tech Tank Azul Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-149": {
+      "item_id": "MLM3140945279",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140945279-arrival-joggers-gris-talla-l-_JM",
+      "title": "Arrival Joggers Gris Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-103": {
+      "item_id": "MLM3140945033",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140945033-dark-wave-joggers-negro-talla-l-_JM",
+      "title": "Dark Wave Joggers Negro Talla L",
+      "price": 3039.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-109": {
+      "item_id": "MLM3140945083",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140945083-faith-sweats-negro-talla-l-_JM",
+      "title": "Faith Sweats Negro Talla L",
+      "price": 3039.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-212": {
+      "item_id": "MLM3140945401",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140945401-arrival-contrast-pants-negro-talla-m-_JM",
+      "title": "Arrival Contrast Pants Negro Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-38": {
+      "item_id": "MLM3140944843",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944843-essential-oversized-joggers-gris-talla-s-_JM",
+      "title": "Essential Oversized Joggers Gris Talla S",
+      "price": 1398.0,
+      "stock": 3,
+      "status": "active"
+    },
+    "hombre-112": {
+      "item_id": "MLM3140945107",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140945107-global-lifting-graphic-pants-gris-talla-m-_JM",
+      "title": "Global Lifting Graphic Pants Gris Talla M",
+      "price": 1688.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-167": {
+      "item_id": "MLM3140945323",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140945323-global-lifting-oversized-essential-joggers-gris-talla-l-_JM",
+      "title": "Global Lifting Oversized Essential Joggers Gris Talla L",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-148": {
+      "item_id": "MLM3140945259",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140945259-arrival-joggers-gris-talla-m-_JM",
+      "title": "Arrival Joggers Gris Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-65": {
+      "item_id": "MLM3140944993",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944993-foundation-track-pants-2113-negro-talla-l-_JM",
+      "title": "Foundation Track Pants 2113 Negro Talla L",
+      "price": 2460.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-147": {
+      "item_id": "MLM3140945245",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140945245-arrival-joggers-gris-talla-s-_JM",
+      "title": "Arrival Joggers Gris Talla S",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-40": {
+      "item_id": "MLM3140944853",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944853-2012-strength-joggers-gris-talla-l-_JM",
+      "title": "2012 Strength Joggers Gris Talla L",
+      "price": 1784.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-201": {
+      "item_id": "MLM3140944527",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944527-geo-seamless-t-shirt-verde-talla-l-_JM",
+      "title": "Geo Seamless T Shirt Verde Talla L",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-202": {
+      "item_id": "MLM3140944543",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944543-ribbed-tank-1pk-negro-talla-xl-_JM",
+      "title": "Ribbed Tank 1pk Negro Talla Xl",
+      "price": 916.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-146": {
+      "item_id": "MLM3140945237",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140945237-tactical-joggers-negro-talla-m-_JM",
+      "title": "Tactical Joggers Negro Talla M",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-193": {
+      "item_id": "MLM3140945371",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140945371-pumper-pants-negro-talla-l-_JM",
+      "title": "Pumper Pants Negro Talla L",
+      "price": 2170.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-197": {
+      "item_id": "MLM3140944471",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944471-vintage-legacy-t-shirt-gris-talla-l-_JM",
+      "title": "Vintage Legacy T Shirt Gris Talla L",
+      "price": 1688.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-91": {
+      "item_id": "MLM3140943667",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943667-built-for-more-t-shirt-gris-talla-s-_JM",
+      "title": "Built For More T Shirt Gris Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-138": {
+      "item_id": "MLM3140944069",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944069-sport-7-2-in-1-shorts-gris-talla-s-_JM",
+      "title": "Sport 7 2 In 1 Shorts Gris Talla S",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-187": {
+      "item_id": "MLM3140944395",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944395-crest-oversized-t-shirt-azul-talla-m-_JM",
+      "title": "Crest Oversized T Shirt Azul Talla M",
+      "price": 1205.0,
+      "stock": 3,
+      "status": "active"
+    },
+    "hombre-169": {
+      "item_id": "MLM3140944207",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944207-critical-tank-blanco-talla-m-_JM",
+      "title": "Critical Tank Blanco Talla M",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-164": {
+      "item_id": "MLM3140944177",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944177-arrival-t-shirt-rosa-talla-s-_JM",
+      "title": "Arrival T Shirt Rosa Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-84": {
+      "item_id": "MLM3140943627",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943627-built-for-more-t-shirt-gris-talla-l-_JM",
+      "title": "Built For More T Shirt Gris Talla L",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-165": {
+      "item_id": "MLM3140944189",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944189-arrival-t-shirt-azul-talla-s-_JM",
+      "title": "Arrival T Shirt Azul Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-82": {
+      "item_id": "MLM3140943597",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943597-built-for-more-t-shirt-blanco-talla-s-_JM",
+      "title": "Built For More T Shirt Blanco Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-142": {
+      "item_id": "MLM3140944097",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944097-dark-wave-wife-lovers-negro-talla-xl-_JM",
+      "title": "Dark Wave Wife Lovers Negro Talla Xl",
+      "price": 1591.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-182": {
+      "item_id": "MLM3140944341",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944341-arrival-contrast-tank-gris-talla-m-_JM",
+      "title": "Arrival Contrast Tank Gris Talla M",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-134": {
+      "item_id": "MLM3140944045",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944045-revenge-tees-spring-gris-talla-m-_JM",
+      "title": "Revenge Tees Spring Gris Talla M",
+      "price": 2170.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-160": {
+      "item_id": "MLM3140944149",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944149-arrival-t-shirt-rosa-talla-l-_JM",
+      "title": "Arrival T Shirt Rosa Talla L",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-177": {
+      "item_id": "MLM3140944293",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944293-built-for-more-t-shirt-negro-talla-m-_JM",
+      "title": "Built For More T Shirt Negro Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-181": {
+      "item_id": "MLM3140944325",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944325-arrival-contrast-tank-gris-talla-l-_JM",
+      "title": "Arrival Contrast Tank Gris Talla L",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-118": {
+      "item_id": "MLM3140943911",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943911-gymshark-x-cbum-t-shirt-blanco-talla-l-_JM",
+      "title": "Gymshark X Cbum T Shirt Blanco Talla L",
+      "price": 2460.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-184": {
+      "item_id": "MLM3140944359",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944359-ribbed-tank-1pk-negro-talla-m-_JM",
+      "title": "Ribbed Tank 1pk Negro Talla M",
+      "price": 1109.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-133": {
+      "item_id": "MLM3140944031",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944031-revenge-crop-cut-offs-gris-talla-l-_JM",
+      "title": "Revenge Crop Cut Offs Gris Talla L",
+      "price": 1881.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-195": {
+      "item_id": "MLM3140944443",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944443-vintage-legacy-tank-gris-talla-l-_JM",
+      "title": "Vintage Legacy Tank Gris Talla L",
+      "price": 1688.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-97": {
+      "item_id": "MLM3140943703",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943703-crest-oversized-t-shirt-azul-talla-s-_JM",
+      "title": "Crest Oversized T Shirt Azul Talla S",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-136": {
+      "item_id": "MLM3140944051",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140944051-running-4-2-in-1-shorts-verde-talla-m-_JM",
+      "title": "Running 4 2 In 1 Shorts Verde Talla M",
+      "price": 1495.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-76": {
+      "item_id": "MLM3140943545",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943545-arrival-contrast-t-shirt-azul-talla-m-_JM",
+      "title": "Arrival Contrast T Shirt Azul Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-117": {
+      "item_id": "MLM3141130009",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141130009-gymshark-x-cbum-hockey-jersey-rojo-talla-s-_JM",
+      "title": "Gymshark X Cbum Hockey Jersey Rojo Talla S",
+      "price": 3039.0,
+      "stock": 1,
+      "status": "under_review"
+    },
+    "hombre-26": {
+      "item_id": "MLM3140943049",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943049-crest-t-shirt-azul-talla-m-_JM",
+      "title": "Crest T Shirt Azul Talla M",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-46": {
+      "item_id": "MLM3140943263",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943263-arrival-short-blanco-talla-l-_JM",
+      "title": "Arrival Short Blanco Talla L",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-18": {
+      "item_id": "MLM3140939465",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140939465-lifting-mesh-5-verde-talla-s-_JM",
+      "title": "Lifting Mesh 5 Verde Talla S",
+      "price": 1205.0,
+      "stock": 3,
+      "status": "active"
+    },
+    "hombre-54": {
+      "item_id": "MLM3140943339",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943339-heritage-5-shorts-gris-talla-s-_JM",
+      "title": "Heritage 5 Shorts Gris Talla S",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-5": {
+      "item_id": "MLM3140939303",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140939303-collegiate-9-short-gris-talla-l-_JM",
+      "title": "Collegiate 9 Short Gris Talla L",
+      "price": 1302.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-15": {
+      "item_id": "MLM3140939431",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140939431-lifting-mesh-5-negro-talla-s-_JM",
+      "title": "Lifting Mesh 5 Negro Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-14": {
+      "item_id": "MLM3140939415",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140939415-lifting-mesh-5-negro-talla-s-_JM",
+      "title": "Lifting Mesh 5 Negro Talla S",
+      "price": 1109.0,
+      "stock": 3,
+      "status": "active"
+    },
+    "hombre-34": {
+      "item_id": "MLM3140943127",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943127-collegiate-contrast-5-azul-talla-s-_JM",
+      "title": "Collegiate Contrast 5 Azul Talla S",
+      "price": 1205.0,
+      "stock": 3,
+      "status": "active"
+    },
+    "hombre-22": {
+      "item_id": "MLM3140939515",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140939515-waffle-short-negro-talla-m-_JM",
+      "title": "Waffle Short Negro Talla M",
+      "price": 1495.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-3": {
+      "item_id": "MLM3140939263",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140939263-collegiate-9-short-verde-talla-m-_JM",
+      "title": "Collegiate 9 Short Verde Talla M",
+      "price": 1302.0,
+      "stock": 3,
+      "status": "active"
+    },
+    "hombre-27": {
+      "item_id": "MLM3140943067",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943067-crest-t-shirt-azul-talla-l-_JM",
+      "title": "Crest T Shirt Azul Talla L",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-44": {
+      "item_id": "MLM3140943217",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943217-tactical-6-short-verde-talla-s-_JM",
+      "title": "Tactical 6 Short Verde Talla S",
+      "price": 1205.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "mujer-132": {
+      "item_id": "MLM3143800677",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3143800677-piping-midi-crew-neck-rojo-talla-s-_JM",
+      "title": "Piping Midi Crew Neck Rojo Talla S",
+      "price": 1398.0,
+      "stock": 1,
+      "status": "under_review"
+    },
+    "hombre-71": {
+      "item_id": "MLM3140943485",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943485-arrival-contrast-t-shirt-azul-talla-l-_JM",
+      "title": "Arrival Contrast T Shirt Azul Talla L",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-45": {
+      "item_id": "MLM3140943255",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943255-tactical-6-short-negro-talla-s-_JM",
+      "title": "Tactical 6 Short Negro Talla S",
+      "price": 1533.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-47": {
+      "item_id": "MLM3140943277",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943277-arrival-short-blanco-talla-m-_JM",
+      "title": "Arrival Short Blanco Talla M",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "hombre-7": {
+      "item_id": "MLM3140939343",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140939343-collegiate-9-short-negro-talla-m-_JM",
+      "title": "Collegiate 9 Short Negro Talla M",
+      "price": 1302.0,
+      "stock": 2,
+      "status": "active"
+    },
+    "hombre-13": {
+      "item_id": "MLM3140939401",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140939401-lifting-mesh-5-gris-talla-s-_JM",
+      "title": "Lifting Mesh 5 Gris Talla S",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "active"
+    },
+    "mujer-7": {
+      "item_id": "MLM3141093711",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3141093711-adapt-fleck-t-back-bra-verde-talla-xs-_JM",
+      "title": "Adapt Fleck T Back Bra Verde Talla Xs",
+      "price": 1205.0,
+      "stock": 1,
+      "status": "under_review"
+    },
+    "hombre-105": {
+      "item_id": "MLM3140943761",
+      "permalink": "https://articulo.mercadolibre.com.mx/MLM-3140943761-distressed-script-tees-blanco-talla-l-_JM",
+      "title": "Distressed Script Tees Blanco Talla L",
+      "price": 2170.0,
       "stock": 1,
       "status": "under_review"
     }
   },
-  "total_activos": 0,
-  "total_mapeados": 1
+  "total_activos": 302,
+  "total_mapeados": 296
 }

@@ -51,6 +51,7 @@
 
     window.obtenerEnlaceMercadoLibre = function(producto) {
         if (!CACHE || !producto) return null;
+        if (String(producto.nombre || '').trim().toUpperCase() === 'ARRIVAL REGULAR FIT') return null;
         var clave = claveProductoML(producto);
         if (!clave) return null;
         var item = CACHE.por_clave[clave];
@@ -63,6 +64,15 @@
         return '<a class="btn-mercadolibre" href="' + permalink + '" target="_blank" rel="noopener noreferrer">' + label + '</a>';
     };
 
+    function iconoMercadoLibre(tamano) {
+        var s = tamano || 28;
+        return ''
+            + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="' + s + '" height="' + s + '" aria-hidden="true" class="ml-logo-icon">'
+            + '<rect width="32" height="32" rx="6" fill="#FFE600"/>'
+            + '<text x="16" y="21" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="11" fill="#2D3277">ML</text>'
+            + '</svg>';
+    }
+
     function inyectarEnlacesGlobales(datos) {
         var vendedor = datos && datos.vendedor;
         if (!vendedor || !vendedor.permalink) return;
@@ -74,12 +84,9 @@
             enlace.target = '_blank';
             enlace.rel = 'noopener noreferrer';
             enlace.className = 'footer-social-link mercadolibre';
-            enlace.setAttribute('aria-label', 'Mercado Libre');
-            enlace.innerHTML = ''
-                + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="28" height="28">'
-                + '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.2 14.25H7.8V9.9h1.65v1.35h.06c.18-.42.63-.9 1.56-.9 1.17 0 2.13.99 2.13 2.43 0 1.44-.96 2.43-2.13 2.43-.93 0-1.38-.48-1.56-.9h-.06v1.35zm-1.8-3.57c0 .81.54 1.38 1.29 1.38.75 0 1.29-.57 1.29-1.38 0-.81-.54-1.38-1.29-1.38-.75 0-1.29.57-1.29 1.38z"/>'
-                + '</svg>'
-                + '<span>' + (vendedor.nickname || 'Mercado Libre') + '</span>';
+            enlace.setAttribute('aria-label', 'Comprar en Mercado Libre');
+            enlace.setAttribute('title', 'Comprar en Mercado Libre');
+            enlace.innerHTML = iconoMercadoLibre(28) + '<span>Mercado Libre</span>';
             contenedor.appendChild(enlace);
         });
 
@@ -90,11 +97,9 @@
             enlace.target = '_blank';
             enlace.rel = 'noopener noreferrer';
             enlace.className = 'social-link mercadolibre';
-            enlace.setAttribute('aria-label', 'Mercado Libre');
-            enlace.innerHTML = ''
-                + '<svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">'
-                + '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.2 14.25H7.8V9.9h1.65v1.35h.06c.18-.42.63-.9 1.56-.9 1.17 0 2.13.99 2.13 2.43 0 1.44-.96 2.43-2.13 2.43-.93 0-1.38-.48-1.56-.9h-.06v1.35zm-1.8-3.57c0 .81.54 1.38 1.29 1.38.75 0 1.29-.57 1.29-1.38 0-.81-.54-1.38-1.29-1.38-.75 0-1.29.57-1.29 1.38z"/>'
-                + '</svg>';
+            enlace.setAttribute('aria-label', 'Comprar en Mercado Libre');
+            enlace.setAttribute('title', 'Mercado Libre');
+            enlace.innerHTML = iconoMercadoLibre(24);
             contenedor.insertBefore(enlace, contenedor.firstChild);
         });
     }

@@ -434,6 +434,16 @@ header .logo-link {
     color: #25D366;
 }
 
+.social-link.mercadolibre {
+    background: #ffe600;
+    color: #2d3277;
+    border-radius: 8px;
+}
+
+.social-link.mercadolibre .ml-logo-icon {
+    display: block;
+}
+
 .social-icon {
     width: 24px;
     height: 24px;
@@ -698,6 +708,26 @@ a.category-btn {
     text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
 }
 
+/* Hero en computadora: más alto y sin recorte para ver los enlaces abajo */
+@media (min-width: 769px) {
+    .hero-slides {
+        height: min(85vh, 880px);
+    }
+
+    .hero-slide img {
+        object-fit: contain;
+        object-position: center top;
+    }
+
+    .hero-content {
+        padding: 0 3% 2rem;
+    }
+
+    .hero-text {
+        margin-bottom: 0;
+    }
+}
+
 /* Botón "Ver más productos" (paginación de 50 en 50) */
 .load-more-wrap {
     display: flex;
@@ -726,6 +756,10 @@ a.category-btn {
 
 .load-more-btn:active {
     transform: translateY(0);
+}
+
+.load-more-wrap[hidden] {
+    display: none !important;
 }
 
 #loadMoreSentinel {
@@ -1590,7 +1624,11 @@ footer {
 .footer-social-link.mercadolibre:hover,
 .social-link.mercadolibre:hover {
     background: #ffe600;
-    color: #1a1a1a;
+    color: #2d3277;
+}
+
+.footer-social-link.mercadolibre .ml-logo-icon {
+    flex-shrink: 0;
 }
 
 .btn-mercadolibre {

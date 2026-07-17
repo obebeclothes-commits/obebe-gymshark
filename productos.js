@@ -1062,24 +1062,45 @@ var PRODUCTOS_POR_BLOQUE = 50;
 var _listaRenderizado = [];
 var _renderizadosCount = 0;
 var _observerCargarMas = null;
+var _cargandoMas = false;
+
+function contarTarjetasEnGrid() {
+    var grid = document.getElementById('productsGrid');
+    if (!grid) return 0;
+    return grid.querySelectorAll('.product-card-full').length;
+}
+
+function sincronizarContadorRenderizado() {
+    var enDom = contarTarjetasEnGrid();
+    if (enDom > _renderizadosCount) {
+        _renderizadosCount = Math.min(enDom, _listaRenderizado.length);
+    }
+}
+
+function sentinelVisible() {
+    var sentinel = document.getElementById('loadMoreSentinel');
+    if (!sentinel) return false;
+    var rect = sentinel.getBoundingClientRect();
+    return rect.top <= window.innerHeight + 600;
+}
+
+function productosPendientesDeRenderizar() {
+    sincronizarContadorRenderizado();
+    return Math.max(0, _listaRenderizado.length - _renderizadosCount);
+}
 
 function actualizarControlesCargarMas() {
     var wrap = document.getElementById('loadMoreWrap');
-    var quedan = _listaRenderizado.length - _renderizadosCount;
+    var quedan = productosPendientesDeRenderizar();
     if (wrap) {
         if (quedan > 0) {
             wrap.hidden = false;
             var btn = document.getElementById('loadMoreBtn');
-            if (btn) {
-                var siguiente = Math.min(PRODUCTOS_POR_BLOQUE, quedan);
-                btn.textContent = 'Ver más productos (' + quedan + ' restantes)';
-                btn.setAttribute('data-siguiente', String(siguiente));
-            }
+            if (btn) btn.textContent = 'Ver más productos';
         } else {
             wrap.hidden = true;
         }
     }
-    // Activar/desactivar el observer de scroll según queden productos
     var sentinel = document.getElementById('loadMoreSentinel');
     if (!sentinel || !('IntersectionObserver' in window)) return;
     if (quedan > 0) {
@@ -1097,16 +1118,37 @@ function actualizarControlesCargarMas() {
 }
 
 function renderizarSiguienteBloque() {
+    if (_cargandoMas) return;
+    sincronizarContadorRenderizado();
+    if (_renderizadosCount >= _listaRenderizado.length) {
+        actualizarControlesCargarMas();
+        return;
+    }
+
     const productsGrid = document.getElementById('productsGrid');
     if (!productsGrid) return;
-    var fin = Math.min(_renderizadosCount + PRODUCTOS_POR_BLOQUE, _listaRenderizado.length);
-    var fragmento = document.createDocumentFragment();
-    for (var i = _renderizadosCount; i < fin; i++) {
-        fragmento.appendChild(crearTarjetaProducto(_listaRenderizado[i]));
+
+    _cargandoMas = true;
+    try {
+        var fin = Math.min(_renderizadosCount + PRODUCTOS_POR_BLOQUE, _listaRenderizado.length);
+        if (sentinelVisible()) {
+            fin = _listaRenderizado.length;
+        }
+        var fragmento = document.createDocumentFragment();
+        for (var i = _renderizadosCount; i < fin; i++) {
+            fragmento.appendChild(crearTarjetaProducto(_listaRenderizado[i]));
+        }
+        productsGrid.appendChild(fragmento);
+        _renderizadosCount = fin;
+    } finally {
+        _cargandoMas = false;
     }
-    productsGrid.appendChild(fragmento);
-    _renderizadosCount = fin;
+
     actualizarControlesCargarMas();
+
+    if (productosPendientesDeRenderizar() > 0 && sentinelVisible()) {
+        renderizarSiguienteBloque();
+    }
 }
 
 function renderizarProductos(productosParaRenderizar) {
