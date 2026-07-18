@@ -576,7 +576,8 @@ function construirQueryRetornoProductos() {
 
 function construirUrlDetalleProducto(producto) {
     var url = 'producto.html?id=' + encodeURIComponent(producto.id);
-    if (producto.categoria === 'Mujer') url += '&categoria=Mujer';
+    var cat = producto.categoria || 'Hombre';
+    url += '&categoria=' + encodeURIComponent(cat);
     if (esModoMayoreo()) url += '&mayoreo=1';
     if (esModoMayoreo50()) url += '&mayoreo50=1';
     if (esModoNuevoStock()) url += '&nuevoStock=1';
@@ -774,6 +775,7 @@ function agregarAlCarrito(producto, opciones) {
             esMayoreo: (esModoMayoreo() && !!producto.mayoreo) || (esModoMayoreo50() && esProductoMayoreo50(producto)),
             talla: producto.talla,
             color: colorProducto,
+            marca: producto.marca || '',
             imagen1: producto.imagen1,
             cantidad: 1,
             categoria: producto.categoria || 'Hombre'
@@ -835,6 +837,7 @@ function actualizarBadgeCarrito() {
 
 // Renderizar carrito
 function renderizarCarrito() {
+    sincronizarCarritoConCatalogo();
     const cartItems = document.getElementById('cartItems');
     const cartTotal = document.getElementById('cartTotal');
     if (!cartItems || !cartTotal) return;
@@ -907,15 +910,90 @@ function mostrarNotificacion(mensaje) {
 
 // Obtener URL base del sitio (para enlaces en WhatsApp)
 function getBaseUrl() {
-    const origin = window.location.origin;
-    const path = window.location.pathname;
-    const lastSlash = path.lastIndexOf('/');
-    const basePath = lastSlash >= 0 ? path.substring(0, lastSlash + 1) : '/';
+    var host = (window.location.hostname || '').toLowerCase();
+    if (host === 'obebe.store' || host === 'www.obebe.store') {
+        return 'https://obebe.store/';
+    }
+    // En local o file://, WhatsApp debe abrir links públicos del sitio en producción.
+    if (window.location.protocol === 'file:' || host === 'localhost' || host === '127.0.0.1' || !host) {
+        return 'https://obebe.store/';
+    }
+    var origin = window.location.origin;
+    var path = window.location.pathname;
+    var lastSlash = path.lastIndexOf('/');
+    var basePath = lastSlash >= 0 ? path.substring(0, lastSlash + 1) : '/';
     return origin + basePath;
+}
+
+function obtenerCatalogoPorCategoria(categoria) {
+    if (categoria === 'Mujer') {
+        return typeof productosMujer !== 'undefined' && Array.isArray(productosMujer) ? productosMujer : [];
+    }
+    if (typeof productos !== 'undefined' && Array.isArray(productos)) return productos;
+    if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) return productosHombre;
+    return [];
+}
+
+function resolverProductoCarrito(item) {
+    if (!item) return null;
+    var categoria = item.categoria || 'Hombre';
+    var catalogo = obtenerCatalogoPorCategoria(categoria);
+    var tallaItem = String(item.talla || '');
+    var colorItem = item.color || '';
+
+    function coincideVariante(producto) {
+        return Number(producto.id) === Number(item.id) &&
+            String(producto.talla) === tallaItem &&
+            (producto.color || '') === colorItem;
+    }
+
+    var producto = catalogo.find(coincideVariante);
+    if (producto) return producto;
+
+    if (item.imagen1) {
+        producto = catalogo.find(function(p) {
+            return p.imagen1 === item.imagen1 &&
+                String(p.talla) === tallaItem &&
+                (p.color || '') === colorItem;
+        });
+        if (producto) return producto;
+    }
+
+    producto = catalogo.find(function(p) { return Number(p.id) === Number(item.id); });
+    return producto || null;
+}
+
+function normalizarItemCarrito(item) {
+    var producto = resolverProductoCarrito(item);
+    if (!producto) return item;
+    return {
+        id: producto.id,
+        nombre: producto.nombre,
+        precio: precioVigenteProducto(producto),
+        precioMenudeo: producto.precio,
+        esMayoreo: (esModoMayoreo() && !!producto.mayoreo) || (esModoMayoreo50() && esProductoMayoreo50(producto)),
+        talla: producto.talla,
+        color: producto.color || '',
+        marca: producto.marca || item.marca || '',
+        imagen1: producto.imagen1 || item.imagen1,
+        cantidad: item.cantidad || 1,
+        categoria: producto.categoria || item.categoria || 'Hombre'
+    };
+}
+
+function sincronizarCarritoConCatalogo() {
+    var carrito = obtenerCarrito();
+    if (!carrito.length) return;
+    var actualizado = carrito.map(normalizarItemCarrito);
+    var cambio = actualizado.some(function(item, index) {
+        return JSON.stringify(item) !== JSON.stringify(carrito[index]);
+    });
+    if (cambio) guardarCarrito(actualizado);
 }
 
 // Enviar mensaje a WhatsApp (incluye link de cada producto)
 function enviarMensajeWhatsApp() {
+    sincronizarCarritoConCatalogo();
     const carrito = obtenerCarrito();
     if (carrito.length === 0) {
         mostrarNotificacion('Tu carrito está vacío');
@@ -927,14 +1005,23 @@ function enviarMensajeWhatsApp() {
     let total = 0;
 
     carrito.forEach((item, index) => {
-        const subtotal = item.precio * item.cantidad;
+        const producto = resolverProductoCarrito(item) || item;
+        const precioUnitario = typeof precioVigenteProducto === 'function'
+            ? precioVigenteProducto(producto)
+            : Number(item.precio) || 0;
+        const subtotal = precioUnitario * item.cantidad;
         total += subtotal;
-        const linkProducto = baseUrl + 'producto.html?id=' + item.id + (item.categoria === 'Mujer' ? '&categoria=Mujer' : '');
-        mensaje += `${index + 1}. ${item.nombre}\n`;
-        mensaje += `   Talla: ${item.talla}\n`;
-        if (item.color) mensaje += `   Color: ${item.color}\n`;
+        const rutaDetalle = 'producto.html?id=' + encodeURIComponent(producto.id) +
+            '&categoria=' + encodeURIComponent(producto.categoria || item.categoria || 'Hombre');
+        const linkProducto = baseUrl + rutaDetalle;
+        mensaje += `${index + 1}. ${producto.nombre}\n`;
+        if (producto.marca || item.marca) mensaje += `   Marca: ${producto.marca || item.marca}\n`;
+        mensaje += `   Talla: ${producto.talla || item.talla}\n`;
+        const color = producto.color || item.color;
+        if (color) mensaje += `   Color: ${color}\n`;
         mensaje += `   Cantidad: ${item.cantidad}\n`;
-        mensaje += `   Precio: $${formatearPrecio(subtotal)}\n`;
+        mensaje += `   Precio unitario: $${formatearPrecio(precioUnitario)}\n`;
+        mensaje += `   Subtotal: $${formatearPrecio(subtotal)}\n`;
         mensaje += `   Link: ${linkProducto}\n\n`;
     });
 

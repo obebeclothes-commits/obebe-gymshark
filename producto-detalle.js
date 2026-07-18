@@ -17,6 +17,9 @@ window.iniciarDetalleProducto = function() {
     if (categoriaParam === 'Mujer') {
         if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) producto = productosMujer.find(mismoId);
         if (!producto && typeof productos !== 'undefined' && Array.isArray(productos)) producto = productos.find(mismoId);
+    } else if (categoriaParam === 'Hombre') {
+        if (typeof productos !== 'undefined' && Array.isArray(productos)) producto = productos.find(mismoId);
+        if (!producto && typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) producto = productosHombre.find(mismoId);
     } else {
         if (typeof productos !== 'undefined' && Array.isArray(productos)) producto = productos.find(mismoId);
         if (!producto && typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) producto = productosMujer.find(mismoId);
