@@ -506,11 +506,24 @@
         return actualizados;
     }
 
+    function fetchConTimeout(url, opciones, ms) {
+        var limite = ms || 12000;
+        var controlador = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        var timer = setTimeout(function() {
+            if (controlador) controlador.abort();
+        }, limite);
+        var opts = opciones || {};
+        if (controlador) opts.signal = controlador.signal;
+        return fetch(url, opts).finally(function() {
+            clearTimeout(timer);
+        });
+    }
+
     function descargarHoja(nombreHoja) {
         var url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
             '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(nombreHoja) +
             '&_=' + Date.now();
-        return fetch(url, { cache: 'no-store' }).then(function(res) {
+        return fetchConTimeout(url, { cache: 'no-store' }, 12000).then(function(res) {
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return res.text();
         });
@@ -554,6 +567,20 @@
             })
             .catch(function(err) {
                 console.warn('[stock-sheet] inventario:', err);
+                return null;
             });
+    };
+
+    window.refrescarTiendaTrasSyncStock = function() {
+        if (typeof actualizarEtiquetaNuevoStock === 'function') actualizarEtiquetaNuevoStock();
+        if (typeof renderizarCarruselHombre === 'function') renderizarCarruselHombre('Hombre', false);
+        if (typeof renderizarProductosMujer === 'function') renderizarProductosMujer();
+        if (document.getElementById('productsGrid') && typeof renderizarTodosLosProductos === 'function') {
+            renderizarTodosLosProductos();
+        }
+        if (document.getElementById('productDetailContainer') && typeof iniciarDetalleProducto === 'function') {
+            iniciarDetalleProducto();
+        }
+        if (typeof actualizarBadgeCarrito === 'function') actualizarBadgeCarrito();
     };
 })();

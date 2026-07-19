@@ -1637,16 +1637,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    iniciarPagina();
+
+    var promesas = [];
     if (typeof sincronizarStockDesdeSheets === 'function') {
-        var promesaStock = sincronizarStockDesdeSheets();
-        var promesaML = typeof cargarListadosMercadoLibre === 'function'
-            ? cargarListadosMercadoLibre()
-            : Promise.resolve();
-        Promise.all([promesaStock, promesaML]).then(iniciarPagina);
-    } else if (typeof cargarListadosMercadoLibre === 'function') {
-        cargarListadosMercadoLibre().then(iniciarPagina);
-    } else {
-        iniciarPagina();
+        promesas.push(sincronizarStockDesdeSheets());
+    }
+    if (typeof cargarListadosMercadoLibre === 'function') {
+        promesas.push(cargarListadosMercadoLibre());
+    }
+    if (promesas.length) {
+        Promise.all(promesas).then(function() {
+            if (typeof window.refrescarTiendaTrasSyncStock === 'function') {
+                window.refrescarTiendaTrasSyncStock();
+            }
+        }).catch(function() {});
     }
 
     var messages = document.querySelectorAll('.promo-message');

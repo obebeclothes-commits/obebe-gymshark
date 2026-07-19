@@ -914,13 +914,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isIndexPage) return;
 
     const run = () => iniciarIndex();
+    run();
+
     var promesas = [];
     if (typeof sincronizarStockDesdeSheets === 'function') promesas.push(sincronizarStockDesdeSheets());
     if (typeof cargarListadosMercadoLibre === 'function') promesas.push(cargarListadosMercadoLibre());
     if (promesas.length) {
-        Promise.all(promesas).then(run);
-    } else {
-        run();
+        Promise.all(promesas).then(function() {
+            if (typeof window.refrescarTiendaTrasSyncStock === 'function') {
+                window.refrescarTiendaTrasSyncStock();
+            }
+        }).catch(function() {});
     }
 });
 
