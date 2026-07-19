@@ -1611,14 +1611,8 @@ window.addEventListener('pageshow', (event) => {
     });
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    arrancarProductosPagina();
-});
-if (window.__obebeBootActivo) {
-    document.addEventListener('obebe-scripts-ready', () => {
-        arrancarProductosPagina();
-    });
-} else if (document.readyState !== 'loading') {
+document.addEventListener('DOMContentLoaded', arrancarProductosPagina);
+if (document.readyState !== 'loading') {
     arrancarProductosPagina();
 }
 

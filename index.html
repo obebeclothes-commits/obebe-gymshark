@@ -4,7 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Obebe - GymShark Collection</title>
-    <script>document.documentElement.style.setProperty('--vh', (window.innerHeight/100) + 'px');</script>
+    <script>
+    document.documentElement.style.setProperty('--vh', (window.innerHeight / 100) + 'px');
+    (function(w) {
+        w.__obebeRedMovil = (function() {
+            try {
+                var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                if (c && (c.type === 'wifi' || c.type === 'ethernet')) return false;
+                if (c && (c.saveData || c.type === 'cellular' || /^(slow-2g|2g|3g)$/.test(String(c.effectiveType || '')))) return true;
+            } catch (e) {}
+            return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+        })();
+        w.__obebeOmitirSyncSheet = w.__obebeRedMovil;
+    })(window);
+    </script>
     <link rel="stylesheet" href="styles.css">
     <style>
         /* En desktop: texto de la barra promocional un poco a la derecha */
@@ -26,12 +39,6 @@
     </style>
 </head>
 <body>
-    <div id="siteBootLoading" aria-live="polite" aria-busy="true">
-        <div class="site-boot-loading-inner">
-            <div class="site-boot-spinner" aria-hidden="true"></div>
-            <p>Cargando Obebe...</p>
-        </div>
-    </div>
     <div class="promo-bar">
         <div class="promo-container">
             <div class="promo-messages">
@@ -92,7 +99,7 @@
         <section id="inicio" class="hero">
             <div class="hero-slides" aria-live="polite">
                 <div class="hero-slide active">
-                    <img src="PORTADA1.jpeg?v=20260716" alt="Obebe Clothes" fetchpriority="high">
+                    <img src="PORTADA1.jpeg?v=20260716" alt="Obebe Clothes" decoding="async">
                 </div>
             </div>
             <div class="hero-nav-arrows hero-nav-arrows--hidden" id="heroNavArrows" aria-hidden="true">
@@ -313,7 +320,12 @@
         </div>
     </div>
 
-    <script src="boot.js?v=20260720"></script>
+    <script src="productos-hombre.js?v=20260721"></script>
+    <script src="catalogo-mujer-loader.js?v=20260721"></script>
+    <script src="stock-sheet.js?v=20260721"></script>
+    <script src="mercadolibre-web.js?v=20260721"></script>
+    <script src="script.js?v=20260721"></script>
+    <script src="productos.js?v=20260721"></script>
 </body>
 </html>
 

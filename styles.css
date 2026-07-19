@@ -2240,38 +2240,3 @@ footer {
 .restriction-close-btn:hover {
     background: #2d2d2d;
 }
-
-#siteBootLoading {
-    position: fixed;
-    inset: 0;
-    z-index: 99999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff;
-    color: #111;
-    font-family: system-ui, -apple-system, sans-serif;
-}
-
-#siteBootLoading[hidden] {
-    display: none !important;
-}
-
-.site-boot-loading-inner {
-    text-align: center;
-    padding: 1.5rem;
-}
-
-.site-boot-spinner {
-    width: 36px;
-    height: 36px;
-    margin: 0 auto 1rem;
-    border: 3px solid #ddd;
-    border-top-color: #111;
-    border-radius: 50%;
-    animation: siteBootSpin 0.8s linear infinite;
-}
-
-@keyframes siteBootSpin {
-    to { transform: rotate(360deg); }
-}
