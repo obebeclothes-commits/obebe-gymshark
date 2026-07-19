@@ -1612,6 +1612,20 @@ window.addEventListener('pageshow', (event) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    arrancarProductosPagina();
+});
+if (window.__obebeBootActivo) {
+    document.addEventListener('obebe-scripts-ready', () => {
+        arrancarProductosPagina();
+    });
+} else if (document.readyState !== 'loading') {
+    arrancarProductosPagina();
+}
+
+function arrancarProductosPagina() {
+    if (window.__obebeProductosIniciado) return;
+    window.__obebeProductosIniciado = true;
+
     var isProductDetailPage = document.getElementById('productDetailContainer') && !document.getElementById('productsGrid');
     var isProductsGridPage = document.getElementById('productsGrid');
 
@@ -1671,4 +1685,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (messages.length > 0) {
         setInterval(cambiarMensaje, 5000);
     }
-});
+}

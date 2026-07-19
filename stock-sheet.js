@@ -557,6 +557,11 @@
             return Promise.resolve();
         }
 
+        if (window.__obebeOmitirSyncSheet) {
+            console.info('[stock-sheet] Sync omitido en datos móviles (catálogo local).');
+            return Promise.resolve();
+        }
+
         return descargarHoja(HOJA_INVENTARIO)
             .catch(function() {
                 console.warn('[stock-sheet] Probando hoja legacy ' + HOJA_INVENTARIO_LEGACY);

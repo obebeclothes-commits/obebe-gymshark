@@ -833,88 +833,82 @@ window.addEventListener('pageshow', (event) => {
     });
 });
 
-// Inicializar cuando el DOM est�� listo (solo en index; en productos/producto lo hace productos.js)
-document.addEventListener('DOMContentLoaded', () => {
-    const iniciarIndex = () => {
-        const isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
-        if (!isIndexPage) return;
-        var esInstagramInApp = /Instagram|FB_IAB|FBAV/i.test(navigator.userAgent);
-        if (esInstagramInApp) {
-            fijarAlturaHero();
-            setTimeout(function() { fijarAlturaHero(); instalarResizeObserverHero(); }, 150);
-            window.addEventListener('resize', fijarAlturaHero);
-            window.addEventListener('orientationchange', function() { setTimeout(fijarAlturaHero, 100); });
-        }
-        inicializarHoverCarruselHombre();
-        actualizarEtiquetaNuevoStock();
-        renderizarCarruselHombre('Hombre', false);
-        renderizarProductosMujer();
-        inicializarCarousel();
-        inicializarCarouselMujer();
-        inicializarNavegacion();
-        inicializarPromoBar();
-        inicializarHeroCarrusel();
-        // Asegurar eventos del modal del carrito en index (complementa productos.js)
-        const cartIconBtn = document.getElementById('cartIconBtn');
-        const cartModal = document.getElementById('cartModal');
-        const closeCartBtn = document.getElementById('closeCartBtn');
-        const clearCartBtn = document.getElementById('clearCartBtn');
-        const checkoutBtn = document.getElementById('checkoutBtn');
-        if (cartIconBtn && cartModal && typeof renderizarCarrito === 'function') {
-            cartIconBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                renderizarCarrito();
-                cartModal.classList.add('active');
-            });
-        }
-        if (cartModal && closeCartBtn) {
-            closeCartBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                cartModal.classList.remove('active');
-            });
-            function handleCartModalClick(e) {
-                const removeBtn = e.target.closest('[data-cart-remove]');
-                if (removeBtn && typeof eliminarDelCarrito === 'function') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const id = parseInt(removeBtn.getAttribute('data-id'), 10);
-                    const talla = removeBtn.getAttribute('data-talla') || '';
-                    const color = removeBtn.getAttribute('data-color') || '';
-                    eliminarDelCarrito(id, talla, color);
-                    return;
-                }
-                if (e.target === cartModal) cartModal.classList.remove('active');
-            }
-            cartModal.addEventListener('click', handleCartModalClick);
-            cartModal.addEventListener('touchend', handleCartModalClick, { passive: false });
-        }
-        if (clearCartBtn && typeof vaciarCarrito === 'function') {
-            clearCartBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                vaciarCarrito();
-            });
-        }
-        if (checkoutBtn && typeof enviarMensajeWhatsApp === 'function') {
-            checkoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                enviarMensajeWhatsApp();
-            });
-        }
-        // Asegurar que el badge del carrito muestre el n��mero al volver desde productos
-        if (typeof actualizarBadgeCarrito === 'function') {
-            actualizarBadgeCarrito();
-        }
-    };
+// Inicializar cuando el DOM esta listo (solo en index; en productos/producto lo hace productos.js)
+function arrancarIndexPagina() {
+    if (window.__obebeIndexIniciado) return;
+    window.__obebeIndexIniciado = true;
 
     const isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
     if (!isIndexPage) return;
 
-    const run = () => iniciarIndex();
-    run();
+    var esInstagramInApp = /Instagram|FB_IAB|FBAV/i.test(navigator.userAgent);
+    if (esInstagramInApp) {
+        fijarAlturaHero();
+        setTimeout(function() { fijarAlturaHero(); instalarResizeObserverHero(); }, 150);
+        window.addEventListener('resize', fijarAlturaHero);
+        window.addEventListener('orientationchange', function() { setTimeout(fijarAlturaHero, 100); });
+    }
+    inicializarHoverCarruselHombre();
+    actualizarEtiquetaNuevoStock();
+    renderizarCarruselHombre('Hombre', false);
+    renderizarProductosMujer();
+    inicializarCarousel();
+    inicializarCarouselMujer();
+    inicializarNavegacion();
+    inicializarPromoBar();
+    inicializarHeroCarrusel();
+    const cartIconBtn = document.getElementById('cartIconBtn');
+    const cartModal = document.getElementById('cartModal');
+    const closeCartBtn = document.getElementById('closeCartBtn');
+    const clearCartBtn = document.getElementById('clearCartBtn');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    if (cartIconBtn && cartModal && typeof renderizarCarrito === 'function') {
+        cartIconBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            renderizarCarrito();
+            cartModal.classList.add('active');
+        });
+    }
+    if (cartModal && closeCartBtn) {
+        closeCartBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            cartModal.classList.remove('active');
+        });
+        function handleCartModalClick(e) {
+            const removeBtn = e.target.closest('[data-cart-remove]');
+            if (removeBtn && typeof eliminarDelCarrito === 'function') {
+                e.preventDefault();
+                e.stopPropagation();
+                const id = parseInt(removeBtn.getAttribute('data-id'), 10);
+                const talla = removeBtn.getAttribute('data-talla') || '';
+                const color = removeBtn.getAttribute('data-color') || '';
+                eliminarDelCarrito(id, talla, color);
+                return;
+            }
+            if (e.target === cartModal) cartModal.classList.remove('active');
+        }
+        cartModal.addEventListener('click', handleCartModalClick);
+        cartModal.addEventListener('touchend', handleCartModalClick, { passive: false });
+    }
+    if (clearCartBtn && typeof vaciarCarrito === 'function') {
+        clearCartBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            vaciarCarrito();
+        });
+    }
+    if (checkoutBtn && typeof enviarMensajeWhatsApp === 'function') {
+        checkoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            enviarMensajeWhatsApp();
+        });
+    }
+    if (typeof actualizarBadgeCarrito === 'function') {
+        actualizarBadgeCarrito();
+    }
 
     var promesas = [];
     if (typeof sincronizarStockDesdeSheets === 'function') promesas.push(sincronizarStockDesdeSheets());
@@ -926,7 +920,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }).catch(function() {});
     }
-});
+}
+
+if (window.__obebeBootActivo) {
+    document.addEventListener('obebe-scripts-ready', arrancarIndexPagina);
+} else {
+    document.addEventListener('DOMContentLoaded', arrancarIndexPagina);
+}
 
 // Al volver atr��s (ej. desde productos.html) o abrir desde Instagram, la p��gina puede restaurarse desde bfcache
 // y DOMContentLoaded no se ejecuta de nuevo. pageshow s�� se dispara: actualizar badge y altura del hero (solo Instagram).

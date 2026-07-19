@@ -28,6 +28,11 @@
 
     window.cargarListadosMercadoLibre = function() {
         if (PROMESA) return PROMESA;
+        if (window.__obebeRedMovil) {
+            CACHE = { por_clave: {}, vendedor: null };
+            window.listadosMercadoLibre = CACHE;
+            return Promise.resolve(CACHE);
+        }
         PROMESA = fetch('mercadolibre-listings.json?v=' + Date.now(), { cache: 'no-store' })
             .then(function(res) {
                 if (!res.ok) throw new Error('HTTP ' + res.status);
