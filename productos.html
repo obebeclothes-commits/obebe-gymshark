@@ -4,21 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Productos - Obebe GymShark Collection</title>
-    <script>
-    document.documentElement.style.setProperty('--vh', (window.innerHeight / 100) + 'px');
-    (function(w) {
-        w.__obebeRedMovil = (function() {
-            try {
-                var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-                if (c && (c.type === 'wifi' || c.type === 'ethernet')) return false;
-                if (c && (c.saveData || c.type === 'cellular' || /^(slow-2g|2g|3g)$/.test(String(c.effectiveType || '')))) return true;
-            } catch (e) {}
-            return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-        })();
-        w.__obebeOmitirSyncSheet = w.__obebeRedMovil;
-    })(window);
-    </script>
-    <link rel="stylesheet" href="styles.css">
+    <script src="site-init.js?v=20260720"></script>
+    <link rel="stylesheet" href="critical.css?v=20260720">
+    <link rel="stylesheet" href="styles.css?v=20260720" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20260720"></noscript>
     <style>
         /* En desktop: texto de la barra promocional un poco a la derecha */
         @media (min-width: 769px) {
@@ -1038,6 +1027,12 @@
             }
         }
     </style>
+    <script defer src="productos-hombre.js?v=20260720"></script>
+    <script defer src="productos-mujer.js?v=20260720"></script>
+    <script defer src="stock-sheet.js?v=20260720"></script>
+    <script defer src="mercadolibre-web.js?v=20260720"></script>
+    <script defer src="script.js?v=20260720"></script>
+    <script defer src="productos.js?v=20260720"></script>
 </head>
 <body>
     <div class="promo-bar">
@@ -1236,12 +1231,6 @@
         </div>
     </div>
 
-    <script src="productos-hombre.js?v=20260721"></script>
-    <script src="catalogo-mujer-loader.js?v=20260721"></script>
-    <script src="stock-sheet.js?v=20260721"></script>
-    <script src="mercadolibre-web.js?v=20260721"></script>
-    <script src="script.js?v=20260721"></script>
-    <script src="productos.js?v=20260721"></script>
 </body>
 </html>
 
