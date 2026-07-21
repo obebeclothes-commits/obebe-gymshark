@@ -473,12 +473,6 @@
             var talla = normalizarTalla(p.tallaBase || String(p.talla || '').split('-')[0].trim());
             var refImagen = extraerRefImagenProducto(p);
             var datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca, refImagen);
-            if (!datos && refImagen > 0 && mapaPorRef && mapaPorRef.has(refImagen)) {
-                var porRef = mapaPorRef.get(refImagen);
-                if (porRef && nombresParecidos(p.nombre, porRef.nombre || '')) {
-                    datos = porRef;
-                }
-            }
             if (datos) {
                 p.stock = datos.stock;
                 if (datos.precio > 0) p.precio = datos.precio;
