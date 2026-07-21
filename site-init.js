@@ -10,7 +10,8 @@ document.documentElement.style.setProperty('--vh', (window.innerHeight / 100) + 
         } catch (e) {}
         return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
     })();
-    w.__obebeOmitirSyncSheet = w.__obebeRedMovil;
+    // Siempre sincronizar stock desde Sheets (catálogo local solo como respaldo inicial).
+    w.__obebeOmitirSyncSheet = false;
 })(window);
 
 if ('serviceWorker' in navigator) {

@@ -558,7 +558,7 @@
         }
 
         if (window.__obebeOmitirSyncSheet) {
-            console.info('[stock-sheet] Sync omitido en datos móviles (catálogo local).');
+            console.info('[stock-sheet] Sync omitido por configuracion local.');
             return Promise.resolve();
         }
 

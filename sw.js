@@ -1,21 +1,18 @@
-var CACHE = 'obebe-v20260720';
-var ASSETS = [
+var CACHE = 'obebe-v20260721';
+var SHELL = [
     './',
     './index.html',
     './styles.css',
     './critical.css',
-    './script.js',
-    './productos.js',
-    './stock-sheet.js',
-    './mercadolibre-web.js',
-    './productos-hombre.js',
     './PORTADA1.jpeg'
 ];
+
+var NETWORK_FIRST = /productos-(hombre|mujer)\.js(\?|$)|stock-sheet\.js(\?|$)|mercadolibre-listings\.json(\?|$)/;
 
 self.addEventListener('install', function(event) {
     event.waitUntil(
         caches.open(CACHE).then(function(cache) {
-            return cache.addAll(ASSETS).catch(function() {});
+            return cache.addAll(SHELL).catch(function() {});
         })
     );
     self.skipWaiting();
@@ -36,6 +33,17 @@ self.addEventListener('fetch', function(event) {
     if (event.request.method !== 'GET') return;
     var url = new URL(event.request.url);
     if (url.origin !== self.location.origin) return;
+
+    if (NETWORK_FIRST.test(url.pathname + (url.search || ''))) {
+        event.respondWith(
+            fetch(event.request).then(function(res) {
+                return res;
+            }).catch(function() {
+                return caches.match(event.request);
+            })
+        );
+        return;
+    }
 
     event.respondWith(
         caches.match(event.request).then(function(cached) {

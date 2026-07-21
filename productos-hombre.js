@@ -584,7 +584,7 @@ const productosHombre = [
         id: 37,
         nombre: "ESSENTIAL OVERSIZED JOGGERS",
         categoria: "Hombre",
-        precio: 650.00,
+        precio: 750.00,
         stock: 3,
         imagen1: "hombre/38.webp",
         imagen2: "hombre/38.1.webp",
@@ -600,7 +600,7 @@ const productosHombre = [
         id: 38,
         nombre: "ESSENTIAL OVERSIZED JOGGERS",
         categoria: "Hombre",
-        precio: 650.00,
+        precio: 750.00,
         stock: 3,
         imagen1: "hombre/39.webp",
         imagen2: "hombre/39.1.webp",
@@ -648,7 +648,7 @@ const productosHombre = [
         id: 41,
         nombre: "CREST SWEATSHIRT",
         categoria: "Hombre",
-        precio: 720.00,
+        precio: 750.00,
         stock: 3,
         imagen1: "hombre/42.webp",
         imagen2: "hombre/42.1.webp",
@@ -1481,22 +1481,6 @@ const productosHombre = [
         nombre: "CREST OVERSIZED T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
-        stock: 1,
-        imagen1: "hombre/96.webp",
-        imagen2: "hombre/96.1.webp",
-        talla: "M",
-        tallaBase: "M",
-        tipo: "T-Shirt",
-        color: "Azul",
-        marca: "Gym Shark",
-        precioMayoreo: 440.00,
-        mayoreo: true
-    },
-    {
-        id: 94,
-        nombre: "CREST OVERSIZED T-SHIRT",
-        categoria: "Hombre",
-        precio: 550.00,
         stock: 2,
         imagen1: "hombre/97.webp",
         imagen2: "hombre/97.1.webp",
@@ -1509,7 +1493,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 95,
+        id: 94,
         nombre: "CREST OVERSIZED T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -1525,7 +1509,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 96,
+        id: 95,
         nombre: "CREST OVERSIZED TRACK JACKET",
         categoria: "Hombre",
         precio: 800.00,
@@ -1541,7 +1525,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 97,
+        id: 96,
         nombre: "CREW SOCKS",
         categoria: "Hombre",
         precio: 500.00,
@@ -1552,6 +1536,22 @@ const productosHombre = [
         tallaBase: "S",
         tipo: "Socks",
         color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 400.00,
+        mayoreo: true
+    },
+    {
+        id: 97,
+        nombre: "CRITICAL CUT OFF TANK",
+        categoria: "Hombre",
+        precio: 500.00,
+        stock: 1,
+        imagen1: "hombre/103.webp",
+        imagen2: "hombre/103.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Tank Top",
+        color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 400.00,
         mayoreo: true
@@ -1734,70 +1734,6 @@ const productosHombre = [
     },
     {
         id: 109,
-        nombre: "GYMSHARK X CBUM HOCKEY JERSEY",
-        categoria: "Hombre",
-        precio: 1500.00,
-        stock: 1,
-        imagen1: "hombre/117.webp",
-        imagen2: "hombre/117.1.webp",
-        talla: "L",
-        tallaBase: "L",
-        tipo: "Jersey",
-        color: "Rojo",
-        marca: "Gym Shark",
-        precioMayoreo: 1450.00,
-        mayoreo: false
-    },
-    {
-        id: 110,
-        nombre: "GYMSHARK X CBUM HOCKEY JERSEY",
-        categoria: "Hombre",
-        precio: 1500.00,
-        stock: 1,
-        imagen1: "hombre/118.webp",
-        imagen2: "hombre/118.1.webp",
-        talla: "M",
-        tallaBase: "M",
-        tipo: "Jersey",
-        color: "Negro",
-        marca: "Gym Shark",
-        precioMayoreo: 1450.00,
-        mayoreo: false
-    },
-    {
-        id: 111,
-        nombre: "GYMSHARK X CBUM HOCKEY JERSEY",
-        categoria: "Hombre",
-        precio: 1500.00,
-        stock: 1,
-        imagen1: "hombre/119.webp",
-        imagen2: "hombre/119.1.webp",
-        talla: "M",
-        tallaBase: "M",
-        tipo: "Jersey",
-        color: "Rojo",
-        marca: "Gym Shark",
-        precioMayoreo: 1450.00,
-        mayoreo: false
-    },
-    {
-        id: 112,
-        nombre: "GYMSHARK X CBUM HOCKEY JERSEY",
-        categoria: "Hombre",
-        precio: 1500.00,
-        stock: 1,
-        imagen1: "hombre/120.webp",
-        imagen2: "hombre/120.1.webp",
-        talla: "S",
-        tallaBase: "S",
-        tipo: "Jersey",
-        color: "Rojo",
-        marca: "Gym Shark",
-        precioMayoreo: 1450.00,
-        mayoreo: false
-    },
-    {
-        id: 113,
         nombre: "GYMSHARK X CBUM T-SHIRT",
         categoria: "Hombre",
         precio: 1200.00,
@@ -1813,7 +1749,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 114,
+        id: 110,
         nombre: "GYMSHARK X CBUM T-SHIRT",
         categoria: "Hombre",
         precio: 1200.00,
@@ -1829,7 +1765,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 115,
+        id: 111,
         nombre: "GYMSHARK X CBUM T-SHIRT",
         categoria: "Hombre",
         precio: 1200.00,
@@ -1845,7 +1781,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 116,
+        id: 112,
         nombre: "GYMSHARK X CBUM T-SHIRT",
         categoria: "Hombre",
         precio: 1200.00,
@@ -1861,7 +1797,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 117,
+        id: 113,
         nombre: "GYMSHARK X CBUM WASHED HOODIE",
         categoria: "Hombre",
         precio: 2000.00,
@@ -1877,7 +1813,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 118,
+        id: 114,
         nombre: "GYMSHARK X CBUM WASHED HOODIE",
         categoria: "Hombre",
         precio: 2000.00,
@@ -1893,7 +1829,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 119,
+        id: 115,
         nombre: "GYMSHARK X CBUM WASHED HOODIE",
         categoria: "Hombre",
         precio: 2000.00,
@@ -1909,7 +1845,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 120,
+        id: 116,
         nombre: "LEGACY DROP ARM TANK",
         categoria: "Hombre",
         precio: 500.00,
@@ -1925,7 +1861,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 121,
+        id: 117,
         nombre: "NUMERALS HOODIE",
         categoria: "Hombre",
         precio: 900.00,
@@ -1941,7 +1877,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 122,
+        id: 118,
         nombre: "NUMERALS HOODIE",
         categoria: "Hombre",
         precio: 900.00,
@@ -1957,7 +1893,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 123,
+        id: 119,
         nombre: "NUMERLAS HOODIE",
         categoria: "Hombre",
         precio: 800.00,
@@ -1973,7 +1909,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 124,
+        id: 120,
         nombre: "PANTS ELITE TALL",
         categoria: "Hombre",
         precio: 800.00,
@@ -1989,7 +1925,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 125,
+        id: 121,
         nombre: "PANTS ELITE TALL",
         categoria: "Hombre",
         precio: 800.00,
@@ -2005,7 +1941,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 126,
+        id: 122,
         nombre: "PANTS ELITE TALL",
         categoria: "Hombre",
         precio: 800.00,
@@ -2021,7 +1957,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 127,
+        id: 123,
         nombre: "PANTS ELITE TALL",
         categoria: "Hombre",
         precio: 800.00,
@@ -2037,7 +1973,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 128,
+        id: 124,
         nombre: "REVENGE CROP CUT-OFFS",
         categoria: "Hombre",
         precio: 900.00,
@@ -2053,7 +1989,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 129,
+        id: 125,
         nombre: "REVENGE TEES SPRING",
         categoria: "Hombre",
         precio: 1050.00,
@@ -2069,7 +2005,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 130,
+        id: 126,
         nombre: "RUNNING 4 2 IN 1 SHORTS",
         categoria: "Hombre",
         precio: 600.00,
@@ -2085,7 +2021,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 131,
+        id: 127,
         nombre: "RUNNING 4 2 IN 1 SHORTS",
         categoria: "Hombre",
         precio: 700.00,
@@ -2101,7 +2037,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 132,
+        id: 128,
         nombre: "SPORT 7 2 IN 1 SHORTS",
         categoria: "Hombre",
         precio: 600.00,
@@ -2117,7 +2053,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 133,
+        id: 129,
         nombre: "SPORT 7 2 IN 1 SHORTS",
         categoria: "Hombre",
         precio: 600.00,
@@ -2133,7 +2069,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 134,
+        id: 130,
         nombre: "SPORT 7 2 IN 1 SHORTS",
         categoria: "Hombre",
         precio: 600.00,
@@ -2149,7 +2085,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 135,
+        id: 131,
         nombre: "STRAIGHT LEG PUMPER PANTS",
         categoria: "Hombre",
         precio: 1850.00,
@@ -2165,7 +2101,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 136,
+        id: 132,
         nombre: "YUGIOH JERSEY",
         categoria: "Hombre",
         precio: 1100.00,
@@ -2181,7 +2117,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 137,
+        id: 133,
         nombre: "ARRIVAL CONTRAST PANTS",
         categoria: "Hombre",
         precio: 750.00,
@@ -2197,7 +2133,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 138,
+        id: 134,
         nombre: "ARRIVAL CONTRAST PANTS",
         categoria: "Hombre",
         precio: 750.00,
@@ -2213,7 +2149,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 139,
+        id: 135,
         nombre: "TACTICAL JOGGERS",
         categoria: "Hombre",
         precio: 750.00,
@@ -2229,7 +2165,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 140,
+        id: 136,
         nombre: "TACTICAL JOGGERS",
         categoria: "Hombre",
         precio: 750.00,
@@ -2245,7 +2181,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 141,
+        id: 137,
         nombre: "ARRIVAL JOGGERS",
         categoria: "Hombre",
         precio: 750.00,
@@ -2261,7 +2197,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 142,
+        id: 138,
         nombre: "ARRIVAL JOGGERS",
         categoria: "Hombre",
         precio: 750.00,
@@ -2277,7 +2213,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 143,
+        id: 139,
         nombre: "ARRIVAL JOGGERS",
         categoria: "Hombre",
         precio: 750.00,
@@ -2293,7 +2229,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 144,
+        id: 140,
         nombre: "COLLEGIATE TECH HOODIE",
         categoria: "Hombre",
         precio: 750.00,
@@ -2309,7 +2245,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 145,
+        id: 141,
         nombre: "COLLEGIATE TECH HOODIE",
         categoria: "Hombre",
         precio: 750.00,
@@ -2325,7 +2261,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 146,
+        id: 142,
         nombre: "COLLEGIATE TECH HOODIE",
         categoria: "Hombre",
         precio: 750.00,
@@ -2341,7 +2277,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 147,
+        id: 143,
         nombre: "CREST HOODIE",
         categoria: "Hombre",
         precio: 750.00,
@@ -2357,7 +2293,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 148,
+        id: 144,
         nombre: "WEEKEND ZIP THROUGH SHELL JACKET",
         categoria: "Hombre",
         precio: 750.00,
@@ -2373,7 +2309,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 149,
+        id: 145,
         nombre: "WEEKEND ZIP THROUGH SHELL JACKET",
         categoria: "Hombre",
         precio: 750.00,
@@ -2389,7 +2325,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 150,
+        id: 146,
         nombre: "ACTIVE BACKPACK",
         categoria: "Hombre",
         precio: 600.00,
@@ -2405,7 +2341,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 151,
+        id: 147,
         nombre: "ARRIVAL T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -2421,7 +2357,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 152,
+        id: 148,
         nombre: "ARRIVAL T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -2437,7 +2373,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 153,
+        id: 149,
         nombre: "ARRIVAL T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -2453,7 +2389,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 154,
+        id: 150,
         nombre: "ARRIVAL T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -2469,7 +2405,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 155,
+        id: 151,
         nombre: "GLOBAL LIFTING OVERSIZED ESSENTIAL JOGGERS",
         categoria: "Hombre",
         precio: 750.00,
@@ -2485,39 +2421,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 156,
-        nombre: "GLOBAL LIFTING OVERSIZED ESSENTIAL JOGGERS",
-        categoria: "Hombre",
-        precio: 750.00,
-        stock: 1,
-        imagen1: "hombre/169.webp",
-        imagen2: "hombre/169.1.webp",
-        talla: "L",
-        tallaBase: "L",
-        tipo: "Joggers",
-        color: "Gris",
-        marca: "Gym Shark",
-        precioMayoreo: 600.00,
-        mayoreo: true
-    },
-    {
-        id: 157,
-        nombre: "GLOBAL LIFTING OVERSIZED ESSENTIAL JOGGERS",
-        categoria: "Hombre",
-        precio: 750.00,
-        stock: 1,
-        imagen1: "hombre/170.webp",
-        imagen2: "hombre/170.1.webp",
-        talla: "M",
-        tallaBase: "M",
-        tipo: "Joggers",
-        color: "Gris",
-        marca: "Gym Shark",
-        precioMayoreo: 600.00,
-        mayoreo: true
-    },
-    {
-        id: 158,
+        id: 152,
         nombre: "CRITICAL TANK",
         categoria: "Hombre",
         precio: 500.00,
@@ -2533,7 +2437,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 159,
+        id: 153,
         nombre: "CRITICAL 2.0 DROP ARM TANK",
         categoria: "Hombre",
         precio: 500.00,
@@ -2549,7 +2453,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 160,
+        id: 154,
         nombre: "CRITICAL 2.0 DROP ARM TANK",
         categoria: "Hombre",
         precio: 500.00,
@@ -2565,7 +2469,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 161,
+        id: 155,
         nombre: "RIBBED T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -2581,7 +2485,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 162,
+        id: 156,
         nombre: "RIBBED T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -2597,7 +2501,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 163,
+        id: 157,
         nombre: "BUILT FOR MORE T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -2613,7 +2517,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 164,
+        id: 158,
         nombre: "BUILT FOR MORE T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -2629,7 +2533,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 165,
+        id: 159,
         nombre: "BUILT FOR MORE T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -2645,7 +2549,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 166,
+        id: 160,
         nombre: "CREST OVERSIZED T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -2661,7 +2565,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 167,
+        id: 161,
         nombre: "CREST OVERSIZED T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -2677,7 +2581,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 168,
+        id: 162,
         nombre: "ARRIVAL CONTRAST TANK",
         categoria: "Hombre",
         precio: 500.00,
@@ -2693,7 +2597,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 169,
+        id: 163,
         nombre: "RIBBED TANK 1PK",
         categoria: "Hombre",
         precio: 500.00,
@@ -2709,23 +2613,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 170,
-        nombre: "RIBBED TANK 1PK",
-        categoria: "Hombre",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "hombre/186.webp",
-        imagen2: "hombre/186.1.webp",
-        talla: "M",
-        tallaBase: "M",
-        tipo: "Tank Top",
-        color: "Negro",
-        marca: "Gym Shark",
-        precioMayoreo: 380.00,
-        mayoreo: false
-    },
-    {
-        id: 171,
+        id: 164,
         nombre: "RIBBED TANK 1PK",
         categoria: "Hombre",
         precio: 500.00,
@@ -2741,7 +2629,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 172,
+        id: 165,
         nombre: "CREST OVERSIZED T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -2757,7 +2645,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 173,
+        id: 166,
         nombre: "CREST OVERSIZED T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -2773,7 +2661,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 174,
+        id: 167,
         nombre: "HYBRID 6\" SHORTS",
         categoria: "Hombre",
         precio: 550.00,
@@ -2789,7 +2677,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 175,
+        id: 168,
         nombre: "14OZ SHAKER BOTTLE",
         categoria: "Hombre",
         precio: 400.00,
@@ -2805,7 +2693,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 176,
+        id: 169,
         nombre: "BASELAYER LEGGING",
         categoria: "Hombre",
         precio: 750.00,
@@ -2821,7 +2709,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 177,
+        id: 170,
         nombre: "CARLOS BELCAST TRACK JACKET",
         categoria: "Hombre",
         precio: 1200.00,
@@ -2837,7 +2725,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 178,
+        id: 171,
         nombre: "EAGLE BAND STYLE GRAPHIC STRAIGHT LEG PANTS",
         categoria: "Hombre",
         precio: 1200.00,
@@ -2853,7 +2741,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 179,
+        id: 172,
         nombre: "PUMPER PANTS",
         categoria: "Hombre",
         precio: 1050.00,
@@ -2869,7 +2757,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 180,
+        id: 173,
         nombre: "CARLOS BELCAST TRACK PANT",
         categoria: "Hombre",
         precio: 1250.00,
@@ -2885,7 +2773,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 181,
+        id: 174,
         nombre: "COLLEGIATE TECH TANK",
         categoria: "Hombre",
         precio: 750.00,
@@ -2901,7 +2789,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 182,
+        id: 175,
         nombre: "VINTAGE LEGACY T-SHIRT",
         categoria: "Hombre",
         precio: 800.00,
@@ -2917,23 +2805,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 183,
-        nombre: "LEGACY DROP ARM TANK",
-        categoria: "Hombre",
-        precio: 550.00,
-        stock: 1,
-        imagen1: "hombre/200.webp",
-        imagen2: "hombre/200.1.webp",
-        talla: "L",
-        tallaBase: "L",
-        tipo: "Tank Top",
-        color: "Negro",
-        marca: "Gym Shark",
-        precioMayoreo: 530.00,
-        mayoreo: false
-    },
-    {
-        id: 184,
+        id: 176,
         nombre: "SHADOW SEAMLESS T SHIRT",
         categoria: "Hombre",
         precio: 750.00,
@@ -2949,7 +2821,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 185,
+        id: 177,
         nombre: "GEO SEAMLESS T-SHIRT",
         categoria: "Hombre",
         precio: 500.00,
@@ -2965,7 +2837,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 186,
+        id: 178,
         nombre: "RIBBED TANK 1PK",
         categoria: "Hombre",
         precio: 400.00,
@@ -2981,7 +2853,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 187,
+        id: 179,
         nombre: "SHADOW SEAMLESS LONG SLEEVE T-SHIRT",
         categoria: "Hombre",
         precio: 800.00,
@@ -2997,7 +2869,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 188,
+        id: 180,
         nombre: "SHADOW SEAMLESS LONG SLEEVE T-SHIRT",
         categoria: "Hombre",
         precio: 800.00,
@@ -3013,7 +2885,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 189,
+        id: 181,
         nombre: "GEO SEAMLESS T-SHIRT",
         categoria: "Hombre",
         precio: 600.00,
@@ -3029,7 +2901,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 190,
+        id: 182,
         nombre: "GEO SEAMLESS LONG SLEEVE T-SHIRT",
         categoria: "Hombre",
         precio: 700.00,
@@ -3045,7 +2917,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 191,
+        id: 183,
         nombre: "GEO SEAMLESS LONG SLEEVE T-SHIRT",
         categoria: "Hombre",
         precio: 800.00,
@@ -3061,7 +2933,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 192,
+        id: 184,
         nombre: "ELEMENT BASELAYYER T-SHIRT",
         categoria: "Hombre",
         precio: 700.00,
@@ -3077,7 +2949,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 193,
+        id: 185,
         nombre: "ARRIVAL CONTRAST PANTS",
         categoria: "Hombre",
         precio: 750.00,
@@ -3093,7 +2965,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 194,
+        id: 186,
         nombre: "ARRIVAL CONTRAST PANTS",
         categoria: "Hombre",
         precio: 750.00,
@@ -3109,7 +2981,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 195,
+        id: 187,
         nombre: "ARRIVAL CONTRAST 1/4 ZIP",
         categoria: "Hombre",
         precio: 750.00,
@@ -3125,23 +2997,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 196,
-        nombre: "ARRIVAL CONTRAST 1/4 ZIP",
-        categoria: "Hombre",
-        precio: 750.00,
-        stock: 1,
-        imagen1: "hombre/217.webp",
-        imagen2: "hombre/217.1.webp",
-        talla: "M",
-        tallaBase: "M",
-        tipo: "Long Sleeve",
-        color: "Gris",
-        marca: "Gym Shark",
-        precioMayoreo: 590.00,
-        mayoreo: false
-    },
-    {
-        id: 197,
+        id: 188,
         nombre: "CREST TALL JOGGERS",
         categoria: "Hombre",
         precio: 750.00,
@@ -3157,7 +3013,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 198,
+        id: 189,
         nombre: "VERSATILE SEAMLESS TANK",
         categoria: "Hombre",
         precio: 500.00,
@@ -3173,7 +3029,23 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 199,
+        id: 190,
+        nombre: "ARRIVAL CONTRAST T-SHIRT",
+        categoria: "Hombre",
+        precio: 550.00,
+        stock: 1,
+        imagen1: "hombre/222.webp",
+        imagen2: "hombre/222.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "T-Shirt",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 480.00,
+        mayoreo: false
+    },
+    {
+        id: 191,
         nombre: "ARRIVAL CONTRAST T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -3189,7 +3061,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 200,
+        id: 192,
         nombre: "ARRIVAL CONTRAST T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -3205,7 +3077,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 201,
+        id: 193,
         nombre: "ARRIVAL CONTRAST T-SHIRT",
         categoria: "Hombre",
         precio: 550.00,
@@ -3221,7 +3093,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 202,
+        id: 194,
         nombre: "CREST JOGGERS",
         categoria: "Hombre",
         precio: 750.00,
@@ -3237,7 +3109,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 203,
+        id: 195,
         nombre: "CREST TALL JOGGERS",
         categoria: "Hombre",
         precio: 750.00,
@@ -3253,7 +3125,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 204,
+        id: 196,
         nombre: "2012 STRENGTH JOGGERS",
         categoria: "Hombre",
         precio: 750.00,
@@ -3269,7 +3141,7 @@ const productosHombre = [
         mayoreo: false
     },
     {
-        id: 205,
+        id: 197,
         nombre: "COLLEGIATE MINI TOTE BAG",
         categoria: "Hombre",
         precio: 400.00,
@@ -3285,23 +3157,7 @@ const productosHombre = [
         mayoreo: true
     },
     {
-        id: 206,
-        nombre: "ESSENTIAL OVERSSIZED JOGGERS",
-        categoria: "Hombre",
-        precio: 750.00,
-        stock: 1,
-        imagen1: "hombre/230.webp",
-        imagen2: "hombre/230.1.webp",
-        talla: "S",
-        tallaBase: "S",
-        tipo: "Joggers",
-        color: "Azul",
-        marca: "Gym Shark",
-        precioMayoreo: 600.00,
-        mayoreo: true
-    },
-    {
-        id: 207,
+        id: 198,
         nombre: "REST DAY ESSENTIALS CARGO JOGGERS",
         categoria: "Hombre",
         precio: 750.00,
