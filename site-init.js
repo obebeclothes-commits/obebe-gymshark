@@ -10,12 +10,13 @@ document.documentElement.style.setProperty('--vh', (window.innerHeight / 100) + 
         } catch (e) {}
         return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
     })();
-    // Siempre sincronizar stock desde Sheets (catálogo local solo como respaldo inicial).
     w.__obebeOmitirSyncSheet = false;
-})(window);
+    w.__obebeSyncEnBackground = w.__obebeRedMovil;
+    w.__obebeCargaExterna = true;
 
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js').catch(function() {});
-    });
-}
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+            regs.forEach(function(reg) { reg.unregister(); });
+        }).catch(function() {});
+    }
+})(window);

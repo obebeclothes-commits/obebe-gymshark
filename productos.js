@@ -1611,10 +1611,7 @@ window.addEventListener('pageshow', (event) => {
     });
 });
 
-document.addEventListener('DOMContentLoaded', arrancarProductosPagina);
-if (document.readyState !== 'loading') {
-    arrancarProductosPagina();
-}
+document.addEventListener('obebe-scripts-ready', arrancarProductosPagina);
 
 function arrancarProductosPagina() {
     if (window.__obebeProductosIniciado) return;
@@ -1629,9 +1626,14 @@ function arrancarProductosPagina() {
             inicializarNavegacion();
             if (typeof iniciarDetalleProducto === 'function') iniciarDetalleProducto();
         } else if (isProductsGridPage) {
-            var grid = document.getElementById('productsGrid');
-            if (grid) {
-                grid.innerHTML = '<p style="text-align:center;padding:2rem;color:#666;">Actualizando inventario...</p>';
+            if (!window.__obebeSyncEnBackground) {
+                var grid = document.getElementById('productsGrid');
+                if (grid) {
+                    grid.innerHTML = '<p style="text-align:center;padding:2rem;color:#666;">Actualizando inventario...</p>';
+                }
+            }
+            if (window.__obebeSyncEnBackground) {
+                renderizarTodosLosProductos();
             }
             inicializarFiltroGeneroNuevoStock();
             inicializarHoverImagenes();
@@ -1658,22 +1660,25 @@ function arrancarProductosPagina() {
         promesas.push(cargarListadosMercadoLibre());
     }
     if (promesas.length) {
-        Promise.race([
-            Promise.all(promesas),
-            new Promise(function(resolve) { setTimeout(resolve, 12000); })
-        ]).then(function() {
-            if (isProductsGridPage) {
+        var refrescar = function() {
+            if (isProductsGridPage && !window.__obebeSyncEnBackground) {
                 renderizarTodosLosProductos();
             }
             if (typeof window.refrescarTiendaTrasSyncStock === 'function') {
                 window.refrescarTiendaTrasSyncStock();
             }
-        }).catch(function() {
-            if (isProductsGridPage) {
-                renderizarTodosLosProductos();
-            }
-        });
-    } else if (isProductsGridPage) {
+        };
+        if (window.__obebeSyncEnBackground) {
+            Promise.all(promesas).then(refrescar).catch(refrescar);
+        } else {
+            Promise.race([
+                Promise.all(promesas),
+                new Promise(function(resolve) { setTimeout(resolve, 12000); })
+            ]).then(refrescar).catch(function() {
+                if (isProductsGridPage) renderizarTodosLosProductos();
+            });
+        }
+    } else if (isProductsGridPage && !window.__obebeSyncEnBackground) {
         renderizarTodosLosProductos();
     }
 

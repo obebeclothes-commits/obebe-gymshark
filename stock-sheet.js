@@ -517,7 +517,7 @@
         var url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
             '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(nombreHoja) +
             '&_=' + Date.now();
-        return fetchConTimeout(url, { cache: 'no-store' }, 12000).then(function(res) {
+        return fetchConTimeout(url, { cache: 'no-store' }, window.__obebeRedMovil ? 8000 : 12000).then(function(res) {
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return res.text();
         });

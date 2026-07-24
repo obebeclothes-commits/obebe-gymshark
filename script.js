@@ -922,7 +922,7 @@ function arrancarIndexPagina() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', arrancarIndexPagina);
+document.addEventListener('obebe-scripts-ready', arrancarIndexPagina);
 
 // Al volver atr��s (ej. desde productos.html) o abrir desde Instagram, la p��gina puede restaurarse desde bfcache
 // y DOMContentLoaded no se ejecuta de nuevo. pageshow s�� se dispara: actualizar badge y altura del hero (solo Instagram).
