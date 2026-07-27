@@ -19,6 +19,7 @@ header .container{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;ali
 .logo h1{font-size:1.1rem;margin:0;letter-spacing:.05em;color:#fff}
 .hero{position:relative;width:100%;overflow:hidden;background:#0d0d0d;min-height:40vh}
 .hero-slides{position:relative;width:100%;height:min(76vh,800px);background:#0d0d0d}
+.hero-slide picture{display:block;width:100%;height:100%}
 .hero-slide img{width:100%;height:100%;object-fit:cover;object-position:top center}
 .hero-content{position:absolute;inset:0;display:flex;align-items:flex-end;padding:0 3% 1.25rem;z-index:2}
 .hero-text{color:#fff;max-width:500px}
@@ -29,8 +30,10 @@ main,.container{max-width:1200px;margin:0 auto}
 footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
 @media(max-width:768px){.hero-slides{height:auto;aspect-ratio:819/1024;max-height:92vh}.mobile-menu-btn{display:flex}}
     </style>
-    <link rel="stylesheet" href="styles.css?v=20260733" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20260733"></noscript>
+    <link rel="stylesheet" href="styles.css?v=20260734" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20260734"></noscript>
+    <link rel="preload" as="image" type="image/webp" href="PORTADA1-movil.webp?v=20260734" media="(max-width: 768px)">
+    <link rel="preload" as="image" type="image/webp" href="PORTADA1.webp?v=20260734" media="(min-width: 769px)">
     <style>
         /* En desktop: texto de la barra promocional un poco a la derecha */
         @media (min-width: 769px) {
@@ -111,7 +114,11 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
         <section id="inicio" class="hero">
             <div class="hero-slides" aria-live="polite">
                 <div class="hero-slide active">
-                    <img src="PORTADA1.jpeg?v=20260716" alt="Obebe Clothes" decoding="async" fetchpriority="high" width="819" height="1024">
+                    <picture>
+                        <source media="(max-width: 768px)" srcset="PORTADA1-movil.webp?v=20260734" type="image/webp">
+                        <source srcset="PORTADA1.webp?v=20260734" type="image/webp">
+                        <img src="PORTADA1.jpeg?v=20260716" alt="Obebe Clothes" decoding="async" fetchpriority="high" width="819" height="1024">
+                    </picture>
                 </div>
             </div>
             <div class="hero-nav-arrows hero-nav-arrows--hidden" id="heroNavArrows" aria-hidden="true">
@@ -332,30 +339,11 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
         </div>
     </div>
 
-    <script>
-    (function(){
-        var V='20260733';
-        function loadScript(src,cb){
-            var s=document.createElement('script');
-            s.src=src+'?v='+V;
-            s.onload=s.onerror=function(){if(cb)cb();};
-            document.body.appendChild(s);
-        }
-        function loadSeq(list,idx,done){
-            if(idx>=list.length){done();return;}
-            loadScript(list[idx],function(){loadSeq(list,idx+1,done);});
-        }
-        function boot(){
-            var list=['productos-hombre.js','productos-mujer.js','script.js','productos.js'];
-            loadSeq(list,0,function(){
-                document.dispatchEvent(new Event('obebe-scripts-ready'));
-                loadScript('obebe-listo.js');
-            });
-        }
-        if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);
-        else boot();
-    })();
-    </script>
+    <script defer src="productos-hombre.js?v=20260734"></script>
+    <script defer src="productos-mujer.js?v=20260734"></script>
+    <script defer src="script.js?v=20260734"></script>
+    <script defer src="productos.js?v=20260734"></script>
+    <script defer src="obebe-listo.js?v=20260734"></script>
 </body>
 </html>
 

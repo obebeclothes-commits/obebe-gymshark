@@ -1,5 +1,5 @@
 (function() {
-    var VERSION = '20260733';
+    var VERSION = '20260734';
     window.__obebeCargaExterna = true;
 
     function paginaActual() {
@@ -38,44 +38,40 @@
         return base;
     }
 
-    function cargarScript(src) {
-        if (document.querySelector('script[src*="' + src + '"]')) {
-            return Promise.resolve(true);
-        }
+    // async=false conserva el orden de ejecución pero descarga todo en paralelo.
+    function cargarOrdenado(lista) {
         return new Promise(function(resolve) {
-            var el = document.createElement('script');
-            el.src = src + '?v=' + VERSION;
-            var limite = window.__obebeRedMovil ? 120000 : 60000;
-            var listo = false;
-            var timer = setTimeout(function() {
-                if (!listo) {
-                    console.warn('[obebe-cargar] timeout', src);
-                    resolve(false);
+            var restantes = lista.length;
+            if (!restantes) {
+                resolve();
+                return;
+            }
+            var terminado = function() {
+                restantes -= 1;
+                if (restantes === 0) resolve();
+            };
+            lista.forEach(function(src) {
+                if (document.querySelector('script[data-obebe="' + src + '"]')) {
+                    terminado();
+                    return;
                 }
-            }, limite);
-            el.onload = function() {
-                listo = true;
-                clearTimeout(timer);
-                resolve(true);
-            };
-            el.onerror = function() {
-                listo = true;
-                clearTimeout(timer);
-                console.warn('[obebe-cargar] error', src);
-                resolve(false);
-            };
-            document.body.appendChild(el);
-        });
-    }
-
-    function cargarSecuencia(lista, indice) {
-        if (indice >= lista.length) return Promise.resolve();
-        return cargarScript(lista[indice]).then(function() {
-            return cargarSecuencia(lista, indice + 1);
+                var el = document.createElement('script');
+                el.src = src + '?v=' + VERSION;
+                el.async = false;
+                el.setAttribute('data-obebe', src);
+                el.onload = terminado;
+                el.onerror = function() {
+                    console.warn('[obebe-cargar] error', src);
+                    terminado();
+                };
+                document.body.appendChild(el);
+            });
         });
     }
 
     function cargarExtras() {
+        if (window.__obebeExtrasPedidos) return;
+        window.__obebeExtrasPedidos = true;
         if (paginaActual() === 'asesorias.html') return;
         var el = document.createElement('script');
         el.src = 'obebe-listo.js?v=' + VERSION;
@@ -83,25 +79,20 @@
         document.body.appendChild(el);
     }
 
+    // Se puede llamar más de una vez: los propios módulos evitan inicializar doble.
     function dispararReady() {
-        if (window.__obebeScriptsReadyDisparado) return;
-        window.__obebeScriptsReadyDisparado = true;
         document.dispatchEvent(new Event('obebe-scripts-ready'));
         cargarExtras();
     }
 
     function iniciar() {
-        var esenciales = scriptsEsenciales();
         var failsafeMs = window.__obebeRedMovil ? 8000 : 5000;
         var failsafe = setTimeout(function() {
             console.warn('[obebe-cargar] failsafe — iniciando con lo disponible');
             dispararReady();
         }, failsafeMs);
 
-        cargarSecuencia(esenciales, 0).then(function() {
-            clearTimeout(failsafe);
-            dispararReady();
-        }).catch(function() {
+        cargarOrdenado(scriptsEsenciales()).then(function() {
             clearTimeout(failsafe);
             dispararReady();
         });
