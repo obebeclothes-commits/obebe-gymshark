@@ -74,13 +74,12 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
     contenedor.textContent = fuente;
 }
 
-/** Productos con columna U = 1..8; si no hay, primeros 8 con stock del catálogo estático. */
+/** Productos con columna U del Sheet = posiciones 1..8 en el carrusel (sin filtro de stock). */
 function obtenerProductosParaCarrusel(catalogo, categoria) {
     var slots = new Array(8);
     if (!Array.isArray(catalogo)) return [];
     catalogo.forEach(function(p) {
         if (p.categoria !== categoria && p.categoria !== 'Unisex') return;
-        if (Number(p.stock) <= 0) return;
         var pos = parseInt(p.posicionCarrusel, 10);
         if (pos >= 1 && pos <= 8) slots[pos - 1] = p;
     });
@@ -88,10 +87,16 @@ function obtenerProductosParaCarrusel(catalogo, categoria) {
     for (var i = 0; i < slots.length; i++) {
         if (slots[i]) resultado.push(slots[i]);
     }
-    if (resultado.length > 0) return resultado;
-    return catalogo.filter(function(p) {
-        return (p.categoria === categoria || p.categoria === 'Unisex') && Number(p.stock) > 0;
-    }).slice(0, 8);
+    return resultado;
+}
+
+function mensajeCarruselCargando() {
+    return '<p style="padding:2rem;text-align:center;color:#666;">Cargando productos...</p>';
+}
+
+function mensajeCarruselError() {
+    return '<p style="padding:2rem;text-align:center;color:#666;line-height:1.5;">No se pudo cargar el inventario. '
+        + '<a href="javascript:location.reload()" style="color:#111;text-decoration:underline;">Reintentar</a></p>';
 }
 
 function inicializarHoverCarruselHombre() {
@@ -854,9 +859,8 @@ function arrancarIndexPagina() {
     inicializarHoverCarruselHombre();
     actualizarEtiquetaNuevoStock();
     renderizarCarruselHombre('Hombre', false);
-    renderizarProductosMujer();
+    if (typeof productosMujer !== 'undefined') renderizarProductosMujer();
     inicializarCarousel();
-    inicializarCarouselMujer();
     inicializarNavegacion();
     inicializarPromoBar();
     inicializarHeroCarrusel();
@@ -913,16 +917,7 @@ function arrancarIndexPagina() {
         actualizarBadgeCarrito();
     }
 
-    var promesas = [];
-    if (typeof sincronizarStockDesdeSheets === 'function') promesas.push(sincronizarStockDesdeSheets());
-    if (typeof cargarListadosMercadoLibre === 'function') promesas.push(cargarListadosMercadoLibre());
-    if (promesas.length) {
-        Promise.all(promesas).then(function() {
-            if (typeof window.refrescarTiendaTrasSyncStock === 'function') {
-                window.refrescarTiendaTrasSyncStock();
-            }
-        }).catch(function() {});
-    }
+    if (typeof inicializarCarouselMujer === 'function') inicializarCarouselMujer();
 }
 
 document.addEventListener('obebe-scripts-ready', arrancarIndexPagina);

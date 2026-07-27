@@ -379,6 +379,12 @@ def leer_productos_desde_csv(
         imagen_num = parsear_numero_imagen(obtener_valor(fila, idx["imagen"]))
         ref_imagen = elegir_numero_imagen(imagen_num, nuevo_id, numeros_imagen_usados)
         imagen1, imagen2 = resolver_imagenes(carpeta_imagenes, carpeta_rel, ref_imagen)
+        carrusel_raw = obtener_valor(fila, idx["carrusel"])
+        posicion_carrusel = 0
+        if carrusel_raw.isdigit():
+            n = int(carrusel_raw)
+            if 1 <= n <= 8:
+                posicion_carrusel = n
 
         productos.append(
             {
@@ -396,6 +402,7 @@ def leer_productos_desde_csv(
                 "marca": normalizar_marca(obtener_valor(fila, idx["marca"])),
                 "precioMayoreo": precio_mayoreo,
                 "mayoreo": mayoreo,
+                "posicionCarrusel": posicion_carrusel,
             }
         )
         nuevo_id += 1
@@ -422,6 +429,7 @@ def producto_a_js(producto: dict, indent: str = "    ") -> str:
         ("marca", producto["marca"], "str"),
         ("precioMayoreo", f"{producto.get('precioMayoreo', 0):.2f}", "num"),
         ("mayoreo", producto.get("mayoreo", False), "bool"),
+        ("posicionCarrusel", producto.get("posicionCarrusel", 0), "num"),
     ]
 
     lineas = [f"{indent}{{"]

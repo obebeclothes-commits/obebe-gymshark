@@ -515,13 +515,13 @@
         var url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
             '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(nombreHoja) +
             '&_=' + Date.now();
-        var ms = window.__obebeRedMovil ? 15000 : 12000;
+        var ms = window.__obebeRedMovil ? 25000 : 15000;
         return fetchConTimeout(url, { cache: 'no-store' }, ms).then(function(res) {
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return res.text();
         }).catch(function(err) {
-            if (n < 1) {
-                console.warn('[stock-sheet] reintento', nombreHoja);
+            if (n < 2) {
+                console.warn('[stock-sheet] reintento', nombreHoja, n + 1);
                 return descargarHoja(nombreHoja, n + 1);
             }
             throw err;
@@ -558,9 +558,12 @@
         }
 
         if (window.__obebeOmitirSyncSheet) {
+            window.__obebeSheetSyncOk = true;
             console.info('[stock-sheet] Sync omitido por configuracion local.');
             return Promise.resolve();
         }
+
+        window.__obebeSheetSyncOk = false;
 
         return descargarHoja(HOJA_INVENTARIO)
             .catch(function() {
@@ -578,7 +581,6 @@
     };
 
     window.refrescarTiendaTrasSyncStock = function() {
-        if (!window.__obebeSheetSyncOk) return;
         if (typeof actualizarEtiquetaNuevoStock === 'function') actualizarEtiquetaNuevoStock();
         if (typeof renderizarCarruselHombre === 'function') renderizarCarruselHombre('Hombre', false);
         if (typeof renderizarProductosMujer === 'function') renderizarProductosMujer();

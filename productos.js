@@ -1644,23 +1644,6 @@ function arrancarProductosPagina() {
 
     iniciarPagina();
 
-    var promesas = [];
-    if (typeof sincronizarStockDesdeSheets === 'function') {
-        promesas.push(sincronizarStockDesdeSheets());
-    }
-    if (typeof cargarListadosMercadoLibre === 'function') {
-        promesas.push(cargarListadosMercadoLibre());
-    }
-    if (promesas.length) {
-        var refrescar = function() {
-            if (isProductsGridPage) renderizarTodosLosProductos();
-            if (typeof window.refrescarTiendaTrasSyncStock === 'function') {
-                window.refrescarTiendaTrasSyncStock();
-            }
-        };
-        Promise.all(promesas).then(refrescar).catch(refrescar);
-    }
-
     var messages = document.querySelectorAll('.promo-message');
     var currentIndex = 0;
     function cambiarMensaje() {

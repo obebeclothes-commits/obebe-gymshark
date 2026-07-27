@@ -1,5 +1,5 @@
 (function() {
-    var VERSION = '20260728';
+    var VERSION = '20260731';
     window.__obebeCargaExterna = true;
 
     function paginaActual() {
@@ -25,54 +25,99 @@
         return true;
     }
 
-    function scriptsParaPagina() {
+    function scriptsEsenciales() {
         var pg = paginaActual();
         if (pg === 'asesorias.html') {
             return ['mercadolibre-web.js', 'productos.js', 'script.js'];
         }
-        var list = ['productos-hombre.js', 'stock-sheet.js', 'mercadolibre-web.js', 'script.js', 'productos.js'];
+        var base = ['productos-hombre.js', 'script.js', 'productos.js'];
         if (necesitaMujer()) {
-            list.splice(1, 0, 'productos-mujer.js');
+            base.splice(1, 0, 'productos-mujer.js');
         }
-        if (pg === 'producto.html') list.push('producto-detalle.js');
-        return list;
+        if (pg === 'producto.html') base.push('producto-detalle.js');
+        return base;
     }
 
     function cargarScript(src) {
+        if (document.querySelector('script[src*="' + src + '"]')) {
+            return Promise.resolve(true);
+        }
         return new Promise(function(resolve) {
             var el = document.createElement('script');
             el.src = src + '?v=' + VERSION;
-            var limite = window.__obebeRedMovil ? 35000 : 25000;
+            var limite = window.__obebeRedMovil ? 90000 : 45000;
+            var listo = false;
             var timer = setTimeout(function() {
-                console.warn('[obebe-cargar] timeout', src);
-                resolve();
+                if (!listo) {
+                    console.warn('[obebe-cargar] timeout', src);
+                    resolve(false);
+                }
             }, limite);
             el.onload = function() {
+                listo = true;
                 clearTimeout(timer);
-                resolve();
+                resolve(true);
             };
             el.onerror = function() {
+                listo = true;
                 clearTimeout(timer);
                 console.warn('[obebe-cargar] error', src);
-                resolve();
+                resolve(false);
             };
             document.body.appendChild(el);
         });
     }
 
-    function cargarSecuencia(lista, indice, done) {
-        if (indice >= lista.length) {
-            done();
-            return;
-        }
-        cargarScript(lista[indice]).then(function() {
-            cargarSecuencia(lista, indice + 1, done);
+    function cargarSecuencia(lista, indice) {
+        if (indice >= lista.length) return Promise.resolve();
+        return cargarScript(lista[indice]).then(function() {
+            return cargarSecuencia(lista, indice + 1);
         });
     }
 
+    function cargarGrupo(lista) {
+        if (!lista.length) return Promise.resolve();
+        return Promise.all(lista.map(cargarScript));
+    }
+
+    function cargarExtras() {
+        if (paginaActual() === 'asesorias.html') return;
+        var el = document.createElement('script');
+        el.src = 'obebe-listo.js?v=' + VERSION;
+        el.async = true;
+        document.body.appendChild(el);
+    }
+
+    function dispararReady() {
+        if (window.__obebeScriptsReadyDisparado) return;
+        window.__obebeScriptsReadyDisparado = true;
+        document.dispatchEvent(new Event('obebe-scripts-ready'));
+        cargarExtras();
+    }
+
     function iniciar() {
-        cargarSecuencia(scriptsParaPagina(), 0, function() {
-            document.dispatchEvent(new Event('obebe-scripts-ready'));
+        var esenciales = scriptsEsenciales();
+        var catalogo = ['productos-hombre.js', 'productos-mujer.js'].filter(function(s) {
+            return esenciales.indexOf(s) >= 0;
+        });
+        var resto = esenciales.filter(function(s) {
+            return catalogo.indexOf(s) < 0;
+        });
+
+        var failsafeMs = window.__obebeRedMovil ? 15000 : 10000;
+        var failsafe = setTimeout(function() {
+            console.warn('[obebe-cargar] failsafe — iniciando con lo disponible');
+            dispararReady();
+        }, failsafeMs);
+
+        cargarGrupo(catalogo).then(function() {
+            return cargarSecuencia(resto, 0);
+        }).then(function() {
+            clearTimeout(failsafe);
+            dispararReady();
+        }).catch(function() {
+            clearTimeout(failsafe);
+            dispararReady();
         });
     }
 

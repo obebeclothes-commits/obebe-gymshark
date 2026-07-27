@@ -2610,7 +2610,8 @@ const productosHombre = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 380.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 3
     },
     {
         id: 164,
