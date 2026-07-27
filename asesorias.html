@@ -21,8 +21,20 @@ main,.container{max-width:1200px;margin:0 auto}
 footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
 @media(max-width:768px){.mobile-menu-btn{display:flex}}
     </style>
-    <link rel="stylesheet" href="styles.css?v=20260734" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20260734"></noscript>
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20260735" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20260735"></noscript>
+    <script>
+    // Respaldo: si el onload del <link> no dispara, la hoja quedaria en media=print y sin aplicar.
+    (function(w, d) {
+        function activarCss() {
+            var l = d.getElementById('cssPrincipal');
+            if (l && l.media !== 'all') l.media = 'all';
+        }
+        d.addEventListener('DOMContentLoaded', activarCss);
+        w.addEventListener('load', activarCss);
+        setTimeout(activarCss, 3000);
+    })(window, document);
+    </script>
     <style>
         /* Página asesorías */
         .asesorias-page { padding: 0; }
@@ -731,7 +743,7 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
         </div>
     </div>
 
-    <script src="obebe-cargar.js?v=20260734"></script>
+    <script src="obebe-cargar.js?v=20260735"></script>
 </body>
 </html>
 

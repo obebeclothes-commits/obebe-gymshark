@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnostico Obebe</title>
+<style>
+body{margin:0;padding:1rem;background:#111;color:#eee;font-family:monospace;font-size:14px;line-height:1.6}
+h1{font-size:1.2rem;color:#4ecdc4;margin:0 0 .5rem}
+.ok{color:#51cf66}
+.bad{color:#ff6b6b}
+.wait{color:#ffd43b}
+table{width:100%;border-collapse:collapse;margin-top:.5rem}
+td{padding:.3rem;border-bottom:1px solid #333;word-break:break-all}
+td:first-child{width:45%}
+#info{background:#1c1c1c;padding:.6rem;border-radius:4px;margin-bottom:1rem}
+#errores{background:#2a1414;padding:.6rem;border-radius:4px;margin-top:1rem;display:none}
+</style>
+</head>
+<body>
+<h1>Diagnostico Obebe</h1>
+<div id="info">Leyendo datos de conexion...</div>
+<div>Archivos del sitio:</div>
+<table id="tabla"></table>
+<div id="errores"></div>
+<div id="resumen" style="margin-top:1rem;padding:.6rem;background:#1c1c1c;border-radius:4px">Probando...</div>
+
+<script>
+(function(){
+  var errores = [];
+  window.onerror = function(msg, url, line){
+    errores.push(msg + ' (' + url + ':' + line + ')');
+    pintarErrores();
+    return false;
+  };
+  function pintarErrores(){
+    if(!errores.length) return;
+    var d = document.getElementById('errores');
+    d.style.display = 'block';
+    d.innerHTML = '<b class="bad">ERRORES DE JAVASCRIPT:</b><br>' + errores.join('<br>');
+  }
+
+  // Datos de conexion
+  var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+  var info = [
+    'Navegador: ' + navigator.userAgent,
+    'Tipo de red: ' + (c.type || 'desconocido'),
+    'Velocidad estimada: ' + (c.effectiveType || 'desconocida'),
+    'Ahorro de datos: ' + (c.saveData ? 'ACTIVADO (puede romper el sitio)' : 'apagado'),
+    'Mbps aprox: ' + (c.downlink !== undefined ? c.downlink : 'desconocido'),
+    'Online: ' + navigator.onLine
+  ];
+  document.getElementById('info').innerHTML = info.join('<br>');
+
+  var archivos = [
+    'productos-hombre.js',
+    'productos-mujer.js',
+    'script.js',
+    'productos.js',
+    'obebe-listo.js',
+    'styles.css',
+    'PORTADA1-movil.webp'
+  ];
+
+  var tabla = document.getElementById('tabla');
+  var pendientes = archivos.length;
+  var fallos = 0;
+  var inicioTotal = Date.now();
+
+  archivos.forEach(function(f){
+    var tr = document.createElement('tr');
+    var tdN = document.createElement('td');
+    var tdR = document.createElement('td');
+    tdN.textContent = f;
+    tdR.className = 'wait';
+    tdR.textContent = 'cargando...';
+    tr.appendChild(tdN); tr.appendChild(tdR);
+    tabla.appendChild(tr);
+
+    var t0 = Date.now();
+    var listo = false;
+    var limite = setTimeout(function(){
+      if(listo) return;
+      listo = true;
+      tdR.className = 'bad';
+      tdR.textContent = 'TIMEOUT (mas de 20s)';
+      fallos++;
+      terminar();
+    }, 20000);
+
+    fetch(f + '?d=' + Date.now(), {cache:'no-store'}).then(function(r){
+      if(listo) return;
+      return r.text().then(function(txt){
+        listo = true; clearTimeout(limite);
+        var ms = Date.now() - t0;
+        var kb = Math.round(txt.length/1024*10)/10;
+        if(r.ok){
+          tdR.className = 'ok';
+          tdR.textContent = 'OK ' + ms + 'ms (' + kb + ' KB)';
+        } else {
+          tdR.className = 'bad';
+          tdR.textContent = 'HTTP ' + r.status;
+          fallos++;
+        }
+        terminar();
+      });
+    }).catch(function(e){
+      if(listo) return;
+      listo = true; clearTimeout(limite);
+      tdR.className = 'bad';
+      tdR.textContent = 'FALLO: ' + e.message;
+      fallos++;
+      terminar();
+    });
+  });
+
+  function terminar(){
+    pendientes--;
+    if(pendientes > 0) return;
+    var seg = Math.round((Date.now()-inicioTotal)/100)/10;
+    var r = document.getElementById('resumen');
+    if(fallos === 0){
+      r.innerHTML = '<b class="ok">TODO CARGO BIEN en ' + seg + 's</b><br>La red y los archivos funcionan. Si la pagina principal falla, el problema esta en el codigo.';
+    } else {
+      r.innerHTML = '<b class="bad">FALLARON ' + fallos + ' de ' + archivos.length + ' archivos</b> en ' + seg + 's<br>El problema es de red o del servidor.';
+    }
+    pintarErrores();
+  }
+})();
+</script>
+</body>
+</html>
