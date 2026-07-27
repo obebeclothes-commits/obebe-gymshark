@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Productos - Obebe GymShark Collection</title>
-    <script src="site-init.js?v=20260731"></script>
-    <link rel="preload" href="productos-hombre.js?v=20260731" as="script">
-    <link rel="preload" href="stock-sheet.js?v=20260731" as="script">
-    <link rel="stylesheet" href="critical.css?v=20260731">
-    <link rel="stylesheet" href="styles.css?v=20260731">
+    <script>
+    (function(w,d){d.documentElement.style.setProperty('--vh',(w.innerHeight/100)+'px');w.__obebeRedMovil=(function(){try{var c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;if(c&&(c.type==='wifi'||c.type==='ethernet'))return false;if(c&&(c.saveData||c.type==='cellular'||/^(slow-2g|2g|3g)$/.test(String(c.effectiveType||''))))return true;}catch(e){}return/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);})();w.__obebeOmitirSyncSheet=false;w.__obebeSyncEnBackground=true;w.__obebeCargaExterna=true;if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(x){x.unregister();});}).catch(function(){});}})(window,document);
+    </script>
+    <link rel="stylesheet" href="critical.css?v=20260732">
+    <link rel="stylesheet" href="styles.css?v=20260732" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20260732"></noscript>
     <style>
         /* En desktop: texto de la barra promocional un poco a la derecha */
         @media (min-width: 769px) {
@@ -1226,7 +1227,7 @@
         </div>
     </div>
 
-    <script src="obebe-cargar.js?v=20260731"></script>
+    <script src="obebe-cargar.js?v=20260732"></script>
 </body>
 </html>
 

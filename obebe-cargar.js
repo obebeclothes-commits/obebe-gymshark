@@ -1,5 +1,5 @@
 (function() {
-    var VERSION = '20260731';
+    var VERSION = '20260732';
     window.__obebeCargaExterna = true;
 
     function paginaActual() {
@@ -45,7 +45,7 @@
         return new Promise(function(resolve) {
             var el = document.createElement('script');
             el.src = src + '?v=' + VERSION;
-            var limite = window.__obebeRedMovil ? 90000 : 45000;
+            var limite = window.__obebeRedMovil ? 120000 : 60000;
             var listo = false;
             var timer = setTimeout(function() {
                 if (!listo) {
@@ -75,11 +75,6 @@
         });
     }
 
-    function cargarGrupo(lista) {
-        if (!lista.length) return Promise.resolve();
-        return Promise.all(lista.map(cargarScript));
-    }
-
     function cargarExtras() {
         if (paginaActual() === 'asesorias.html') return;
         var el = document.createElement('script');
@@ -97,22 +92,13 @@
 
     function iniciar() {
         var esenciales = scriptsEsenciales();
-        var catalogo = ['productos-hombre.js', 'productos-mujer.js'].filter(function(s) {
-            return esenciales.indexOf(s) >= 0;
-        });
-        var resto = esenciales.filter(function(s) {
-            return catalogo.indexOf(s) < 0;
-        });
-
-        var failsafeMs = window.__obebeRedMovil ? 15000 : 10000;
+        var failsafeMs = window.__obebeRedMovil ? 8000 : 5000;
         var failsafe = setTimeout(function() {
             console.warn('[obebe-cargar] failsafe — iniciando con lo disponible');
             dispararReady();
         }, failsafeMs);
 
-        cargarGrupo(catalogo).then(function() {
-            return cargarSecuencia(resto, 0);
-        }).then(function() {
+        cargarSecuencia(esenciales, 0).then(function() {
             clearTimeout(failsafe);
             dispararReady();
         }).catch(function() {
