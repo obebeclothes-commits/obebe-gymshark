@@ -74,7 +74,7 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
     contenedor.textContent = fuente;
 }
 
-/** Productos con columna U = 1..8, ordenados por posición (máx. 8 por carrusel). */
+/** Productos con columna U = 1..8; si no hay, primeros 8 con stock del catálogo estático. */
 function obtenerProductosParaCarrusel(catalogo, categoria) {
     var slots = new Array(8);
     if (!Array.isArray(catalogo)) return [];
@@ -88,7 +88,10 @@ function obtenerProductosParaCarrusel(catalogo, categoria) {
     for (var i = 0; i < slots.length; i++) {
         if (slots[i]) resultado.push(slots[i]);
     }
-    return resultado;
+    if (resultado.length > 0) return resultado;
+    return catalogo.filter(function(p) {
+        return (p.categoria === categoria || p.categoria === 'Unisex') && Number(p.stock) > 0;
+    }).slice(0, 8);
 }
 
 function inicializarHoverCarruselHombre() {

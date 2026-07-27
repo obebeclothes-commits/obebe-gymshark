@@ -491,11 +491,8 @@
                     p.tallaBase = datos.talla;
                 }
                 actualizados += 1;
-            } else {
-                // Ya no está en el sheet (eliminado o sin coincidencia): ocultar en la tienda.
-                p.stock = 0;
-                p.posicionCarrusel = 0;
             }
+            // Sin coincidencia: conservar stock del catálogo estático (no borrar productos).
         });
         return actualizados;
     }
@@ -532,6 +529,7 @@
     }
 
     function sincronizarDesdeCsv(csv) {
+        window.__obebeSheetSyncOk = true;
         var fechaReciente = extraerFechaStockMasReciente(csv);
         window.fechaStockMasReciente = fechaReciente;
         window.fechaStockMasRecienteEtiqueta = formatearFechaStockEtiqueta(fechaReciente);
@@ -573,12 +571,14 @@
                 sincronizarDesdeCsv(csv);
             })
             .catch(function(err) {
+                window.__obebeSheetSyncOk = false;
                 console.warn('[stock-sheet] inventario:', err);
                 return null;
             });
     };
 
     window.refrescarTiendaTrasSyncStock = function() {
+        if (!window.__obebeSheetSyncOk) return;
         if (typeof actualizarEtiquetaNuevoStock === 'function') actualizarEtiquetaNuevoStock();
         if (typeof renderizarCarruselHombre === 'function') renderizarCarruselHombre('Hombre', false);
         if (typeof renderizarProductosMujer === 'function') renderizarProductosMujer();
