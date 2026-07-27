@@ -513,13 +513,21 @@
         });
     }
 
-    function descargarHoja(nombreHoja) {
+    function descargarHoja(nombreHoja, intento) {
+        var n = intento || 0;
         var url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
             '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(nombreHoja) +
             '&_=' + Date.now();
-        return fetchConTimeout(url, { cache: 'no-store' }, window.__obebeRedMovil ? 8000 : 12000).then(function(res) {
+        var ms = window.__obebeRedMovil ? 15000 : 12000;
+        return fetchConTimeout(url, { cache: 'no-store' }, ms).then(function(res) {
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return res.text();
+        }).catch(function(err) {
+            if (n < 1) {
+                console.warn('[stock-sheet] reintento', nombreHoja);
+                return descargarHoja(nombreHoja, n + 1);
+            }
+            throw err;
         });
     }
 

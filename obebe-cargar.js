@@ -1,6 +1,7 @@
 (function() {
-    var VERSION = '20260723';
+    var VERSION = '20260727';
     window.__obebeCargaExterna = true;
+    window.__obebeScriptsFallidos = window.__obebeScriptsFallidos || [];
 
     function paginaActual() {
         var partes = location.pathname.split('/');
@@ -25,49 +26,76 @@
         return true;
     }
 
-    function scriptsParaPagina() {
+    function gruposScripts() {
         var pg = paginaActual();
         if (pg === 'asesorias.html') {
-            return ['mercadolibre-web.js', 'productos.js', 'script.js'];
+            return {
+                paralelo: ['mercadolibre-web.js'],
+                secuencial: ['script.js', 'productos.js']
+            };
         }
-        var list = ['productos-hombre.js', 'stock-sheet.js', 'mercadolibre-web.js', 'script.js', 'productos.js'];
+        var paralelo = ['productos-hombre.js', 'stock-sheet.js', 'mercadolibre-web.js'];
+        var secuencial = ['script.js', 'productos.js'];
         if (necesitaMujer() && !(window.__obebeRedMovil && pg === 'index.html')) {
-            list.splice(1, 0, 'productos-mujer.js');
+            paralelo.push('productos-mujer.js');
         }
-        if (pg === 'producto.html') list.push('producto-detalle.js');
-        return list;
+        if (pg === 'producto.html') secuencial.push('producto-detalle.js');
+        return { paralelo: paralelo, secuencial: secuencial };
     }
 
     function cargarScript(src) {
         return new Promise(function(resolve) {
             var el = document.createElement('script');
             el.src = src + '?v=' + VERSION;
-            var limite = window.__obebeRedMovil ? 20000 : 12000;
+            var limite = window.__obebeRedMovil ? 45000 : 20000;
+            var ok = false;
             var timer = setTimeout(function() {
-                console.warn('[obebe-cargar] timeout', src);
+                if (!ok) {
+                    console.warn('[obebe-cargar] timeout', src);
+                    window.__obebeScriptsFallidos.push(src);
+                }
                 resolve();
             }, limite);
             el.onload = function() {
+                ok = true;
                 clearTimeout(timer);
                 resolve();
             };
             el.onerror = function() {
+                ok = true;
                 clearTimeout(timer);
                 console.warn('[obebe-cargar] error', src);
+                window.__obebeScriptsFallidos.push(src);
                 resolve();
             };
             document.body.appendChild(el);
         });
     }
 
-    function cargarSecuencia(lista, indice, done) {
-        if (indice >= lista.length) {
-            done();
-            return;
-        }
-        cargarScript(lista[indice]).then(function() {
-            cargarSecuencia(lista, indice + 1, done);
+    function cargarParalelo(lista) {
+        return Promise.all(lista.map(cargarScript));
+    }
+
+    function cargarSecuencia(lista, indice) {
+        if (indice >= lista.length) return Promise.resolve();
+        return cargarScript(lista[indice]).then(function() {
+            return cargarSecuencia(lista, indice + 1);
         });
+    }
+
+    function avisoFalloCritico() {
+        var hombreFallo = window.__obebeScriptsFallidos.indexOf('productos-hombre.js') >= 0;
+        var sinCatalogo = typeof productosHombre === 'undefined' || !productosHombre.length;
+        if (!hombreFallo && !sinCatalogo) return;
+
+        var grid = document.getElementById('productsGrid');
+        var carousel = document.getElementById('productsCarousel');
+        var msg = '<p style="text-align:center;padding:2rem 1rem;color:#666;line-height:1.5;">'
+            + 'No se pudo cargar el catálogo. Revisa tu conexión e '
+            + '<a href="javascript:location.reload()" style="color:#111;text-decoration:underline;">intenta de nuevo</a>.'
+            + '</p>';
+        if (grid) grid.innerHTML = msg;
+        else if (carousel) carousel.innerHTML = msg;
     }
 
     function cargarMujerDespues() {
@@ -79,12 +107,16 @@
     }
 
     function iniciar() {
-        cargarSecuencia(scriptsParaPagina(), 0, function() {
-            document.dispatchEvent(new Event('obebe-scripts-ready'));
-            if (window.__obebeRedMovil && paginaActual() === 'index.html') {
-                cargarMujerDespues();
-            }
-        });
+        var grupos = gruposScripts();
+        cargarParalelo(grupos.paralelo)
+            .then(function() { return cargarSecuencia(grupos.secuencial, 0); })
+            .then(function() {
+                avisoFalloCritico();
+                document.dispatchEvent(new Event('obebe-scripts-ready'));
+                if (window.__obebeRedMovil && paginaActual() === 'index.html') {
+                    cargarMujerDespues();
+                }
+            });
     }
 
     if (document.readyState === 'loading') {

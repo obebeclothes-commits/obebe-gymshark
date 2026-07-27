@@ -1626,15 +1626,7 @@ function arrancarProductosPagina() {
             inicializarNavegacion();
             if (typeof iniciarDetalleProducto === 'function') iniciarDetalleProducto();
         } else if (isProductsGridPage) {
-            if (!window.__obebeSyncEnBackground) {
-                var grid = document.getElementById('productsGrid');
-                if (grid) {
-                    grid.innerHTML = '<p style="text-align:center;padding:2rem;color:#666;">Actualizando inventario...</p>';
-                }
-            }
-            if (window.__obebeSyncEnBackground) {
-                renderizarTodosLosProductos();
-            }
+            renderizarTodosLosProductos();
             inicializarFiltroGeneroNuevoStock();
             inicializarHoverImagenes();
             inicializarEventosFiltros();
@@ -1661,25 +1653,12 @@ function arrancarProductosPagina() {
     }
     if (promesas.length) {
         var refrescar = function() {
-            if (isProductsGridPage && !window.__obebeSyncEnBackground) {
-                renderizarTodosLosProductos();
-            }
+            if (isProductsGridPage) renderizarTodosLosProductos();
             if (typeof window.refrescarTiendaTrasSyncStock === 'function') {
                 window.refrescarTiendaTrasSyncStock();
             }
         };
-        if (window.__obebeSyncEnBackground) {
-            Promise.all(promesas).then(refrescar).catch(refrescar);
-        } else {
-            Promise.race([
-                Promise.all(promesas),
-                new Promise(function(resolve) { setTimeout(resolve, 12000); })
-            ]).then(refrescar).catch(function() {
-                if (isProductsGridPage) renderizarTodosLosProductos();
-            });
-        }
-    } else if (isProductsGridPage && !window.__obebeSyncEnBackground) {
-        renderizarTodosLosProductos();
+        Promise.all(promesas).then(refrescar).catch(refrescar);
     }
 
     var messages = document.querySelectorAll('.promo-message');
