@@ -651,7 +651,26 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
         </div>
     </div>
 
-    <script src="obebe-cargar.js?v=20260735"></script>
+    <script defer src="productos-hombre.js?v=20260736"></script>
+    <script defer src="productos-mujer.js?v=20260736"></script>
+    <script defer src="script.js?v=20260736"></script>
+    <script defer src="productos.js?v=20260736"></script>
+    <script defer src="producto-detalle.js?v=20260736"></script>
+    <script defer src="obebe-listo.js?v=20260736"></script>
+    <script>
+    // Si el detalle no arranca, avisar en pantalla en vez de quedarse muda.
+    (function(w, d) {
+        setTimeout(function() {
+            if (w.__obebeProductosIniciado) return;
+            var b = d.createElement('div');
+            b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#ff6b6b;color:#fff;padding:1rem;text-align:center;z-index:99999;font-family:sans-serif;font-size:14px;line-height:1.5';
+            b.innerHTML = 'El producto no termino de cargar.'
+                + '<br><a href="javascript:location.reload()" style="color:#fff;text-decoration:underline">Reintentar</a>'
+                + ' &middot; <a href="productos.html?categoria=Hombre" style="color:#fff;text-decoration:underline">Ver tienda</a>';
+            d.body.appendChild(b);
+        }, 20000);
+    })(window, document);
+    </script>
 </body>
 </html>
 

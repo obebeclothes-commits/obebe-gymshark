@@ -104,7 +104,13 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    // Este archivo se carga en segundo plano, cuando DOMContentLoaded ya paso:
+    // esperarlo dejaria los enlaces sin pintar.
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarListadosMercadoLibre();
+        });
+    } else {
         cargarListadosMercadoLibre();
-    });
+    }
 })();
