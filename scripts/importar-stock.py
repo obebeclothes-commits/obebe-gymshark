@@ -24,6 +24,7 @@ import re
 import sys
 import urllib.error
 import urllib.request
+from collections import Counter
 from pathlib import Path
 
 # -----------------------------------------------------------------------------
@@ -32,6 +33,7 @@ from pathlib import Path
 SPREADSHEET_ID = "195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko"
 HOJA_INVENTARIO = "INVENTARIO"
 HOJA_INVENTARIO_LEGACY = "HOMBRE"
+GID_INVENTARIO = 0  # pestaña INVENTARIO
 BASE_URL_IMAGENES = "https://obebeclothes-commits.github.io/obebe-gymshark"
 
 HOJAS = {
@@ -128,13 +130,7 @@ def columna_a_indice(letra: str) -> int:
     return valor - 1
 
 
-def descargar_csv(spreadsheet_id: str, nombre_hoja: str) -> str:
-    from urllib.parse import quote
-
-    url = (
-        f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
-        f"/gviz/tq?tqx=out:csv&sheet={quote(nombre_hoja)}"
-    )
+def _bajar(url: str) -> str:
     try:
         with urllib.request.urlopen(url, timeout=30) as resp:
             return resp.read().decode("utf-8-sig")
@@ -148,7 +144,30 @@ def descargar_csv(spreadsheet_id: str, nombre_hoja: str) -> str:
         raise RuntimeError(f"Error de conexión al descargar el sheet: {exc}") from exc
 
 
+def descargar_csv(spreadsheet_id: str, nombre_hoja: str) -> str:
+    from urllib.parse import quote
+
+    return _bajar(
+        f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
+        f"/gviz/tq?tqx=out:csv&sheet={quote(nombre_hoja)}"
+    )
+
+
+def descargar_csv_por_gid(spreadsheet_id: str, gid: int) -> str:
+    return _bajar(
+        f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
+        f"/export?format=csv&gid={gid}"
+    )
+
+
 def descargar_hoja_inventario(spreadsheet_id: str = SPREADSHEET_ID) -> str:
+    # /export entrega la hoja completa. /gviz/tq respeta los filtros activos del
+    # Sheet, asi que con un filtro puesto solo devolvia las filas visibles y la
+    # importacion habria borrado casi todo el catalogo.
+    try:
+        return descargar_csv_por_gid(spreadsheet_id, GID_INVENTARIO)
+    except RuntimeError:
+        pass
     try:
         return descargar_csv(spreadsheet_id, HOJA_INVENTARIO)
     except RuntimeError:
@@ -388,7 +407,10 @@ def leer_productos_desde_csv(
 
         productos.append(
             {
-                "id": nuevo_id,
+                # El id es el numero de la columna A del Sheet, no un consecutivo:
+                # asi cada producto conserva su identidad entre importaciones y
+                # coincide con el nombre de su foto.
+                "id": ref_imagen,
                 "nombre": nombre,
                 "categoria": categoria,
                 "precio": precio,
@@ -410,6 +432,14 @@ def leer_productos_desde_csv(
     if omitidos_segmento:
         print(f"  Filas de otra categoría (columna T): {omitidos_segmento}")
     print(f"  Filas omitidas (sin stock o sin datos): {omitidos}")
+
+    # Dos filas con el mismo numero en la columna A darian dos productos con el
+    # mismo id y la ficha de detalle solo encontraria el primero.
+    conteo = Counter(p["id"] for p in productos)
+    repetidos = sorted(num for num, veces in conteo.items() if veces > 1)
+    if repetidos:
+        print(f"  [!] Números repetidos en la columna A: {', '.join(map(str, repetidos))}")
+
     return productos
 
 

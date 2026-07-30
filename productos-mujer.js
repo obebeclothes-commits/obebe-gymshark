@@ -18,7 +18,8 @@ const productosMujer = [
         color: "Marrón",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 1
     },
     {
         id: 2,
@@ -34,7 +35,8 @@ const productosMujer = [
         color: "Marrón",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 3,
@@ -50,7 +52,8 @@ const productosMujer = [
         color: "Verde",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 4,
@@ -66,7 +69,8 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 5,
@@ -82,7 +86,8 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 6,
@@ -98,7 +103,8 @@ const productosMujer = [
         color: "Morado",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 7,
@@ -114,7 +120,8 @@ const productosMujer = [
         color: "Verde",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 8,
@@ -130,7 +137,8 @@ const productosMujer = [
         color: "Verde",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 9,
@@ -146,7 +154,8 @@ const productosMujer = [
         color: "Verde",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 10,
@@ -162,7 +171,8 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 11,
@@ -178,7 +188,8 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 12,
@@ -194,7 +205,8 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 13,
@@ -210,7 +222,8 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 14,
@@ -226,7 +239,8 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 15,
@@ -242,7 +256,8 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 16,
@@ -258,7 +273,8 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 17,
@@ -274,7 +290,8 @@ const productosMujer = [
         color: "Gris",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 18,
@@ -290,7 +307,8 @@ const productosMujer = [
         color: "Gris",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 19,
@@ -306,7 +324,8 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 20,
@@ -322,7 +341,8 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 21,
@@ -338,7 +358,8 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 22,
@@ -354,7 +375,8 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 23,
@@ -370,7 +392,8 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 24,
@@ -386,7 +409,8 @@ const productosMujer = [
         color: "Verde",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 25,
@@ -402,7 +426,8 @@ const productosMujer = [
         color: "Verde",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 26,
@@ -418,7 +443,8 @@ const productosMujer = [
         color: "Rosa",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 27,
@@ -434,7 +460,8 @@ const productosMujer = [
         color: "Rosa",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 28,
@@ -450,7 +477,8 @@ const productosMujer = [
         color: "Gris",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 2
     },
     {
         id: 29,
@@ -466,7 +494,8 @@ const productosMujer = [
         color: "Gris",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 30,
@@ -482,7 +511,8 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 31,
@@ -498,14 +528,15 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 32,
         nombre: "VITAL SCULPT SEAMLESS SHORT",
         categoria: "Mujer",
         precio: 550.00,
-        stock: 2,
+        stock: 1,
         imagen1: "mujer/32.webp",
         imagen2: "mujer/32.1.webp",
         talla: "M",
@@ -514,7 +545,8 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
         id: 33,
@@ -530,10 +562,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 34,
+        id: 35,
         nombre: "WOMEN CARGO PANTS",
         categoria: "Mujer",
         precio: 750.00,
@@ -546,10 +579,11 @@ const productosMujer = [
         color: "Verde",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 35,
+        id: 36,
         nombre: "PEEK A BOO SPORTS BRA",
         categoria: "Mujer",
         precio: 500.00,
@@ -562,10 +596,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 36,
+        id: 37,
         nombre: "STRAIGHT HEADBAND",
         categoria: "Mujer",
         precio: 250.00,
@@ -578,10 +613,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 37,
+        id: 38,
         nombre: "TWIST HEADBAND",
         categoria: "Mujer",
         precio: 250.00,
@@ -594,10 +630,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 38,
+        id: 39,
         nombre: "TWIST HEADBAND",
         categoria: "Mujer",
         precio: 250.00,
@@ -610,26 +647,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 39,
-        nombre: "PLEAT CROSSBODY",
-        categoria: "Mujer",
-        precio: 350.00,
-        stock: 1,
-        imagen1: "mujer/40.webp",
-        imagen2: "mujer/40.1.webp",
-        talla: "ONE SIZE",
-        tallaBase: "ONE SIZE",
-        tipo: "Bag",
-        color: "Verde",
-        marca: "Gym Shark",
-        precioMayoreo: 0.00,
-        mayoreo: false
-    },
-    {
-        id: 40,
+        id: 41,
         nombre: "PEEK A BOO SPORTS BRA",
         categoria: "Mujer",
         precio: 500.00,
@@ -642,10 +664,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 41,
+        id: 42,
         nombre: "VITAL SOFT SHORT",
         categoria: "Mujer",
         precio: 550.00,
@@ -658,10 +681,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 42,
+        id: 43,
         nombre: "BACK GAINS SPORTS BRA",
         categoria: "Mujer",
         precio: 500.00,
@@ -674,10 +698,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 43,
+        id: 44,
         nombre: "COLLEGIATE GRAPHIC JOGGERS",
         categoria: "Mujer",
         precio: 750.00,
@@ -690,10 +715,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 44,
+        id: 45,
         nombre: "COLLEGIATE GRAPHIC JOGGERS",
         categoria: "Mujer",
         precio: 750.00,
@@ -706,10 +732,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 45,
+        id: 46,
         nombre: "JUICY PEACH LONG SLEEVE T-SHIRT",
         categoria: "Mujer",
         precio: 600.00,
@@ -722,10 +749,11 @@ const productosMujer = [
         color: "Rosa",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 46,
+        id: 47,
         nombre: "JUICY PEACH LONG SLEEVE T-SHIRT",
         categoria: "Mujer",
         precio: 600.00,
@@ -738,10 +766,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 47,
+        id: 49,
         nombre: "JUICY PEACH LONG SLEEVE T-SHIRT",
         categoria: "Mujer",
         precio: 600.00,
@@ -754,10 +783,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 48,
+        id: 50,
         nombre: "JUICY PEACH LONG SLEEVE T-SHIRT",
         categoria: "Mujer",
         precio: 600.00,
@@ -770,10 +800,11 @@ const productosMujer = [
         color: "Rosa",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 49,
+        id: 51,
         nombre: "JUICY PEACH LONG SLEEVE T-SHIRT",
         categoria: "Mujer",
         precio: 600.00,
@@ -786,10 +817,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 50,
+        id: 52,
         nombre: "JUICY PEACH SHORT SLEEVE T-SHIRT",
         categoria: "Mujer",
         precio: 550.00,
@@ -802,10 +834,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 51,
+        id: 54,
         nombre: "JUICY PEACH SHORT SLEEVE T-SHIRT",
         categoria: "Mujer",
         precio: 550.00,
@@ -818,10 +851,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 52,
+        id: 54,
         nombre: "JUICY PEACH SHORT SLEEVE T-SHIRT",
         categoria: "Mujer",
         precio: 550.00,
@@ -834,10 +868,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 53,
+        id: 55,
         nombre: "JUICY PEACH SHORT SLEEVE T-SHIRT",
         categoria: "Mujer",
         precio: 550.00,
@@ -850,10 +885,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 54,
+        id: 58,
         nombre: "RETRO STRIPE SNAP PANTS",
         categoria: "Mujer",
         precio: 750.00,
@@ -866,10 +902,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 55,
+        id: 59,
         nombre: "RETRO STRIPE SNAP PANTS",
         categoria: "Mujer",
         precio: 750.00,
@@ -882,10 +919,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 56,
+        id: 60,
         nombre: "STRENGTH GRAPHIC JOGGERS",
         categoria: "Mujer",
         precio: 750.00,
@@ -898,26 +936,11 @@ const productosMujer = [
         color: "Morado",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 57,
-        nombre: "STRENGTH GRAPHIC JOGGERS",
-        categoria: "Mujer",
-        precio: 750.00,
-        stock: 1,
-        imagen1: "mujer/61.webp",
-        imagen2: "mujer/61.1.webp",
-        talla: "M",
-        tallaBase: "M",
-        tipo: "Joggers",
-        color: "Morado",
-        marca: "Gym Shark",
-        precioMayoreo: 0.00,
-        mayoreo: false
-    },
-    {
-        id: 58,
+        id: 62,
         nombre: "SUPERSOFT STRAIGHT LEG PANT",
         categoria: "Mujer",
         precio: 750.00,
@@ -930,10 +953,11 @@ const productosMujer = [
         color: "Rosa",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 59,
+        id: 63,
         nombre: "SUPERSOFT STRAIGHT LEG PANT",
         categoria: "Mujer",
         precio: 750.00,
@@ -946,10 +970,11 @@ const productosMujer = [
         color: "Rosa",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 60,
+        id: 64,
         nombre: "SUPERSOFT STRAIGHT LEG PANT",
         categoria: "Mujer",
         precio: 750.00,
@@ -962,10 +987,11 @@ const productosMujer = [
         color: "Rosa",
         marca: "Gym Shark",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 61,
+        id: 65,
         nombre: "VELOCITY SHORTS",
         categoria: "Mujer",
         precio: 900.00,
@@ -978,10 +1004,11 @@ const productosMujer = [
         color: "Negro",
         marca: "YoungLA",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 62,
+        id: 66,
         nombre: "VELOCY SPORTS BRA",
         categoria: "Mujer",
         precio: 850.00,
@@ -994,10 +1021,11 @@ const productosMujer = [
         color: "Negro",
         marca: "YoungLA",
         precioMayoreo: 0.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 63,
+        id: 67,
         nombre: "COSY LUXE ZIP THROUGH HOODIE",
         categoria: "Mujer",
         precio: 750.00,
@@ -1010,10 +1038,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 660.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 64,
+        id: 68,
         nombre: "CHAINSTITCH GRAPHIC HOODIE",
         categoria: "Mujer",
         precio: 750.00,
@@ -1026,10 +1055,11 @@ const productosMujer = [
         color: "Rosa",
         marca: "Gym Shark",
         precioMayoreo: 660.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 65,
+        id: 69,
         nombre: "COSY LUXE ZIP THROUGH HOODIE",
         categoria: "Mujer",
         precio: 750.00,
@@ -1042,10 +1072,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 660.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 3
     },
     {
-        id: 66,
+        id: 70,
         nombre: "COSY LUXE ZIP THROUGH HOODIE",
         categoria: "Mujer",
         precio: 750.00,
@@ -1058,10 +1089,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 600.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 67,
+        id: 71,
         nombre: "TRAINING OVERSIZED FLEECE HOODIE",
         categoria: "Mujer",
         precio: 750.00,
@@ -1074,10 +1106,11 @@ const productosMujer = [
         color: "Morado",
         marca: "Gym Shark",
         precioMayoreo: 600.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 68,
+        id: 72,
         nombre: "CHAINSTITCH GRAPHIC HOODIE",
         categoria: "Mujer",
         precio: 750.00,
@@ -1090,10 +1123,11 @@ const productosMujer = [
         color: "Rosa",
         marca: "Gym Shark",
         precioMayoreo: 630.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 69,
+        id: 74,
         nombre: "CHAINSTITCH GRAPHIC HOODIE",
         categoria: "Mujer",
         precio: 750.00,
@@ -1106,10 +1140,11 @@ const productosMujer = [
         color: "Rosa",
         marca: "Gym Shark",
         precioMayoreo: 600.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 70,
+        id: 75,
         nombre: "EVERYDAY SEAMLESS LEGGINGS",
         categoria: "Mujer",
         precio: 750.00,
@@ -1122,10 +1157,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 600.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 71,
+        id: 76,
         nombre: "LIGHT HOLD LEGGINGS",
         categoria: "Mujer",
         precio: 750.00,
@@ -1138,10 +1174,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 600.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 72,
+        id: 77,
         nombre: "LIGHT HOLD LEGGINGS",
         categoria: "Mujer",
         precio: 750.00,
@@ -1154,10 +1191,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 600.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 73,
+        id: 78,
         nombre: "LIGHT HOLD LEGGINGS",
         categoria: "Mujer",
         precio: 750.00,
@@ -1170,10 +1208,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 600.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 74,
+        id: 79,
         nombre: "EVERYDAY SEAMLESS TIGHT FIT CREW NECK TEE",
         categoria: "Mujer",
         precio: 550.00,
@@ -1186,10 +1225,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 440.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 75,
+        id: 80,
         nombre: "EVERYDAY SEAMLESS TIGHT FIT CREW NECK TEE",
         categoria: "Mujer",
         precio: 550.00,
@@ -1202,10 +1242,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 440.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 76,
+        id: 81,
         nombre: "EVERYDAY SEAMLESS TIGHT FIT CREW NECK TEE",
         categoria: "Mujer",
         precio: 550.00,
@@ -1218,10 +1259,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 440.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 77,
+        id: 82,
         nombre: "RUCHED STRAPPY SPORTS BRA",
         categoria: "Mujer",
         precio: 500.00,
@@ -1234,10 +1276,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 400.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 78,
+        id: 83,
         nombre: "RUCHED STRAPPY SPORTS BRA",
         categoria: "Mujer",
         precio: 500.00,
@@ -1250,10 +1293,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 400.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 79,
+        id: 84,
         nombre: "VITAL CROP TOP",
         categoria: "Mujer",
         precio: 600.00,
@@ -1266,42 +1310,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 480.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 80,
-        nombre: "VITAL CROP TOP",
-        categoria: "Mujer",
-        precio: 600.00,
-        stock: 1,
-        imagen1: "mujer/85.webp",
-        imagen2: "mujer/85.1.webp",
-        talla: "M",
-        tallaBase: "M",
-        tipo: "Crop Top",
-        color: "Negro",
-        marca: "Gym Shark",
-        precioMayoreo: 480.00,
-        mayoreo: true
-    },
-    {
-        id: 81,
-        nombre: "VITAL CROP TOP",
-        categoria: "Mujer",
-        precio: 600.00,
-        stock: 1,
-        imagen1: "mujer/86.webp",
-        imagen2: "mujer/86.1.webp",
-        talla: "S",
-        tallaBase: "S",
-        tipo: "Crop Top",
-        color: "Negro",
-        marca: "Gym Shark",
-        precioMayoreo: 480.00,
-        mayoreo: true
-    },
-    {
-        id: 82,
+        id: 87,
         nombre: "TRAINING BABY TEE",
         categoria: "Mujer",
         precio: 550.00,
@@ -1314,10 +1327,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 440.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 83,
+        id: 88,
         nombre: "TRAINING BABY TEE",
         categoria: "Mujer",
         precio: 550.00,
@@ -1330,26 +1344,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 440.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 84,
-        nombre: "TRAINING CAMI TANK WITH SHELF",
-        categoria: "Mujer",
-        precio: 550.00,
-        stock: 1,
-        imagen1: "mujer/89.webp",
-        imagen2: "mujer/89.1.webp",
-        talla: "XS",
-        tallaBase: "XS",
-        tipo: "Tank Top",
-        color: "Rojo",
-        marca: "Gym Shark",
-        precioMayoreo: 440.00,
-        mayoreo: true
-    },
-    {
-        id: 85,
+        id: 90,
         nombre: "LIGHT HOLD SHORTS",
         categoria: "Mujer",
         precio: 550.00,
@@ -1362,10 +1361,11 @@ const productosMujer = [
         color: "Rosa",
         marca: "Gym Shark",
         precioMayoreo: 440.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 86,
+        id: 91,
         nombre: "LIGHT HOLD SHORTS",
         categoria: "Mujer",
         precio: 550.00,
@@ -1378,10 +1378,11 @@ const productosMujer = [
         color: "Rosa",
         marca: "Gym Shark",
         precioMayoreo: 440.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 87,
+        id: 92,
         nombre: "EVERYDAY MINI TOTE BAG",
         categoria: "Mujer",
         precio: 500.00,
@@ -1394,10 +1395,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 400.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 88,
+        id: 94,
         nombre: "PIPING SPORTS BRA",
         categoria: "Mujer",
         precio: 500.00,
@@ -1410,10 +1412,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 400.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 89,
+        id: 95,
         nombre: "PIPING SPORTS BRA",
         categoria: "Mujer",
         precio: 500.00,
@@ -1426,10 +1429,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 400.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 6
     },
     {
-        id: 90,
+        id: 96,
         nombre: "LOVE LIFTING GRAPHIC TOTE BAG",
         categoria: "Mujer",
         precio: 600.00,
@@ -1442,26 +1446,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 480.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 5
     },
     {
-        id: 91,
-        nombre: "DOUBLE UP SPORTS BRA",
-        categoria: "Mujer",
-        precio: 500.00,
-        stock: 1,
-        imagen1: "mujer/97.webp",
-        imagen2: "mujer/97.1.webp",
-        talla: "S",
-        tallaBase: "S",
-        tipo: "Sport Bra",
-        color: "Blanco",
-        marca: "Gym Shark",
-        precioMayoreo: 400.00,
-        mayoreo: true
-    },
-    {
-        id: 92,
+        id: 98,
         nombre: "EVERYDAY SEAMLESS CROP TANK",
         categoria: "Mujer",
         precio: 500.00,
@@ -1474,10 +1463,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 400.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 7
     },
     {
-        id: 93,
+        id: 99,
         nombre: "PEEK A BOO SPORTS BRA",
         categoria: "Mujer",
         precio: 500.00,
@@ -1490,10 +1480,11 @@ const productosMujer = [
         color: "Blanco",
         marca: "Gym Shark",
         precioMayoreo: 400.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 8
     },
     {
-        id: 94,
+        id: 100,
         nombre: "PEEK A BOO SPORTS BRA",
         categoria: "Mujer",
         precio: 500.00,
@@ -1506,10 +1497,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 400.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 95,
+        id: 101,
         nombre: "BACK GAINS SPORTS BRA",
         categoria: "Mujer",
         precio: 500.00,
@@ -1522,42 +1514,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 400.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 96,
-        nombre: "EVERYDAY CAMERA BAG",
-        categoria: "Mujer",
-        precio: 400.00,
-        stock: 1,
-        imagen1: "mujer/103.webp",
-        imagen2: "mujer/103.1.webp",
-        talla: "ONE SIZE",
-        tallaBase: "ONE SIZE",
-        tipo: "Bag",
-        color: "Rojo",
-        marca: "Gym Shark",
-        precioMayoreo: 300.00,
-        mayoreo: false
-    },
-    {
-        id: 97,
-        nombre: "PLEAT CROSSBODY",
-        categoria: "Mujer",
-        precio: 350.00,
-        stock: 1,
-        imagen1: "mujer/104.webp",
-        imagen2: "mujer/104.1.webp",
-        talla: "ONE SIZE",
-        tallaBase: "ONE SIZE",
-        tipo: "Bag",
-        color: "Rojo",
-        marca: "Gym Shark",
-        precioMayoreo: 280.00,
-        mayoreo: true
-    },
-    {
-        id: 98,
+        id: 105,
         nombre: "PIPING MIDI CREW NECK",
         categoria: "Mujer",
         precio: 650.00,
@@ -1570,10 +1531,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 520.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 99,
+        id: 106,
         nombre: "PIPING MIDI CREW NECK",
         categoria: "Mujer",
         precio: 650.00,
@@ -1586,10 +1548,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 520.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 100,
+        id: 108,
         nombre: "PIPING LONG SLEEVE CROP TOP",
         categoria: "Mujer",
         precio: 600.00,
@@ -1602,10 +1565,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 460.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 101,
+        id: 109,
         nombre: "PIPING BANDEAU WITH SHELF",
         categoria: "Mujer",
         precio: 550.00,
@@ -1618,10 +1582,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 460.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 102,
+        id: 110,
         nombre: "PIPING BANDEAU WITH SHELF",
         categoria: "Mujer",
         precio: 550.00,
@@ -1634,10 +1599,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 460.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 103,
+        id: 111,
         nombre: "PIPING LONG SLEEVE CROP TOP",
         categoria: "Mujer",
         precio: 600.00,
@@ -1650,10 +1616,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 460.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 104,
+        id: 112,
         nombre: "PIPING BANDEAU WITH SHELF",
         categoria: "Mujer",
         precio: 550.00,
@@ -1666,10 +1633,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 460.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 105,
+        id: 113,
         nombre: "PIPING LONG SLEEVE CROP TOP",
         categoria: "Mujer",
         precio: 600.00,
@@ -1682,10 +1650,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 460.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 106,
+        id: 114,
         nombre: "PIPING BANDEAU WITH SHELF",
         categoria: "Mujer",
         precio: 550.00,
@@ -1698,10 +1667,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 460.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 107,
+        id: 115,
         nombre: "PIPING BANDEAU WITH SHELF",
         categoria: "Mujer",
         precio: 550.00,
@@ -1714,26 +1684,11 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 460.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 108,
-        nombre: "VITAL SEAMLESS 2.0 CROP TOP",
-        categoria: "Mujer",
-        precio: 600.00,
-        stock: 1,
-        imagen1: "mujer/116.webp",
-        imagen2: "mujer/116.1.webp",
-        talla: "S",
-        tallaBase: "S",
-        tipo: "Crop Top",
-        color: "Negro",
-        marca: "Gym Shark",
-        precioMayoreo: 480.00,
-        mayoreo: true
-    },
-    {
-        id: 109,
+        id: 117,
         nombre: "PIPING BANDEAU WITH SHELF",
         categoria: "Mujer",
         precio: 550.00,
@@ -1746,14 +1701,15 @@ const productosMujer = [
         color: "Azul",
         marca: "Gym Shark",
         precioMayoreo: 460.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 110,
+        id: 118,
         nombre: "VITAL SEAMLESS 2.0 CROP TOP",
         categoria: "Mujer",
         precio: 600.00,
-        stock: 2,
+        stock: 1,
         imagen1: "mujer/118.webp",
         imagen2: "mujer/118.1.webp",
         talla: "M",
@@ -1762,10 +1718,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 480.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 111,
+        id: 119,
         nombre: "EVERYDAY FOLDOVER LEGGINGS",
         categoria: "Mujer",
         precio: 750.00,
@@ -1778,10 +1735,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 600.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 112,
+        id: 120,
         nombre: "CONTRAST SEAMLESS CROP TOP",
         categoria: "Mujer",
         precio: 650.00,
@@ -1794,10 +1752,11 @@ const productosMujer = [
         color: "Marrón",
         marca: "Gym Shark",
         precioMayoreo: 630.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 113,
+        id: 121,
         nombre: "CONTRAST SEAMLESS CROP TOP",
         categoria: "Mujer",
         precio: 650.00,
@@ -1810,10 +1769,11 @@ const productosMujer = [
         color: "Marrón",
         marca: "Gym Shark",
         precioMayoreo: 630.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 114,
+        id: 122,
         nombre: "PEEK A BOO SPORTS BRA",
         categoria: "Mujer",
         precio: 500.00,
@@ -1826,10 +1786,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 400.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 115,
+        id: 123,
         nombre: "RUCHED STRAPPY SPORTS BRA",
         categoria: "Mujer",
         precio: 500.00,
@@ -1842,10 +1803,11 @@ const productosMujer = [
         color: "Morado",
         marca: "Gym Shark",
         precioMayoreo: 400.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 116,
+        id: 125,
         nombre: "EVERYDAY MINI TOTE BAG",
         categoria: "Mujer",
         precio: 500.00,
@@ -1858,10 +1820,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 400.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 117,
+        id: 126,
         nombre: "LEGACY REGULAR LEGGINGS",
         categoria: "Mujer",
         precio: 750.00,
@@ -1874,10 +1837,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 600.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 118,
+        id: 127,
         nombre: "ADAPT ANIMAL SEAMLESS LEGGINGS",
         categoria: "Mujer",
         precio: 750.00,
@@ -1890,10 +1854,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 600.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 119,
+        id: 128,
         nombre: "LEGACY REGULAR LEGGINGS",
         categoria: "Mujer",
         precio: 750.00,
@@ -1906,10 +1871,11 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 600.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 120,
+        id: 129,
         nombre: "SUPERSOFT STRAIGHT LEG PANT",
         categoria: "Mujer",
         precio: 750.00,
@@ -1922,10 +1888,11 @@ const productosMujer = [
         color: "Gris",
         marca: "Gym Shark",
         precioMayoreo: 600.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 121,
+        id: 130,
         nombre: "FLEX SHORTS",
         categoria: "Mujer",
         precio: 550.00,
@@ -1938,10 +1905,11 @@ const productosMujer = [
         color: "Gris",
         marca: "Gym Shark",
         precioMayoreo: 420.00,
-        mayoreo: false
+        mayoreo: false,
+        posicionCarrusel: 0
     },
     {
-        id: 122,
+        id: 131,
         nombre: "PIPING MIDI CREW NECK",
         categoria: "Mujer",
         precio: 650.00,
@@ -1954,10 +1922,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 520.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 123,
+        id: 132,
         nombre: "PIPING MIDI CREW NECK",
         categoria: "Mujer",
         precio: 650.00,
@@ -1970,10 +1939,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 520.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 124,
+        id: 133,
         nombre: "PIPING MIDI CREW NECK",
         categoria: "Mujer",
         precio: 650.00,
@@ -1986,10 +1956,11 @@ const productosMujer = [
         color: "Rojo",
         marca: "Gym Shark",
         precioMayoreo: 520.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
     },
     {
-        id: 125,
+        id: 134,
         nombre: "VITAL SOFT SHORT",
         categoria: "Mujer",
         precio: 550.00,
@@ -2002,6 +1973,58 @@ const productosMujer = [
         color: "Negro",
         marca: "Gym Shark",
         precioMayoreo: 440.00,
-        mayoreo: true
+        mayoreo: true,
+        posicionCarrusel: 0
+    },
+    {
+        id: 136,
+        nombre: "AFTER DARK HOODIE W532",
+        categoria: "Mujer",
+        precio: 1500.00,
+        stock: 1,
+        imagen1: "mujer/136.webp",
+        imagen2: "mujer/136.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Hoodie",
+        color: "Rojo",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0
+    },
+    {
+        id: 137,
+        nombre: "AFTER DARK HOODIE W532",
+        categoria: "Mujer",
+        precio: 1500.00,
+        stock: 1,
+        imagen1: "mujer/137.webp",
+        imagen2: "mujer/137.1.webp",
+        talla: "L",
+        tallaBase: "L",
+        tipo: "Hoodie",
+        color: "Gris",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0
+    },
+    {
+        id: 138,
+        nombre: "AFTER DARK JOGGERS W234",
+        categoria: "Mujer",
+        precio: 1400.00,
+        stock: 1,
+        imagen1: "mujer/138.webp",
+        imagen2: "mujer/138.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Joggers",
+        color: "Rojo",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0
     }
 ];
