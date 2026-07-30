@@ -4,6 +4,7 @@
     var SPREADSHEET_ID = '195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko';
     var HOJA_INVENTARIO = 'INVENTARIO';
     var HOJA_INVENTARIO_LEGACY = 'HOMBRE';
+    var GID_INVENTARIO = 0; // pestana INVENTARIO
     var FILA_INICIO = 2; // fila 3 del sheet (0-based en CSV)
     var IDX_IMAGEN = 0; // columna A (número de imagen / referencia de producto)
     var IDX_SEGMENTO = 19; // columna T
@@ -371,12 +372,12 @@
             var posicionCarrusel = parsearPosicionCarrusel(f[IDX_CARRUSEL]);
             var fechaStock = parsearFechaStock(f[IDX_FECHA_STOCK]);
             var refImagen = parsearNumeroImagen(f[IDX_IMAGEN]);
-            if (stock > 0) {
-                if (talla) opciones.tallas.add(talla);
-                if (color) opciones.colores.add(color);
-                if (tipo) opciones.tipos.add(tipo);
-                if (marca) opciones.marcas.add(marca);
-            }
+            // Los agotados siguen apareciendo en la tienda con su etiqueta, asi que
+            // sus opciones tambien deben quedar disponibles en los filtros.
+            if (talla) opciones.tallas.add(talla);
+            if (color) opciones.colores.add(color);
+            if (tipo) opciones.tipos.add(tipo);
+            if (marca) opciones.marcas.add(marca);
             var clave = claveProducto(nombre, talla, color, marca, refImagen);
             var datosFila = {
                 nombre: nombre,
@@ -510,19 +511,30 @@
         });
     }
 
-    function descargarHoja(nombreHoja, intento) {
-        var n = intento || 0;
-        var url = 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
+    // /export entrega la hoja completa. /gviz/tq respeta los filtros activos del
+    // Sheet: con un filtro puesto solo devuelve las filas visibles, y el sitio se
+    // queda con un punado de productos, sin carrusel y sin opciones de filtro.
+    function urlExport(gid) {
+        return 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
+            '/export?format=csv&gid=' + gid + '&_=' + Date.now();
+    }
+
+    function urlPorNombreDeHoja(nombreHoja) {
+        return 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID +
             '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(nombreHoja) +
             '&_=' + Date.now();
+    }
+
+    function descargarCsv(url, etiqueta, intento) {
+        var n = intento || 0;
         var ms = window.__obebeRedMovil ? 25000 : 15000;
         return fetchConTimeout(url, { cache: 'no-store' }, ms).then(function(res) {
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return res.text();
         }).catch(function(err) {
             if (n < 2) {
-                console.warn('[stock-sheet] reintento', nombreHoja, n + 1);
-                return descargarHoja(nombreHoja, n + 1);
+                console.warn('[stock-sheet] reintento', etiqueta, n + 1);
+                return descargarCsv(url, etiqueta, n + 1);
             }
             throw err;
         });
@@ -565,10 +577,14 @@
 
         window.__obebeSheetSyncOk = false;
 
-        return descargarHoja(HOJA_INVENTARIO)
+        return descargarCsv(urlExport(GID_INVENTARIO), HOJA_INVENTARIO)
+            .catch(function() {
+                console.warn('[stock-sheet] Probando ' + HOJA_INVENTARIO + ' por nombre de hoja');
+                return descargarCsv(urlPorNombreDeHoja(HOJA_INVENTARIO), HOJA_INVENTARIO);
+            })
             .catch(function() {
                 console.warn('[stock-sheet] Probando hoja legacy ' + HOJA_INVENTARIO_LEGACY);
-                return descargarHoja(HOJA_INVENTARIO_LEGACY);
+                return descargarCsv(urlPorNombreDeHoja(HOJA_INVENTARIO_LEGACY), HOJA_INVENTARIO_LEGACY);
             })
             .then(function(csv) {
                 sincronizarDesdeCsv(csv);
