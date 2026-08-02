@@ -209,23 +209,6 @@ const productosHombre = [
         posicionCarrusel: 0
     },
     {
-        id: 13,
-        nombre: "LIFTING MESH 5",
-        categoria: "Hombre",
-        precio: 550.00,
-        stock: 1,
-        imagen1: "hombre/13.webp",
-        imagen2: "hombre/13.1.webp",
-        talla: "S",
-        tallaBase: "S",
-        tipo: "Short",
-        color: "Gris",
-        marca: "Gym Shark",
-        precioMayoreo: 440.00,
-        mayoreo: true,
-        posicionCarrusel: 0
-    },
-    {
         id: 14,
         nombre: "LIFTING MESH 5",
         categoria: "Hombre",
