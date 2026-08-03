@@ -17,23 +17,38 @@ const productos = (typeof productosHombre !== 'undefined' && Array.isArray(produ
     : [];
 
 
+/** Bust de caché para fotos (CDN / navegador) al corregir un archivo. */
+var VERSION_IMAGENES_PRODUCTO = '20260803';
+
 function esRutaImagen(valor) {
-    return /\.(png|jpe?g|webp|gif|svg)$/i.test(valor);
+    return /\.(png|jpe?g|webp|gif|svg)(\?|$)/i.test(valor || '');
+}
+
+function conVersionImagen(ruta) {
+    if (!ruta || /[?&]v=/.test(ruta)) return ruta || '';
+    return ruta + (ruta.indexOf('?') >= 0 ? '&' : '?') + 'v=' + VERSION_IMAGENES_PRODUCTO;
 }
 
 /** Usa rutas del catálogo o convención hombre|mujer/{id}.webp si faltan. */
 function obtenerRutaImagenProducto(producto, numero) {
     var guardada = numero === 2 ? (producto.imagen2 || '') : (producto.imagen1 || '');
-    if (guardada && esRutaImagen(guardada)) return guardada;
+    if (guardada && esRutaImagen(guardada)) return conVersionImagen(guardada);
     if (numero !== 1 || !producto || !producto.id) return '';
     var carpeta = (producto.categoria === 'Mujer') ? 'mujer' : 'hombre';
-    return carpeta + '/' + producto.id + '.webp';
+    return conVersionImagen(carpeta + '/' + producto.id + '.webp');
 }
 
 function candidatosImagen(fuente) {
     if (!fuente) return [];
-    var base = fuente.replace(/\.(png|jpe?g|webp)$/i, '');
-    return [fuente, base + '.webp', base + '.png', base + '.jpeg', base + '.jpg']
+    var q = '';
+    var qi = fuente.indexOf('?');
+    var path = fuente;
+    if (qi >= 0) {
+        q = fuente.slice(qi);
+        path = fuente.slice(0, qi);
+    }
+    var base = path.replace(/\.(png|jpe?g|webp)$/i, '');
+    return [path + q, base + '.webp' + q, base + '.png' + q, base + '.jpeg' + q, base + '.jpg' + q]
         .filter(function(v, i, a) { return v && a.indexOf(v) === i; });
 }
 
