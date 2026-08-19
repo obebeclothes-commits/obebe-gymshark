@@ -492,8 +492,31 @@
                     p.tallaBase = datos.talla;
                 }
                 actualizados += 1;
+            } else if (mapaPorRef && refImagen > 0 && mapaPorRef.has(refImagen)) {
+                // Coincidencia solo por columna A (misma foto/id).
+                datos = mapaPorRef.get(refImagen);
+                p.stock = datos.stock;
+                if (datos.precio > 0) p.precio = datos.precio;
+                if (datos.precioMayoreo > 0) p.precioMayoreo = datos.precioMayoreo;
+                p.precioMayoreo50 = datos.precioMayoreo50 || 0;
+                p.descuentoMayoreo = datos.descuentoMayoreo || '';
+                p.descuentoMayoreo50 = datos.descuentoMayoreo50 || '';
+                p.mayoreo = !!datos.mayoreo;
+                p.posicionCarrusel = datos.posicionCarrusel || 0;
+                p.fechaStock = datos.fechaStock || '';
+                if (datos.nombre) p.nombre = datos.nombre;
+                if (datos.tipo) p.tipo = datos.tipo;
+                if (datos.color) p.color = datos.color;
+                if (datos.marca) p.marca = datos.marca;
+                if (datos.talla) {
+                    p.talla = datos.talla;
+                    p.tallaBase = datos.talla;
+                }
+                actualizados += 1;
+            } else {
+                // Ya no está en el Sheet: quitar de la tienda (stock 0).
+                p.stock = 0;
             }
-            // Sin coincidencia: conservar stock del catálogo estático (no borrar productos).
         });
         return actualizados;
     }
