@@ -413,12 +413,12 @@ function actualizarFlechasColecciones() {
 function configurarPlaceholdersImagenesInventario() {
     document.querySelectorAll('#inventario .coleccion-card-image img, #inventario .home-tile-photo-wrap img').forEach(function(img) {
         function marcarPlaceholder() {
-            var contenedor = img.closest('.coleccion-card-image');
+            var contenedor = img.closest('.coleccion-card-image') || img.closest('.home-tile-photo-wrap');
             if (contenedor) contenedor.classList.add('is-placeholder');
             img.remove();
         }
         img.addEventListener('error', marcarPlaceholder);
-        if (img.complete && !img.naturalWidth) marcarPlaceholder();
+        if (img.complete && img.naturalWidth === 0) marcarPlaceholder();
     });
 }
 
@@ -427,9 +427,10 @@ function inicializarCarouselColecciones() {
     var wrapper = document.getElementById('coleccionesCarouselWrapper');
     var arrowLeft = document.getElementById('coleccionesArrowLeft');
     var arrowRight = document.getElementById('coleccionesArrowRight');
-    if (!carousel || !wrapper) return;
 
     configurarPlaceholdersImagenesInventario();
+
+    if (!carousel || !wrapper) return;
 
     if (arrowLeft) arrowLeft.addEventListener('click', function() { scrollCarouselColecciones('left'); });
     if (arrowRight) arrowRight.addEventListener('click', function() { scrollCarouselColecciones('right'); });

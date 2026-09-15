@@ -27,8 +27,9 @@ jobs:
       - name: Prepare site artifact
         run: |
           mkdir -p _site
-          cp -r *.html *.js *.css *.json *.jpeg *.png CNAME .nojekyll _site/ 2>/dev/null || true
-          cp -r hombre mujer hero _site/ 2>/dev/null || true
+          cp -r *.html *.js *.css *.json CNAME .nojekyll _site/ 2>/dev/null || true
+          cp -r *.jpeg *.jpg *.png *.webp *.avif *.gif *.svg _site/ 2>/dev/null || true
+          cp -r hombre mujer hero secciones colecciones _site/ 2>/dev/null || true
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
