@@ -89,20 +89,72 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
     contenedor.textContent = fuente;
 }
 
-/** Productos con columna U del Sheet = posiciones 1..8 en el carrusel (sin filtro de stock). */
+/** Productos con columna U del Sheet = posiciones 1..6 en el carrusel (7.º recuadro = Ver más). */
 function obtenerProductosParaCarrusel(catalogo, categoria) {
-    var slots = new Array(8);
+    var slots = new Array(6);
     if (!Array.isArray(catalogo)) return [];
     catalogo.forEach(function(p) {
         if (p.categoria !== categoria && p.categoria !== 'Unisex') return;
         var pos = parseInt(p.posicionCarrusel, 10);
-        if (pos >= 1 && pos <= 8) slots[pos - 1] = p;
+        if (pos >= 1 && pos <= 6) slots[pos - 1] = p;
     });
     var resultado = [];
     for (var i = 0; i < slots.length; i++) {
         if (slots[i]) resultado.push(slots[i]);
     }
     return resultado;
+}
+
+var VERSION_IMAGENES_SECCIONES = '20260915y';
+
+function crearTarjetaVerMasCarrusel(opciones) {
+    var href = opciones.href || 'productos.html';
+    var archivoImagen = opciones.archivoImagen || 'secciones/ver-mas.jpg';
+    var titulo = opciones.titulo || 'VER MÁS';
+    var subtitulo = opciones.subtitulo || 'Ver catálogo completo';
+    var imgSrc = archivoImagen.indexOf('?') >= 0
+        ? archivoImagen
+        : archivoImagen + '?v=' + VERSION_IMAGENES_SECCIONES;
+
+    var card = document.createElement('a');
+    card.className = 'product-card product-card-ver-mas';
+    card.href = href;
+    card.setAttribute('aria-label', titulo + ' — ' + subtitulo);
+
+    var imageWrap = document.createElement('div');
+    imageWrap.className = 'product-image-wrap product-card-ver-mas-image-wrap coleccion-card-image';
+    imageWrap.setAttribute('data-label', titulo);
+
+    var imageContainer = document.createElement('div');
+    imageContainer.className = 'product-image';
+    var img = document.createElement('img');
+    img.src = imgSrc;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.width = 320;
+    img.height = 380;
+    imageContainer.appendChild(img);
+
+    var overlay = document.createElement('div');
+    overlay.className = 'product-card-ver-mas-overlay';
+    overlay.setAttribute('aria-hidden', 'true');
+
+    var overlayTitle = document.createElement('span');
+    overlayTitle.className = 'product-card-ver-mas-title';
+    overlayTitle.textContent = titulo;
+
+    var overlaySub = document.createElement('span');
+    overlaySub.className = 'product-card-ver-mas-sub';
+    overlaySub.textContent = subtitulo;
+
+    overlay.appendChild(overlayTitle);
+    overlay.appendChild(overlaySub);
+
+    imageWrap.appendChild(imageContainer);
+    imageWrap.appendChild(overlay);
+    card.appendChild(imageWrap);
+
+    return card;
 }
 
 function mensajeCarruselCargando() {
@@ -120,7 +172,7 @@ function inicializarHoverCarruselHombre() {
 
     carousel.addEventListener('mouseover', (e) => {
         const card = e.target.closest('.product-card');
-        if (!card || card.dataset.hovered === 'true') return;
+        if (!card || card.classList.contains('product-card-ver-mas') || card.dataset.hovered === 'true') return;
         card.dataset.hovered = 'true';
         const imgContainer = card.querySelector('.product-image');
         if (imgContainer && imgContainer.dataset.img2) {
@@ -130,7 +182,7 @@ function inicializarHoverCarruselHombre() {
 
     carousel.addEventListener('mouseout', (e) => {
         const card = e.target.closest('.product-card');
-        if (!card) return;
+        if (!card || card.classList.contains('product-card-ver-mas')) return;
         // Verificar si el mouse realmente sali�� de la tarjeta
         const related = e.relatedTarget;
         if (related && card.contains(related)) return;
@@ -224,6 +276,13 @@ function renderizarCarruselHombre(categoria = 'Hombre', mostrarTodos = false) {
         productsCarousel.appendChild(card);
     });
 
+    productsCarousel.appendChild(crearTarjetaVerMasCarrusel({
+        href: 'productos.html?categoria=Hombre',
+        archivoImagen: 'secciones/hombre-final.jpg',
+        titulo: 'VER MÁS',
+        subtitulo: 'Ver catálogo completo'
+    }));
+
     // Resetear scroll
     currentScroll = 0;
     productsCarousel.style.transform = 'translateX(0)';
@@ -311,10 +370,17 @@ function renderizarProductosMujer() {
         carousel.appendChild(card);
     });
 
+    carousel.appendChild(crearTarjetaVerMasCarrusel({
+        href: 'productos.html?categoria=Mujer',
+        archivoImagen: 'secciones/mujer-final.jpg',
+        titulo: 'VER MÁS',
+        subtitulo: 'Ver catálogo completo'
+    }));
+
     // Hover segunda imagen en carrusel mujer
     carousel.addEventListener('mouseover', function(e) {
         const card = e.target.closest('.product-card');
-        if (!card || card.dataset.hovered === 'true') return;
+        if (!card || card.classList.contains('product-card-ver-mas') || card.dataset.hovered === 'true') return;
         card.dataset.hovered = 'true';
         const imgContainer = card.querySelector('.product-image');
         if (imgContainer && imgContainer.dataset.img2) {
@@ -323,7 +389,7 @@ function renderizarProductosMujer() {
     });
     carousel.addEventListener('mouseout', function(e) {
         const card = e.target.closest('.product-card');
-        if (!card) return;
+        if (!card || card.classList.contains('product-card-ver-mas')) return;
         const related = e.relatedTarget;
         if (related && card.contains(related)) return;
         card.dataset.hovered = 'false';
@@ -411,9 +477,9 @@ function actualizarFlechasColecciones() {
 }
 
 function configurarPlaceholdersImagenesInventario() {
-    document.querySelectorAll('#inventario .coleccion-card-image img, #inventario .home-tile-photo-wrap img').forEach(function(img) {
+    document.querySelectorAll('#inventario .coleccion-card-image img, #inventario .home-tile-photo-wrap img, #inventario-mujer .product-card-ver-mas-image-wrap img, #inventario .product-card-ver-mas-image-wrap img').forEach(function(img) {
         function marcarPlaceholder() {
-            var contenedor = img.closest('.coleccion-card-image') || img.closest('.home-tile-photo-wrap');
+            var contenedor = img.closest('.coleccion-card-image') || img.closest('.home-tile-photo-wrap') || img.closest('.product-card-ver-mas-image-wrap');
             if (contenedor) contenedor.classList.add('is-placeholder');
             img.remove();
         }
