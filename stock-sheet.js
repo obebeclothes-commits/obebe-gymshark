@@ -14,6 +14,7 @@
     var IDX_PRECIO_MAYOREO_50 = 21; // columna V (mayoreo +50)
     var IDX_DESCUENTO_MAYOREO_50 = 22; // columna W (% mayoreo +50)
     var IDX_CARRUSEL = 20; // columna U
+    var IDX_COLECCION = 23; // columna X
     var IDX_FECHA_STOCK = 10; // columna K
 
     var MESES_FECHA_STOCK = {
@@ -92,6 +93,12 @@
             'UNIQUE': 'UNI'
         };
         return alias[clave] || texto;
+    }
+
+    function normalizarColeccion(valor) {
+        var clave = String(valor || '').trim().toUpperCase().replace(/\s+/g, ' ');
+        if (clave === "GOLD'S GYM" || clave === 'GOLDS' || clave === 'GOLD GYM') return 'GOLDS GYM';
+        return clave;
     }
 
     function normalizarTipo(valor) {
@@ -372,6 +379,7 @@
             var posicionCarrusel = parsearPosicionCarrusel(f[IDX_CARRUSEL]);
             var fechaStock = parsearFechaStock(f[IDX_FECHA_STOCK]);
             var refImagen = parsearNumeroImagen(f[IDX_IMAGEN]);
+            var coleccion = normalizarColeccion(f[IDX_COLECCION] || '');
             // Los agotados siguen apareciendo en la tienda con su etiqueta, asi que
             // sus opciones tambien deben quedar disponibles en los filtros.
             if (talla) opciones.tallas.add(talla);
@@ -394,7 +402,8 @@
                 color: color,
                 marca: marca,
                 talla: talla,
-                refImagen: refImagen
+                refImagen: refImagen,
+                coleccion: coleccion
             };
             var previo = mapa.get(clave);
             if (previo) {
@@ -411,6 +420,7 @@
                 if (color) previo.color = color;
                 if (marca) previo.marca = marca;
                 if (talla) previo.talla = talla;
+                if (coleccion) previo.coleccion = coleccion;
             } else {
                 mapa.set(clave, datosFila);
             }
@@ -432,6 +442,7 @@
                     if (color) prevRef.color = color;
                     if (marca) prevRef.marca = marca;
                     if (talla) prevRef.talla = talla;
+                    if (coleccion) prevRef.coleccion = coleccion;
                 }
             }
         }
@@ -491,6 +502,7 @@
                     p.talla = datos.talla;
                     p.tallaBase = datos.talla;
                 }
+                p.coleccion = datos.coleccion || '';
                 actualizados += 1;
             } else if (mapaPorRef && refImagen > 0 && mapaPorRef.has(refImagen)) {
                 // Coincidencia solo por columna A (misma foto/id).
@@ -512,10 +524,12 @@
                     p.talla = datos.talla;
                     p.tallaBase = datos.talla;
                 }
+                p.coleccion = datos.coleccion || '';
                 actualizados += 1;
             } else {
                 // Ya no está en el Sheet: quitar de la tienda (stock 0).
                 p.stock = 0;
+                p.coleccion = '';
             }
         });
         return actualizados;

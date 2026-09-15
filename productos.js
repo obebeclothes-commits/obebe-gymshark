@@ -109,6 +109,37 @@ function esModoMayoreo() {
     return false;
 }
 
+function obtenerColeccionDeURL() {
+    var params = new URLSearchParams(window.location.search);
+    var valor = (params.get('coleccion') || '').trim();
+    if (valor) return valor;
+    var retorno = params.get('retorno');
+    if (retorno) {
+        try {
+            var retornoParams = new URLSearchParams(decodeURIComponent(retorno));
+            return (retornoParams.get('coleccion') || '').trim();
+        } catch (err) {
+            return '';
+        }
+    }
+    return '';
+}
+
+function esModoColeccion() {
+    return !!obtenerColeccionDeURL();
+}
+
+function normalizarColeccionClave(valor) {
+    var clave = String(valor || '').trim().toUpperCase().replace(/\s+/g, ' ');
+    if (clave === "GOLD'S GYM" || clave === 'GOLDS' || clave === 'GOLD GYM') return 'GOLDS GYM';
+    return clave;
+}
+
+function productoEnColeccion(producto, coleccion) {
+    if (!coleccion) return true;
+    return normalizarColeccionClave(producto && producto.coleccion) === normalizarColeccionClave(coleccion);
+}
+
 function esModoNuevoStock() {
     var params = new URLSearchParams(window.location.search);
     var valor = (params.get('nuevoStock') || '').trim().toLowerCase();
@@ -165,6 +196,32 @@ function obtenerCategoriaFiltroGenero() {
     var params = new URLSearchParams(window.location.search);
     if (!params.has('categoria')) return '';
     return (params.get('categoria') || '').trim();
+}
+
+function actualizarMayoreoPageSwitch() {
+    var cont = document.getElementById('mayoreoPageSwitch');
+    var link20 = document.getElementById('mayoreoSwitch20Link');
+    var link50 = document.getElementById('mayoreoSwitch50Link');
+    if (!cont) return;
+    var enPlus20 = esModoMayoreo() && !esModoMayoreo50();
+    var enPlus50 = esModoMayoreo50() && !esModoMayoreo();
+    cont.hidden = !(enPlus20 || enPlus50);
+    if (link20) link20.hidden = !enPlus50;
+    if (link50) link50.hidden = !enPlus20;
+    if (enPlus50 && link20) {
+        var params20 = new URLSearchParams(window.location.search);
+        params20.delete('mayoreo50');
+        params20.set('mayoreo', '1');
+        var qs20 = params20.toString();
+        link20.href = window.location.pathname + (qs20 ? '?' + qs20 : '');
+    }
+    if (enPlus20 && link50) {
+        var params50 = new URLSearchParams(window.location.search);
+        params50.delete('mayoreo');
+        params50.set('mayoreo50', '1');
+        var qs50 = params50.toString();
+        link50.href = window.location.pathname + (qs50 ? '?' + qs50 : '');
+    }
 }
 
 function actualizarFiltroGeneroNuevoStockUI() {
@@ -264,6 +321,8 @@ window.esModoMayoreo = esModoMayoreo;
 window.esModoMayoreo50 = esModoMayoreo50;
 window.esProductoMayoreo50 = esProductoMayoreo50;
 window.esModoNuevoStock = esModoNuevoStock;
+window.esModoColeccion = esModoColeccion;
+window.obtenerColeccionDeURL = obtenerColeccionDeURL;
 window.esProductoNuevoStock = esProductoNuevoStock;
 window.precioVigenteProducto = precioVigenteProducto;
 window.htmlPrecioProducto = htmlPrecioProducto;
@@ -279,7 +338,24 @@ function obtenerProductosPorCategoria() {
     var modoMayoreo = esModoMayoreo();
     var modoMayoreo50 = esModoMayoreo50();
     var modoNuevoStock = esModoNuevoStock();
+    var coleccion = obtenerColeccionDeURL();
     var categoria = params.get('categoria') || 'Hombre';
+
+    if (coleccion) {
+        var todosColeccion = [];
+        if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) {
+            todosColeccion = todosColeccion.concat(productosHombre);
+        } else if (typeof productos !== 'undefined' && Array.isArray(productos)) {
+            todosColeccion = todosColeccion.concat(productos);
+        }
+        if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) {
+            todosColeccion = todosColeccion.concat(productosMujer);
+        }
+        return todosColeccion.filter(function(p) {
+            if (Number(p.stock) <= 0) return false;
+            return productoEnColeccion(p, coleccion);
+        });
+    }
 
     function filtrarLista(lista, cat) {
         return lista.filter(function(p) {
@@ -323,11 +399,7 @@ function obtenerProductosPorCategoria() {
 
 // Función para obtener todas las tallas, tipos y colores únicos de los productos
 function obtenerOpcionesFiltros(productos) {
-    var categoria = obtenerCategoriaDeURL();
-    if (typeof window.opcionesInventarioSheet !== 'undefined' && window.opcionesInventarioSheet[categoria]) {
-        return window.opcionesInventarioSheet[categoria];
-    }
-
+    // Opciones solo del listado actual (Hombre/Mujer/mayoreo/colección) para no mezclar tipos entre géneros.
     const tallas = new Set();
     const tipos = new Set();
     const colores = new Set();
@@ -581,6 +653,8 @@ function construirUrlDetalleProducto(producto) {
     if (esModoMayoreo()) url += '&mayoreo=1';
     if (esModoMayoreo50()) url += '&mayoreo50=1';
     if (esModoNuevoStock()) url += '&nuevoStock=1';
+    var coleccion = obtenerColeccionDeURL();
+    if (coleccion) url += '&coleccion=' + encodeURIComponent(coleccion);
     var retorno = construirQueryRetornoProductos();
     if (retorno) url += '&retorno=' + retorno;
     return url;
@@ -598,6 +672,8 @@ function construirUrlVolverProductos(params) {
     if (esModoMayoreo()) return 'productos.html?mayoreo=1';
     if (esModoMayoreo50()) return 'productos.html?mayoreo50=1';
     if (esModoNuevoStock()) return 'productos.html?nuevoStock=1';
+    var coleccion = obtenerColeccionDeURL();
+    if (coleccion) return 'productos.html?coleccion=' + encodeURIComponent(coleccion);
     var categoria = params.get('categoria') || 'Hombre';
     return 'productos.html?categoria=' + encodeURIComponent(categoria);
 }
@@ -633,6 +709,13 @@ function obtenerFiltrosActivos() {
 function aplicarFiltrosYOrdenar(productos) {
     const filtros = obtenerFiltrosActivos();
     let productosFiltrados = [...productos];
+
+    if (debeMostrarFiltroGenero() && tieneCategoriaEnURL()) {
+        var catUrl = obtenerCategoriaDeURL();
+        productosFiltrados = productosFiltrados.filter(function(p) {
+            return p.categoria === catUrl || p.categoria === 'Unisex';
+        });
+    }
 
     // Filtrar por talla (usa tallaBase directamente del producto)
     if (filtros.tallas.length > 0) {
@@ -1264,12 +1347,15 @@ function renderizarTodosLosProductos() {
             if (window.fechaStockMasRecienteEtiqueta) {
                 tituloBase += ' · ' + window.fechaStockMasRecienteEtiqueta.toUpperCase();
             }
+        } else if (esModoColeccion()) {
+            tituloBase = 'COLECCIÓN · ' + obtenerColeccionDeURL().toUpperCase();
         }
         var filtrosUrl = leerFiltrosDesdeURL();
         var marcaTitulo = filtrosUrl.marcas.length === 1 ? filtrosUrl.marcas[0] : (marca || '');
         var titulo = marcaTitulo ? (tituloBase + ' · ' + marcaTitulo.toUpperCase()) : tituloBase;
         var esMovil = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
         pageTitle.textContent = esMovil ? tituloBase : titulo;
+        actualizarMayoreoPageSwitch();
     }
     actualizarTituloPagina();
     if (pageTitle && window.matchMedia) {
@@ -1289,6 +1375,7 @@ function renderizarTodosLosProductos() {
     const productosFiltrados = aplicarFiltrosYOrdenar(productosCategoria);
     aplicarBusquedaYRenderizar(productosFiltrados);
     actualizarFiltroGeneroNuevoStockUI();
+    actualizarMayoreoPageSwitch();
 }
 
 // Función para inicializar eventos de filtros

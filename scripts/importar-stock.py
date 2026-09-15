@@ -69,6 +69,7 @@ COLUMNAS = {
     "mayoreo": "R",
     "segmento": "T",
     "carrusel": "U",
+    "coleccion": "X",
 }
 
 FILA_INICIO_DATOS = 3  # Primera fila de producto (fila 1 = título, fila 2 = encabezados)
@@ -265,6 +266,16 @@ def elegir_numero_imagen(
     return numero
 
 
+def normalizar_coleccion(valor: str) -> str:
+    texto = re.sub(r"\s+", " ", str(valor or "").strip()).upper()
+    alias = {
+        "GOLD'S GYM": "GOLDS GYM",
+        "GOLDS": "GOLDS GYM",
+        "GOLD GYM": "GOLDS GYM",
+    }
+    return alias.get(texto, texto)
+
+
 def normalizar_marca(valor: str) -> str:
     clave = re.sub(r"\s+", " ", str(valor or "").strip()).upper()
     return MARCAS.get(clave, valor.strip().title())
@@ -425,6 +436,7 @@ def leer_productos_desde_csv(
                 "precioMayoreo": precio_mayoreo,
                 "mayoreo": mayoreo,
                 "posicionCarrusel": posicion_carrusel,
+                "coleccion": normalizar_coleccion(obtener_valor(fila, idx["coleccion"])),
             }
         )
         nuevo_id += 1
@@ -460,6 +472,7 @@ def producto_a_js(producto: dict, indent: str = "    ") -> str:
         ("precioMayoreo", f"{producto.get('precioMayoreo', 0):.2f}", "num"),
         ("mayoreo", producto.get("mayoreo", False), "bool"),
         ("posicionCarrusel", producto.get("posicionCarrusel", 0), "num"),
+        ("coleccion", producto.get("coleccion", ""), "str"),
     ]
 
     lineas = [f"{indent}{{"]

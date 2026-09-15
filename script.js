@@ -376,6 +376,113 @@ function actualizarFlechasMujer() {
     arrowRight.disabled = currentScrollMujer >= maxScroll - 1;
 }
 
+let currentScrollColecciones = 0;
+
+function scrollCarouselColecciones(direction) {
+    var carousel = document.getElementById('coleccionesCarousel');
+    if (!carousel) return;
+    var wrapper = carousel.parentElement;
+    if (!wrapper) return;
+
+    var gap = 10;
+    var firstCard = carousel.querySelector('.product-card');
+    var scrollAmount = firstCard ? firstCard.offsetWidth + gap : 330;
+    var maxScroll = Math.max(0, carousel.scrollWidth - wrapper.offsetWidth);
+
+    if (direction === 'left') {
+        currentScrollColecciones = Math.max(0, currentScrollColecciones - scrollAmount);
+    } else {
+        currentScrollColecciones = Math.min(maxScroll, currentScrollColecciones + scrollAmount);
+    }
+    carousel.style.transition = 'transform 0.3s ease-out';
+    carousel.style.transform = 'translateX(-' + currentScrollColecciones + 'px)';
+    actualizarFlechasColecciones();
+}
+
+function actualizarFlechasColecciones() {
+    var carousel = document.getElementById('coleccionesCarousel');
+    var arrowLeft = document.getElementById('coleccionesArrowLeft');
+    var arrowRight = document.getElementById('coleccionesArrowRight');
+    if (!carousel || !arrowLeft || !arrowRight) return;
+    var wrapper = carousel.parentElement;
+    var maxScroll = Math.max(0, carousel.scrollWidth - wrapper.offsetWidth);
+    arrowLeft.disabled = currentScrollColecciones <= 0;
+    arrowRight.disabled = currentScrollColecciones >= maxScroll - 1;
+}
+
+function inicializarCarouselColecciones() {
+    var carousel = document.getElementById('coleccionesCarousel');
+    var wrapper = document.getElementById('coleccionesCarouselWrapper');
+    var arrowLeft = document.getElementById('coleccionesArrowLeft');
+    var arrowRight = document.getElementById('coleccionesArrowRight');
+    if (!carousel || !wrapper) return;
+
+    document.querySelectorAll('#coleccionesCarousel .coleccion-card-image img').forEach(function(img) {
+        function marcarPlaceholder() {
+            var contenedor = img.closest('.coleccion-card-image');
+            if (contenedor) contenedor.classList.add('is-placeholder');
+            img.remove();
+        }
+        img.addEventListener('error', marcarPlaceholder);
+        if (img.complete && !img.naturalWidth) marcarPlaceholder();
+    });
+
+    if (arrowLeft) arrowLeft.addEventListener('click', function() { scrollCarouselColecciones('left'); });
+    if (arrowRight) arrowRight.addEventListener('click', function() { scrollCarouselColecciones('right'); });
+
+    var touchStartX = 0;
+    var scrollStart = 0;
+    wrapper.addEventListener('touchstart', function(e) {
+        touchStartX = e.touches[0].clientX;
+        scrollStart = currentScrollColecciones;
+        carousel.style.transition = 'none';
+    }, { passive: true });
+    wrapper.addEventListener('touchmove', function(e) {
+        var deltaX = e.touches[0].clientX - touchStartX;
+        var maxScroll = Math.max(0, carousel.scrollWidth - wrapper.offsetWidth);
+        currentScrollColecciones = Math.max(0, Math.min(maxScroll, scrollStart - deltaX));
+        carousel.style.transform = 'translateX(-' + currentScrollColecciones + 'px)';
+        actualizarFlechasColecciones();
+        e.preventDefault();
+    }, { passive: false });
+    wrapper.addEventListener('touchend', function() {
+        carousel.style.transition = 'transform 0.3s ease-out';
+        actualizarFlechasColecciones();
+    }, { passive: true });
+
+    var isDragging = false;
+    var dragStartX = 0;
+    var dragScrollStart = 0;
+    wrapper.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragScrollStart = currentScrollColecciones;
+        carousel.style.transition = 'none';
+        wrapper.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+    window.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        var deltaX = e.clientX - dragStartX;
+        var maxScroll = Math.max(0, carousel.scrollWidth - wrapper.offsetWidth);
+        currentScrollColecciones = Math.max(0, Math.min(maxScroll, dragScrollStart - deltaX));
+        carousel.style.transform = 'translateX(-' + currentScrollColecciones + 'px)';
+        actualizarFlechasColecciones();
+    });
+    window.addEventListener('mouseup', function() {
+        if (!isDragging) return;
+        isDragging = false;
+        carousel.style.transition = 'transform 0.3s ease-out';
+        wrapper.style.cursor = 'grab';
+        actualizarFlechasColecciones();
+    });
+
+    currentScrollColecciones = 0;
+    carousel.style.transform = 'translateX(0)';
+    actualizarFlechasColecciones();
+    window.addEventListener('resize', actualizarFlechasColecciones);
+}
+
 function inicializarCarouselMujer() {
     const arrowLeft = document.getElementById('arrowLeftMujer');
     const arrowRight = document.getElementById('arrowRightMujer');
@@ -876,6 +983,7 @@ function arrancarIndexPagina() {
     renderizarCarruselHombre('Hombre', false);
     if (typeof productosMujer !== 'undefined') renderizarProductosMujer();
     inicializarCarousel();
+    inicializarCarouselColecciones();
     inicializarNavegacion();
     inicializarPromoBar();
     inicializarHeroCarrusel();

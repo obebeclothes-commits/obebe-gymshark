@@ -154,19 +154,12 @@ header .container {
     display: flex;
 }
 
-.mobile-nav .category-btn,
-.mobile-nav .nav-link-asesorias {
+.mobile-nav .category-btn {
     width: 100%;
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    text-align: center;
-    box-sizing: border-box;
-}
-
-.mobile-nav .nav-link-asesorias {
-    display: flex;
     text-align: center;
     box-sizing: border-box;
 }
@@ -524,18 +517,6 @@ a.category-btn {
 
 .category-btn.active {
     background: white;
-    color: var(--primary-color);
-}
-
-/* Enlace Asesorías en header (mismo estilo que botones Hombre/Mujer) */
-.nav-link-asesorias {
-    text-decoration: none;
-    color: white;
-    display: inline-block;
-    box-sizing: border-box;
-}
-
-.nav-link-asesorias:hover {
     color: var(--primary-color);
 }
 
@@ -1499,6 +1480,74 @@ a.nuevo-stock-cta:active {
     font-weight: 500;
     letter-spacing: 0.03em;
     color: rgba(255, 255, 255, 0.82);
+}
+
+.colecciones-block {
+    margin: 0 auto 1.25rem;
+}
+
+.colecciones-block .brand-filter-title {
+    margin-bottom: 0.5rem;
+}
+
+.colecciones-arrows-header {
+    margin-bottom: 1rem;
+    margin-top: -0.25rem;
+}
+
+.coleccion-card-image.is-placeholder .product-image {
+    background: linear-gradient(145deg, #ececec 0%, #d8d8d8 100%);
+}
+
+.coleccion-card-image.is-placeholder::after {
+    content: attr(data-label);
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba(40, 40, 40, 0.85);
+    text-transform: uppercase;
+    pointer-events: none;
+}
+
+.coleccion-carousel-card .product-info {
+    padding-bottom: 1rem;
+    text-align: center;
+    align-items: center;
+}
+
+.coleccion-carousel-card .product-name {
+    text-align: center;
+    width: 100%;
+}
+
+.coleccion-carousel-card .product-image img {
+    object-fit: cover;
+    object-position: center;
+}
+
+.coleccion-carousel-card.coleccion-img-top .product-image img {
+    object-position: top center;
+}
+
+@media (min-width: 769px) {
+    .coleccion-carousel-card .product-image img {
+        object-fit: cover;
+        object-position: center;
+        background: #f3f3f3;
+    }
+
+    .coleccion-carousel-card.coleccion-img-top .product-image img {
+        object-fit: cover;
+        object-position: top center;
+    }
 }
 
 .mayoreo-cta {
