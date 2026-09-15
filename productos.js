@@ -1471,6 +1471,12 @@ function renderizarTodosLosProductos() {
         var titulo = marcaTitulo ? (tituloBase + ' · ' + marcaTitulo.toUpperCase()) : tituloBase;
         var esMovil = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
         pageTitle.textContent = esMovil ? tituloBase : titulo;
+        pageTitle.classList.remove('page-title-gymshark', 'page-title-mujer');
+        if (tituloBase === 'PARA NUESTROS ATLETAS') {
+            pageTitle.classList.add('page-title-gymshark');
+        } else if (tituloBase === 'PARA NUESTRAS ATLETAS') {
+            pageTitle.classList.add('page-title-mujer');
+        }
         actualizarMayoreoPageSwitch();
     }
     actualizarTituloPagina();

@@ -30,17 +30,17 @@
 body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5;color:#333;background:#f8f9fa}
 a{text-decoration:none;color:inherit}
 img{max-width:100%;height:auto;display:block}
-.promo-bar{background:linear-gradient(135deg,#4ecdc4 0%,#3db8a8 100%);color:#fff;text-align:center;padding:.5rem 0;position:relative;z-index:1001;min-height:2rem}
+.promo-bar{background:#000;color:#fff;text-align:center;padding:.5rem 0;position:relative;z-index:1001;min-height:2rem}
 .promo-message.active{opacity:1;visibility:visible}
-header{background:linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 100%);color:#fff;padding:.75rem 0;position:sticky;top:0;z-index:1000;box-shadow:0 2px 10px rgba(0,0,0,.1);min-height:3rem}
+header{background:#fff;color:#1a1a1a;padding:.75rem 0;position:sticky;top:0;z-index:1000;box-shadow:0 2px 10px rgba(0,0,0,.08);min-height:3rem}
 header .container{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:1rem}
-.logo h1{font-size:1.1rem;margin:0;letter-spacing:.05em;color:#fff}
+.logo h1{font-size:1.1rem;margin:0;letter-spacing:.05em;color:#1a1a1a}
 main,.container{max-width:1200px;margin:0 auto}
-footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
+footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3px solid #1a1a1a}
 @media(max-width:768px){.mobile-menu-btn{display:flex}}
     </style>
-    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20260735" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20260735"></noscript>
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20260915al" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20260915al"></noscript>
     <script>
     // Respaldo: si el onload del <link> no dispara, la hoja quedaria en media=print y sin aplicar.
     (function(w, d) {
@@ -98,37 +98,68 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
             height: 100%;
             object-fit: cover;
         }
+        .product-detail-summary h1,
         .product-detail-info h1 {
             font-size: 1.75rem;
             color: var(--primary-color);
             margin-bottom: 0.5rem;
         }
+        .product-detail-summary .product-price,
         .product-detail-info .product-price {
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--primary-color);
             margin: 1rem 0;
         }
+        .product-detail-summary .product-price-mayoreo,
         .product-detail-info .product-price-mayoreo {
             display: flex;
             align-items: baseline;
             gap: 0.5rem;
             flex-wrap: wrap;
         }
+        .product-detail-summary .product-price-retail,
         .product-detail-info .product-price-retail {
             text-decoration: line-through;
             color: #888;
             font-weight: 500;
             font-size: 1.1rem;
         }
+        .product-detail-summary .product-price-wholesale,
         .product-detail-info .product-price-wholesale {
             color: #b71c1c;
             font-weight: 800;
             font-size: 1.5rem;
         }
+        .product-detail-summary .product-size,
         .product-detail-info .product-size {
             color: #666;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.35rem;
+        }
+        .product-detail-summary .product-color,
+        .product-detail-info .product-color {
+            color: #666;
+            margin: 0 0 0.5rem;
+        }
+        .product-detail-side {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        @media (min-width: 769px) {
+            .product-detail-side {
+                position: static;
+                background: transparent;
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+            }
+            .product-detail-summary {
+                text-align: left;
+            }
+            .product-detail-summary .product-price-mayoreo {
+                justify-content: flex-start;
+            }
         }
         /* Mismo estilo que "Volver al inicio" en productos.html */
         .back-link {
@@ -192,8 +223,8 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
         .cart-icon-btn {
             position: relative;
             background: transparent;
-            border: 2px solid white;
-            color: white;
+            border: 2px solid #1a1a1a;
+            color: #1a1a1a;
             padding: 0.5rem;
             border-radius: 50%;
             cursor: pointer;
@@ -206,8 +237,8 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
             flex-shrink: 0;
         }
         .cart-icon-btn:hover {
-            background: white;
-            color: var(--primary-color);
+            background: #1a1a1a;
+            color: #ffffff;
         }
         .cart-badge {
             position: absolute;
@@ -402,15 +433,67 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
         }
         @media (max-width: 768px) {
             .product-detail {
-                padding: 1rem 0 2rem;
+                padding: 1rem 0 0.35rem;
             }
             .product-detail-container {
                 grid-template-columns: 1fr;
                 gap: 1.5rem;
                 padding: 0 1rem;
+                padding-bottom: max(0.35rem, env(safe-area-inset-bottom, 0px));
+            }
+            .product-detail .container {
+                padding-bottom: 0;
+            }
+            main.product-detail + footer {
+                margin-top: 0.75rem;
+                padding-top: 1.25rem;
             }
             .product-detail-images {
                 position: static;
+            }
+            .product-detail-side {
+                position: sticky;
+                bottom: 0;
+                z-index: 99;
+                background: #f8f9fa;
+                padding: 0.4rem 0.5rem 0.35rem;
+                margin: 0 -0.5rem;
+                box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
+                gap: 0.35rem;
+            }
+            .product-detail-summary {
+                text-align: left;
+            }
+            .product-detail-summary h1 {
+                font-size: 1.05rem;
+                margin-bottom: 0.15rem;
+                line-height: 1.15;
+            }
+            .product-detail-summary .product-size,
+            .product-detail-summary .product-color {
+                font-size: 0.78rem;
+                margin-bottom: 0.05rem;
+                line-height: 1.2;
+            }
+            .product-detail-summary .product-price,
+            .product-detail-summary .product-price-mayoreo {
+                justify-content: flex-start;
+            }
+            .product-detail-summary .product-price,
+            .product-detail-summary .product-price-wholesale {
+                font-size: 1.05rem;
+                margin: 0.15rem 0 0;
+                line-height: 1.2;
+            }
+            .product-detail-summary .product-price-retail {
+                font-size: 0.88rem;
+            }
+            .product-detail-summary--fixed {
+                padding: 0 0 0.25rem;
+                box-shadow: none;
+                margin: 0;
+                background: transparent;
+                text-align: left;
             }
             .product-detail-image {
                 position: static;
@@ -434,17 +517,10 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
                 max-height: min(72vh, 72dvh);
             }
             .product-detail-info {
-                order: 2;
-                padding: 0 0.5rem;
-            }
-            .product-detail-info h1 {
-                font-size: 1.4rem;
-            }
-            .product-detail-info .product-price {
-                font-size: 1.35rem;
-            }
-            .product-detail-info .product-size {
-                font-size: 0.95rem;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
             }
             /* Botón: tamaño fijo invariable (mismo en barra fija y sticky); sin transición para que no se note el cambio */
             .add-to-cart-detail {
@@ -458,21 +534,10 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
                 line-height: 48px;
                 box-sizing: border-box;
                 flex-shrink: 0;
-            }
-            /* Botón en flujo: al hacer scroll se queda estático abajo del precio */
-            .product-detail-info {
-                display: flex;
-                flex-direction: column;
-            }
-            .add-to-cart-detail {
-                position: sticky;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                z-index: 100;
-                border-radius: 0;
-                box-shadow: 0 -2px 12px rgba(0,0,0,0.15);
-                margin-top: 1rem;
+                position: static;
+                margin: 0.25rem 0 0;
+                border-radius: 8px;
+                box-shadow: none;
             }
             .add-to-cart-detail.add-to-cart-added {
                 background: #2d7a2d;
@@ -487,10 +552,12 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
                 z-index: 100;
                 max-width: 900px;
                 margin: 0 auto;
-                padding: 0 calc(15px + 1rem + 0.5rem);
+                padding: 0.35rem calc(15px + 1rem + 0.5rem) 0.3rem;
                 width: 100%;
                 box-sizing: border-box;
                 transition: none;
+                background: #f8f9fa;
+                box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
             }
             .add-to-cart-fixed-mobile:not(.hidden) {
                 opacity: 1;
@@ -498,9 +565,7 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
                 visibility: visible;
             }
             .add-to-cart-fixed-mobile.hidden {
-                opacity: 0;
-                pointer-events: none;
-                visibility: hidden;
+                display: none !important;
             }
             .add-to-cart-fixed-mobile .add-to-cart-detail {
                 position: static;
@@ -552,6 +617,7 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
                 <nav class="desktop-nav">
                     <button class="category-btn" id="btnHombre" onclick="window.location.href='productos.html?categoria=Hombre'">Hombre</button>
                     <a href="productos.html?categoria=Mujer" class="category-btn" id="btnMujer">Mujer</a>
+                    <a href="productos.html?mayoreo50=1" class="category-btn" id="btnMayoreo">Mayoreo</a>
                 </nav>
             </div>
             <a href="index.html" class="logo-link" id="logoLink">
@@ -589,7 +655,8 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
         </div>
     </main>
 
-    <div class="add-to-cart-fixed-mobile" id="addToCartFixedBar">
+    <div class="add-to-cart-fixed-mobile hidden" id="addToCartFixedBar">
+        <div class="product-detail-summary product-detail-summary--fixed" id="addToCartFixedSummary" aria-hidden="true"></div>
         <button type="button" class="add-to-cart-detail" id="addToCartFixedBtn">Agregar al Carrito</button>
     </div>
 
@@ -654,7 +721,7 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
     <script defer src="productos-mujer.js?v=20260915d"></script>
     <script defer src="script.js?v=20260820"></script>
     <script defer src="productos.js?v=20260915e"></script>
-    <script defer src="producto-detalle.js?v=20260820"></script>
+    <script defer src="producto-detalle.js?v=20260915ap"></script>
     <script defer src="obebe-listo.js?v=20260820"></script>
     <script>
     // Si el detalle no arranca, avisar en pantalla en vez de quedarse muda.

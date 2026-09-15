@@ -31,8 +31,8 @@ body {
 
 /* Promo Bar */
 .promo-bar {
-    background: linear-gradient(135deg, var(--accent-color) 0%, #3db8a8 100%);
-    color: white;
+    background: #000000;
+    color: #ffffff;
     padding: 0.5rem 0 0.5rem 0;
     text-align: center;
     position: relative;
@@ -86,10 +86,10 @@ body {
 
 /* Header */
 header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #2d2d2d 100%);
-    color: white;
+    background: #ffffff;
+    color: #1a1a1a;
     padding: 0.75rem 0;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -120,7 +120,7 @@ header .container {
 .mobile-menu-btn span {
     width: 24px;
     height: 3px;
-    background: white;
+    background: #1a1a1a;
     border-radius: 2px;
     transition: all 0.3s;
 }
@@ -143,10 +143,12 @@ header .container {
     top: 100%;
     left: 0;
     width: 100%;
-    background: var(--primary-color);
+    background: #ffffff;
+    color: #1a1a1a;
     flex-direction: column;
     padding: 1rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
     z-index: 1000;
 }
 
@@ -162,6 +164,15 @@ header .container {
     justify-content: center;
     text-align: center;
     box-sizing: border-box;
+    border: 2px solid #1a1a1a;
+    color: #1a1a1a;
+    background: transparent;
+}
+
+.mobile-nav .category-btn:hover,
+.mobile-nav .category-btn.active {
+    background: #1a1a1a;
+    color: #ffffff;
 }
 
 /* Desktop: izquierda = Hombre/Mujer, centro = logo, derecha = Instagram + carrito */
@@ -187,8 +198,8 @@ header .logo-link {
 .cart-icon-btn {
     position: relative;
     background: transparent;
-    border: 2px solid white;
-    color: white;
+    border: 2px solid #1a1a1a;
+    color: #1a1a1a;
     padding: 0.5rem;
     border-radius: 50%;
     cursor: pointer;
@@ -202,8 +213,8 @@ header .logo-link {
 }
 
 .cart-icon-btn:hover {
-    background: white;
-    color: var(--primary-color);
+    background: #1a1a1a;
+    color: #ffffff;
 }
 
 .cart-badge {
@@ -405,7 +416,7 @@ header .logo-link {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #1a1a1a;
     text-decoration: none;
     transition: all 0.3s;
     padding: 0.5rem;
@@ -415,7 +426,7 @@ header .logo-link {
 }
 
 .social-link:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.06);
     transform: translateY(-2px);
 }
 
@@ -469,14 +480,14 @@ header .logo-link {
     font-weight: bold;
     letter-spacing: 3px;
     margin-bottom: 0.15rem;
-    color: white;
+    color: #1a1a1a;
 }
 
 .tagline {
     font-size: 0.85rem;
     opacity: 0.9;
     letter-spacing: 1px;
-    color: white;
+    color: #1a1a1a;
 }
 
 nav {
@@ -487,8 +498,8 @@ nav {
 
 .category-btn {
     background: transparent;
-    border: 2px solid white;
-    color: white;
+    border: 2px solid #1a1a1a;
+    color: #1a1a1a;
     padding: 0.5rem 1.5rem;
     font-size: 0.95rem;
     font-weight: 600;
@@ -510,14 +521,14 @@ a.category-btn {
 }
 
 .category-btn:hover {
-    background: white;
-    color: var(--primary-color);
+    background: #1a1a1a;
+    color: #ffffff;
     transform: translateY(-2px);
 }
 
 .category-btn.active {
-    background: white;
-    color: var(--primary-color);
+    background: #1a1a1a;
+    color: #ffffff;
 }
 
 /* Hero: tamaño compacto, imagen anclada arriba (recorta solo abajo) */
@@ -776,6 +787,30 @@ a.category-btn {
     line-height: 1.15;
 }
 
+.page-header h1.page-title-gymshark {
+    font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #ffffff;
+    text-shadow:
+        0 0 22px rgba(94, 184, 255, 0.75),
+        0 2px 0 rgba(30, 100, 180, 0.95),
+        0 4px 18px rgba(0, 0, 0, 0.85);
+}
+
+.page-header h1.page-title-mujer {
+    font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #ffffff;
+    text-shadow:
+        0 0 20px rgba(255, 107, 107, 0.65),
+        0 2px 0 rgba(120, 30, 30, 0.95),
+        0 4px 18px rgba(0, 0, 0, 0.85);
+}
+
 .inventory-title-br {
     display: none;
 }
@@ -875,6 +910,15 @@ a.category-label:hover {
     color: var(--primary-color);
     margin: 0 0 1rem;
     text-transform: uppercase;
+}
+
+.page-product-count {
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+    font-weight: 800;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    line-height: 1.15;
 }
 
 .brand-pill,
@@ -1191,14 +1235,6 @@ a.add-to-cart-carousel {
     color: var(--primary-color);
     margin: 0;
     line-height: 1.2;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    max-height: calc(1.2em * 2);
 }
 
 .product-size {
@@ -2136,10 +2172,10 @@ a.home-tile-card--mayoreo-foto.mayoreo-cta-50:active {
 
 /* Footer */
 footer {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #2d2d2d 100%);
-    color: white;
+    background: #ffffff;
+    color: #1a1a1a;
     padding: 2rem 0 1.5rem;
-    border-top: 3px solid var(--accent-color);
+    border-top: 3px solid #1a1a1a;
 }
 
 .footer-content {
@@ -2164,12 +2200,12 @@ footer {
     font-weight: bold;
     letter-spacing: 3px;
     margin: 0;
-    color: white;
+    color: #1a1a1a;
 }
 
 .footer-tagline {
     font-size: 1rem;
-    color: var(--accent-color);
+    color: #1a1a1a;
     font-weight: 600;
     letter-spacing: 1px;
     margin: 0;
@@ -2194,18 +2230,18 @@ footer {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    color: white;
+    color: #1a1a1a;
     text-decoration: none;
     padding: 0.6rem 1.2rem;
     border-radius: 25px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.06);
     transition: all 0.3s ease;
     font-weight: 500;
     font-size: 0.95rem;
 }
 
 .footer-social-link:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.1);
     transform: translateY(-3px);
 }
 
@@ -2284,8 +2320,8 @@ footer {
 .footer-bottom {
     text-align: center;
     padding-top: 1.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.7);
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    color: rgba(0, 0, 0, 0.65);
     font-size: 0.85rem;
 }
 
@@ -2389,8 +2425,9 @@ footer {
         height: 30px;
         padding: 0;
         flex-shrink: 0;
-        border: 2px solid white;
+        border: 2px solid #1a1a1a;
         background: transparent;
+        color: #1a1a1a;
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -2446,10 +2483,12 @@ footer {
         top: 100%;
         left: 0;
         right: 0;
-        margin-top: 0.5rem;
+        margin-top: 0;
         z-index: 1001;
-        background: var(--primary-color);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        background: #ffffff;
+        color: #1a1a1a;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
     }
 
     .mobile-nav.active,
@@ -2612,6 +2651,21 @@ footer {
 
     .product-image {
         height: 300px;
+    }
+
+    .product-name,
+    .cart-item-name {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        line-height: 1.2;
+        min-height: calc(1.2em * 2);
+        max-height: calc(1.2em * 2);
     }
 
     .contact h2 {

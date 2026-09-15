@@ -79,21 +79,51 @@ window.iniciarDetalleProducto = function() {
     if (!imagen1 && !imagen2) imagesBlock.appendChild(crearBloqueImagen(''));
     container.appendChild(imagesBlock);
 
-    var info = document.createElement('div');
-    info.className = 'product-detail-info';
-    info.innerHTML = ''
+    var precioHtml = typeof htmlPrecioProducto === 'function'
+        ? htmlPrecioProducto(producto)
+        : '<p class="product-price">$' + (typeof formatearPrecio === 'function' ? formatearPrecio(producto.precio) : producto.precio.toFixed(2)) + '</p>';
+
+    var summary = document.createElement('div');
+    summary.className = 'product-detail-summary';
+    summary.innerHTML = ''
         + '<h1>' + producto.nombre + '</h1>'
         + '<p class="product-size">Talla: ' + producto.talla + '</p>'
         + (producto.color ? '<p class="product-color">Color: ' + producto.color + '</p>' : '')
-        + (typeof htmlPrecioProducto === 'function' ? htmlPrecioProducto(producto) : '<p class="product-price">$' + (typeof formatearPrecio === 'function' ? formatearPrecio(producto.precio) : producto.precio.toFixed(2)) + '</p>')
-        + (agotado
-            ? '<button type="button" class="add-to-cart-detail agotado" id="addToCartDetailBtn" disabled>Agotado</button>'
-            : '<button type="button" class="add-to-cart-detail" id="addToCartDetailBtn">Agregar al Carrito</button>');
-    container.appendChild(info);
+        + precioHtml;
+
+    var info = document.createElement('div');
+    info.className = 'product-detail-info';
+    info.innerHTML = agotado
+        ? '<button type="button" class="add-to-cart-detail agotado" id="addToCartDetailBtn" disabled>Agotado</button>'
+        : '<button type="button" class="add-to-cart-detail" id="addToCartDetailBtn">Agregar al Carrito</button>';
+
+    var side = document.createElement('div');
+    side.className = 'product-detail-side';
+    side.appendChild(summary);
+    side.appendChild(info);
+    container.appendChild(side);
 
     var btn = document.getElementById('addToCartDetailBtn');
     var fixedBar = document.getElementById('addToCartFixedBar');
     var fixedBtn = document.getElementById('addToCartFixedBtn');
+    var fixedSummary = document.getElementById('addToCartFixedSummary');
+    var sideEl = container.querySelector('.product-detail-side');
+
+    if (fixedSummary && summary) {
+        fixedSummary.innerHTML = summary.innerHTML;
+    }
+
+    function syncFixedPurchaseBar() {
+        if (!fixedBar || !sideEl || agotado) return;
+        var rect = sideEl.getBoundingClientRect();
+        var viewH = window.innerHeight || document.documentElement.clientHeight;
+        var sideVisible = rect.top < viewH && rect.bottom > 0;
+        if (sideVisible) {
+            fixedBar.classList.add('hidden');
+        } else {
+            fixedBar.classList.remove('hidden');
+        }
+    }
 
     if (btn && !agotado && typeof agregarAlCarrito === 'function') {
         btn.addEventListener('click', function() {
@@ -109,17 +139,17 @@ window.iniciarDetalleProducto = function() {
     if (agotado && fixedBar) {
         fixedBar.style.display = 'none';
     }
-    if (btn && fixedBar && !agotado && typeof IntersectionObserver !== 'undefined') {
-        var observer = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                    fixedBar.classList.add('hidden');
-                } else {
-                    fixedBar.classList.remove('hidden');
-                }
-            });
-        }, { threshold: 0.85, rootMargin: '0px 0px 0px 0px' });
-        observer.observe(btn);
+    if (sideEl && fixedBar && !agotado) {
+        fixedBar.classList.add('hidden');
+        syncFixedPurchaseBar();
+        if (typeof IntersectionObserver !== 'undefined') {
+            var observer = new IntersectionObserver(function() {
+                syncFixedPurchaseBar();
+            }, { threshold: [0, 0.01, 0.25, 0.5, 1] });
+            observer.observe(sideEl);
+        }
+        window.addEventListener('scroll', syncFixedPurchaseBar, { passive: true });
+        window.addEventListener('resize', syncFixedPurchaseBar);
     }
 
     if (typeof actualizarBadgeCarrito === 'function') actualizarBadgeCarrito();
