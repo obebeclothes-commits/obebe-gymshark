@@ -40,8 +40,8 @@ main,.container{max-width:1200px;margin:0 auto}
 footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
 @media(max-width:768px){.mobile-menu-btn{display:flex}}
     </style>
-    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20260914" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20260914"></noscript>
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20260915w" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20260915w"></noscript>
     <script>
     // Respaldo: si el onload del <link> no dispara, la hoja quedaria en media=print y sin aplicar.
     (function(w, d) {
@@ -127,11 +127,15 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
         .mayoreo-page-switch {
             max-width: 420px;
             width: 100%;
-            margin: 0.15rem auto 0.65rem;
+            margin: 0 auto 0.5rem;
             padding: 0 0.5rem;
             display: flex;
             flex-direction: column;
             gap: 0.65rem;
+        }
+
+        .page-header:has(#mayoreoPageSwitch:not([hidden])) h1 {
+            margin-top: 0;
         }
 
         .mayoreo-page-switch a[hidden] {
@@ -1156,7 +1160,6 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
                     <input type="text" class="product-search-input" id="productSearchInput" placeholder="Buscar producto..." aria-label="Buscar por nombre" autocomplete="off">
                 </div>
                 <div class="page-header">
-                    <h1 id="pageTitle">Productos</h1>
                     <div class="mayoreo-page-switch" id="mayoreoPageSwitch" hidden aria-label="Ver otro nivel de mayoreo">
                         <a href="productos.html?mayoreo=1" class="mayoreo-cta mayoreo-cta-20" id="mayoreoSwitch20Link" hidden aria-label="Ver productos de mayoreo +20">
                             <span class="mayoreo-cta-text">Mayoreo +20</span>
@@ -1167,6 +1170,7 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
                             <span class="mayoreo-cta-sub">Mejor precio por volumen</span>
                         </a>
                     </div>
+                    <h1 id="pageTitle">Productos</h1>
                     <p class="page-product-count" id="pageProductCount" aria-live="polite"></p>
                     <div class="nuevo-stock-gender-filter" id="nuevoStockGenderFilter" hidden aria-label="Filtrar nuevo stock por categoría">
                         <button type="button" class="nuevo-stock-gender-btn" data-categoria="" aria-pressed="false">Todos</button>

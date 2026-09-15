@@ -1791,6 +1791,12 @@ a.home-tile-card--mayoreo-foto.mayoreo-cta-50:active {
     min-height: 0 !important;
     gap: 0 !important;
     align-items: stretch !important;
+    justify-content: flex-start !important;
+    -webkit-box-pack: start !important;
+    -webkit-box-align: stretch !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
 }
 
 .mayoreo-filter-row .home-tile-card--mayoreo-foto .home-tile-photo-wrap {
@@ -2353,6 +2359,20 @@ footer {
     .mayoreo-filter-row .home-tile-card--mayoreo-foto.mayoreo-cta {
         padding: 0 !important;
         min-height: 0 !important;
+        height: auto !important;
+        align-self: stretch !important;
+        justify-content: flex-start !important;
+        -webkit-box-pack: start !important;
+    }
+
+    .mayoreo-filter-row .home-tile-card--mayoreo-foto .home-tile-photo-wrap {
+        flex: 0 0 130px;
+        height: 130px;
+    }
+
+    .mayoreo-filter-row .home-tile-card--mayoreo-foto .home-tile-card-caption {
+        flex: 0 0 auto;
+        line-height: normal;
     }
 
     .mayoreo-filter-row .home-tile-card--mayoreo-foto .home-tile-photo-wrap img {

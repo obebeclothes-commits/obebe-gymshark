@@ -29,7 +29,9 @@ jobs:
           mkdir -p _site
           cp -r *.html *.js *.css *.json CNAME .nojekyll _site/ 2>/dev/null || true
           cp -r *.jpeg *.jpg *.png *.webp *.avif *.gif *.svg _site/ 2>/dev/null || true
-          cp -r hombre mujer hero secciones colecciones _site/ 2>/dev/null || true
+          for dir in hombre mujer hero secciones colecciones; do
+            if [ -d "$dir" ]; then cp -a "$dir" _site/; fi
+          done
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
