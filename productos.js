@@ -135,9 +135,28 @@ function normalizarColeccionClave(valor) {
     return clave;
 }
 
+function coleccionEtiquetaProducto(producto) {
+    if (!producto) return '';
+    return producto.coleccionCatalogo || producto.coleccion || '';
+}
+
+function preservarColeccionesCatalogo() {
+    ['productosHombre', 'productosMujer'].forEach(function(nombreLista) {
+        var lista = typeof window[nombreLista] !== 'undefined' ? window[nombreLista] : null;
+        if (!Array.isArray(lista)) return;
+        lista.forEach(function(p) {
+            if (!p.coleccionCatalogo && p.coleccion) {
+                p.coleccionCatalogo = p.coleccion;
+            }
+        });
+    });
+}
+
+window.preservarColeccionesCatalogo = preservarColeccionesCatalogo;
+
 function productoEnColeccion(producto, coleccion) {
     if (!coleccion) return true;
-    return normalizarColeccionClave(producto && producto.coleccion) === normalizarColeccionClave(coleccion);
+    return normalizarColeccionClave(coleccionEtiquetaProducto(producto)) === normalizarColeccionClave(coleccion);
 }
 
 function esModoNuevoStock() {
@@ -352,15 +371,15 @@ function obtenerProductosPorCategoria() {
             todosColeccion = todosColeccion.concat(productosMujer);
         }
         return todosColeccion.filter(function(p) {
-            if (Number(p.stock) <= 0) return false;
             return productoEnColeccion(p, coleccion);
         });
     }
 
     function filtrarLista(lista, cat) {
+        var soloConStock = modoNuevoStock || modoMayoreo || modoMayoreo50;
         return lista.filter(function(p) {
             if (!(p.categoria === cat || p.categoria === 'Unisex')) return false;
-            if (Number(p.stock) <= 0) return false;
+            if (soloConStock && Number(p.stock) <= 0) return false;
             if (modoNuevoStock) return esProductoNuevoStock(p);
             if (modoMayoreo50) return esProductoMayoreo50(p);
             if (modoMayoreo) return !!p.mayoreo;
@@ -397,15 +416,53 @@ function obtenerProductosPorCategoria() {
     return filtrarLista(productos, categoria);
 }
 
-// Función para obtener todas las tallas, tipos y colores únicos de los productos
-function obtenerOpcionesFiltros(productos) {
-    // Opciones solo del listado actual (Hombre/Mujer/mayoreo/colección) para no mezclar tipos entre géneros.
+function resolverCategoriaOpcionesFiltro(productos) {
+    if (esModoColeccion()) return '';
+    if (debeMostrarFiltroGenero() && !tieneCategoriaEnURL()) {
+        var catFiltro = obtenerCategoriaFiltroGenero();
+        if (catFiltro === 'Hombre' || catFiltro === 'Mujer') return catFiltro;
+        return '';
+    }
+    var cat = obtenerCategoriaDeURL();
+    if (cat === 'Hombre' || cat === 'Mujer') return cat;
+    return '';
+}
+
+function obtenerCatalogoCompletoPorCategoria(categoria) {
+    if (categoria === 'Mujer') {
+        return typeof productosMujer !== 'undefined' && Array.isArray(productosMujer) ? productosMujer : [];
+    }
+    if (categoria === 'Hombre') {
+        if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) return productosHombre;
+        return typeof productos !== 'undefined' && Array.isArray(productos) ? productos : [];
+    }
+    return [];
+}
+
+function obtenerProductosBaseParaOpcionesFiltro(productosVisibles) {
+    var cat = resolverCategoriaOpcionesFiltro(productosVisibles);
+    if (cat === 'Hombre' || cat === 'Mujer') {
+        return obtenerCatalogoCompletoPorCategoria(cat).filter(function(p) {
+            return p.categoria === cat || p.categoria === 'Unisex';
+        });
+    }
+    return productosVisibles || [];
+}
+
+function fusionarValoresFiltro(listaA, listaB) {
+    var set = new Set();
+    (listaA || []).forEach(function(v) { if (v) set.add(v); });
+    (listaB || []).forEach(function(v) { if (v) set.add(v); });
+    return Array.from(set);
+}
+
+function opcionesDesdeListaProductos(productos) {
     const tallas = new Set();
     const tipos = new Set();
     const colores = new Set();
     const marcas = new Set();
 
-    productos.forEach(producto => {
+    (productos || []).forEach(function(producto) {
         const tallaBase = producto.tallaBase || obtenerTallaBaseFallback(producto.talla);
         if (tallaBase) tallas.add(tallaBase);
         const tipo = producto.tipo || obtenerTipoProductoFallback(producto.nombre);
@@ -415,10 +472,36 @@ function obtenerOpcionesFiltros(productos) {
     });
 
     return {
-        tallas: Array.from(tallas).sort(),
-        tipos: Array.from(tipos).sort(),
-        colores: Array.from(colores).sort(),
-        marcas: Array.from(marcas).sort()
+        tallas: Array.from(tallas),
+        tipos: Array.from(tipos),
+        colores: Array.from(colores),
+        marcas: Array.from(marcas)
+    };
+}
+
+// Tallas, tipos, colores y marcas: catálogo del género + inventario Sheet (sin mezclar Hombre/Mujer).
+function obtenerOpcionesFiltros(productos) {
+    var base = obtenerProductosBaseParaOpcionesFiltro(productos);
+    var desdeProductos = opcionesDesdeListaProductos(base);
+    var cat = resolverCategoriaOpcionesFiltro(productos);
+    var sheet = cat && typeof window.opcionesInventarioSheet !== 'undefined'
+        ? window.opcionesInventarioSheet[cat]
+        : null;
+
+    if (!sheet) {
+        return {
+            tallas: desdeProductos.tallas.slice().sort(),
+            tipos: ordenarAlfabetico(desdeProductos.tipos),
+            colores: ordenarAlfabetico(desdeProductos.colores),
+            marcas: ordenarAlfabetico(desdeProductos.marcas)
+        };
+    }
+
+    return {
+        tallas: ordenarTallas(fusionarValoresFiltro(sheet.tallas, desdeProductos.tallas)),
+        tipos: ordenarAlfabetico(fusionarValoresFiltro(sheet.tipos, desdeProductos.tipos)),
+        colores: ordenarAlfabetico(fusionarValoresFiltro(sheet.colores, desdeProductos.colores)),
+        marcas: ordenarAlfabetico(fusionarValoresFiltro(sheet.marcas, desdeProductos.marcas))
     };
 }
 
@@ -434,6 +517,20 @@ function obtenerTallaBaseFallback(talla) {
 }
 
 // Función de respaldo para extraer tipo (por si algún producto no tiene tipo)
+function claveTipoFiltro(tipo) {
+    var t = String(tipo || '').trim().toLowerCase();
+    if (t === 'sports bra' || t === 'sport bra') return 'sport-bra';
+    if (t === 'short' || t === 'shorts') return 'short';
+    return t.replace(/\s+/g, ' ');
+}
+
+function tipoCoincideFiltro(tipoProducto, tipoFiltro) {
+    if (!tipoFiltro) return true;
+    var a = claveTipoFiltro(tipoProducto);
+    var b = claveTipoFiltro(tipoFiltro);
+    return a === b;
+}
+
 function obtenerTipoProductoFallback(nombre) {
     const nombreLower = nombre.toLowerCase();
     if (nombreLower.includes('short')) return 'Shorts';
@@ -727,9 +824,9 @@ function aplicarFiltrosYOrdenar(productos) {
 
     // Filtrar por tipo (usa tipo directamente del producto)
     if (filtros.tipos.length > 0) {
-        productosFiltrados = productosFiltrados.filter(producto => {
-            const tipo = producto.tipo || obtenerTipoProductoFallback(producto.nombre);
-            return filtros.tipos.includes(tipo);
+        productosFiltrados = productosFiltrados.filter(function(producto) {
+            var tipo = producto.tipo || obtenerTipoProductoFallback(producto.nombre);
+            return filtros.tipos.some(function(t) { return tipoCoincideFiltro(tipo, t); });
         });
     }
 
@@ -1703,6 +1800,7 @@ document.addEventListener('obebe-scripts-ready', arrancarProductosPagina);
 function arrancarProductosPagina() {
     if (window.__obebeProductosIniciado) return;
     window.__obebeProductosIniciado = true;
+    preservarColeccionesCatalogo();
 
     var isProductDetailPage = document.getElementById('productDetailContainer') && !document.getElementById('productsGrid');
     var isProductsGridPage = document.getElementById('productsGrid');

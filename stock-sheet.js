@@ -331,8 +331,10 @@
     }
 
     function filaPerteneceCategoria(fila, categoria, usarSegmento) {
+        var seg = (fila[IDX_SEGMENTO] || '').trim();
+        if (seg) return normalizarSegmento(seg) === categoria;
         if (!usarSegmento) return true;
-        return normalizarSegmento(fila[IDX_SEGMENTO]) === categoria;
+        return false;
     }
 
     function setsToSortedArrays(opciones) {
@@ -425,25 +427,8 @@
                 mapa.set(clave, datosFila);
             }
             if (refImagen > 0) {
-                var prevRef = mapaPorRef.get(refImagen);
-                if (!prevRef) {
-                    mapaPorRef.set(refImagen, Object.assign({}, datosFila));
-                } else {
-                    prevRef.stock = Math.min(prevRef.stock, stock);
-                    if (precio > 0) prevRef.precio = precio;
-                    if (precioMayoreo > 0) prevRef.precioMayoreo = precioMayoreo;
-                    if (precioMayoreo50 > 0) prevRef.precioMayoreo50 = precioMayoreo50;
-                    if (descuentoMayoreo) prevRef.descuentoMayoreo = descuentoMayoreo;
-                    if (descuentoMayoreo50) prevRef.descuentoMayoreo50 = descuentoMayoreo50;
-                    prevRef.mayoreo = prevRef.mayoreo || mayoreo;
-                    if (posicionCarrusel > 0) prevRef.posicionCarrusel = posicionCarrusel;
-                    if (fechaStock) prevRef.fechaStock = fechaStock;
-                    if (tipo) prevRef.tipo = tipo;
-                    if (color) prevRef.color = color;
-                    if (marca) prevRef.marca = marca;
-                    if (talla) prevRef.talla = talla;
-                    if (coleccion) prevRef.coleccion = coleccion;
-                }
+                if (!mapaPorRef.has(refImagen)) mapaPorRef.set(refImagen, []);
+                mapaPorRef.get(refImagen).push(Object.assign({}, datosFila));
             }
         }
         return { mapa: mapa, mapaPorRef: mapaPorRef, opciones: setsToSortedArrays(opciones) };
@@ -460,6 +445,74 @@
             if (mapa.has(clave)) return mapa.get(clave);
         }
         return null;
+    }
+
+    function buscarEnMapaPorRef(mapaPorRef, producto, mapa) {
+        var ref = extraerRefImagenProducto(producto);
+        if (!ref && producto && producto.id) ref = parsearNumeroImagen(producto.id);
+        if (!ref || !mapaPorRef || !mapaPorRef.has(ref)) return null;
+
+        var talla = normalizarTalla(producto.tallaBase || String(producto.talla || '').split('-')[0].trim());
+        var lista = mapaPorRef.get(ref);
+        if (!lista || !lista.length) return null;
+
+        var exacto = buscarEnMapa(mapa, producto.nombre, talla, producto.color, producto.marca, ref);
+        if (exacto) return exacto;
+
+        for (var i = 0; i < lista.length; i++) {
+            var d = lista[i];
+            var claveDatos = claveProducto(d.nombre, d.talla, d.color, d.marca, ref);
+            var claveProd = claveProducto(producto.nombre, talla, producto.color, producto.marca, ref);
+            if (claveDatos === claveProd) return d;
+        }
+
+        var idProducto = parsearNumeroImagen(producto.id);
+        for (var r = 0; r < lista.length; r++) {
+            var candidato = lista[r];
+            if (Number(candidato.refImagen) !== Number(ref)) continue;
+            if (idProducto > 0 && Number(candidato.refImagen) !== idProducto) continue;
+            if (normalizarTalla(candidato.talla) === talla && normColorClave(candidato.color) === normColorClave(producto.color)) {
+                return candidato;
+            }
+        }
+
+        for (var j = 0; j < lista.length; j++) {
+            var fila = lista[j];
+            if (Number(fila.refImagen) !== Number(ref)) continue;
+            if (normalizarTalla(fila.talla) === talla && normColorClave(fila.color) === normColorClave(producto.color)) {
+                return fila;
+            }
+        }
+
+        if (lista.length === 1 && Number(lista[0].refImagen) === Number(ref)) return lista[0];
+
+        for (var k = 0; k < lista.length; k++) {
+            if (Number(lista[k].refImagen) !== Number(ref)) continue;
+            if (nombresParecidos(lista[k].nombre, producto.nombre)) return lista[k];
+        }
+
+        return null;
+    }
+
+    function aplicarDatosSheetEnProducto(p, datos) {
+        if (!p || !datos) return;
+        p.stock = datos.stock;
+        if (datos.precio > 0) p.precio = datos.precio;
+        if (datos.precioMayoreo > 0) p.precioMayoreo = datos.precioMayoreo;
+        p.precioMayoreo50 = datos.precioMayoreo50 || 0;
+        p.descuentoMayoreo = datos.descuentoMayoreo || '';
+        p.descuentoMayoreo50 = datos.descuentoMayoreo50 || '';
+        p.mayoreo = !!datos.mayoreo;
+        p.posicionCarrusel = datos.posicionCarrusel || 0;
+        p.fechaStock = datos.fechaStock || '';
+        if (datos.tipo) p.tipo = datos.tipo;
+        if (datos.color) p.color = datos.color;
+        if (datos.marca) p.marca = datos.marca;
+        if (datos.talla) {
+            p.talla = datos.talla;
+            p.tallaBase = datos.talla;
+        }
+        if (datos.nombre) p.nombre = datos.nombre;
     }
 
     function nombresParecidos(nombreA, nombreB) {
@@ -485,51 +538,15 @@
             var talla = normalizarTalla(p.tallaBase || String(p.talla || '').split('-')[0].trim());
             var refImagen = extraerRefImagenProducto(p);
             var datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca, refImagen);
+            if (!datos && p.id) {
+                datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca, p.id);
+            }
+            if (!datos) {
+                datos = buscarEnMapaPorRef(mapaPorRef, p, mapaSheet);
+            }
             if (datos) {
-                p.stock = datos.stock;
-                if (datos.precio > 0) p.precio = datos.precio;
-                if (datos.precioMayoreo > 0) p.precioMayoreo = datos.precioMayoreo;
-                p.precioMayoreo50 = datos.precioMayoreo50 || 0;
-                p.descuentoMayoreo = datos.descuentoMayoreo || '';
-                p.descuentoMayoreo50 = datos.descuentoMayoreo50 || '';
-                p.mayoreo = !!datos.mayoreo;
-                p.posicionCarrusel = datos.posicionCarrusel || 0;
-                p.fechaStock = datos.fechaStock || '';
-                if (datos.tipo) p.tipo = datos.tipo;
-                if (datos.color) p.color = datos.color;
-                if (datos.marca) p.marca = datos.marca;
-                if (datos.talla) {
-                    p.talla = datos.talla;
-                    p.tallaBase = datos.talla;
-                }
-                p.coleccion = datos.coleccion || '';
+                aplicarDatosSheetEnProducto(p, datos);
                 actualizados += 1;
-            } else if (mapaPorRef && refImagen > 0 && mapaPorRef.has(refImagen)) {
-                // Coincidencia solo por columna A (misma foto/id).
-                datos = mapaPorRef.get(refImagen);
-                p.stock = datos.stock;
-                if (datos.precio > 0) p.precio = datos.precio;
-                if (datos.precioMayoreo > 0) p.precioMayoreo = datos.precioMayoreo;
-                p.precioMayoreo50 = datos.precioMayoreo50 || 0;
-                p.descuentoMayoreo = datos.descuentoMayoreo || '';
-                p.descuentoMayoreo50 = datos.descuentoMayoreo50 || '';
-                p.mayoreo = !!datos.mayoreo;
-                p.posicionCarrusel = datos.posicionCarrusel || 0;
-                p.fechaStock = datos.fechaStock || '';
-                if (datos.nombre) p.nombre = datos.nombre;
-                if (datos.tipo) p.tipo = datos.tipo;
-                if (datos.color) p.color = datos.color;
-                if (datos.marca) p.marca = datos.marca;
-                if (datos.talla) {
-                    p.talla = datos.talla;
-                    p.tallaBase = datos.talla;
-                }
-                p.coleccion = datos.coleccion || '';
-                actualizados += 1;
-            } else {
-                // Ya no está en el Sheet: quitar de la tienda (stock 0).
-                p.stock = 0;
-                p.coleccion = '';
             }
         });
         return actualizados;
@@ -578,6 +595,9 @@
     }
 
     function sincronizarDesdeCsv(csv) {
+        if (typeof window.preservarColeccionesCatalogo === 'function') {
+            window.preservarColeccionesCatalogo();
+        }
         window.__obebeSheetSyncOk = true;
         var fechaReciente = extraerFechaStockMasReciente(csv);
         window.fechaStockMasReciente = fechaReciente;

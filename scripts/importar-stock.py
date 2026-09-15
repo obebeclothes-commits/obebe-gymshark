@@ -319,9 +319,12 @@ def fila_pertenece_categoria(
     categoria: str,
     usar_segmento: bool,
 ) -> bool:
+    seg = obtener_valor(fila, idx["segmento"])
+    if seg:
+        return normalizar_segmento(seg) == categoria
     if not usar_segmento:
         return True
-    return normalizar_segmento(obtener_valor(fila, idx["segmento"])) == categoria
+    return False
 
 
 def normalizar_tipo(valor: str) -> str:
@@ -439,6 +442,7 @@ def leer_productos_desde_csv(
                 "coleccion": normalizar_coleccion(obtener_valor(fila, idx["coleccion"])),
             }
         )
+        productos[-1]["coleccionCatalogo"] = productos[-1]["coleccion"]
         nuevo_id += 1
 
     if omitidos_segmento:
@@ -473,6 +477,7 @@ def producto_a_js(producto: dict, indent: str = "    ") -> str:
         ("mayoreo", producto.get("mayoreo", False), "bool"),
         ("posicionCarrusel", producto.get("posicionCarrusel", 0), "num"),
         ("coleccion", producto.get("coleccion", ""), "str"),
+        ("coleccionCatalogo", producto.get("coleccionCatalogo", producto.get("coleccion", "")), "str"),
     ]
 
     lineas = [f"{indent}{{"]
