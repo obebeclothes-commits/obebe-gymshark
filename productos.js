@@ -480,6 +480,22 @@ function opcionesDesdeListaProductos(productos) {
 }
 
 // Tallas, tipos, colores y marcas: catálogo del género + inventario Sheet (sin mezclar Hombre/Mujer).
+function tiposPermitidosEnCatalogo(categoria) {
+    var permitidos = new Set();
+    obtenerCatalogoCompletoPorCategoria(categoria).forEach(function(p) {
+        if (!(p.categoria === categoria || p.categoria === 'Unisex')) return;
+        var tipo = p.tipo || obtenerTipoProductoFallback(p.nombre);
+        if (tipo) permitidos.add(tipo);
+    });
+    return permitidos;
+}
+
+function filtrarTiposOpcionesPorCategoria(tipos, categoria) {
+    if (categoria !== 'Hombre') return tipos;
+    var permitidos = tiposPermitidosEnCatalogo('Hombre');
+    return (tipos || []).filter(function(t) { return permitidos.has(t); });
+}
+
 function obtenerOpcionesFiltros(productos) {
     var base = obtenerProductosBaseParaOpcionesFiltro(productos);
     var desdeProductos = opcionesDesdeListaProductos(base);
@@ -491,7 +507,7 @@ function obtenerOpcionesFiltros(productos) {
     if (!sheet) {
         return {
             tallas: desdeProductos.tallas.slice().sort(),
-            tipos: ordenarAlfabetico(desdeProductos.tipos),
+            tipos: filtrarTiposOpcionesPorCategoria(ordenarAlfabetico(desdeProductos.tipos), cat),
             colores: ordenarAlfabetico(desdeProductos.colores),
             marcas: ordenarAlfabetico(desdeProductos.marcas)
         };
@@ -499,7 +515,10 @@ function obtenerOpcionesFiltros(productos) {
 
     return {
         tallas: ordenarTallas(fusionarValoresFiltro(sheet.tallas, desdeProductos.tallas)),
-        tipos: ordenarAlfabetico(fusionarValoresFiltro(sheet.tipos, desdeProductos.tipos)),
+        tipos: filtrarTiposOpcionesPorCategoria(
+            ordenarAlfabetico(fusionarValoresFiltro(sheet.tipos, desdeProductos.tipos)),
+            cat
+        ),
         colores: ordenarAlfabetico(fusionarValoresFiltro(sheet.colores, desdeProductos.colores)),
         marcas: ordenarAlfabetico(fusionarValoresFiltro(sheet.marcas, desdeProductos.marcas))
     };
