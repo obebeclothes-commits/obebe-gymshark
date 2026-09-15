@@ -874,7 +874,7 @@ function aplicarFiltrosYOrdenar(productos) {
         if (aAgotado !== bAgotado) return aAgotado - bAgotado;
         if (filtros.ordenarPor === 'price-desc') return precioVigenteProducto(b) - precioVigenteProducto(a);
         if (filtros.ordenarPor === 'price-asc') return precioVigenteProducto(a) - precioVigenteProducto(b);
-        return 0;
+        return Number(b.id) - Number(a.id);
     });
 
     return productosFiltrados;

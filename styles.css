@@ -792,11 +792,8 @@ a.category-btn {
     font-weight: 400;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #ffffff;
-    text-shadow:
-        0 0 22px rgba(94, 184, 255, 0.75),
-        0 2px 0 rgba(30, 100, 180, 0.95),
-        0 4px 18px rgba(0, 0, 0, 0.85);
+    color: #1a1a1a;
+    text-shadow: none;
 }
 
 .page-header h1.page-title-mujer {
@@ -804,11 +801,8 @@ a.category-btn {
     font-weight: 400;
     letter-spacing: 0.02em;
     text-transform: uppercase;
-    color: #ffffff;
-    text-shadow:
-        0 0 20px rgba(255, 107, 107, 0.65),
-        0 2px 0 rgba(120, 30, 30, 0.95),
-        0 4px 18px rgba(0, 0, 0, 0.85);
+    color: #1a1a1a;
+    text-shadow: none;
 }
 
 .inventory-title-br {
