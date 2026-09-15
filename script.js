@@ -410,14 +410,8 @@ function actualizarFlechasColecciones() {
     arrowRight.disabled = currentScrollColecciones >= maxScroll - 1;
 }
 
-function inicializarCarouselColecciones() {
-    var carousel = document.getElementById('coleccionesCarousel');
-    var wrapper = document.getElementById('coleccionesCarouselWrapper');
-    var arrowLeft = document.getElementById('coleccionesArrowLeft');
-    var arrowRight = document.getElementById('coleccionesArrowRight');
-    if (!carousel || !wrapper) return;
-
-    document.querySelectorAll('#coleccionesCarousel .coleccion-card-image img').forEach(function(img) {
+function configurarPlaceholdersImagenesInventario() {
+    document.querySelectorAll('#inventario .coleccion-card-image img, #inventario .home-tile-photo-wrap img').forEach(function(img) {
         function marcarPlaceholder() {
             var contenedor = img.closest('.coleccion-card-image');
             if (contenedor) contenedor.classList.add('is-placeholder');
@@ -426,6 +420,16 @@ function inicializarCarouselColecciones() {
         img.addEventListener('error', marcarPlaceholder);
         if (img.complete && !img.naturalWidth) marcarPlaceholder();
     });
+}
+
+function inicializarCarouselColecciones() {
+    var carousel = document.getElementById('coleccionesCarousel');
+    var wrapper = document.getElementById('coleccionesCarouselWrapper');
+    var arrowLeft = document.getElementById('coleccionesArrowLeft');
+    var arrowRight = document.getElementById('coleccionesArrowRight');
+    if (!carousel || !wrapper) return;
+
+    configurarPlaceholdersImagenesInventario();
 
     if (arrowLeft) arrowLeft.addEventListener('click', function() { scrollCarouselColecciones('left'); });
     if (arrowRight) arrowRight.addEventListener('click', function() { scrollCarouselColecciones('right'); });

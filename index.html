@@ -48,8 +48,11 @@ main,.container{max-width:1200px;margin:0 auto}
 footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
 @media(max-width:768px){.hero-slides{height:auto;aspect-ratio:819/1024;max-height:92vh}.mobile-menu-btn{display:flex}}
     </style>
-    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20260914b" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20260914b"></noscript>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20260915t" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20260915t"></noscript>
     <script>
     // Respaldo: si el onload del <link> no dispara, la hoja quedaria en media=print y sin aplicar.
     (function(w, d) {
@@ -177,9 +180,14 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
         <section id="inventario" class="inventory">
             <div class="container">
                 <div class="nuevo-stock-block">
-                    <a href="productos.html?nuevoStock=1" class="nuevo-stock-cta" aria-label="Ver nuevo stock">
-                        <span class="nuevo-stock-cta-text">Nuevo stock</span>
-                        <span class="nuevo-stock-cta-sub" id="nuevoStockFechaLabel">Última llegada</span>
+                    <a href="productos.html?nuevoStock=1" class="nuevo-stock-cta home-tile-card home-tile-card--half home-tile-card--nuevo-foto" aria-label="Ver nuevo stock">
+                        <div class="home-tile-photo-wrap coleccion-card-image" data-label="NUEVO STOCK">
+                            <img src="secciones/nuevo-stock.jpg?v=20260915n" alt="" loading="lazy" width="160" height="190">
+                        </div>
+                        <div class="home-tile-card-caption home-tile-card-caption--nuevo-stock">
+                            <span class="nuevo-stock-cta-text">Nuevo stock</span>
+                            <span class="nuevo-stock-cta-sub" id="nuevoStockFechaLabel">Última llegada</span>
+                        </div>
                     </a>
                 </div>
                 <div class="colecciones-block">
@@ -256,28 +264,50 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
                 </div>
                 <h3 class="brand-filter-title">MARCAS</h3>
                 <div class="brand-filter-row" aria-label="Marcas">
-                    <a href="productos.html?categoria=Hombre&marca=Gym%20Shark" class="brand-pill brand-pill-gymshark">
-                        <span class="brand-pill-text">Gym Shark</span>
+                    <a href="productos.html?categoria=Hombre&marca=Gym%20Shark" class="brand-pill brand-pill-gymshark home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="Gym Shark">
+                        <div class="home-tile-photo-wrap coleccion-card-image" data-label="GYMSHARK">
+                            <img src="secciones/marca-gymshark.jpg?v=20260915k" alt="" loading="lazy" width="160" height="150">
+                            <span class="home-tile-marca-label home-tile-marca-label--gymshark">GYMSHARK</span>
+                        </div>
                     </a>
-                    <a href="productos.html?categoria=Hombre&marca=YoungLA" class="brand-pill brand-pill-youngla">
-                        <span class="brand-pill-text">YoungLA</span>
+                    <a href="productos.html?categoria=Hombre&marca=YoungLA" class="brand-pill brand-pill-youngla home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="YoungLA">
+                        <div class="home-tile-photo-wrap coleccion-card-image" data-label="YOUNGLA">
+                            <img src="secciones/marca-youngla.jpg?v=20260915k" alt="" loading="lazy" width="160" height="150">
+                            <span class="home-tile-marca-label home-tile-marca-label--youngla">YOUNGLA</span>
+                        </div>
                     </a>
-                    <a href="productos.html?categoria=Hombre&marca=Uniqlo" class="brand-pill brand-pill-uniqlo">
-                        <span class="brand-pill-text">Uniqlo</span>
+                    <a href="productos.html?categoria=Hombre&marca=Uniqlo" class="brand-pill brand-pill-uniqlo home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="Uniqlo">
+                        <div class="home-tile-photo-wrap coleccion-card-image" data-label="UNIQLO">
+                            <img src="secciones/marca-uniqlo.jpg?v=20260915k" alt="" loading="lazy" width="160" height="150">
+                            <span class="home-tile-marca-label home-tile-marca-label--uniqlo">UNIQLO</span>
+                        </div>
                     </a>
-                    <a href="productos.html?categoria=Hombre&marca=On%20Cloud" class="brand-pill brand-pill-oncloud">
-                        <span class="brand-pill-text">On Cloud</span>
+                    <a href="productos.html?categoria=Hombre&marca=On%20Cloud" class="brand-pill brand-pill-oncloud home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="On Cloud">
+                        <div class="home-tile-photo-wrap coleccion-card-image" data-label="ON CLOUD">
+                            <img src="secciones/marca-oncloud.jpg?v=20260915k" alt="" loading="lazy" width="160" height="150">
+                            <span class="home-tile-marca-label home-tile-marca-label--oncloud">ON CLOUD</span>
+                        </div>
                     </a>
                 </div>
                 <h3 class="brand-filter-title">MAYOREO</h3>
                 <div class="mayoreo-filter-block mayoreo-filter-row">
-                    <a href="productos.html?mayoreo=1" class="mayoreo-cta mayoreo-cta-20" aria-label="Ver productos de mayoreo +20">
-                        <span class="mayoreo-cta-text">Mayoreo +20</span>
-                        <span class="mayoreo-cta-sub">Precios por volumen</span>
+                    <a href="productos.html?mayoreo=1" class="mayoreo-cta mayoreo-cta-20 home-tile-card home-tile-card--mayoreo-foto" aria-label="Ver productos de mayoreo +20">
+                        <div class="home-tile-photo-wrap coleccion-card-image" data-label="MAYOREO +20">
+                            <img src="secciones/mayoreo-20.jpg?v=20260915m" alt="" loading="lazy" width="160" height="130">
+                        </div>
+                        <div class="home-tile-card-caption home-tile-card-caption--mayoreo-20">
+                            <span class="mayoreo-cta-text">Mayoreo +20</span>
+                            <span class="mayoreo-cta-sub">Precios por volumen</span>
+                        </div>
                     </a>
-                    <a href="productos.html?mayoreo50=1" class="mayoreo-cta mayoreo-cta-50" aria-label="Ver productos de mayoreo +50">
-                        <span class="mayoreo-cta-text">Mayoreo +50</span>
-                        <span class="mayoreo-cta-sub">Mejor precio por volumen</span>
+                    <a href="productos.html?mayoreo50=1" class="mayoreo-cta mayoreo-cta-50 home-tile-card home-tile-card--mayoreo-foto" aria-label="Ver productos de mayoreo +50">
+                        <div class="home-tile-photo-wrap coleccion-card-image" data-label="MAYOREO +50">
+                            <img src="secciones/mayoreo-50.jpg?v=20260915m" alt="" loading="lazy" width="160" height="130">
+                        </div>
+                        <div class="home-tile-card-caption home-tile-card-caption--mayoreo-50">
+                            <span class="mayoreo-cta-text">Mayoreo +50</span>
+                            <span class="mayoreo-cta-sub">Mejor precio por volumen</span>
+                        </div>
                     </a>
                 </div>
                 <div class="inventory-header">
@@ -443,7 +473,7 @@ footer{background:#1a1a1a;color:#fff;padding:2rem 0;margin-top:2rem}
 
     <script defer src="productos-hombre.js?v=20260915d"></script>
     <script defer src="productos-mujer.js?v=20260915d"></script>
-    <script defer src="script.js?v=20260914b"></script>
+    <script defer src="script.js?v=20260915h"></script>
     <script defer src="productos.js?v=20260915e"></script>
     <script defer src="obebe-listo.js?v=20260914b"></script>
     <script>

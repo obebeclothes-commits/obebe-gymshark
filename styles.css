@@ -1430,6 +1430,8 @@ a.mayoreo-cta-50:active {
 .nuevo-stock-block {
     margin: 0 auto 1.25rem;
     max-width: 860px;
+    display: flex;
+    justify-content: center;
 }
 
 .nuevo-stock-cta {
@@ -1482,6 +1484,364 @@ a.nuevo-stock-cta:active {
     color: rgba(255, 255, 255, 0.82);
 }
 
+/* Tarjetas con foto (sin carrusel): color semitransparente sobre la imagen */
+.home-tile-card {
+    overflow: hidden;
+    padding: 0 !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    min-height: 0 !important;
+    gap: 0 !important;
+    background: transparent !important;
+}
+
+a.home-tile-card.nuevo-stock-cta,
+a.home-tile-card.nuevo-stock-cta:link,
+a.home-tile-card.nuevo-stock-cta:visited,
+a.home-tile-card.nuevo-stock-cta:hover,
+a.home-tile-card.nuevo-stock-cta:active,
+a.home-tile-card.brand-pill,
+a.home-tile-card.brand-pill:link,
+a.home-tile-card.brand-pill:visited,
+a.home-tile-card.brand-pill:hover,
+a.home-tile-card.brand-pill:active,
+a.home-tile-card.mayoreo-cta,
+a.home-tile-card.mayoreo-cta:link,
+a.home-tile-card.mayoreo-cta:visited,
+a.home-tile-card.mayoreo-cta:hover,
+a.home-tile-card.mayoreo-cta:active {
+    background: transparent !important;
+}
+
+.home-tile-card--half {
+    width: 160px;
+    max-width: 100%;
+}
+
+.home-tile-photo-wrap {
+    position: relative;
+    width: 100%;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: #e8e8e8;
+}
+
+.home-tile-photo-wrap::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.42;
+}
+
+.home-tile-card--half .home-tile-photo-wrap {
+    height: 190px;
+}
+
+.brand-filter-row .home-tile-card--solo-imagen .home-tile-photo-wrap {
+    height: 150px;
+}
+
+.mayoreo-filter-row .home-tile-card .home-tile-photo-wrap {
+    height: 120px;
+}
+
+.home-tile-photo-wrap img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    position: relative;
+    z-index: 0;
+}
+
+.nuevo-stock-cta.home-tile-card:not(.home-tile-card--nuevo-foto) .home-tile-photo-wrap::before {
+    background: linear-gradient(135deg, #10231c 0%, #1f4d3b 100%);
+}
+
+.nuevo-stock-cta.home-tile-card--nuevo-foto {
+    border-left: none !important;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.nuevo-stock-cta.home-tile-card--nuevo-foto .home-tile-photo-wrap {
+    position: relative;
+    overflow: hidden;
+    background: #111;
+}
+
+.nuevo-stock-cta.home-tile-card--nuevo-foto .home-tile-photo-wrap::before {
+    background: rgba(0, 0, 0, 0.32) !important;
+    opacity: 1 !important;
+}
+
+.nuevo-stock-cta.home-tile-card--nuevo-foto .home-tile-photo-wrap img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+}
+
+/* Marca con foto a full bleed, sin recuadro de color — texto en el centro */
+.home-tile-card--marca-centro,
+a.home-tile-card--marca-centro.brand-pill,
+a.home-tile-card--marca-centro.brand-pill:link,
+a.home-tile-card--marca-centro.brand-pill:visited,
+a.home-tile-card--marca-centro.brand-pill:hover,
+a.home-tile-card--marca-centro.brand-pill:active {
+    border-left: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+    border-radius: 8px;
+}
+
+.home-tile-card--marca-centro.home-tile-card--solo-imagen {
+    display: block;
+    width: 100%;
+}
+
+.home-tile-card--marca-centro .home-tile-photo-wrap {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 150px;
+    margin: 0;
+    padding: 0;
+    background: #111;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.home-tile-card--marca-centro .home-tile-photo-wrap::before {
+    display: block;
+    opacity: 1;
+    z-index: 1;
+    background: rgba(0, 0, 0, 0.38);
+}
+
+.home-tile-card--marca-centro .home-tile-photo-wrap img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+}
+
+/* Móvil: On Cloud anclada al borde inferior */
+.home-tile-card--marca-centro.brand-pill-oncloud .home-tile-photo-wrap img {
+    object-position: bottom center;
+}
+
+@media (min-width: 769px) {
+    .home-tile-card--marca-centro.brand-pill-youngla .home-tile-photo-wrap img {
+        object-position: center 38%;
+    }
+
+    .home-tile-card--marca-centro.brand-pill-uniqlo .home-tile-photo-wrap img {
+        object-position: center 32%;
+    }
+
+    .home-tile-card--marca-centro.brand-pill-oncloud .home-tile-photo-wrap img {
+        object-position: bottom center;
+    }
+
+    .mayoreo-filter-row .home-tile-card--mayoreo-foto .home-tile-photo-wrap img {
+        object-position: bottom center;
+    }
+
+    .mayoreo-filter-row .home-tile-card--mayoreo-foto.mayoreo-cta-50 .home-tile-photo-wrap img {
+        object-position: center 36%;
+    }
+
+    .nuevo-stock-cta.home-tile-card--nuevo-foto.home-tile-card--half {
+        width: 320px;
+        max-width: 100%;
+    }
+
+    .nuevo-stock-cta.home-tile-card--nuevo-foto .home-tile-photo-wrap img {
+        object-position: center 44%;
+    }
+}
+
+.home-tile-marca-label {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0 0.65rem;
+    text-align: center;
+    pointer-events: none;
+    line-height: 1;
+}
+
+.home-tile-marca-label--gymshark,
+.home-tile-marca-label--youngla,
+.home-tile-marca-label--uniqlo,
+.home-tile-marca-label--oncloud {
+    font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+    font-size: clamp(1.85rem, 5.5vw, 2.35rem);
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #ffffff;
+}
+
+.home-tile-marca-label--gymshark {
+    text-shadow:
+        0 0 22px rgba(94, 184, 255, 0.75),
+        0 2px 0 rgba(30, 100, 180, 0.95),
+        0 4px 18px rgba(0, 0, 0, 0.85);
+}
+
+.home-tile-marca-label--youngla {
+    letter-spacing: 0.02em;
+    text-shadow:
+        0 0 20px rgba(255, 107, 107, 0.65),
+        0 2px 0 rgba(120, 30, 30, 0.95),
+        0 4px 18px rgba(0, 0, 0, 0.85);
+}
+
+.home-tile-marca-label--uniqlo {
+    text-shadow:
+        0 0 18px rgba(200, 200, 200, 0.55),
+        0 2px 0 rgba(50, 50, 50, 0.95),
+        0 4px 18px rgba(0, 0, 0, 0.85);
+}
+
+.home-tile-marca-label--oncloud {
+    font-size: clamp(1.55rem, 4.8vw, 2rem);
+    letter-spacing: 0.03em;
+    color: #ffffff;
+    text-shadow:
+        0 0 20px rgba(255, 255, 255, 0.45),
+        0 2px 0 rgba(40, 40, 40, 0.9),
+        0 4px 18px rgba(0, 0, 0, 0.85);
+}
+
+.home-tile-card--marca-centro .home-tile-photo-wrap::before {
+    background: rgba(0, 0, 0, 0.38) !important;
+    opacity: 1 !important;
+}
+
+.brand-pill-youngla.home-tile-card:not(.home-tile-card--marca-centro) .home-tile-photo-wrap::before {
+    background: linear-gradient(135deg, #1a1a1a 0%, #3d1515 100%);
+}
+
+.brand-pill-uniqlo.home-tile-card:not(.home-tile-card--marca-centro) .home-tile-photo-wrap::before {
+    background: linear-gradient(135deg, #3a3a3a 0%, #6e6e6e 100%);
+}
+
+.brand-pill-oncloud.home-tile-card:not(.home-tile-card--marca-centro) .home-tile-photo-wrap::before {
+    background: linear-gradient(135deg, #ffffff 0%, #eef1f5 100%);
+    opacity: 0.35;
+}
+
+.mayoreo-cta-20.home-tile-card:not(.home-tile-card--mayoreo-foto) .home-tile-photo-wrap::before {
+    background: linear-gradient(135deg, #1a1030 0%, #5a2ea6 100%);
+}
+
+.mayoreo-cta-50.home-tile-card:not(.home-tile-card--mayoreo-foto) .home-tile-photo-wrap::before {
+    background: linear-gradient(135deg, #06403b 0%, #0e8f8f 45%, #a0247e 100%);
+}
+
+.home-tile-card--mayoreo-foto,
+a.home-tile-card--mayoreo-foto.mayoreo-cta,
+a.home-tile-card--mayoreo-foto.mayoreo-cta:link,
+a.home-tile-card--mayoreo-foto.mayoreo-cta:visited,
+a.home-tile-card--mayoreo-foto.mayoreo-cta:hover,
+a.home-tile-card--mayoreo-foto.mayoreo-cta:active {
+    border-left: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.mayoreo-filter-row .home-tile-card--mayoreo-foto .home-tile-photo-wrap {
+    position: relative;
+    height: 130px;
+    overflow: hidden;
+    background: #111;
+}
+
+.mayoreo-filter-row .home-tile-card--mayoreo-foto .home-tile-photo-wrap::before {
+    background: rgba(0, 0, 0, 0.32) !important;
+    opacity: 1 !important;
+}
+
+.mayoreo-filter-row .home-tile-card--mayoreo-foto .home-tile-photo-wrap img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: cover;
+    object-position: center 58%;
+    display: block;
+}
+
+.home-tile-card-caption {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.65rem 1.1rem 0.75rem;
+}
+
+.home-tile-card-caption--nuevo-stock {
+    background: linear-gradient(135deg, #10231c 0%, #1f4d3b 100%);
+    color: #fff;
+}
+
+.home-tile-card-caption--mayoreo-20 {
+    background: linear-gradient(135deg, #1a1030 0%, #5a2ea6 100%);
+    color: #fff;
+}
+
+.home-tile-card-caption--mayoreo-50 {
+    background: linear-gradient(135deg, #06403b 0%, #0e8f8f 45%, #a0247e 100%);
+    color: #fff;
+}
+
+.home-tile-card-caption .nuevo-stock-cta-text,
+.home-tile-card-caption .mayoreo-cta-text {
+    padding: 0;
+}
+
+.home-tile-card-caption .nuevo-stock-cta-sub,
+.home-tile-card-caption .mayoreo-cta-sub {
+    padding: 0;
+}
+
 .colecciones-block {
     margin: 0 auto 1.25rem;
 }
@@ -1495,11 +1855,13 @@ a.nuevo-stock-cta:active {
     margin-top: -0.25rem;
 }
 
-.coleccion-card-image.is-placeholder .product-image {
+.coleccion-card-image.is-placeholder .product-image,
+.home-tile-photo-wrap.coleccion-card-image.is-placeholder {
     background: linear-gradient(145deg, #ececec 0%, #d8d8d8 100%);
 }
 
-.coleccion-card-image.is-placeholder::after {
+.coleccion-card-image.is-placeholder::after,
+.home-tile-photo-wrap.coleccion-card-image.is-placeholder::after {
     content: attr(data-label);
     position: absolute;
     inset: 0;
@@ -1515,6 +1877,12 @@ a.nuevo-stock-cta:active {
     color: rgba(40, 40, 40, 0.85);
     text-transform: uppercase;
     pointer-events: none;
+}
+
+.home-tile-photo-wrap.coleccion-card-image.is-placeholder::after {
+    font-size: 0.72rem;
+    padding: 0.5rem;
+    z-index: 2;
 }
 
 .coleccion-carousel-card .product-info {
@@ -1974,7 +2342,39 @@ footer {
     }
     .nuevo-stock-block {
         max-width: none;
+        width: 100%;
+        justify-content: stretch;
     }
+
+    .nuevo-stock-cta.home-tile-card--nuevo-foto.home-tile-card--half {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .nuevo-stock-cta.home-tile-card--nuevo-foto .home-tile-photo-wrap {
+        height: 100px;
+    }
+
+    .nuevo-stock-cta.home-tile-card--nuevo-foto .home-tile-photo-wrap img {
+        object-position: center 42%;
+    }
+
+    .home-tile-card-caption--nuevo-stock {
+        align-items: center;
+        text-align: center;
+        padding: 0.55rem 1rem 0.65rem;
+    }
+
+    .home-tile-card-caption--nuevo-stock .nuevo-stock-cta-text,
+    .home-tile-card-caption--nuevo-stock .nuevo-stock-cta-sub {
+        width: 100%;
+        text-align: center;
+    }
+
+    .mayoreo-filter-row .home-tile-card--mayoreo-foto.mayoreo-cta-50 .home-tile-photo-wrap img {
+        object-position: top center;
+    }
+
     .nuevo-stock-cta {
         min-height: 68px;
         padding: 0.9rem 1.1rem;
