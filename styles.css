@@ -1060,7 +1060,22 @@ a.category-btn {
         margin-left: 0.45rem;
     }
 
-    .inventory-ofertas-heading-line2 {
+    .inventory-ofertas .inventory-atletas-heading.inventory-ofertas-heading {
+        font-size: clamp(0.95rem, 4.6vw, 1.85rem);
+        letter-spacing: 0.07em;
+        line-height: 1.12;
+    }
+
+    .inventory-ofertas .inventory-ofertas-heading-line2 {
+        display: inline;
+        white-space: nowrap;
+        letter-spacing: inherit;
+    }
+
+    .inventory-ofertas .inventory-ofertas-heading .ver-todo-link {
+        font-size: clamp(0.62rem, 3.1vw, 0.82rem);
+        letter-spacing: 0.08em;
+        margin-left: 0.3rem;
         white-space: nowrap;
     }
 }
@@ -2787,20 +2802,32 @@ footer {
     .logo-link {
         position: absolute;
         left: 50%;
-        top: 50%;
+        top: 54%;
         transform: translate(-50%, -50%);
         margin: 0;
         width: auto;
         max-width: calc(100% - 120px);
-        transition: transform 0.25s ease;
+        transition: top 0.25s ease, transform 0.25s ease;
     }
 
     body.mobile-menu-open header .logo-link {
-        transform: translate(-50%, calc(-50% + 5px));
+        top: 58%;
+        transform: translate(-50%, -50%);
     }
 
     body.mobile-menu-open header {
-        padding-bottom: 0.85rem;
+        padding-top: 0.35rem;
+        padding-bottom: 1rem;
+        min-height: 62px;
+    }
+
+    .mobile-menu-btn {
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .mobile-menu-btn.active {
+        transform: translateY(-50%);
     }
 
     .logo {
