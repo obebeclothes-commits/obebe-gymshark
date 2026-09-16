@@ -891,9 +891,9 @@ function scrollCarousel(direction) {
 
 // Funci��n para scroll con mouse (drag)
 function inicializarScrollMouse() {
-    const wrapper = document.querySelector('.products-carousel-wrapper');
     const carousel = document.getElementById('productsCarousel');
-    
+    const wrapper = carousel ? carousel.parentElement : null;
+
     if (!wrapper || !carousel) return;
 
     wrapper.addEventListener('mousedown', (e) => {
@@ -1002,10 +1002,11 @@ function inicializarCarousel() {
         arrowRight.addEventListener('click', () => scrollCarousel('right'));
     }
 
-    // Deslizamiento libre en m��vil: el carrusel sigue el dedo (arrastre t��ctil)
-    const wrapper = document.querySelector('.products-carousel-wrapper');
+    // Deslizamiento libre en móvil: el carrusel sigue el dedo (arrastre táctil)
     const carousel = document.getElementById('productsCarousel');
-    if (wrapper && carousel) {
+    const wrapper = carousel ? carousel.parentElement : null;
+    if (wrapper && carousel && !wrapper.dataset.touchCarouselBound) {
+        wrapper.dataset.touchCarouselBound = '1';
         let touchStartX = 0;
         let scrollStart = 0;
 

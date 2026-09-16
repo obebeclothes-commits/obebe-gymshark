@@ -1305,6 +1305,11 @@ a.mayoreo-cta:active {
     cursor: grab;
     user-select: none;
     margin: 0 auto;
+    touch-action: pan-y pinch-zoom;
+}
+
+#productsCarouselWrapper {
+    touch-action: none;
 }
 
 .products-carousel-wrapper:active {
@@ -3006,8 +3011,13 @@ footer {
     }
 
     .hero-arrow {
-        width: 44px;
-        height: 44px;
+        width: 48px;
+        height: 48px;
+    }
+
+    .hero-arrow svg {
+        width: 26px;
+        height: 26px;
     }
 
     .hero-content {
@@ -3232,13 +3242,13 @@ footer {
     }
 
     .hero-arrow {
-        width: 40px;
-        height: 40px;
+        width: 52px;
+        height: 52px;
     }
 
     .hero-arrow svg {
-        width: 22px;
-        height: 22px;
+        width: 28px;
+        height: 28px;
     }
 
     .hero-content {
