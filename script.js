@@ -151,7 +151,8 @@ function crearTarjetaVerMasCarrusel(opciones) {
 
     var overlayTitle = document.createElement('span');
     overlayTitle.className = 'product-card-ver-mas-title'
-        + (opciones.estiloTitulo === 'gymshark' ? ' product-card-ver-mas-title--gymshark' : '');
+        + (opciones.estiloTitulo === 'gymshark' ? ' product-card-ver-mas-title--gymshark' : '')
+        + (opciones.estiloTitulo === 'nuevo-drop' ? ' product-card-ver-mas-title--nuevo-drop' : '');
     overlayTitle.textContent = titulo;
 
     var overlaySub = document.createElement('span');
@@ -544,9 +545,9 @@ function renderizarCarruselOfertas() {
         href: 'ofertas-semanales.html',
         archivoImagen: 'colecciones/OFERTAS.png',
         imagenFallback: 'secciones/OFERTAS.jpg',
-        titulo: 'OFERTAS',
+        titulo: 'OFERTAS SEMANALES',
         subtitulo: 'Ver todas las ofertas',
-        estiloTitulo: 'gymshark',
+        estiloTitulo: 'nuevo-drop',
         variante: 'ofertas'
     }));
 

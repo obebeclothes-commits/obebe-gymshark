@@ -624,6 +624,17 @@ a.category-btn {
     line-height: 1;
 }
 
+.hero-ofertas-title--nuevo-drop {
+    font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+    font-size: clamp(2.75rem, 11vw, 5.25rem);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #1a1a1a;
+    text-shadow: none;
+}
+
 .titulo-marca-gymshark {
     font-family: "Bebas Neue", "Arial Narrow", sans-serif;
     font-size: clamp(1.85rem, 5.5vw, 2.35rem);
@@ -1061,9 +1072,12 @@ a.category-btn {
     }
 
     .inventory-ofertas .inventory-atletas-heading.inventory-ofertas-heading {
-        font-size: 2rem;
-        letter-spacing: 0.12em;
-        line-height: 1.2;
+        font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+        font-size: clamp(2.75rem, 11vw, 5.25rem);
+        font-weight: 400;
+        line-height: 0.95;
+        letter-spacing: 0.1em;
+        text-shadow: none;
     }
 
     .inventory-ofertas .inventory-ofertas-heading-line2 {
@@ -2365,9 +2379,12 @@ a.home-tile-card--mayoreo-foto.mayoreo-cta-50:active {
 
 .inventory-ofertas .inventory-atletas-heading.inventory-ofertas-heading {
     margin-bottom: 1rem;
-    font-family: inherit;
-    font-weight: 800;
-    letter-spacing: 0.12em;
+    font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+    font-size: clamp(2.75rem, 11vw, 5.25rem);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     color: var(--primary-color);
     text-shadow: none;
 }
@@ -2388,6 +2405,25 @@ a.home-tile-card--mayoreo-foto.mayoreo-cta-50:active {
         0 0 22px rgba(94, 184, 255, 0.75),
         0 2px 0 rgba(30, 100, 180, 0.95),
         0 4px 18px rgba(0, 0, 0, 0.85);
+}
+
+.product-card-ver-mas-title--nuevo-drop {
+    font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+    font-size: clamp(2.75rem, 11vw, 5.25rem);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: 0.1em;
+    color: #ffffff;
+    text-shadow:
+        0 2px 0 rgba(0, 0, 0, 0.95),
+        0 4px 22px rgba(0, 0, 0, 0.92),
+        0 0 2px rgba(0, 0, 0, 1);
+}
+
+.product-card-ver-mas--ofertas .product-card-ver-mas-title--nuevo-drop {
+    font-size: clamp(1.65rem, 7.5vw, 2.85rem);
+    max-width: 100%;
+    text-wrap: balance;
 }
 
 .product-card-full .product-image-wrap {
