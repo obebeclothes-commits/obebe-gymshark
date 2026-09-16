@@ -573,6 +573,12 @@ a.category-btn {
     pointer-events: none;
 }
 
+.hero-slide picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
 .hero-slide img {
     width: 100%;
     height: 100%;
@@ -585,6 +591,203 @@ a.category-btn {
     opacity: 1;
     z-index: 1;
     pointer-events: auto;
+}
+
+.hero-slide--ofertas.active,
+.hero-slide--nuevo.active {
+    z-index: 3;
+}
+
+.hero-slide--ofertas {
+    background: var(--bg-color, #f5f5f5);
+}
+
+.hero-ofertas-panel {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 1.25rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow: auto;
+}
+
+.hero-ofertas-title {
+    margin: 0;
+    text-align: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--primary-color);
+    line-height: 1.15;
+}
+
+.hero-ofertas-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+    min-height: 0;
+    align-content: stretch;
+}
+
+.hero-oferta-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, #e0e0e0);
+    color: var(--text-color, #1a1a1a);
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.hero-oferta-card--placeholder {
+    pointer-events: none;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    text-align: center;
+    color: #666;
+    opacity: 1;
+}
+
+.hero-oferta-card-media {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 120px;
+    background: #111;
+}
+
+.hero-oferta-card-media .hero-oferta-card-badge {
+    z-index: 2;
+}
+
+.hero-oferta-card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+}
+
+.hero-oferta-card-body {
+    padding: 0.55rem 0.6rem 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.hero-oferta-card-name {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    min-height: calc(1.25em * 2);
+    max-height: calc(1.25em * 2);
+}
+
+.hero-oferta-card-prices {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+}
+
+.hero-oferta-card-prices .product-price-retail {
+    text-decoration: line-through;
+    color: #888;
+    opacity: 1;
+    font-size: 0.75rem;
+}
+
+.hero-oferta-card-prices .product-price-wholesale {
+    color: #e53935;
+    font-weight: 800;
+}
+
+.hero-slide--nuevo .hero-nuevo-link {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.hero-slide--nuevo .hero-nuevo-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.42) 0%,
+        rgba(0, 0, 0, 0.28) 45%,
+        rgba(0, 0, 0, 0.48) 100%
+    );
+}
+
+.hero-nuevo-drop-label {
+    position: absolute;
+    top: clamp(0.75rem, 8%, 3.5rem);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(96%, 640px);
+    margin: 0;
+    padding: 0 0.5rem;
+    box-sizing: border-box;
+    text-align: center;
+    font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+    font-size: clamp(2.75rem, 11vw, 5.25rem);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #ffffff;
+    pointer-events: none;
+    z-index: 2;
+    text-shadow:
+        0 2px 0 rgba(0, 0, 0, 0.95),
+        0 4px 22px rgba(0, 0, 0, 0.92),
+        0 0 2px rgba(0, 0, 0, 1);
+}
+
+.hero-slide--nuevo picture,
+.hero-slide--nuevo img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.hero-slide--nuevo img {
+    object-fit: cover;
+    object-position: center;
+}
+
+.hero-content.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.product-price-oferta-semanal .product-price-wholesale {
+    color: #e53935;
+    font-weight: 800;
 }
 
 .hero-nav-arrows {
@@ -787,7 +990,8 @@ a.category-btn {
     line-height: 1.15;
 }
 
-.page-header h1.page-title-gymshark {
+.page-header h1.page-title-gymshark,
+.page-header h1.page-title-coleccion {
     font-family: "Bebas Neue", "Arial Narrow", sans-serif;
     font-weight: 400;
     letter-spacing: 0.04em;
@@ -1339,6 +1543,7 @@ a.add-to-cart-carousel {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.85rem;
+    align-items: stretch;
 }
 
 /* ===== Colores por marca / mayoreo ===== */
@@ -1508,6 +1713,72 @@ a.mayoreo-cta-50:active {
 @keyframes comingSoonPulse {
     0%, 100% { transform: scaleX(0.6); opacity: 0.6; }
     50% { transform: scaleX(1); opacity: 1; }
+}
+
+.coming-soon > * {
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 768px) {
+    .products-content:has(.products-grid-coming-soon) {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .products-grid-full.products-grid-coming-soon {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        justify-content: center;
+        justify-items: stretch;
+        align-content: start;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        box-sizing: border-box;
+        padding: 1rem 0 0 0 !important;
+        gap: 0;
+    }
+
+    .products-grid-full.products-grid-coming-soon .coming-soon {
+        grid-column: 1 / -1;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        justify-self: center;
+        box-sizing: border-box;
+        padding: 3rem 1.25rem;
+    }
+
+    .coming-soon-tag {
+        display: inline-block;
+        text-align: center;
+        padding-left: 0.3em;
+        box-sizing: border-box;
+    }
+
+    .coming-soon-title {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        text-align: center;
+        font-style: normal;
+        letter-spacing: 0.04em;
+        margin: 0 auto;
+    }
+
+    .coming-soon-sub {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding-left: 0.14em;
+        box-sizing: border-box;
+    }
+
+    .coming-soon-bar {
+        margin-left: auto;
+        margin-right: auto;
+    }
 }
 
 .nuevo-stock-block {
@@ -1879,12 +2150,15 @@ a.home-tile-card--mayoreo-foto.mayoreo-cta-50:active {
     -webkit-box-align: stretch !important;
     display: flex !important;
     flex-direction: column !important;
-    height: auto !important;
+    height: 100% !important;
+    min-height: 0 !important;
 }
 
 .mayoreo-filter-row .home-tile-card--mayoreo-foto .home-tile-photo-wrap {
     position: relative;
-    height: 130px;
+    flex: 1 1 auto;
+    min-height: 130px;
+    height: auto;
     overflow: hidden;
     background: #111;
     border-radius: 8px 8px 0 0;
@@ -1920,6 +2194,7 @@ a.home-tile-card--mayoreo-foto.mayoreo-cta-50:active {
     width: 100%;
     box-sizing: border-box;
     padding: 0.65rem 1.1rem 0.75rem;
+    flex: 0 0 auto;
 }
 
 .home-tile-card-caption--nuevo-stock {
@@ -1999,6 +2274,53 @@ a.home-tile-card--mayoreo-foto.mayoreo-cta-50:active {
 .coleccion-carousel-card .product-name {
     text-align: center;
     width: 100%;
+}
+
+.inventory-ofertas {
+    padding-top: 0.35rem;
+}
+
+.inventory-ofertas .inventory-atletas-heading {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--primary-color);
+    line-height: 1.15;
+}
+
+#inventario-ofertas .product-name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
+    min-height: calc(1.2em * 2);
+    max-height: calc(1.2em * 2);
+}
+
+.product-card-oferta .product-image-wrap {
+    position: relative;
+}
+
+.product-card-oferta-badge {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 3;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: #e53935;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    pointer-events: none;
 }
 
 .product-card-ver-mas {
@@ -2551,15 +2873,16 @@ footer {
     .mayoreo-filter-row .home-tile-card--mayoreo-foto.mayoreo-cta {
         padding: 0 !important;
         min-height: 0 !important;
-        height: auto !important;
+        height: 100% !important;
         align-self: stretch !important;
         justify-content: flex-start !important;
         -webkit-box-pack: start !important;
     }
 
     .mayoreo-filter-row .home-tile-card--mayoreo-foto .home-tile-photo-wrap {
-        flex: 0 0 130px;
-        height: 130px;
+        flex: 1 1 auto;
+        min-height: 130px;
+        height: auto;
     }
 
     .mayoreo-filter-row .home-tile-card--mayoreo-foto .home-tile-card-caption {
@@ -2648,7 +2971,8 @@ footer {
     }
 
     .product-name,
-    .cart-item-name {
+    .cart-item-name,
+    .hero-oferta-card-name {
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
@@ -2660,6 +2984,12 @@ footer {
         line-height: 1.2;
         min-height: calc(1.2em * 2);
         max-height: calc(1.2em * 2);
+    }
+
+    .hero-oferta-card-name {
+        line-height: 1.25;
+        min-height: calc(1.25em * 2);
+        max-height: calc(1.25em * 2);
     }
 
     .contact h2 {

@@ -70,6 +70,7 @@ COLUMNAS = {
     "segmento": "T",
     "carrusel": "U",
     "coleccion": "X",
+    "oferta_semanal": "Y",
 }
 
 FILA_INICIO_DATOS = 3  # Primera fila de producto (fila 1 = título, fila 2 = encabezados)
@@ -243,6 +244,10 @@ def parsear_mayoreo(valor: str) -> bool:
     return clave in ("si", "yes", "1", "true")
 
 
+def parsear_precio_oferta_semanal(valor: str) -> float:
+    return parsear_precio(valor)
+
+
 def parsear_numero_imagen(valor: str) -> int | None:
     texto = str(valor or "").strip()
     if not texto or not texto.isdigit():
@@ -404,6 +409,9 @@ def leer_productos_desde_csv(
         precio = parsear_precio(obtener_valor(fila, idx["precio"]))
         precio_mayoreo = parsear_precio(obtener_valor(fila, idx["precio_mayoreo"]))
         mayoreo = parsear_mayoreo(obtener_valor(fila, idx["mayoreo"]))
+        precio_oferta_semanal = parsear_precio_oferta_semanal(
+            obtener_valor(fila, idx["oferta_semanal"])
+        )
         if precio <= 0:
             print(f"  [!] Fila {num_fila}: '{nombre}' sin precio válido, se omite.")
             omitidos += 1
@@ -440,6 +448,9 @@ def leer_productos_desde_csv(
                 "mayoreo": mayoreo,
                 "posicionCarrusel": posicion_carrusel,
                 "coleccion": normalizar_coleccion(obtener_valor(fila, idx["coleccion"])),
+                "precioOfertaSemanal": round(precio_oferta_semanal, 2)
+                if precio_oferta_semanal > 0
+                else 0,
             }
         )
         productos[-1]["coleccionCatalogo"] = productos[-1]["coleccion"]
@@ -477,6 +488,11 @@ def producto_a_js(producto: dict, indent: str = "    ") -> str:
         ("mayoreo", producto.get("mayoreo", False), "bool"),
         ("posicionCarrusel", producto.get("posicionCarrusel", 0), "num"),
         ("coleccion", producto.get("coleccion", ""), "str"),
+        (
+            "precioOfertaSemanal",
+            f"{float(producto.get('precioOfertaSemanal', 0) or 0):.2f}",
+            "num",
+        ),
         ("coleccionCatalogo", producto.get("coleccionCatalogo", producto.get("coleccion", "")), "str"),
     ]
 

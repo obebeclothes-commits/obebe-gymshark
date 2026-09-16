@@ -283,6 +283,147 @@ function inicializarFiltroGeneroNuevoStock() {
     });
 }
 
+var FACTOR_PRECIO_OFERTA_SEMANAL = 0.75;
+
+function esPaginaOfertasSemanales() {
+    var path = (window.location.pathname || '').replace(/\\/g, '/');
+    return /ofertas-semanales\.html$/i.test(path);
+}
+
+function esProductoOfertaSemanal(producto) {
+    if (!producto) return false;
+    var retail = Number(producto.precio) || 0;
+    var oferta = precioOfertaSemanalProducto(producto);
+    return oferta > 0 && retail > oferta;
+}
+
+function precioOfertaSemanalProducto(producto) {
+    var retail = Number(producto && producto.precio) || 0;
+    var precioSheet = Number(producto && producto.precioOfertaSemanal);
+    if (precioSheet > 0) return Math.round(precioSheet * 100) / 100;
+    if (producto && producto.ofertaSemanal && retail > 0) {
+        return Math.round(retail * FACTOR_PRECIO_OFERTA_SEMANAL * 100) / 100;
+    }
+    return 0;
+}
+
+function porcentajeDescuentoOfertaSemanalProducto(producto) {
+    var retail = Number(producto && producto.precio) || 0;
+    var oferta = precioOfertaSemanalProducto(producto);
+    if (retail <= 0 || oferta <= 0 || oferta >= retail) return 0;
+    return Math.round((1 - oferta / retail) * 100);
+}
+
+function esModoOfertasSemanal() {
+    if (esPaginaOfertasSemanales() || window.__OEBE_PAGINA_OFERTAS === true) return true;
+    var params = new URLSearchParams(window.location.search);
+    var valor = (params.get('ofertas') || '').trim().toLowerCase();
+    if (valor === '1' || valor === 'si' || valor === 'true') return true;
+    var retorno = params.get('retorno');
+    if (retorno) {
+        try {
+            var retornoParams = new URLSearchParams(decodeURIComponent(retorno));
+            var rv = (retornoParams.get('ofertas') || '').trim().toLowerCase();
+            if (rv === '1' || rv === 'si' || rv === 'true') return true;
+        } catch (err) {
+            // ignorar retorno mal formado
+        }
+    }
+    return false;
+}
+
+function esOfertaSemanalCategoriaMujer(producto) {
+    return !!(producto && producto.categoria === 'Mujer');
+}
+
+function deduplicarOfertasSemanalesConStock(lista) {
+    var vistos = new Set();
+    var out = [];
+    (lista || []).forEach(function(p) {
+        if (!esProductoOfertaSemanal(p) || Number(p.stock) <= 0) return;
+        var id = String(p.id);
+        if (vistos.has(id)) return;
+        vistos.add(id);
+        out.push(p);
+    });
+    out.sort(function(a, b) { return Number(b.id) - Number(a.id); });
+    return out;
+}
+
+function intercalarOfertasHombreMujer(listaHombre, listaMujer, limite) {
+    var hombre = listaHombre.slice();
+    var mujer = listaMujer.slice();
+    var resultado = [];
+    var i = 0;
+    var j = 0;
+    var turnoHombre = true;
+    var max = typeof limite === 'number' && limite > 0 ? limite : Infinity;
+
+    while (resultado.length < max && (i < hombre.length || j < mujer.length)) {
+        if (turnoHombre) {
+            if (i < hombre.length) {
+                resultado.push(hombre[i++]);
+                turnoHombre = false;
+            } else if (j < mujer.length) {
+                resultado.push(mujer[j++]);
+            } else {
+                break;
+            }
+        } else if (j < mujer.length) {
+            resultado.push(mujer[j++]);
+            turnoHombre = true;
+        } else if (i < hombre.length) {
+            resultado.push(hombre[i++]);
+        } else {
+            break;
+        }
+    }
+    return resultado;
+}
+
+function recolectarOfertasSemanalesIntercaladas(limite) {
+    var hombreRaw = [];
+    if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) {
+        hombreRaw = hombreRaw.concat(productosHombre);
+    } else if (typeof productos !== 'undefined' && Array.isArray(productos)) {
+        hombreRaw = hombreRaw.concat(productos);
+    }
+    var mujerRaw = typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)
+        ? productosMujer.slice()
+        : [];
+
+    var hombre = deduplicarOfertasSemanalesConStock(
+        hombreRaw.filter(function(p) { return !esOfertaSemanalCategoriaMujer(p); })
+    );
+    var mujer = deduplicarOfertasSemanalesConStock(
+        mujerRaw.filter(function(p) { return esOfertaSemanalCategoriaMujer(p); })
+    );
+
+    return intercalarOfertasHombreMujer(hombre, mujer, limite);
+}
+
+function ordenarListaOfertasSemanalesIntercalado(productos) {
+    if (!productos || !productos.length) return productos || [];
+    var hombre = deduplicarOfertasSemanalesConStock(
+        productos.filter(function(p) { return !esOfertaSemanalCategoriaMujer(p); })
+    );
+    var mujer = deduplicarOfertasSemanalesConStock(
+        productos.filter(function(p) { return esOfertaSemanalCategoriaMujer(p); })
+    );
+    var idsUsados = new Set();
+    var intercalado = intercalarOfertasHombreMujer(hombre, mujer);
+    intercalado.forEach(function(p) { idsUsados.add(String(p.id)); });
+    productos.forEach(function(p) {
+        if (!idsUsados.has(String(p.id))) intercalado.push(p);
+    });
+    return intercalado;
+}
+
+function obtenerProductosOfertaSemanal(limite) {
+    var max = typeof limite === 'number' ? limite : 4;
+    return recolectarOfertasSemanalesIntercaladas(max);
+}
+
 function precioVigenteProducto(producto) {
     if (esModoMayoreo50() && esProductoMayoreo50(producto)) {
         return Number(producto.precioMayoreo50);
@@ -290,7 +431,38 @@ function precioVigenteProducto(producto) {
     if (esModoMayoreo() && producto && producto.mayoreo && Number(producto.precioMayoreo) > 0) {
         return Number(producto.precioMayoreo);
     }
+    if (esProductoOfertaSemanal(producto)) {
+        var oferta = precioOfertaSemanalProducto(producto);
+        if (oferta > 0) return oferta;
+    }
     return Number(producto && producto.precio) || 0;
+}
+
+function htmlPrecioOfertaSemanalMarkup(producto, sinBadge) {
+    if (!esProductoOfertaSemanal(producto)) return '';
+    var retail = Number(producto.precio) || 0;
+    var precioOferta = precioOfertaSemanalProducto(producto);
+    if (!(precioOferta > 0 && retail > precioOferta)) return '';
+    var html = '<p class="product-price product-price-oferta-semanal">'
+        + '<span class="product-price-retail">$' + formatearPrecio(retail) + '</span>'
+        + '<span class="product-price-wholesale">$' + formatearPrecio(precioOferta) + '</span>';
+    if (!sinBadge) {
+        html += htmlBadgeDescuento(porcentajeDescuentoOfertaSemanalProducto(producto));
+    }
+    html += '</p>';
+    return html;
+}
+
+function htmlPrecioListadoProducto(producto, opciones) {
+    var opts = opciones || {};
+    if (!esModoMayoreo50() && !esModoMayoreo()) {
+        var ofertaHtml = htmlPrecioOfertaSemanalMarkup(producto, !!opts.sinBadgeOferta);
+        if (ofertaHtml) return ofertaHtml;
+    }
+    if (typeof htmlPrecioProducto === 'function') {
+        return htmlPrecioProducto(producto);
+    }
+    return '<p class="product-price">$' + formatearPrecio(precioVigenteProducto(producto)) + '</p>';
 }
 
 function htmlBadgeDescuento(porcentaje, extraClase) {
@@ -333,7 +505,9 @@ function htmlPrecioProducto(producto) {
         }
         return '<p class="product-price">$' + formatearPrecio(mayor) + htmlBadgeDescuento(producto.descuentoMayoreo) + '</p>';
     }
-    return '<p class="product-price">$' + formatearPrecio(retail) + '</p>';
+    var markupOferta = htmlPrecioOfertaSemanalMarkup(producto, false);
+    if (markupOferta) return markupOferta;
+    return '<p class="product-price">$' + formatearPrecio(precioVigenteProducto(producto)) + '</p>';
 }
 
 window.esModoMayoreo = esModoMayoreo;
@@ -345,6 +519,14 @@ window.obtenerColeccionDeURL = obtenerColeccionDeURL;
 window.esProductoNuevoStock = esProductoNuevoStock;
 window.precioVigenteProducto = precioVigenteProducto;
 window.htmlPrecioProducto = htmlPrecioProducto;
+window.htmlPrecioListadoProducto = htmlPrecioListadoProducto;
+window.htmlPrecioOfertaSemanalMarkup = htmlPrecioOfertaSemanalMarkup;
+window.esProductoOfertaSemanal = esProductoOfertaSemanal;
+window.precioOfertaSemanalProducto = precioOfertaSemanalProducto;
+window.porcentajeDescuentoOfertaSemanalProducto = porcentajeDescuentoOfertaSemanalProducto;
+window.esModoOfertasSemanal = esModoOfertasSemanal;
+window.esPaginaOfertasSemanales = esPaginaOfertasSemanales;
+window.obtenerProductosOfertaSemanal = obtenerProductosOfertaSemanal;
 
 function obtenerMarcaDeURL() {
     const params = new URLSearchParams(window.location.search);
@@ -359,6 +541,10 @@ function obtenerProductosPorCategoria() {
     var modoNuevoStock = esModoNuevoStock();
     var coleccion = obtenerColeccionDeURL();
     var categoria = params.get('categoria') || 'Hombre';
+
+    if (esModoOfertasSemanal()) {
+        return recolectarOfertasSemanalesIntercaladas();
+    }
 
     if (coleccion) {
         var todosColeccion = [];
@@ -759,28 +945,65 @@ function limpiarFiltrosEnURL() {
 
 function construirQueryRetornoProductos() {
     var qs = window.location.search.replace(/^\?/, '');
+    if (esPaginaOfertasSemanales()) {
+        return encodeURIComponent('ofertas-semanales.html' + (qs ? '?' + qs : ''));
+    }
     return qs ? encodeURIComponent(qs) : '';
 }
 
-function construirUrlDetalleProducto(producto) {
+function construirUrlDetalleProducto(producto, opciones) {
+    var opts = opciones || {};
     var url = 'producto.html?id=' + encodeURIComponent(producto.id);
     var cat = producto.categoria || 'Hombre';
     url += '&categoria=' + encodeURIComponent(cat);
     if (esModoMayoreo()) url += '&mayoreo=1';
     if (esModoMayoreo50()) url += '&mayoreo50=1';
     if (esModoNuevoStock()) url += '&nuevoStock=1';
+    if (opts.desdeOfertasSemanales || esModoOfertasSemanal()) url += '&ofertas=1';
     var coleccion = obtenerColeccionDeURL();
     if (coleccion) url += '&coleccion=' + encodeURIComponent(coleccion);
-    var retorno = construirQueryRetornoProductos();
+    var retorno = opts.desdeOfertasSemanales
+        ? encodeURIComponent('ofertas-semanales.html')
+        : construirQueryRetornoProductos();
     if (retorno) url += '&retorno=' + retorno;
     return url;
+}
+
+function construirUrlDetalleProductoOfertaSemanal(producto) {
+    return construirUrlDetalleProducto(producto, { desdeOfertasSemanales: true });
+}
+
+function esRetornoOfertasSemanales(params) {
+    if (!params) return false;
+    if (esModoOfertasSemanal()) return true;
+    var retorno = params.get('retorno');
+    if (!retorno) return false;
+    try {
+        return /ofertas-semanales\.html/i.test(decodeURIComponent(retorno));
+    } catch (err) {
+        return false;
+    }
+}
+
+function etiquetaVolverDesdeDetalle(params) {
+    if (esRetornoOfertasSemanales(params)) return '← Volver a Ofertas';
+    if (esModoMayoreo50()) return '← Volver a Mayoreo +50';
+    if (esModoMayoreo()) return '← Volver a Mayoreo +20';
+    if (esModoNuevoStock()) return '← Volver a Nuevo stock';
+    if (esModoColeccion() && typeof obtenerColeccionDeURL === 'function') {
+        var col = obtenerColeccionDeURL();
+        if (col) return '← Volver a ' + col;
+    }
+    return '← Volver a productos';
 }
 
 function construirUrlVolverProductos(params) {
     var retorno = params.get('retorno');
     if (retorno) {
         try {
-            return 'productos.html?' + decodeURIComponent(retorno);
+            var destino = decodeURIComponent(retorno);
+            if (/\.html/i.test(destino)) return destino;
+            return 'productos.html?' + destino;
         } catch (err) {
             console.warn('No se pudo leer retorno de filtros:', err);
         }
@@ -788,6 +1011,13 @@ function construirUrlVolverProductos(params) {
     if (esModoMayoreo()) return 'productos.html?mayoreo=1';
     if (esModoMayoreo50()) return 'productos.html?mayoreo50=1';
     if (esModoNuevoStock()) return 'productos.html?nuevoStock=1';
+    if (esModoOfertasSemanal()) {
+        if (esPaginaOfertasSemanales()) {
+            var qsVolver = window.location.search.replace(/^\?/, '');
+            return 'ofertas-semanales.html' + (qsVolver ? '?' + qsVolver : '');
+        }
+        return 'ofertas-semanales.html';
+    }
     var coleccion = obtenerColeccionDeURL();
     if (coleccion) return 'productos.html?coleccion=' + encodeURIComponent(coleccion);
     var categoria = params.get('categoria') || 'Hombre';
@@ -795,7 +1025,9 @@ function construirUrlVolverProductos(params) {
 }
 
 window.construirUrlDetalleProducto = construirUrlDetalleProducto;
+window.construirUrlDetalleProductoOfertaSemanal = construirUrlDetalleProductoOfertaSemanal;
 window.construirUrlVolverProductos = construirUrlVolverProductos;
+window.etiquetaVolverDesdeDetalle = etiquetaVolverDesdeDetalle;
 
 // Función para obtener filtros activos
 function obtenerFiltrosActivos() {
@@ -877,6 +1109,10 @@ function aplicarFiltrosYOrdenar(productos) {
         return Number(b.id) - Number(a.id);
     });
 
+    if (esModoOfertasSemanal() && !filtros.ordenarPor) {
+        productosFiltrados = ordenarListaOfertasSemanalesIntercalado(productosFiltrados);
+    }
+
     return productosFiltrados;
 }
 
@@ -903,7 +1139,7 @@ function textoContadorArticulos(cantidad) {
 function actualizarContadorArticulos(cantidad) {
     var el = document.getElementById('pageProductCount');
     if (!el) return;
-    if (cantidad === 0 && marcaFiltroActiva()) {
+    if (cantidad === 0 && etiquetaComingSoonVacio()) {
         el.textContent = '';
         return;
     }
@@ -971,6 +1207,7 @@ function agregarAlCarrito(producto, opciones) {
             nombre: producto.nombre,
             precio: precioVigenteProducto(producto),
             precioMenudeo: producto.precio,
+            esOfertaSemanal: esProductoOfertaSemanal(producto),
             esMayoreo: (esModoMayoreo() && !!producto.mayoreo) || (esModoMayoreo50() && esProductoMayoreo50(producto)),
             talla: producto.talla,
             color: colorProducto,
@@ -1170,6 +1407,7 @@ function normalizarItemCarrito(item) {
         nombre: producto.nombre,
         precio: precioVigenteProducto(producto),
         precioMenudeo: producto.precio,
+        esOfertaSemanal: esProductoOfertaSemanal(producto),
         esMayoreo: (esModoMayoreo() && !!producto.mayoreo) || (esModoMayoreo50() && esProductoMayoreo50(producto)),
         talla: producto.talla,
         color: producto.color || '',
@@ -1240,18 +1478,29 @@ function marcaFiltroActiva() {
     return pill || '';
 }
 
-function htmlEstadoVacio() {
+function etiquetaComingSoonVacio() {
     var marca = marcaFiltroActiva();
-    if (marca) {
-        var marcaSegura = String(marca).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        return ''
-            + '<div class="coming-soon" role="status">'
-            + '  <span class="coming-soon-tag">' + marcaSegura.toUpperCase() + '</span>'
-            + '  <span class="coming-soon-title">COMING<span class="coming-soon-amp"> </span>SOON</span>'
-            + '  <span class="coming-soon-sub">Nuevo drop en camino</span>'
-            + '  <span class="coming-soon-bar"></span>'
-            + '</div>';
+    if (marca) return marca;
+    if (esModoColeccion() && obtenerProductosPorCategoria().length === 0) {
+        return obtenerColeccionDeURL();
     }
+    return '';
+}
+
+function htmlComingSoon(etiqueta) {
+    var tagSeguro = String(etiqueta).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').toUpperCase();
+    return ''
+        + '<div class="coming-soon" role="status">'
+        + '  <span class="coming-soon-tag">' + tagSeguro + '</span>'
+        + '  <span class="coming-soon-title">COMING<span class="coming-soon-amp"> </span>SOON</span>'
+        + '  <span class="coming-soon-sub">Nuevo drop en camino</span>'
+        + '  <span class="coming-soon-bar"></span>'
+        + '</div>';
+}
+
+function htmlEstadoVacio() {
+    var etiqueta = etiquetaComingSoonVacio();
+    if (etiqueta) return htmlComingSoon(etiqueta);
     return '<p style="padding: 2rem; color: #666; text-align: center; grid-column: 1 / -1;">No hay productos que coincidan con los filtros seleccionados.</p>';
 }
 
@@ -1439,11 +1688,14 @@ function renderizarProductos(productosParaRenderizar) {
     _renderizadosCount = 0;
 
     if (_listaRenderizado.length === 0) {
-        productsGrid.innerHTML = htmlEstadoVacio();
+        var vacioHtml = htmlEstadoVacio();
+        productsGrid.innerHTML = vacioHtml;
+        productsGrid.classList.toggle('products-grid-coming-soon', vacioHtml.indexOf('coming-soon') !== -1);
         actualizarControlesCargarMas();
         return;
     }
 
+    productsGrid.classList.remove('products-grid-coming-soon');
     renderizarSiguienteBloque();
 }
 
@@ -1463,15 +1715,17 @@ function renderizarTodosLosProductos() {
             if (window.fechaStockMasRecienteEtiqueta) {
                 tituloBase += ' · ' + window.fechaStockMasRecienteEtiqueta.toUpperCase();
             }
-        } else if (esModoColeccion()) {
-            tituloBase = 'COLECCIÓN · ' + obtenerColeccionDeURL().toUpperCase();
+        } else if (esModoOfertasSemanal()) {
+            tituloBase = 'OFERTAS SEMANALES';
         }
         var filtrosUrl = leerFiltrosDesdeURL();
         var marcaTitulo = filtrosUrl.marcas.length === 1 ? filtrosUrl.marcas[0] : (marca || '');
-        var titulo = marcaTitulo ? (tituloBase + ' · ' + marcaTitulo.toUpperCase()) : tituloBase;
+        var coleccionTitulo = esModoColeccion() ? (obtenerColeccionDeURL() || '').trim() : '';
+        var sufijoTitulo = marcaTitulo || coleccionTitulo;
+        var titulo = sufijoTitulo ? (tituloBase + ' · ' + sufijoTitulo.toUpperCase()) : tituloBase;
         var esMovil = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
         pageTitle.textContent = esMovil ? tituloBase : titulo;
-        pageTitle.classList.remove('page-title-gymshark', 'page-title-mujer');
+        pageTitle.classList.remove('page-title-gymshark', 'page-title-mujer', 'page-title-coleccion');
         if (tituloBase === 'PARA NUESTROS ATLETAS') {
             pageTitle.classList.add('page-title-gymshark');
         } else if (tituloBase === 'PARA NUESTRAS ATLETAS') {
@@ -1824,6 +2078,19 @@ document.addEventListener('obebe-scripts-ready', arrancarProductosPagina);
 
 function arrancarProductosPagina() {
     if (window.__obebeProductosIniciado) return;
+
+    var isProductsGridPageEarly = document.getElementById('productsGrid');
+    if (isProductsGridPageEarly && !esPaginaOfertasSemanales()) {
+        var paramsOfertas = new URLSearchParams(window.location.search);
+        var flagOfertas = (paramsOfertas.get('ofertas') || '').trim().toLowerCase();
+        if (flagOfertas === '1' || flagOfertas === 'si' || flagOfertas === 'true') {
+            paramsOfertas.delete('ofertas');
+            var qsRedirect = paramsOfertas.toString();
+            window.location.replace('ofertas-semanales.html' + (qsRedirect ? '?' + qsRedirect : ''));
+            return;
+        }
+    }
+
     window.__obebeProductosIniciado = true;
     preservarColeccionesCatalogo();
 

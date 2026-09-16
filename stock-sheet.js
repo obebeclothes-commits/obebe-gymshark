@@ -15,6 +15,7 @@
     var IDX_DESCUENTO_MAYOREO_50 = 22; // columna W (% mayoreo +50)
     var IDX_CARRUSEL = 20; // columna U
     var IDX_COLECCION = 23; // columna X
+    var IDX_OFERTA_SEMANAL = 24; // columna Y
     var IDX_FECHA_STOCK = 10; // columna K
 
     var MESES_FECHA_STOCK = {
@@ -153,6 +154,14 @@
     function parsearMayoreo(valor) {
         var clave = String(valor || '').trim().toLowerCase().replace(/í/g, 'i');
         return clave === 'si' || clave === 'yes' || clave === '1' || clave === 'true';
+    }
+
+    function parsearPrecioOfertaSemanal(valor) {
+        var precio = parsearPrecio(valor);
+        if (precio > 0) return precio;
+        var clave = normTexto(valor).replace(/í/g, 'i');
+        if (clave === 'oferta semanal' || clave.indexOf('oferta semanal') >= 0) return 0;
+        return 0;
     }
 
     function parsearPosicionCarrusel(valor) {
@@ -382,6 +391,7 @@
             var fechaStock = parsearFechaStock(f[IDX_FECHA_STOCK]);
             var refImagen = parsearNumeroImagen(f[IDX_IMAGEN]);
             var coleccion = normalizarColeccion(f[IDX_COLECCION] || '');
+            var precioOfertaSemanal = parsearPrecioOfertaSemanal(f[IDX_OFERTA_SEMANAL]);
             // Los agotados siguen apareciendo en la tienda con su etiqueta, asi que
             // sus opciones tambien deben quedar disponibles en los filtros.
             if (talla) opciones.tallas.add(talla);
@@ -405,7 +415,8 @@
                 marca: marca,
                 talla: talla,
                 refImagen: refImagen,
-                coleccion: coleccion
+                coleccion: coleccion,
+                precioOfertaSemanal: precioOfertaSemanal
             };
             var previo = mapa.get(clave);
             if (previo) {
@@ -423,6 +434,7 @@
                 if (marca) previo.marca = marca;
                 if (talla) previo.talla = talla;
                 if (coleccion) previo.coleccion = coleccion;
+                if (precioOfertaSemanal > 0) previo.precioOfertaSemanal = precioOfertaSemanal;
             } else {
                 mapa.set(clave, datosFila);
             }
@@ -513,6 +525,9 @@
             p.tallaBase = datos.talla;
         }
         if (datos.nombre) p.nombre = datos.nombre;
+        if (datos.coleccion) p.coleccionCatalogo = datos.coleccion;
+        p.precioOfertaSemanal = Number(datos.precioOfertaSemanal) || 0;
+        p.ofertaSemanal = p.precioOfertaSemanal > 0;
     }
 
     function nombresParecidos(nombreA, nombreB) {
@@ -655,6 +670,8 @@
 
     window.refrescarTiendaTrasSyncStock = function() {
         if (typeof actualizarEtiquetaNuevoStock === 'function') actualizarEtiquetaNuevoStock();
+        if (typeof actualizarHeroOfertasSemanales === 'function') actualizarHeroOfertasSemanales();
+        if (typeof renderizarCarruselOfertas === 'function') renderizarCarruselOfertas();
         if (typeof renderizarCarruselHombre === 'function') renderizarCarruselHombre('Hombre', false);
         if (typeof renderizarProductosMujer === 'function') renderizarProductosMujer();
         if (document.getElementById('productsGrid') && typeof renderizarTodosLosProductos === 'function') {

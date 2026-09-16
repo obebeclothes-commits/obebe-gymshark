@@ -105,7 +105,7 @@ function obtenerProductosParaCarrusel(catalogo, categoria) {
     return resultado;
 }
 
-var VERSION_IMAGENES_SECCIONES = '20260915y';
+var VERSION_IMAGENES_SECCIONES = '20260916r';
 
 function crearTarjetaVerMasCarrusel(opciones) {
     var href = opciones.href || 'productos.html';
@@ -255,10 +255,13 @@ function renderizarCarruselHombre(categoria = 'Hombre', mostrarTodos = false) {
         info.className = 'product-info';
         const btnTexto = agotado ? 'Agotado' : 'Agregar al Carrito';
         const btnClase = 'add-to-cart-carousel' + (agotado ? ' agotado' : '');
+        var precioHtml = typeof htmlPrecioListadoProducto === 'function'
+            ? htmlPrecioListadoProducto(producto, { sinBadgeOferta: true })
+            : ('<p class="product-price">$' + formatearPrecio(typeof precioVigenteProducto === 'function' ? precioVigenteProducto(producto) : producto.precio) + '</p>');
         info.innerHTML = `
             <h3 class="product-name">${producto.nombre}</h3>
             <p class="product-size">Talla: ${producto.talla}</p>
-            <p class="product-price">$${formatearPrecio(producto.precio)}</p>
+            ${precioHtml}
             <button type="button" class="${btnClase}" data-product-id="${producto.id}" ${agotado ? ' disabled' : ''}>${btnTexto}</button>
         `;
 
@@ -279,7 +282,7 @@ function renderizarCarruselHombre(categoria = 'Hombre', mostrarTodos = false) {
     productsCarousel.appendChild(crearTarjetaVerMasCarrusel({
         href: 'productos.html?categoria=Hombre',
         archivoImagen: 'secciones/hombre-final.jpg',
-        titulo: 'VER MÁS',
+        titulo: 'HOMBRE',
         subtitulo: 'Ver catálogo completo'
     }));
 
@@ -354,7 +357,10 @@ function renderizarProductosMujer() {
         info.className = 'product-info';
         const btnTexto = agotado ? 'Agotado' : 'Agregar al Carrito';
         const btnClase = 'add-to-cart-carousel' + (agotado ? ' agotado' : '');
-        info.innerHTML = '<h3 class="product-name">' + producto.nombre + '</h3><p class="product-size">Talla: ' + producto.talla + '</p><p class="product-price">$' + (producto.precio ? formatearPrecio(producto.precio) : '0') + '</p><button type="button" class="' + btnClase + '" data-product-id="' + producto.id + '" ' + (agotado ? ' disabled' : '') + '>' + btnTexto + '</button>';
+        var precioHtmlMujer = typeof htmlPrecioListadoProducto === 'function'
+            ? htmlPrecioListadoProducto(producto, { sinBadgeOferta: true })
+            : ('<p class="product-price">$' + (producto.precio ? formatearPrecio(typeof precioVigenteProducto === 'function' ? precioVigenteProducto(producto) : producto.precio) : '0') + '</p>');
+        info.innerHTML = '<h3 class="product-name">' + producto.nombre + '</h3><p class="product-size">Talla: ' + producto.talla + '</p>' + precioHtmlMujer + '<button type="button" class="' + btnClase + '" data-product-id="' + producto.id + '" ' + (agotado ? ' disabled' : '') + '>' + btnTexto + '</button>';
 
         card.appendChild(info);
 
@@ -373,7 +379,7 @@ function renderizarProductosMujer() {
     carousel.appendChild(crearTarjetaVerMasCarrusel({
         href: 'productos.html?categoria=Mujer',
         archivoImagen: 'secciones/mujer-final.jpg',
-        titulo: 'VER MÁS',
+        titulo: 'MUJER',
         subtitulo: 'Ver catálogo completo'
     }));
 
@@ -400,6 +406,156 @@ function renderizarProductosMujer() {
     });
     actualizarFlechasMujer();
 }
+
+function htmlPrecioCarruselOferta(producto) {
+    if (typeof htmlPrecioListadoProducto === 'function') {
+        return htmlPrecioListadoProducto(producto, { sinBadgeOferta: true });
+    }
+    var retail = Number(producto.precio) || 0;
+    var oferta = typeof precioOfertaSemanalProducto === 'function'
+        ? precioOfertaSemanalProducto(producto)
+        : Math.round(retail * 0.75 * 100) / 100;
+    if (oferta > 0 && retail > oferta) {
+        return '<p class="product-price product-price-oferta-semanal">'
+            + '<span class="product-price-retail">$' + formatearPrecio(retail) + '</span>'
+            + '<span class="product-price-wholesale">$' + formatearPrecio(oferta) + '</span>'
+            + '</p>';
+    }
+    return '<p class="product-price">$' + formatearPrecio(typeof precioVigenteProducto === 'function' ? precioVigenteProducto(producto) : retail) + '</p>';
+}
+
+function renderizarCarruselOfertas() {
+    var carousel = document.getElementById('productsCarouselOfertas');
+    var section = document.getElementById('inventario-ofertas');
+    if (!carousel) return;
+
+    var list = typeof obtenerProductosOfertaSemanal === 'function'
+        ? obtenerProductosOfertaSemanal(4)
+        : [];
+
+    currentScrollOfertas = 0;
+    carousel.innerHTML = '';
+    carousel.classList.remove('products-carousel--static');
+    carousel.style.transform = 'translateX(0)';
+
+    if (section) {
+        section.hidden = false;
+    }
+
+    list.forEach(function(producto) {
+        var agotado = producto.stock === 0;
+        var card = document.createElement('a');
+        card.className = 'product-card product-card-oferta' + (agotado ? ' product-card-agotado' : '');
+        if (!agotado) {
+            card.href = typeof construirUrlDetalleProductoOfertaSemanal === 'function'
+                ? construirUrlDetalleProductoOfertaSemanal(producto)
+                : (typeof construirUrlDetalleProducto === 'function'
+                    ? construirUrlDetalleProducto(producto, { desdeOfertasSemanales: true })
+                    : ('producto.html?id=' + encodeURIComponent(producto.id)
+                        + (producto.categoria === 'Mujer' ? '&categoria=Mujer' : '')
+                        + '&ofertas=1&retorno=' + encodeURIComponent('ofertas-semanales.html')));
+        } else {
+            card.href = '#';
+            card.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); });
+        }
+        card.setAttribute('aria-label', agotado ? (producto.nombre + ' (agotado)') : ('Oferta: ' + producto.nombre));
+        card.setAttribute('data-product-id', producto.id);
+
+        var imagen1 = obtenerRutaImagenProducto(producto, 1);
+        var imagen2 = obtenerRutaImagenProducto(producto, 2);
+
+        var imageWrap = document.createElement('div');
+        imageWrap.className = 'product-image-wrap' + (agotado ? ' out-of-stock' : '');
+
+        var imageContainer = document.createElement('div');
+        imageContainer.className = 'product-image';
+        imageContainer.dataset.alt = producto.nombre;
+        if (imagen1) {
+            imageContainer.dataset.type = 'img';
+            imageContainer.dataset.img1 = imagen1;
+            if (imagen2) imageContainer.dataset.img2 = imagen2;
+            renderizarImagenProducto(imageContainer, imagen1);
+        } else {
+            imageContainer.dataset.type = 'emoji';
+            imageContainer.textContent = '🛍️';
+        }
+        imageWrap.appendChild(imageContainer);
+
+        if (agotado) {
+            var overlay = document.createElement('div');
+            overlay.className = 'product-out-of-stock-overlay';
+            overlay.setAttribute('aria-hidden', 'true');
+            overlay.innerHTML = '<span>AGOTADO</span>';
+            imageWrap.appendChild(overlay);
+        }
+
+        var badge = document.createElement('span');
+        badge.className = 'product-card-oferta-badge';
+        var pctOferta = typeof porcentajeDescuentoOfertaSemanalProducto === 'function'
+            ? porcentajeDescuentoOfertaSemanalProducto(producto)
+            : 0;
+        badge.textContent = pctOferta > 0 ? ('-' + pctOferta + '%') : '-%';
+        imageWrap.appendChild(badge);
+
+        card.appendChild(imageWrap);
+
+        var info = document.createElement('div');
+        info.className = 'product-info';
+        var btnTexto = agotado ? 'Agotado' : 'Agregar al Carrito';
+        var btnClase = 'add-to-cart-carousel' + (agotado ? ' agotado' : '');
+        info.innerHTML = '<h3 class="product-name">' + producto.nombre + '</h3>'
+            + '<p class="product-size">Talla: ' + producto.talla + '</p>'
+            + htmlPrecioCarruselOferta(producto)
+            + '<button type="button" class="' + btnClase + '" data-product-id="' + producto.id + '" ' + (agotado ? ' disabled' : '') + '>' + btnTexto + '</button>';
+        card.appendChild(info);
+
+        var addBtn = info.querySelector('.add-to-cart-carousel');
+        if (addBtn && !agotado && typeof agregarAlCarrito === 'function') {
+            addBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                agregarAlCarrito(producto, { button: addBtn });
+            });
+        }
+
+        carousel.appendChild(card);
+    });
+
+    carousel.appendChild(crearTarjetaVerMasCarrusel({
+        href: 'ofertas-semanales.html',
+        archivoImagen: 'colecciones/OFERTAS.png',
+        titulo: 'OFERTAS',
+        subtitulo: 'Ver todas las ofertas'
+    }));
+
+    if (!carousel._ofertasHoverBound) {
+        carousel._ofertasHoverBound = true;
+        carousel.addEventListener('mouseover', function(e) {
+            var card = e.target.closest('.product-card');
+            if (!card || card.classList.contains('product-card-ver-mas') || card.dataset.hovered === 'true') return;
+            card.dataset.hovered = 'true';
+            var imgContainer = card.querySelector('.product-image');
+            if (imgContainer && imgContainer.dataset.img2) {
+                renderizarImagenProducto(imgContainer, imgContainer.dataset.img2, { noOcultarSiFalla: true });
+            }
+        });
+        carousel.addEventListener('mouseout', function(e) {
+            var card = e.target.closest('.product-card');
+            if (!card || card.classList.contains('product-card-ver-mas')) return;
+            var related = e.relatedTarget;
+            if (related && card.contains(related)) return;
+            card.dataset.hovered = 'false';
+            var imgContainer = card.querySelector('.product-image');
+            if (imgContainer && imgContainer.dataset.img1) {
+                renderizarImagenProducto(imgContainer, imgContainer.dataset.img1);
+            }
+        });
+    }
+
+    actualizarFlechasOfertas();
+}
+
+window.renderizarCarruselOfertas = renderizarCarruselOfertas;
 
 // Carrusel mujer: scroll y flechas
 let currentScrollMujer = 0;
@@ -442,6 +598,46 @@ function actualizarFlechasMujer() {
     arrowRight.disabled = currentScrollMujer >= maxScroll - 1;
 }
 
+let currentScrollOfertas = 0;
+
+function scrollCarouselOfertas(direction) {
+    var carousel = document.getElementById('productsCarouselOfertas');
+    if (!carousel) return;
+    var wrapper = carousel.parentElement;
+    if (!wrapper) return;
+
+    var gap = 10;
+    var isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+    var scrollAmount;
+    var firstCard = carousel.querySelector('.product-card');
+    if (isMobile && firstCard) {
+        scrollAmount = firstCard.offsetWidth + gap;
+    } else {
+        scrollAmount = (320 + gap) * 4;
+    }
+
+    var maxScroll = Math.max(0, carousel.scrollWidth - wrapper.offsetWidth);
+    if (direction === 'left') {
+        currentScrollOfertas = Math.max(0, currentScrollOfertas - scrollAmount);
+    } else {
+        currentScrollOfertas = Math.min(maxScroll, currentScrollOfertas + scrollAmount);
+    }
+    carousel.style.transition = 'transform 0.3s ease-out';
+    carousel.style.transform = 'translateX(-' + currentScrollOfertas + 'px)';
+    actualizarFlechasOfertas();
+}
+
+function actualizarFlechasOfertas() {
+    var carousel = document.getElementById('productsCarouselOfertas');
+    var arrowLeft = document.getElementById('arrowLeftOfertas');
+    var arrowRight = document.getElementById('arrowRightOfertas');
+    if (!carousel || !arrowLeft || !arrowRight) return;
+    var wrapper = carousel.parentElement;
+    var maxScroll = Math.max(0, carousel.scrollWidth - wrapper.offsetWidth);
+    arrowLeft.disabled = currentScrollOfertas <= 0;
+    arrowRight.disabled = currentScrollOfertas >= maxScroll - 1;
+}
+
 let currentScrollColecciones = 0;
 
 function scrollCarouselColecciones(direction) {
@@ -477,7 +673,7 @@ function actualizarFlechasColecciones() {
 }
 
 function configurarPlaceholdersImagenesInventario() {
-    document.querySelectorAll('#inventario .coleccion-card-image img, #inventario .home-tile-photo-wrap img, #inventario-mujer .product-card-ver-mas-image-wrap img, #inventario .product-card-ver-mas-image-wrap img').forEach(function(img) {
+    document.querySelectorAll('#inventario .coleccion-card-image img, #inventario .home-tile-photo-wrap img, #inventario-mujer .product-card-ver-mas-image-wrap img, #inventario .product-card-ver-mas-image-wrap img, #inventario-ofertas .product-card-ver-mas-image-wrap img').forEach(function(img) {
         function marcarPlaceholder() {
             var contenedor = img.closest('.coleccion-card-image') || img.closest('.home-tile-photo-wrap') || img.closest('.product-card-ver-mas-image-wrap');
             if (contenedor) contenedor.classList.add('is-placeholder');
@@ -593,6 +789,45 @@ function inicializarCarouselMujer() {
 
     actualizarFlechasMujer();
     window.addEventListener('resize', actualizarFlechasMujer);
+}
+
+function inicializarCarouselOfertas() {
+    var arrowLeft = document.getElementById('arrowLeftOfertas');
+    var arrowRight = document.getElementById('arrowRightOfertas');
+    var carousel = document.getElementById('productsCarouselOfertas');
+    var wrapper = carousel ? carousel.parentElement : null;
+
+    if (arrowLeft) {
+        arrowLeft.addEventListener('click', function() { scrollCarouselOfertas('left'); });
+    }
+    if (arrowRight) {
+        arrowRight.addEventListener('click', function() { scrollCarouselOfertas('right'); });
+    }
+
+    if (wrapper && carousel) {
+        var touchStartXOfertas = 0;
+        var scrollStartOfertas = 0;
+        wrapper.addEventListener('touchstart', function(e) {
+            touchStartXOfertas = e.touches[0].clientX;
+            scrollStartOfertas = currentScrollOfertas;
+            carousel.style.transition = 'none';
+        }, { passive: true });
+        wrapper.addEventListener('touchmove', function(e) {
+            var deltaX = e.touches[0].clientX - touchStartXOfertas;
+            var maxScroll = Math.max(0, carousel.scrollWidth - wrapper.offsetWidth);
+            currentScrollOfertas = Math.max(0, Math.min(maxScroll, scrollStartOfertas - deltaX));
+            carousel.style.transform = 'translateX(-' + currentScrollOfertas + 'px)';
+            actualizarFlechasOfertas();
+            e.preventDefault();
+        }, { passive: false });
+        wrapper.addEventListener('touchend', function() {
+            carousel.style.transition = 'transform 0.3s ease-out';
+            actualizarFlechasOfertas();
+        }, { passive: true });
+    }
+
+    actualizarFlechasOfertas();
+    window.addEventListener('resize', actualizarFlechasOfertas);
 }
 
 // Funci��n para manejar el scroll del carrusel
@@ -954,10 +1189,125 @@ function instalarResizeObserverHero() {
     ro.observe(hero);
 }
 
-// Funci��n para rotar videos del hero
+function obtenerCatalogoCompletoOfertas() {
+    var todos = [];
+    if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) {
+        todos = todos.concat(productosHombre);
+    } else if (Array.isArray(productos)) {
+        todos = todos.concat(productos);
+    }
+    if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) {
+        todos = todos.concat(productosMujer);
+    }
+    return todos;
+}
+
+function obtenerProductosOfertaSemanalHero() {
+    if (typeof obtenerProductosOfertaSemanal === 'function') {
+        return obtenerProductosOfertaSemanal(2);
+    }
+    return [];
+}
+
+function urlDetalleProductoHero(producto) {
+    if (typeof construirUrlDetalleProductoOfertaSemanal === 'function') {
+        return construirUrlDetalleProductoOfertaSemanal(producto);
+    }
+    if (typeof construirUrlDetalleProducto === 'function') {
+        return construirUrlDetalleProducto(producto, { desdeOfertasSemanales: true });
+    }
+    var url = 'producto.html?id=' + encodeURIComponent(producto.id);
+    if (producto.categoria === 'Mujer') url += '&categoria=Mujer';
+    return url;
+}
+
+function htmlPrecioHeroOferta(producto) {
+    if (typeof htmlPrecioListadoProducto === 'function') {
+        return htmlPrecioListadoProducto(producto, { sinBadgeOferta: true })
+            .replace('product-price product-price-oferta-semanal', 'hero-oferta-card-prices product-price-oferta-semanal')
+            .replace('<p class="product-price">', '<p class="hero-oferta-card-prices">');
+    }
+    var retail = Number(producto.precio) || 0;
+    var oferta = typeof precioOfertaSemanalProducto === 'function'
+        ? precioOfertaSemanalProducto(producto)
+        : Math.round(retail * 0.75 * 100) / 100;
+    if (oferta > 0 && retail > oferta) {
+        return '<p class="hero-oferta-card-prices">'
+            + '<span class="product-price-retail">$' + formatearPrecio(retail) + '</span>'
+            + '<span class="product-price-wholesale">$' + formatearPrecio(oferta) + '</span>'
+            + '</p>';
+    }
+    return '<p class="hero-oferta-card-prices"><span class="product-price-wholesale">$' + formatearPrecio(typeof precioVigenteProducto === 'function' ? precioVigenteProducto(producto) : retail) + '</span></p>';
+}
+
+function crearTarjetaHeroOferta(producto) {
+    var card = document.createElement('a');
+    card.className = 'hero-oferta-card';
+    card.href = urlDetalleProductoHero(producto);
+    card.setAttribute('aria-label', 'Ver oferta: ' + producto.nombre);
+
+    var media = document.createElement('div');
+    media.className = 'hero-oferta-card-media';
+    var imgSrc = obtenerRutaImagenProducto(producto, 1);
+    if (imgSrc) {
+        var img = document.createElement('img');
+        img.src = imgSrc;
+        img.alt = producto.nombre;
+        img.loading = 'lazy';
+        media.appendChild(img);
+    }
+
+    var pctHero = typeof porcentajeDescuentoOfertaSemanalProducto === 'function'
+        ? porcentajeDescuentoOfertaSemanalProducto(producto)
+        : 0;
+    if (pctHero > 0) {
+        var badgeHero = document.createElement('span');
+        badgeHero.className = 'product-card-oferta-badge hero-oferta-card-badge';
+        badgeHero.textContent = '-' + pctHero + '%';
+        media.appendChild(badgeHero);
+    }
+
+    var body = document.createElement('div');
+    body.className = 'hero-oferta-card-body';
+    body.innerHTML = '<h3 class="hero-oferta-card-name"></h3>';
+    body.querySelector('.hero-oferta-card-name').textContent = producto.nombre;
+    body.insertAdjacentHTML('beforeend', htmlPrecioHeroOferta(producto));
+
+    card.appendChild(media);
+    card.appendChild(body);
+    return card;
+}
+
+function crearPlaceholderHeroOferta(texto) {
+    var el = document.createElement('div');
+    el.className = 'hero-oferta-card hero-oferta-card--placeholder';
+    el.innerHTML = '<span>' + (texto || 'Próxima oferta') + '</span>';
+    return el;
+}
+
+function actualizarHeroOfertasSemanales() {
+    var grid = document.getElementById('heroOfertasGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    var ofertas = obtenerProductosOfertaSemanalHero();
+    for (var i = 0; i < 2; i++) {
+        if (ofertas[i]) {
+            grid.appendChild(crearTarjetaHeroOferta(ofertas[i]));
+        } else {
+            grid.appendChild(crearPlaceholderHeroOferta('Pon el precio de oferta en la columna Y'));
+        }
+    }
+}
+
+window.actualizarHeroOfertasSemanales = actualizarHeroOfertasSemanales;
+
+var heroCarruselControl = null;
+
 function inicializarHeroCarrusel() {
     var slides = document.querySelectorAll('.hero-slide');
     if (!slides.length) return;
+
+    actualizarHeroOfertasSemanales();
 
     var navArrows = document.getElementById('heroNavArrows');
     if (slides.length <= 1) {
@@ -973,46 +1323,102 @@ function inicializarHeroCarrusel() {
         navArrows.setAttribute('aria-hidden', 'false');
     }
 
+    if (heroCarruselControl && typeof heroCarruselControl.destruir === 'function') {
+        heroCarruselControl.destruir();
+    }
+
     var indice = 0;
     var arrowLeft = document.getElementById('heroArrowLeft');
     var arrowRight = document.getElementById('heroArrowRight');
+    var hero = document.querySelector('section.hero');
+    var welcome = document.getElementById('heroWelcomeContent');
+    var autoplayMs = 3000;
+    var timer = null;
+
+    function actualizarOverlay() {
+        if (!welcome) return;
+        var slide = slides[indice];
+        var esPortada = slide && slide.getAttribute('data-hero-slide') === 'portada';
+        welcome.classList.toggle('is-hidden', !esPortada);
+        welcome.setAttribute('aria-hidden', esPortada ? 'false' : 'true');
+    }
+
+    function reiniciarAutoplay() {
+        if (timer) clearInterval(timer);
+        if (slides.length <= 1) return;
+        timer = setInterval(function() {
+            mostrar(indice + 1);
+        }, autoplayMs);
+    }
 
     function mostrar(nuevoIndice) {
         slides[indice].classList.remove('active');
         indice = (nuevoIndice + slides.length) % slides.length;
         slides[indice].classList.add('active');
+        actualizarOverlay();
+        reiniciarAutoplay();
+    }
+
+    actualizarOverlay();
+    reiniciarAutoplay();
+
+    function onArrowLeft(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        mostrar(indice - 1);
+    }
+
+    function onArrowRight(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        mostrar(indice + 1);
     }
 
     if (arrowLeft) {
-        arrowLeft.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            mostrar(indice - 1);
-        });
+        arrowLeft.removeEventListener('click', heroCarruselControl && heroCarruselControl.onArrowLeft);
+        arrowLeft.addEventListener('click', onArrowLeft);
     }
 
     if (arrowRight) {
-        arrowRight.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            mostrar(indice + 1);
-        });
+        arrowRight.removeEventListener('click', heroCarruselControl && heroCarruselControl.onArrowRight);
+        arrowRight.addEventListener('click', onArrowRight);
     }
 
-    var hero = document.querySelector('section.hero');
-    if (hero) {
-        var touchStartX = 0;
-        hero.addEventListener('touchstart', function(e) {
-            if (e.touches.length === 1) touchStartX = e.touches[0].clientX;
-        }, { passive: true });
-        hero.addEventListener('touchend', function(e) {
-            if (!e.changedTouches.length) return;
-            var delta = e.changedTouches[0].clientX - touchStartX;
-            if (Math.abs(delta) < 50) return;
-            if (delta < 0) mostrar(indice + 1);
-            else mostrar(indice - 1);
-        }, { passive: true });
+    var touchStartX = 0;
+    function onTouchStart(e) {
+        if (e.touches.length === 1) touchStartX = e.touches[0].clientX;
     }
+    function onTouchEnd(e) {
+        if (!e.changedTouches.length) return;
+        var delta = e.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(delta) < 50) return;
+        if (delta < 0) mostrar(indice + 1);
+        else mostrar(indice - 1);
+    }
+
+    if (hero) {
+        hero.removeEventListener('touchstart', heroCarruselControl && heroCarruselControl.onTouchStart);
+        hero.removeEventListener('touchend', heroCarruselControl && heroCarruselControl.onTouchEnd);
+        hero.addEventListener('touchstart', onTouchStart, { passive: true });
+        hero.addEventListener('touchend', onTouchEnd, { passive: true });
+    }
+
+    heroCarruselControl = {
+        onArrowLeft: onArrowLeft,
+        onArrowRight: onArrowRight,
+        onTouchStart: onTouchStart,
+        onTouchEnd: onTouchEnd,
+        destruir: function() {
+            if (timer) clearInterval(timer);
+            timer = null;
+            if (arrowLeft) arrowLeft.removeEventListener('click', onArrowLeft);
+            if (arrowRight) arrowRight.removeEventListener('click', onArrowRight);
+            if (hero) {
+                hero.removeEventListener('touchstart', onTouchStart);
+                hero.removeEventListener('touchend', onTouchEnd);
+            }
+        }
+    };
 }
 
 // Al volver atr��s (bfcache), refrescar im��genes de productos para evitar "?" o imagen rota en m��vil
@@ -1053,10 +1459,12 @@ function arrancarIndexPagina() {
     actualizarEtiquetaNuevoStock();
     renderizarCarruselHombre('Hombre', false);
     if (typeof productosMujer !== 'undefined') renderizarProductosMujer();
+    renderizarCarruselOfertas();
     inicializarCarousel();
     inicializarCarouselColecciones();
     inicializarNavegacion();
     inicializarPromoBar();
+    actualizarHeroOfertasSemanales();
     inicializarHeroCarrusel();
     const cartIconBtn = document.getElementById('cartIconBtn');
     const cartModal = document.getElementById('cartModal');
@@ -1112,6 +1520,7 @@ function arrancarIndexPagina() {
     }
 
     if (typeof inicializarCarouselMujer === 'function') inicializarCarouselMujer();
+    if (typeof inicializarCarouselOfertas === 'function') inicializarCarouselOfertas();
 }
 
 document.addEventListener('obebe-scripts-ready', arrancarIndexPagina);

@@ -51,8 +51,8 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20260915aj" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20260915aj"></noscript>
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20260916p" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20260916p"></noscript>
     <script>
     // Respaldo: si el onload del <link> no dispara, la hoja quedaria en media=print y sin aplicar.
     (function(w, d) {
@@ -145,13 +145,25 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
 
     <main>
         <section id="inicio" class="hero">
-            <div class="hero-slides" aria-live="polite">
-                <div class="hero-slide active">
+            <div class="hero-slides" id="heroSlides" aria-live="polite">
+                <div class="hero-slide hero-slide--portada active" data-hero-slide="portada">
                     <picture>
                         <source media="(max-width: 768px)" srcset="PORTADA1-movil.webp?v=20260734" type="image/webp">
                         <source srcset="PORTADA1.webp?v=20260734" type="image/webp">
                         <img src="PORTADA1.jpeg?v=20260716" alt="Obebe Clothes" decoding="async" fetchpriority="high" width="819" height="1024">
                     </picture>
+                </div>
+                <div class="hero-slide hero-slide--ofertas" data-hero-slide="ofertas" aria-label="Ofertas semanales">
+                    <div class="hero-ofertas-panel">
+                        <h2 class="hero-ofertas-title">Ofertas semanales</h2>
+                        <div class="hero-ofertas-grid" id="heroOfertasGrid"></div>
+                    </div>
+                </div>
+                <div class="hero-slide hero-slide--nuevo" data-hero-slide="nuevo" aria-label="Lo nuevo">
+                    <a class="hero-nuevo-link" href="productos.html?coleccion=NARUTO" aria-label="Ver colección destacada — Nuevo drop">
+                        <img src="colecciones/NEW-1.png?v=20260916n" alt="Lo nuevo en Obebe — colección NARUTO" width="819" height="1024" loading="lazy" decoding="async">
+                        <span class="hero-nuevo-drop-label" aria-hidden="true">NUEVO DROP</span>
+                    </a>
                 </div>
             </div>
             <div class="hero-nav-arrows hero-nav-arrows--hidden" id="heroNavArrows" aria-hidden="true">
@@ -166,7 +178,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                     </svg>
                 </button>
             </div>
-            <div class="hero-content">
+            <div class="hero-content" id="heroWelcomeContent">
                 <div class="hero-text">
                     <h2>Bienvenido a Obebe</h2>
                     <p>Tu destino para ropa deportiva de calidad</p>
@@ -406,6 +418,31 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
             </div>
         </section>
 
+        <section id="inventario-ofertas" class="inventory inventory-ofertas">
+            <div class="container">
+                <div class="inventory-header">
+                    <div class="inventory-title-section">
+                        <h2 class="inventory-atletas-heading">OFERTAS<br class="inventory-title-br" aria-hidden="true"> SEMANALES <a href="ofertas-semanales.html" class="ver-todo-link" id="verTodoLinkOfertas">VER TODO</a></h2>
+                    </div>
+                    <div class="inventory-nav-arrows">
+                        <button type="button" class="nav-arrow nav-arrow-left" id="arrowLeftOfertas" aria-label="Ver ofertas anteriores">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="nav-arrow nav-arrow-right" id="arrowRightOfertas" aria-label="Ver más ofertas">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="products-carousel-wrapper products-carousel-wrapper-ofertas">
+                    <div class="products-carousel products-carousel--static" id="productsCarouselOfertas"></div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <footer>
@@ -466,9 +503,9 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
 
     <script defer src="productos-hombre.js?v=20260915d"></script>
     <script defer src="productos-mujer.js?v=20260915d"></script>
-    <script defer src="script.js?v=20260915ac"></script>
-    <script defer src="productos.js?v=20260915e"></script>
-    <script defer src="obebe-listo.js?v=20260914b"></script>
+    <script defer src="script.js?v=20260916t"></script>
+    <script defer src="productos.js?v=20260916r"></script>
+    <script defer src="obebe-listo.js?v=20260916m"></script>
     <script>
     // Si la tienda no arranca, avisar en pantalla en vez de quedarse muda.
     (function(w, d) {

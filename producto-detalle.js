@@ -42,13 +42,16 @@ window.iniciarDetalleProducto = function() {
     const backHref = typeof construirUrlVolverProductos === 'function'
         ? construirUrlVolverProductos(params)
         : 'productos.html?categoria=' + encodeURIComponent(producto.categoria || 'Hombre');
+    var backLabel = typeof etiquetaVolverDesdeDetalle === 'function'
+        ? etiquetaVolverDesdeDetalle(params)
+        : '← Volver a productos';
     document.title = producto.nombre + ' - Obebe GymShark Collection';
 
     container.innerHTML = '';
     var backLink = document.createElement('a');
     backLink.href = backHref;
     backLink.className = 'back-link';
-    backLink.textContent = '← Volver a productos';
+    backLink.textContent = backLabel;
     container.appendChild(backLink);
 
     var imagesBlock = document.createElement('div');
