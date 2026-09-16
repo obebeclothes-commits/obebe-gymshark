@@ -680,16 +680,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
             }
             body.mobile-menu-open header {
                 height: auto !important;
-                min-height: 72px !important;
-                padding-top: 0.35rem !important;
-                padding-bottom: 1rem !important;
-            }
-            body.mobile-menu-open header .logo-link {
-                top: 58%;
-                transform: translate(-50%, -50%);
-            }
-            header .logo-link {
-                top: 54%;
+                min-height: 64px !important;
             }
             main {
                 padding-bottom: 0 !important;
@@ -1225,12 +1216,12 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                     <span class="cart-badge" id="cartBadge">0</span>
                 </button>
             </div>
-            <nav class="mobile-nav" id="mobileNav">
-                <button class="category-btn" id="btnHombreMobile" onclick="window.location.href='productos.html?categoria=Hombre'">Hombre</button>
-                <a href="productos.html?categoria=Mujer" class="category-btn" id="btnMujerMobile">Mujer</a>
-                <a href="productos.html?mayoreo50=1" class="category-btn" id="btnMayoreoMobile">Mayoreo</a>
-            </nav>
         </div>
+        <nav class="mobile-nav" id="mobileNav" aria-label="Menú móvil">
+            <button class="category-btn" id="btnHombreMobile" onclick="window.location.href='productos.html?categoria=Hombre'">Hombre</button>
+            <a href="productos.html?categoria=Mujer" class="category-btn" id="btnMujerMobile">Mujer</a>
+            <a href="productos.html?mayoreo50=1" class="category-btn" id="btnMayoreoMobile">Mayoreo</a>
+        </nav>
     </header>
 
     <main>
