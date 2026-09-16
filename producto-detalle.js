@@ -74,6 +74,11 @@ window.iniciarDetalleProducto = function() {
             overlay.innerHTML = '<span>AGOTADO</span>';
             wrap.appendChild(overlay);
         }
+        if (typeof adjuntarBadgeDescuentoEnImagen === 'function') {
+            adjuntarBadgeDescuentoEnImagen(wrap, producto);
+        } else if (typeof adjuntarBadgeOfertaSemanalEnImagen === 'function') {
+            adjuntarBadgeOfertaSemanalEnImagen(wrap, producto);
+        }
         return wrap;
     }
 

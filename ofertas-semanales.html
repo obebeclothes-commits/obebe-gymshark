@@ -44,8 +44,8 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20260916l" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20260916l"></noscript>
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20260917b" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20260917b"></noscript>
     <script>
     // Respaldo: si el onload del <link> no dispara, la hoja quedaria en media=print y sin aplicar.
     (function(w, d) {
@@ -109,8 +109,10 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
 
         .page-header h1.page-title-gymshark,
         .page-header h1.page-title-mujer,
-        .page-header h1.page-title-coleccion {
-            color: #1a1a1a;
+        .page-header h1.page-title-coleccion,
+        .page-header h1.page-title-ofertas,
+        .page-header h1.page-title-atletas {
+            color: var(--primary-color);
         }
 
         .page-product-count {
@@ -676,6 +678,14 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                 height: 100%;
                 min-height: 48px !important;
             }
+            body.mobile-menu-open header {
+                height: auto !important;
+                min-height: 68px !important;
+                padding-bottom: 0.85rem !important;
+            }
+            body.mobile-menu-open header .logo-link {
+                transform: translate(-50%, calc(-50% + 5px));
+            }
             main {
                 padding-bottom: 0 !important;
                 margin-bottom: 0 !important;
@@ -730,8 +740,11 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
             }
             .page-header h1.page-title-gymshark,
             .page-header h1.page-title-mujer,
-            .page-header h1.page-title-coleccion {
-                color: #1a1a1a;
+            .page-header h1.page-title-coleccion,
+            .page-header h1.page-title-atletas,
+            .page-header h1.page-title-ofertas,
+            .page-header h1.page-title-marca {
+                color: var(--primary-color);
             }
             .back-link {
                 display: none !important;
@@ -745,9 +758,10 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                 flex-direction: row;
                 align-items: center;
                 gap: 0.5rem;
-                width: calc(100% + 40px);
-                margin: 0 -20px 0.25rem -20px;
-                padding: 0.5rem 20px;
+                width: 100%;
+                max-width: 100%;
+                margin: 0 0 0.25rem 0;
+                padding: 0.5rem 0;
                 position: sticky;
                 top: 64px;
                 z-index: 1001;
@@ -1229,12 +1243,12 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                         </a>
                         <a href="productos.html?mayoreo50=1" class="mayoreo-cta mayoreo-cta-50" id="mayoreoSwitch50Link" hidden aria-label="Ver productos de mayoreo +50">
                             <span class="mayoreo-cta-text">Mayoreo +50</span>
-                            <span class="mayoreo-cta-sub">Mejor precio por volumen</span>
+                            <span class="mayoreo-cta-sub">Mejor precio</span>
                         </a>
                     </div>
                     <h1 id="pageTitle">OFERTAS SEMANALES</h1>
                     <p class="page-product-count" id="pageProductCount" aria-live="polite"></p>
-                    <div class="nuevo-stock-gender-filter" id="nuevoStockGenderFilter" hidden aria-label="Filtrar nuevo stock por categoría">
+                    <div class="nuevo-stock-gender-filter" id="nuevoStockGenderFilter" hidden aria-label="Filtrar por categoría Hombre o Mujer">
                         <button type="button" class="nuevo-stock-gender-btn" data-categoria="" aria-pressed="false">Todos</button>
                         <button type="button" class="nuevo-stock-gender-btn" data-categoria="Hombre" aria-pressed="false">Hombre</button>
                         <button type="button" class="nuevo-stock-gender-btn" data-categoria="Mujer" aria-pressed="false">Mujer</button>
@@ -1367,7 +1381,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
     <script defer src="productos-hombre.js?v=20260915d"></script>
     <script defer src="productos-mujer.js?v=20260915d"></script>
     <script defer src="script.js?v=20260916m"></script>
-    <script defer src="productos.js?v=20260916q"></script>
+    <script defer src="productos.js?v=20260917b"></script>
     <script defer src="obebe-listo.js?v=20260916m"></script>
     <script>
     // Si la tienda no arranca, avisar en pantalla en vez de quedarse muda.

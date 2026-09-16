@@ -206,9 +206,21 @@ function hayMarcaActivaEnURL() {
     return (leerFiltrosDesdeURL().marcas || []).length > 0;
 }
 
-// El filtro Hombre/Mujer aparece en Nuevo stock, Mayoreo +20/+50 y al filtrar por marca.
+function esModoCatalogoSeccionAcotado() {
+    return esModoOfertasSemanal() || esModoColeccion() || esModoNuevoStock()
+        || esModoMayoreo() || esModoMayoreo50();
+}
+
+function esModoMarcaAcotado() {
+    return !!(obtenerMarcaDeURL() || '').trim() || hayMarcaActivaEnURL();
+}
+
+var obebeActualizarTituloPaginaFn = null;
+
+// El filtro Hombre/Mujer aparece en Nuevo stock, Mayoreo, Ofertas semanales, Colecciones y al filtrar por marca.
 function debeMostrarFiltroGenero() {
-    return esModoNuevoStock() || esModoMayoreo() || esModoMayoreo50() || hayMarcaActivaEnURL();
+    return esModoNuevoStock() || esModoMayoreo() || esModoMayoreo50() || hayMarcaActivaEnURL()
+        || esModoColeccion() || esModoOfertasSemanal();
 }
 
 function obtenerCategoriaFiltroGenero() {
@@ -258,6 +270,19 @@ function actualizarFiltroGeneroNuevoStockUI() {
     });
 }
 
+function refrescarSeccionCatalogo() {
+    if (typeof obebeActualizarTituloPaginaFn === 'function') {
+        obebeActualizarTituloPaginaFn();
+    }
+    actualizarFiltroGeneroNuevoStockUI();
+    var productosCategoria = obtenerProductosPorCategoria();
+    generarFiltros(productosCategoria);
+    restaurarFiltrosDesdeURL();
+    var productosFiltrados = aplicarFiltrosYOrdenar(productosCategoria);
+    aplicarBusquedaYRenderizar(productosFiltrados);
+    actualizarMayoreoPageSwitch();
+}
+
 function navegarFiltroGeneroNuevoStock(categoria) {
     var params = new URLSearchParams(window.location.search);
     if (categoria) {
@@ -267,7 +292,11 @@ function navegarFiltroGeneroNuevoStock(categoria) {
     }
     var qs = params.toString();
     history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''));
-    renderizarTodosLosProductos();
+    var scrollY = window.scrollY || 0;
+    refrescarSeccionCatalogo();
+    requestAnimationFrame(function() {
+        window.scrollTo(0, scrollY);
+    });
 }
 
 function inicializarFiltroGeneroNuevoStock() {
@@ -453,6 +482,70 @@ function htmlPrecioOfertaSemanalMarkup(producto, sinBadge) {
     return html;
 }
 
+function normalizarEtiquetaPorcentajeBadge(valor) {
+    if (valor === null || valor === undefined || valor === '') return '';
+    var texto = String(valor).trim();
+    if (!texto) return '';
+    if (texto.charAt(0) === '-') texto = texto.slice(1).trim();
+    if (texto.indexOf('%') !== -1) return '-' + texto.replace(/^-+/, '');
+    var num = parseInt(texto, 10);
+    if (!isNaN(num) && num > 0) return '-' + num + '%';
+    return '-' + texto + (texto.indexOf('%') === -1 ? '%' : '');
+}
+
+function porcentajeDesdePrecios(precioBase, precioDestino) {
+    var base = Number(precioBase) || 0;
+    var destino = Number(precioDestino) || 0;
+    if (base <= 0 || destino <= 0 || destino >= base) return 0;
+    return Math.round((1 - destino / base) * 100);
+}
+
+function textoBadgeMayoreo20(producto) {
+    if (!producto || !producto.mayoreo) return '';
+    var mayor = Number(producto.precioMayoreo) || 0;
+    if (mayor <= 0) return '';
+    if (producto.descuentoMayoreo) return normalizarEtiquetaPorcentajeBadge(producto.descuentoMayoreo);
+    var pct = porcentajeDesdePrecios(producto.precio, mayor);
+    return pct > 0 ? ('-' + pct + '%') : '';
+}
+
+function textoBadgeMayoreo50(producto) {
+    if (!esProductoMayoreo50(producto)) return '';
+    if (producto.descuentoMayoreo50) return normalizarEtiquetaPorcentajeBadge(producto.descuentoMayoreo50);
+    var mayor50 = Number(producto.precioMayoreo50) || 0;
+    var pct = porcentajeDesdePrecios(producto.precio, mayor50);
+    return pct > 0 ? ('-' + pct + '%') : '';
+}
+
+function adjuntarBadgeDescuentoEnImagen(imageWrap, producto) {
+    if (!imageWrap || !producto) return;
+
+    var textoBadge = '';
+    var claseBadge = 'product-card-oferta-badge';
+
+    if (esModoMayoreo50() && esProductoMayoreo50(producto)) {
+        textoBadge = textoBadgeMayoreo50(producto);
+        claseBadge = 'product-card-oferta-badge product-card-mayoreo50-badge';
+    } else if (esModoMayoreo() && producto.mayoreo && Number(producto.precioMayoreo) > 0) {
+        textoBadge = textoBadgeMayoreo20(producto);
+        claseBadge = 'product-card-oferta-badge product-card-mayoreo-badge';
+    } else if (!esModoMayoreo() && !esModoMayoreo50() && esProductoOfertaSemanal(producto)) {
+        var pctOferta = porcentajeDescuentoOfertaSemanalProducto(producto);
+        if (pctOferta > 0) textoBadge = '-' + pctOferta + '%';
+    }
+
+    if (!textoBadge) return;
+
+    var badge = document.createElement('span');
+    badge.className = claseBadge;
+    badge.textContent = textoBadge;
+    imageWrap.appendChild(badge);
+}
+
+function adjuntarBadgeOfertaSemanalEnImagen(imageWrap, producto) {
+    adjuntarBadgeDescuentoEnImagen(imageWrap, producto);
+}
+
 function htmlPrecioListadoProducto(producto, opciones) {
     var opts = opciones || {};
     if (!esModoMayoreo50() && !esModoMayoreo()) {
@@ -505,7 +598,7 @@ function htmlPrecioProducto(producto) {
         }
         return '<p class="product-price">$' + formatearPrecio(mayor) + htmlBadgeDescuento(producto.descuentoMayoreo) + '</p>';
     }
-    var markupOferta = htmlPrecioOfertaSemanalMarkup(producto, false);
+    var markupOferta = htmlPrecioOfertaSemanalMarkup(producto, true);
     if (markupOferta) return markupOferta;
     return '<p class="product-price">$' + formatearPrecio(precioVigenteProducto(producto)) + '</p>';
 }
@@ -521,6 +614,8 @@ window.precioVigenteProducto = precioVigenteProducto;
 window.htmlPrecioProducto = htmlPrecioProducto;
 window.htmlPrecioListadoProducto = htmlPrecioListadoProducto;
 window.htmlPrecioOfertaSemanalMarkup = htmlPrecioOfertaSemanalMarkup;
+window.adjuntarBadgeOfertaSemanalEnImagen = adjuntarBadgeOfertaSemanalEnImagen;
+window.adjuntarBadgeDescuentoEnImagen = adjuntarBadgeDescuentoEnImagen;
 window.esProductoOfertaSemanal = esProductoOfertaSemanal;
 window.precioOfertaSemanalProducto = precioOfertaSemanalProducto;
 window.porcentajeDescuentoOfertaSemanalProducto = porcentajeDescuentoOfertaSemanalProducto;
@@ -603,7 +698,8 @@ function obtenerProductosPorCategoria() {
 }
 
 function resolverCategoriaOpcionesFiltro(productos) {
-    if (esModoColeccion()) return '';
+    if (esModoCatalogoSeccionAcotado()) return '';
+    if (esModoMarcaAcotado() && debeMostrarFiltroGenero() && !tieneCategoriaEnURL()) return '';
     if (debeMostrarFiltroGenero() && !tieneCategoriaEnURL()) {
         var catFiltro = obtenerCategoriaFiltroGenero();
         if (catFiltro === 'Hombre' || catFiltro === 'Mujer') return catFiltro;
@@ -625,7 +721,30 @@ function obtenerCatalogoCompletoPorCategoria(categoria) {
     return [];
 }
 
+function filtrarProductosPorGeneroEnURL(productos) {
+    var lista = productos || [];
+    if (!debeMostrarFiltroGenero() || !tieneCategoriaEnURL()) return lista;
+    var catUrl = obtenerCategoriaDeURL();
+    return lista.filter(function(p) {
+        return p.categoria === catUrl || p.categoria === 'Unisex';
+    });
+}
+
+function acotarListaASeccionActiva(productos) {
+    var lista = filtrarProductosPorGeneroEnURL(productos || []);
+    var marcaUrl = (obtenerMarcaDeURL() || '').trim();
+    if (marcaUrl) {
+        lista = lista.filter(function(p) {
+            return marcaCoincideFiltro(p.marca, marcaUrl);
+        });
+    }
+    return lista;
+}
+
 function obtenerProductosBaseParaOpcionesFiltro(productosVisibles) {
+    if (esModoCatalogoSeccionAcotado() || esModoMarcaAcotado()) {
+        return acotarListaASeccionActiva(productosVisibles || []);
+    }
     var cat = resolverCategoriaOpcionesFiltro(productosVisibles);
     if (cat === 'Hombre' || cat === 'Mujer') {
         return obtenerCatalogoCompletoPorCategoria(cat).filter(function(p) {
@@ -685,6 +804,16 @@ function filtrarTiposOpcionesPorCategoria(tipos, categoria) {
 function obtenerOpcionesFiltros(productos) {
     var base = obtenerProductosBaseParaOpcionesFiltro(productos);
     var desdeProductos = opcionesDesdeListaProductos(base);
+
+    if (esModoCatalogoSeccionAcotado() || esModoMarcaAcotado()) {
+        return {
+            tallas: ordenarTallas(desdeProductos.tallas),
+            tipos: ordenarAlfabetico(desdeProductos.tipos),
+            colores: ordenarAlfabetico(desdeProductos.colores),
+            marcas: ordenarAlfabetico(desdeProductos.marcas)
+        };
+    }
+
     var cat = resolverCategoriaOpcionesFiltro(productos);
     var sheet = cat && typeof window.opcionesInventarioSheet !== 'undefined'
         ? window.opcionesInventarioSheet[cat]
@@ -1136,6 +1265,42 @@ function textoContadorArticulos(cantidad) {
     return n === 1 ? '1 artículo' : n + ' artículos';
 }
 
+function escaparHtmlTitulo(texto) {
+    return String(texto || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function ajustarTamanoTituloPagina(pageTitle) {
+    if (!pageTitle || !pageTitle.classList.contains('page-title-auto-fit')) return;
+    pageTitle.style.fontSize = '';
+    pageTitle.style.whiteSpace = 'nowrap';
+    var esMovil = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+    var maxPx = esMovil ? 32 : 40;
+    var minPx = esMovil ? 11 : 14;
+    var size = maxPx;
+    pageTitle.style.fontSize = size + 'px';
+
+    while (size > minPx && pageTitle.scrollWidth > pageTitle.clientWidth + 1) {
+        size -= 1;
+        pageTitle.style.fontSize = size + 'px';
+    }
+
+    if (pageTitle.scrollWidth > pageTitle.clientWidth + 1) {
+        pageTitle.style.whiteSpace = 'normal';
+        size = maxPx;
+        pageTitle.style.fontSize = size + 'px';
+        var lineHeight = parseFloat(window.getComputedStyle(pageTitle).lineHeight) || (size * 1.15);
+        while (size > minPx && pageTitle.scrollHeight > lineHeight * 2 + 2) {
+            size -= 1;
+            pageTitle.style.fontSize = size + 'px';
+            lineHeight = parseFloat(window.getComputedStyle(pageTitle).lineHeight) || (size * 1.15);
+        }
+    }
+}
+
 function actualizarContadorArticulos(cantidad) {
     var el = document.getElementById('pageProductCount');
     if (!el) return;
@@ -1555,6 +1720,8 @@ function crearTarjetaProducto(producto) {
         imageWrap.appendChild(overlay);
     }
 
+    adjuntarBadgeDescuentoEnImagen(imageWrap, producto);
+
     linkProducto.appendChild(imageWrap);
 
     const info = document.createElement('div');
@@ -1708,7 +1875,10 @@ function renderizarTodosLosProductos() {
     function actualizarTituloPagina() {
         if (!pageTitle) return;
         var tituloBase = categoria === 'Hombre' ? 'PARA NUESTROS ATLETAS' : (categoria === 'Mujer' ? 'PARA NUESTRAS ATLETAS' : 'Productos');
-        if (esModoMayoreo50()) tituloBase = 'MAYOREO +50';
+        if (esModoColeccion()) {
+            var colNombre = (obtenerColeccionDeURL() || '').trim();
+            tituloBase = colNombre ? ('COLECCIÓN ' + colNombre.toUpperCase()) : 'COLECCIÓN';
+        } else if (esModoMayoreo50()) tituloBase = 'MAYOREO +50';
         else if (esModoMayoreo()) tituloBase = 'MAYOREO +20';
         else if (esModoNuevoStock()) {
             tituloBase = 'NUEVO STOCK';
@@ -1720,24 +1890,59 @@ function renderizarTodosLosProductos() {
         }
         var filtrosUrl = leerFiltrosDesdeURL();
         var marcaTitulo = filtrosUrl.marcas.length === 1 ? filtrosUrl.marcas[0] : (marca || '');
-        var coleccionTitulo = esModoColeccion() ? (obtenerColeccionDeURL() || '').trim() : '';
-        var sufijoTitulo = marcaTitulo || coleccionTitulo;
+        var sufijoTitulo = marcaTitulo;
         var titulo = sufijoTitulo ? (tituloBase + ' · ' + sufijoTitulo.toUpperCase()) : tituloBase;
         var esMovil = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
-        pageTitle.textContent = esMovil ? tituloBase : titulo;
-        pageTitle.classList.remove('page-title-gymshark', 'page-title-mujer', 'page-title-coleccion');
-        if (tituloBase === 'PARA NUESTROS ATLETAS') {
-            pageTitle.classList.add('page-title-gymshark');
-        } else if (tituloBase === 'PARA NUESTRAS ATLETAS') {
-            pageTitle.classList.add('page-title-mujer');
+        var tituloMarcaEnDosLineas = esMovil && sufijoTitulo && !esModoColeccion() && !esModoOfertasSemanal()
+            && !esModoNuevoStock() && !esModoMayoreo() && !esModoMayoreo50();
+
+        pageTitle.classList.remove(
+            'page-title-gymshark', 'page-title-mujer', 'page-title-coleccion', 'page-title-ofertas',
+            'page-title-atletas', 'page-title-auto-fit', 'page-title-marca'
+        );
+        pageTitle.style.fontSize = '';
+        pageTitle.style.whiteSpace = '';
+
+        if (tituloMarcaEnDosLineas) {
+            pageTitle.innerHTML = escaparHtmlTitulo(tituloBase)
+                + '<span class="page-title-marca-line">' + escaparHtmlTitulo(sufijoTitulo.toUpperCase()) + '</span>';
+            pageTitle.classList.add('page-title-atletas', 'page-title-marca', 'page-title-auto-fit');
+            if (tituloBase === 'PARA NUESTROS ATLETAS') pageTitle.classList.add('page-title-gymshark');
+            else if (tituloBase === 'PARA NUESTRAS ATLETAS') pageTitle.classList.add('page-title-mujer');
+        } else if (esModoColeccion()) {
+            pageTitle.textContent = tituloBase;
+            pageTitle.classList.add('page-title-coleccion', 'page-title-atletas', 'page-title-auto-fit');
+        } else {
+            pageTitle.textContent = esMovil ? tituloBase : titulo;
+            if (esModoOfertasSemanal()) {
+                pageTitle.classList.add('page-title-ofertas', 'page-title-atletas');
+            } else if (esModoNuevoStock() || esModoMayoreo50() || esModoMayoreo()) {
+                pageTitle.classList.add('page-title-atletas', 'page-title-auto-fit');
+            } else if (tituloBase === 'PARA NUESTROS ATLETAS') {
+                pageTitle.classList.add('page-title-gymshark', 'page-title-atletas');
+            } else if (tituloBase === 'PARA NUESTRAS ATLETAS') {
+                pageTitle.classList.add('page-title-mujer', 'page-title-atletas');
+            } else if (sufijoTitulo && !esMovil) {
+                pageTitle.classList.add('page-title-atletas', 'page-title-auto-fit');
+            }
         }
+
+        requestAnimationFrame(function() { ajustarTamanoTituloPagina(pageTitle); });
         actualizarMayoreoPageSwitch();
     }
+    obebeActualizarTituloPaginaFn = actualizarTituloPagina;
     actualizarTituloPagina();
     if (pageTitle && window.matchMedia) {
         var mq = window.matchMedia('(max-width: 768px)');
         if (mq.addEventListener) mq.addEventListener('change', actualizarTituloPagina);
         else if (mq.addListener) mq.addListener(actualizarTituloPagina);
+        if (!pageTitle.dataset.tituloResizeBound) {
+            pageTitle.dataset.tituloResizeBound = '1';
+            var reprogramarTitulo = function() {
+                requestAnimationFrame(function() { ajustarTamanoTituloPagina(pageTitle); });
+            };
+            window.addEventListener('resize', reprogramarTitulo);
+        }
     }
 
     // Filtrar productos por categoría (Mujer usa archivo separado productos-mujer.js)

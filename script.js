@@ -117,7 +117,8 @@ function crearTarjetaVerMasCarrusel(opciones) {
         : archivoImagen + '?v=' + VERSION_IMAGENES_SECCIONES;
 
     var card = document.createElement('a');
-    card.className = 'product-card product-card-ver-mas';
+    card.className = 'product-card product-card-ver-mas'
+        + (opciones.variante === 'ofertas' ? ' product-card-ver-mas--ofertas' : '');
     card.href = href;
     card.setAttribute('aria-label', titulo + ' — ' + subtitulo);
 
@@ -129,10 +130,19 @@ function crearTarjetaVerMasCarrusel(opciones) {
     imageContainer.className = 'product-image';
     var img = document.createElement('img');
     img.src = imgSrc;
-    img.alt = '';
+    img.alt = titulo;
     img.loading = 'lazy';
     img.width = 320;
     img.height = 380;
+    if (opciones.imagenFallback) {
+        var fallbackSrc = opciones.imagenFallback.indexOf('?') >= 0
+            ? opciones.imagenFallback
+            : opciones.imagenFallback + '?v=' + VERSION_IMAGENES_SECCIONES;
+        img.addEventListener('error', function onImgError() {
+            img.removeEventListener('error', onImgError);
+            img.src = fallbackSrc;
+        });
+    }
     imageContainer.appendChild(img);
 
     var overlay = document.createElement('div');
@@ -140,7 +150,8 @@ function crearTarjetaVerMasCarrusel(opciones) {
     overlay.setAttribute('aria-hidden', 'true');
 
     var overlayTitle = document.createElement('span');
-    overlayTitle.className = 'product-card-ver-mas-title';
+    overlayTitle.className = 'product-card-ver-mas-title'
+        + (opciones.estiloTitulo === 'gymshark' ? ' product-card-ver-mas-title--gymshark' : '');
     overlayTitle.textContent = titulo;
 
     var overlaySub = document.createElement('span');
@@ -249,6 +260,10 @@ function renderizarCarruselHombre(categoria = 'Hombre', mostrarTodos = false) {
             imageWrap.appendChild(overlay);
         }
 
+        if (typeof adjuntarBadgeDescuentoEnImagen === 'function') {
+            adjuntarBadgeDescuentoEnImagen(imageWrap, producto);
+        }
+
         card.appendChild(imageWrap);
 
         const info = document.createElement('div');
@@ -349,6 +364,10 @@ function renderizarProductosMujer() {
             overlay.setAttribute('aria-hidden', 'true');
             overlay.innerHTML = '<span>AGOTADO</span>';
             imageWrap.appendChild(overlay);
+        }
+
+        if (typeof adjuntarBadgeDescuentoEnImagen === 'function') {
+            adjuntarBadgeDescuentoEnImagen(imageWrap, producto);
         }
 
         card.appendChild(imageWrap);
@@ -524,8 +543,11 @@ function renderizarCarruselOfertas() {
     carousel.appendChild(crearTarjetaVerMasCarrusel({
         href: 'ofertas-semanales.html',
         archivoImagen: 'colecciones/OFERTAS.png',
+        imagenFallback: 'secciones/OFERTAS.jpg',
         titulo: 'OFERTAS',
-        subtitulo: 'Ver todas las ofertas'
+        subtitulo: 'Ver todas las ofertas',
+        estiloTitulo: 'gymshark',
+        variante: 'ofertas'
     }));
 
     if (!carousel._ofertasHoverBound) {

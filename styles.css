@@ -16,11 +16,16 @@
     --border-color: #e0e0e0;
 }
 
+html {
+    scrollbar-gutter: stable;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: var(--text-color);
     background-color: var(--bg-color);
+    overflow-x: clip;
 }
 
 .container {
@@ -616,13 +621,20 @@ a.category-btn {
 .hero-ofertas-title {
     margin: 0;
     text-align: center;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
+    line-height: 1;
+}
+
+.titulo-marca-gymshark {
+    font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+    font-size: clamp(1.85rem, 5.5vw, 2.35rem);
+    font-weight: 400;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--primary-color);
-    line-height: 1.15;
+    color: #1a1a1a;
+    text-shadow:
+        0 0 22px rgba(94, 184, 255, 0.55),
+        0 2px 0 rgba(30, 100, 180, 0.35),
+        0 4px 14px rgba(0, 0, 0, 0.12);
 }
 
 .hero-ofertas-grid {
@@ -991,22 +1003,30 @@ a.category-btn {
 }
 
 .page-header h1.page-title-gymshark,
-.page-header h1.page-title-coleccion {
-    font-family: "Bebas Neue", "Arial Narrow", sans-serif;
-    font-weight: 400;
-    letter-spacing: 0.04em;
+.page-header h1.page-title-mujer,
+.page-header h1.page-title-coleccion,
+.page-header h1.page-title-ofertas,
+.page-header h1.page-title-atletas {
+    font-family: inherit;
+    font-weight: 800;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #1a1a1a;
+    color: var(--primary-color);
     text-shadow: none;
+    line-height: 1.15;
 }
 
-.page-header h1.page-title-mujer {
-    font-family: "Bebas Neue", "Arial Narrow", sans-serif;
-    font-weight: 400;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: #1a1a1a;
-    text-shadow: none;
+.page-header h1.page-title-auto-fit {
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    text-wrap: balance;
+}
+
+.page-header h1.page-title-marca .page-title-marca-line {
+    display: block;
+    margin-top: 0.15rem;
+    letter-spacing: 0.12em;
 }
 
 .inventory-title-br {
@@ -1038,6 +1058,10 @@ a.category-btn {
     .inventory h2 .ver-todo-link,
     .inventory-atletas-heading .ver-todo-link {
         margin-left: 0.45rem;
+    }
+
+    .inventory-ofertas-heading-line2 {
+        white-space: nowrap;
     }
 }
 
@@ -1721,6 +1745,31 @@ a.mayoreo-cta-50:active {
 }
 
 @media (max-width: 768px) {
+    section.inventory .filters-products-wrapper,
+    section.inventory .products-content,
+    section.inventory .products-grid-full {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    section.inventory .filters-search-row {
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        box-sizing: border-box;
+    }
+
+    section.inventory .container {
+        overflow-x: clip;
+    }
+
+    section.inventory .products-grid-full {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .products-content:has(.products-grid-coming-soon) {
         width: 100%;
         max-width: 100%;
@@ -2280,14 +2329,44 @@ a.home-tile-card--mayoreo-foto.mayoreo-cta-50:active {
     padding-top: 0.35rem;
 }
 
-.inventory-ofertas .inventory-atletas-heading {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 2rem;
+.inventory-ofertas .inventory-atletas-heading.inventory-ofertas-heading {
+    margin-bottom: 1rem;
+    font-family: inherit;
     font-weight: 800;
     letter-spacing: 0.12em;
-    text-transform: uppercase;
     color: var(--primary-color);
-    line-height: 1.15;
+    text-shadow: none;
+}
+
+.inventory-ofertas .inventory-ofertas-heading .ver-todo-link {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+.inventory-ofertas-heading-line2 {
+    display: inline;
+}
+
+.product-card-ver-mas-title--gymshark {
+    color: #ffffff;
+    text-shadow:
+        0 0 22px rgba(94, 184, 255, 0.75),
+        0 2px 0 rgba(30, 100, 180, 0.95),
+        0 4px 18px rgba(0, 0, 0, 0.85);
+}
+
+.product-card-full .product-image-wrap {
+    position: relative;
+}
+
+.product-detail-image.product-image-wrap,
+.product-detail-images .product-detail-image {
+    position: relative;
+}
+
+.product-detail-images .product-card-oferta-badge {
+    z-index: 4;
 }
 
 #inventario-ofertas .product-name {
@@ -2321,6 +2400,16 @@ a.home-tile-card--mayoreo-foto.mayoreo-cta-50:active {
     font-weight: 800;
     letter-spacing: 0.06em;
     pointer-events: none;
+}
+
+.product-card-mayoreo-badge {
+    background: linear-gradient(135deg, #ff3d3d 0%, #ff7a18 100%);
+    box-shadow: 0 3px 10px rgba(255, 61, 61, 0.35);
+}
+
+.product-card-mayoreo50-badge {
+    background: linear-gradient(135deg, #0e8f8f 0%, #a0247e 100%);
+    box-shadow: 0 3px 10px rgba(160, 36, 126, 0.4);
 }
 
 .product-card-ver-mas {
@@ -2659,6 +2748,7 @@ footer {
     header {
         padding: 0.75rem 0;
         min-height: 56px;
+        overflow: visible;
     }
 
     header .container {
@@ -2670,6 +2760,7 @@ footer {
         padding-right: 50px;
         min-height: 44px;
         position: relative;
+        overflow: visible;
     }
 
     .mobile-menu-btn {
@@ -2696,10 +2787,20 @@ footer {
     .logo-link {
         position: absolute;
         left: 50%;
-        transform: translateX(-50%);
+        top: 50%;
+        transform: translate(-50%, -50%);
         margin: 0;
         width: auto;
         max-width: calc(100% - 120px);
+        transition: transform 0.25s ease;
+    }
+
+    body.mobile-menu-open header .logo-link {
+        transform: translate(-50%, calc(-50% + 5px));
+    }
+
+    body.mobile-menu-open header {
+        padding-bottom: 0.85rem;
     }
 
     .logo {
