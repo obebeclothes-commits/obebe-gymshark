@@ -21,7 +21,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 3,
@@ -40,7 +42,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 450.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-02-02"
     },
     {
         id: 4,
@@ -59,7 +63,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 450.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-02-02"
     },
     {
         id: 5,
@@ -78,7 +84,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 450.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-02-02"
     },
     {
         id: 6,
@@ -97,7 +105,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 450.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-02-02"
     },
     {
         id: 7,
@@ -116,7 +126,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 450.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-02-02"
     },
     {
         id: 8,
@@ -135,7 +147,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-02-02"
     },
     {
         id: 9,
@@ -154,7 +168,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-03-31"
     },
     {
         id: 10,
@@ -173,7 +189,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-03-31"
     },
     {
         id: 12,
@@ -192,7 +210,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 13,
@@ -211,7 +231,30 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-13"
+    },
+    {
+        id: 14,
+        nombre: "LIFTING MESH 5",
+        categoria: "Hombre",
+        precio: 500.00,
+        stock: 0,
+        imagen1: "hombre/14.webp",
+        imagen2: "hombre/14.1.webp",
+        talla: "S",
+        tallaBase: "S",
+        tipo: "Short",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 400.00,
+        mayoreo: true,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-13"
     },
     {
         id: 15,
@@ -230,7 +273,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-13"
     },
     {
         id: 17,
@@ -249,7 +294,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-13"
     },
     {
         id: 18,
@@ -268,7 +315,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-13"
     },
     {
         id: 19,
@@ -287,7 +336,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 20,
@@ -306,7 +357,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 21,
@@ -325,7 +378,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-02-02"
     },
     {
         id: 22,
@@ -344,7 +399,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-06"
     },
     {
         id: 23,
@@ -363,7 +420,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-06"
     },
     {
         id: 25,
@@ -382,7 +441,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 26,
@@ -401,7 +462,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 27,
@@ -420,7 +483,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 28,
@@ -439,7 +504,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 29,
@@ -458,7 +525,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 30,
@@ -477,7 +546,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 31,
@@ -496,7 +567,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 33,
@@ -515,7 +588,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 34,
@@ -534,7 +609,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 35,
@@ -553,7 +630,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 36,
@@ -572,7 +651,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 37,
@@ -591,7 +672,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 38,
@@ -610,7 +693,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 39,
@@ -629,7 +714,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 41,
@@ -648,7 +735,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 42,
@@ -667,7 +756,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 43,
@@ -686,7 +777,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 44,
@@ -705,7 +798,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-13"
     },
     {
         id: 45,
@@ -724,7 +819,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 46,
@@ -743,7 +840,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 47,
@@ -762,7 +861,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-02-02"
     },
     {
         id: 48,
@@ -781,7 +882,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 49,
@@ -800,7 +903,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-30"
     },
     {
         id: 50,
@@ -819,7 +924,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-30"
     },
     {
         id: 51,
@@ -838,7 +945,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 52,
@@ -857,7 +966,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 53,
@@ -876,7 +987,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 54,
@@ -895,7 +1008,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 55,
@@ -914,7 +1029,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 58,
@@ -923,7 +1040,7 @@ const productosHombre = [
         precio: 750.00,
         stock: 1,
         imagen1: "hombre/58.webp",
-        imagen2: "",
+        imagen2: "hombre/58.1.webp",
         talla: "S",
         tallaBase: "S",
         tipo: "Jersey",
@@ -933,7 +1050,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-04"
     },
     {
         id: 59,
@@ -952,7 +1071,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 61,
@@ -971,7 +1092,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 62,
@@ -990,7 +1113,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 63,
@@ -1009,7 +1134,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 64,
@@ -1028,7 +1155,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 65,
@@ -1047,7 +1176,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 67,
@@ -1066,7 +1197,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 68,
@@ -1085,7 +1218,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 69,
@@ -1094,7 +1229,7 @@ const productosHombre = [
         precio: 1300.00,
         stock: 1,
         imagen1: "hombre/69.webp",
-        imagen2: "",
+        imagen2: "hombre/69.1.webp",
         talla: "M",
         tallaBase: "M",
         tipo: "Compression Shirt",
@@ -1104,7 +1239,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-03"
     },
     {
         id: 70,
@@ -1123,7 +1260,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 71,
@@ -1142,7 +1281,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 72,
@@ -1161,7 +1302,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 74,
@@ -1180,7 +1323,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 75,
@@ -1199,7 +1344,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 76,
@@ -1218,7 +1365,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 77,
@@ -1237,7 +1386,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 78,
@@ -1256,7 +1407,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 80,
@@ -1275,7 +1428,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 82,
@@ -1294,7 +1449,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 83,
@@ -1313,7 +1470,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 84,
@@ -1332,7 +1491,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 85,
@@ -1351,7 +1512,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 86,
@@ -1370,7 +1533,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 87,
@@ -1389,7 +1554,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 88,
@@ -1408,7 +1575,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 89,
@@ -1427,7 +1596,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 90,
@@ -1446,7 +1617,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 91,
@@ -1465,7 +1638,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 92,
@@ -1484,7 +1659,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 93,
@@ -1503,7 +1680,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-04"
     },
     {
         id: 95,
@@ -1522,7 +1701,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 97,
@@ -1541,7 +1722,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 99,
@@ -1560,7 +1743,30 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
+    },
+    {
+        id: 100,
+        nombre: "CREST OVERSIZED TRACK JACKET",
+        categoria: "Hombre",
+        precio: 800.00,
+        stock: 0,
+        imagen1: "hombre/100.webp",
+        imagen2: "hombre/100.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Jacket",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 650.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 102,
@@ -1579,7 +1785,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-04-20"
     },
     {
         id: 105,
@@ -1598,7 +1806,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-27"
     },
     {
         id: 106,
@@ -1617,7 +1827,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-27"
     },
     {
         id: 107,
@@ -1636,7 +1848,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-27"
     },
     {
         id: 108,
@@ -1655,7 +1869,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-27"
     },
     {
         id: 109,
@@ -1674,7 +1890,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-27"
     },
     {
         id: 110,
@@ -1693,7 +1911,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-27"
     },
     {
         id: 111,
@@ -1712,7 +1932,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 112,
@@ -1731,7 +1953,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-27"
     },
     {
         id: 116,
@@ -1750,7 +1974,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "CBUM",
-        coleccionCatalogo: "CBUM"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "CBUM",
+        fechaStock: "2026-05-11"
     },
     {
         id: 121,
@@ -1769,7 +1995,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "CBUM",
-        coleccionCatalogo: "CBUM"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "CBUM",
+        fechaStock: "2026-05-11"
     },
     {
         id: 123,
@@ -1788,7 +2016,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "CBUM",
-        coleccionCatalogo: "CBUM"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "CBUM",
+        fechaStock: "2026-05-11"
     },
     {
         id: 124,
@@ -1807,7 +2037,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "CBUM",
-        coleccionCatalogo: "CBUM"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "CBUM",
+        fechaStock: "2026-05-11"
     },
     {
         id: 125,
@@ -1826,7 +2058,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "CBUM",
-        coleccionCatalogo: "CBUM"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "CBUM",
+        fechaStock: "2026-05-11"
     },
     {
         id: 126,
@@ -1845,7 +2079,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "CBUM",
-        coleccionCatalogo: "CBUM"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "CBUM",
+        fechaStock: "2026-05-11"
     },
     {
         id: 127,
@@ -1864,7 +2100,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "CBUM",
-        coleccionCatalogo: "CBUM"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "CBUM",
+        fechaStock: "2026-05-11"
     },
     {
         id: 128,
@@ -1883,7 +2121,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 130,
@@ -1902,7 +2142,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 131,
@@ -1921,7 +2163,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 132,
@@ -1940,7 +2184,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 133,
@@ -1959,7 +2205,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 134,
@@ -1978,7 +2226,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 135,
@@ -1997,7 +2247,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 136,
@@ -2016,7 +2268,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-27"
     },
     {
         id: 137,
@@ -2025,7 +2279,7 @@ const productosHombre = [
         precio: 1050.00,
         stock: 1,
         imagen1: "hombre/137.webp",
-        imagen2: "",
+        imagen2: "hombre/137.1.webp",
         talla: "M",
         tallaBase: "M",
         tipo: "T-Shirt",
@@ -2035,7 +2289,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-27"
     },
     {
         id: 138,
@@ -2054,7 +2310,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 139,
@@ -2073,7 +2331,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 142,
@@ -2092,7 +2352,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-05-22"
     },
     {
         id: 143,
@@ -2111,7 +2373,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-06-01"
     },
     {
         id: 145,
@@ -2130,7 +2394,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 146,
@@ -2149,7 +2415,30 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
+    },
+    {
+        id: 148,
+        nombre: "TACTICAL JOGGERS",
+        categoria: "Hombre",
+        precio: 750.00,
+        stock: 0,
+        imagen1: "hombre/148.webp",
+        imagen2: "hombre/148.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Joggers",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 700.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 149,
@@ -2168,7 +2457,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 150,
@@ -2187,7 +2478,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 151,
@@ -2206,7 +2499,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 152,
@@ -2225,7 +2520,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 8,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 153,
@@ -2244,7 +2541,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 154,
@@ -2263,7 +2562,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 157,
@@ -2282,7 +2583,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 160,
@@ -2301,7 +2604,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 162,
@@ -2320,7 +2625,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 165,
@@ -2339,7 +2646,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 166,
@@ -2358,7 +2667,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 167,
@@ -2377,7 +2688,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 168,
@@ -2396,7 +2709,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 171,
@@ -2415,7 +2730,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 172,
@@ -2434,7 +2751,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 175,
@@ -2453,7 +2772,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 176,
@@ -2472,7 +2793,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 177,
@@ -2491,7 +2814,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 178,
@@ -2510,7 +2835,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 180,
@@ -2529,7 +2856,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 187,
@@ -2548,7 +2877,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 189,
@@ -2567,7 +2898,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 190,
@@ -2586,7 +2919,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 191,
@@ -2605,7 +2940,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 192,
@@ -2624,7 +2961,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 193,
@@ -2643,7 +2982,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 6,
         coleccion: "BELCAST",
-        coleccionCatalogo: "BELCAST"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "BELCAST",
+        fechaStock: "2026-07-07"
     },
     {
         id: 196,
@@ -2662,7 +3003,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "BELCAST",
-        coleccionCatalogo: "BELCAST"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "BELCAST",
+        fechaStock: "2026-07-07"
     },
     {
         id: 198,
@@ -2681,7 +3024,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 202,
@@ -2700,7 +3045,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 203,
@@ -2719,7 +3066,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 204,
@@ -2738,7 +3087,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 206,
@@ -2757,7 +3108,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 214,
@@ -2776,7 +3129,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 215,
@@ -2795,7 +3150,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 218,
@@ -2814,7 +3171,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 222,
@@ -2833,7 +3192,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 224,
@@ -2852,7 +3213,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 225,
@@ -2871,7 +3234,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 226,
@@ -2890,7 +3255,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 227,
@@ -2909,7 +3276,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 228,
@@ -2928,7 +3297,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 229,
@@ -2947,7 +3318,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 231,
@@ -2966,7 +3339,9 @@ const productosHombre = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 232,
@@ -2975,7 +3350,7 @@ const productosHombre = [
         precio: 1100.00,
         stock: 1,
         imagen1: "hombre/232.webp",
-        imagen2: "",
+        imagen2: "hombre/232.1.webp",
         talla: "S",
         tallaBase: "S",
         tipo: "T-Shirt",
@@ -2985,7 +3360,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "GOLDS GYM",
-        coleccionCatalogo: "GOLDS GYM"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "GOLDS GYM",
+        fechaStock: "2026-07-07"
     },
     {
         id: 233,
@@ -3004,7 +3381,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "GOLDS GYM",
-        coleccionCatalogo: "GOLDS GYM"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "GOLDS GYM",
+        fechaStock: "2026-07-07"
     },
     {
         id: 234,
@@ -3013,7 +3392,7 @@ const productosHombre = [
         precio: 1200.00,
         stock: 1,
         imagen1: "hombre/234.webp",
-        imagen2: "",
+        imagen2: "hombre/234.1.webp",
         talla: "L",
         tallaBase: "L",
         tipo: "Compression Shirt",
@@ -3023,7 +3402,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "GOLDS GYM",
-        coleccionCatalogo: "GOLDS GYM"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "GOLDS GYM",
+        fechaStock: "2026-07-07"
     },
     {
         id: 235,
@@ -3032,7 +3413,7 @@ const productosHombre = [
         precio: 1600.00,
         stock: 1,
         imagen1: "hombre/235.webp",
-        imagen2: "",
+        imagen2: "hombre/235.1.webp",
         talla: "M",
         tallaBase: "M",
         tipo: "Joggers",
@@ -3042,7 +3423,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 236,
@@ -3061,7 +3444,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 4,
         coleccion: "DEVANT",
-        coleccionCatalogo: "DEVANT"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "DEVANT",
+        fechaStock: "2026-08-14"
     },
     {
         id: 237,
@@ -3080,7 +3465,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "DEVANT",
-        coleccionCatalogo: "DEVANT"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "DEVANT",
+        fechaStock: "2026-08-14"
     },
     {
         id: 239,
@@ -3099,7 +3486,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 2,
         coleccion: "DEVANT",
-        coleccionCatalogo: "DEVANT"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "DEVANT",
+        fechaStock: "2026-08-14"
     },
     {
         id: 241,
@@ -3118,7 +3507,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "DEVANT",
-        coleccionCatalogo: "DEVANT"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "DEVANT",
+        fechaStock: "2026-08-14"
     },
     {
         id: 243,
@@ -3137,7 +3528,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "DEVANT",
-        coleccionCatalogo: "DEVANT"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "DEVANT",
+        fechaStock: "2026-08-14"
     },
     {
         id: 245,
@@ -3156,7 +3549,324 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 1,
         coleccion: "DEVANT",
-        coleccionCatalogo: "DEVANT"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "DEVANT",
+        fechaStock: "2026-08-14"
+    },
+    {
+        id: 246,
+        nombre: "1002 - NARUTO SWEAT SHORTS",
+        categoria: "Hombre",
+        precio: 1150.00,
+        stock: 0,
+        imagen1: "hombre/246.webp",
+        imagen2: "hombre/246.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Short",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 247,
+        nombre: "1002 - NARUTO SWEAT SHORTS",
+        categoria: "Hombre",
+        precio: 1150.00,
+        stock: 0,
+        imagen1: "hombre/247.webp",
+        imagen2: "hombre/247.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Short",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 248,
+        nombre: "1002 - NARUTO SWEAT SHORTS",
+        categoria: "Hombre",
+        precio: 1150.00,
+        stock: 0,
+        imagen1: "hombre/248.webp",
+        imagen2: "hombre/248.1.webp",
+        talla: "L",
+        tallaBase: "L",
+        tipo: "Short",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 249,
+        nombre: "1002 - NARUTO SWEAT SHORTS",
+        categoria: "Hombre",
+        precio: 1150.00,
+        stock: 0,
+        imagen1: "hombre/249.webp",
+        imagen2: "hombre/249.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Short",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 250,
+        nombre: "8073 - NARUTO LONGSLEEVES",
+        categoria: "Hombre",
+        precio: 1200.00,
+        stock: 0,
+        imagen1: "hombre/250.webp",
+        imagen2: "hombre/250.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Long Sleeve",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 251,
+        nombre: "8073 - NARUTO LONGSLEEVES",
+        categoria: "Hombre",
+        precio: 1200.00,
+        stock: 0,
+        imagen1: "hombre/251.webp",
+        imagen2: "hombre/251.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Long Sleeve",
+        color: "Blanco",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 252,
+        nombre: "3055 - NARUTO CUT-OFFS",
+        categoria: "Hombre",
+        precio: 1050.00,
+        stock: 0,
+        imagen1: "hombre/252.webp",
+        imagen2: "hombre/252.1.webp",
+        talla: "L",
+        tallaBase: "L",
+        tipo: "Tank Top",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 253,
+        nombre: "3055 - NARUTO CUT-OFFS",
+        categoria: "Hombre",
+        precio: 1050.00,
+        stock: 0,
+        imagen1: "hombre/253.webp",
+        imagen2: "hombre/253.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Tank Top",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 254,
+        nombre: "4319 - NARUTO ARTWORK TEES",
+        categoria: "Hombre",
+        precio: 1150.00,
+        stock: 0,
+        imagen1: "hombre/254.webp",
+        imagen2: "hombre/254.1.webp",
+        talla: "L",
+        tallaBase: "L",
+        tipo: "T-Shirt",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 255,
+        nombre: "4319 - NARUTO ARTWORK TEES",
+        categoria: "Hombre",
+        precio: 1150.00,
+        stock: 0,
+        imagen1: "hombre/255.webp",
+        imagen2: "hombre/255.1.webp",
+        talla: "L",
+        tallaBase: "L",
+        tipo: "T-Shirt",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 256,
+        nombre: "4319 - NARUTO ARTWORK TEES",
+        categoria: "Hombre",
+        precio: 1150.00,
+        stock: 0,
+        imagen1: "hombre/256.webp",
+        imagen2: "hombre/256.1.webp",
+        talla: "L",
+        tallaBase: "L",
+        tipo: "T-Shirt",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 257,
+        nombre: "2012 - NARUTO ARTWORK SWEATS",
+        categoria: "Hombre",
+        precio: 1650.00,
+        stock: 0,
+        imagen1: "hombre/257.webp",
+        imagen2: "hombre/257.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Pants",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 258,
+        nombre: "2012 - NARUTO ARTWORK SWEATS KURAMA",
+        categoria: "Hombre",
+        precio: 1650.00,
+        stock: 1,
+        imagen1: "hombre/258.webp",
+        imagen2: "hombre/258.1.webp",
+        talla: "L",
+        tallaBase: "L",
+        tipo: "Pants",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 259,
+        nombre: "2012 - NARUTO ARTWORK SWEATS",
+        categoria: "Hombre",
+        precio: 1650.00,
+        stock: 0,
+        imagen1: "hombre/259.webp",
+        imagen2: "hombre/259.1.webp",
+        talla: "L",
+        tallaBase: "L",
+        tipo: "Pants",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 260,
+        nombre: "2012 - NARUTO ARTWORK SWEATS",
+        categoria: "Hombre",
+        precio: 1650.00,
+        stock: 0,
+        imagen1: "hombre/260.webp",
+        imagen2: "hombre/260.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Pants",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
     },
     {
         id: 262,
@@ -3175,7 +3885,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "DEVANT",
-        coleccionCatalogo: "DEVANT"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "DEVANT",
+        fechaStock: "2026-08-14"
     },
     {
         id: 263,
@@ -3194,7 +3906,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "DEVANT",
-        coleccionCatalogo: "DEVANT"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "DEVANT",
+        fechaStock: "2026-08-14"
     },
     {
         id: 264,
@@ -3213,7 +3927,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "DEVANT",
-        coleccionCatalogo: "DEVANT"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "DEVANT",
+        fechaStock: "2026-08-14"
     },
     {
         id: 265,
@@ -3232,7 +3948,9 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "DEVANT",
-        coleccionCatalogo: "DEVANT"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "DEVANT",
+        fechaStock: "2026-08-14"
     },
     {
         id: 266,
@@ -3251,7 +3969,156 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "DEVANT",
-        coleccionCatalogo: "DEVANT"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "DEVANT",
+        fechaStock: "2026-08-14"
+    },
+    {
+        id: 267,
+        nombre: "5086 - Naruto Zip-Up Hoodie BATTLE",
+        categoria: "Hombre",
+        precio: 1750.00,
+        stock: 1,
+        imagen1: "hombre/267.webp",
+        imagen2: "hombre/267.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Hoodie",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 268,
+        nombre: "5083 - Naruto Stud Artwork Hoodie KAKUZU",
+        categoria: "Hombre",
+        precio: 1750.00,
+        stock: 1,
+        imagen1: "hombre/268.webp",
+        imagen2: "hombre/268.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Hoodie",
+        color: "Negro",
+        marca: "YoungLA",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "NARUTO",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "NARUTO",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 269,
+        nombre: "Conditioning Club Hoodie",
+        categoria: "Hombre",
+        precio: 950.00,
+        stock: 1,
+        imagen1: "hombre/269.webp",
+        imagen2: "hombre/269.1.webp",
+        talla: "L",
+        tallaBase: "L",
+        tipo: "Hoodie",
+        color: "Verde",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 270,
+        nombre: "VARSITY MESH SHORTS",
+        categoria: "Hombre",
+        precio: 550.00,
+        stock: 1,
+        imagen1: "hombre/270.webp",
+        imagen2: "hombre/270.1.webp",
+        talla: "S",
+        tallaBase: "S",
+        tipo: "Short",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 271,
+        nombre: "VARSITY MESH SHORTS",
+        categoria: "Hombre",
+        precio: 550.00,
+        stock: 1,
+        imagen1: "hombre/271.webp",
+        imagen2: "hombre/271.1.webp",
+        talla: "S",
+        tallaBase: "S",
+        tipo: "Short",
+        color: "Rojo",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 272,
+        nombre: "VARSITY MESH SHORTS",
+        categoria: "Hombre",
+        precio: 550.00,
+        stock: 1,
+        imagen1: "hombre/272.webp",
+        imagen2: "hombre/272.1.webp",
+        talla: "s",
+        tallaBase: "s",
+        tipo: "Short",
+        color: "Azul",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 273,
+        nombre: "VARSITY MESH SHORTS",
+        categoria: "Hombre",
+        precio: 550.00,
+        stock: 1,
+        imagen1: "hombre/273.webp",
+        imagen2: "hombre/273.1.webp",
+        talla: "S",
+        tallaBase: "S",
+        tipo: "Short",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
     },
     {
         id: 275,
@@ -3270,6 +4137,197 @@ const productosHombre = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "DEVANT",
-        coleccionCatalogo: "DEVANT"
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "DEVANT",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 276,
+        nombre: "Fit Zero 7\" Short",
+        categoria: "Hombre",
+        precio: 550.00,
+        stock: 2,
+        imagen1: "hombre/276.webp",
+        imagen2: "hombre/276.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Short",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 280,
+        nombre: "Running Graphic Crew Socks 2pk",
+        categoria: "Hombre",
+        precio: 450.00,
+        stock: 1,
+        imagen1: "hombre/280.webp",
+        imagen2: "hombre/280.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Accesorios",
+        color: "Blanco",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 281,
+        nombre: "Training Short",
+        categoria: "Hombre",
+        precio: 550.00,
+        stock: 1,
+        imagen1: "hombre/281.webp",
+        imagen2: "hombre/281.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Short",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 282,
+        nombre: "Ribbed Tank 1PK",
+        categoria: "Hombre",
+        precio: 500.00,
+        stock: 1,
+        imagen1: "hombre/282.webp",
+        imagen2: "hombre/282.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Tank Top",
+        color: "Blanco",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 283,
+        nombre: "Ribbed Tank 1PK",
+        categoria: "Hombre",
+        precio: 500.00,
+        stock: 1,
+        imagen1: "hombre/283.webp",
+        imagen2: "hombre/283.1.webp",
+        talla: "L",
+        tallaBase: "L",
+        tipo: "Tank Top",
+        color: "Blanco",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 284,
+        nombre: "Graphic Mesh Oversized T-Shirt",
+        categoria: "Hombre",
+        precio: 600.00,
+        stock: 2,
+        imagen1: "hombre/284.webp",
+        imagen2: "hombre/284.1.webp",
+        talla: "L",
+        tallaBase: "L",
+        tipo: "T-Shirt",
+        color: "Azul",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 285,
+        nombre: "Graphic Mesh Oversized T-Shirt",
+        categoria: "Hombre",
+        precio: 600.00,
+        stock: 2,
+        imagen1: "hombre/285.webp",
+        imagen2: "hombre/285.1.webp",
+        talla: "L",
+        tallaBase: "L",
+        tipo: "T-Shirt",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 286,
+        nombre: "Graphic Mesh Oversized T-Shirt",
+        categoria: "Hombre",
+        precio: 600.00,
+        stock: 2,
+        imagen1: "hombre/286.webp",
+        imagen2: "hombre/286.1.webp",
+        talla: "S",
+        tallaBase: "S",
+        tipo: "T-Shirt",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
+    },
+    {
+        id: 287,
+        nombre: "Graphic Mesh Oversized T-Shirt",
+        categoria: "Hombre",
+        precio: 600.00,
+        stock: 2,
+        imagen1: "hombre/287.jpg",
+        imagen2: "hombre/287.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "T-Shirt",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
     }
 ];

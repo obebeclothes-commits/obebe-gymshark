@@ -11,7 +11,7 @@ Requisitos:
   - La hoja debe estar compartida como "Cualquier persona con el enlace puede ver".
   - La hoja INVENTARIO unifica hombre y mujer; columna T = HOMBRE o MUJER.
   - Columna J puede mostrar vista previa con scripts/actualizar-columna-j-imagenes.py
-  - Solo se importan filas con CANTIDAD > 0 y nombre no vacío.
+  - Se importan filas con nombre y precio válidos (incluye stock 0 / agotados).
 """
 
 from __future__ import annotations
@@ -71,6 +71,15 @@ COLUMNAS = {
     "carrusel": "U",
     "coleccion": "X",
     "oferta_semanal": "Y",
+    "ubicacion": "AB",
+}
+
+MESES_FECHA_STOCK = {
+    "ene": 0, "enero": 0, "feb": 1, "febrero": 1, "mar": 2, "marzo": 2,
+    "abr": 3, "abril": 3, "may": 4, "mayo": 4, "jun": 5, "junio": 5,
+    "jul": 6, "julio": 6, "ago": 7, "agosto": 7, "sep": 8, "sept": 8,
+    "septiembre": 8, "oct": 9, "octubre": 9, "nov": 10, "noviembre": 10,
+    "dic": 11, "diciembre": 11,
 }
 
 FILA_INICIO_DATOS = 3  # Primera fila de producto (fila 1 = título, fila 2 = encabezados)
@@ -132,18 +141,25 @@ def columna_a_indice(letra: str) -> int:
     return valor - 1
 
 
-def _bajar(url: str) -> str:
-    try:
-        with urllib.request.urlopen(url, timeout=30) as resp:
-            return resp.read().decode("utf-8-sig")
-    except urllib.error.HTTPError as exc:
-        raise RuntimeError(
-            f"No se pudo descargar la hoja (HTTP {exc.code}). "
-            "Verifica que el sheet esté público: "
-            "Compartir → Cualquier persona con el enlace → Lector."
-        ) from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"Error de conexión al descargar el sheet: {exc}") from exc
+def _bajar(url: str, timeout: int = 120) -> str:
+    ultimo: BaseException | None = None
+    for intento in range(3):
+        try:
+            with urllib.request.urlopen(url, timeout=timeout) as resp:
+                return resp.read().decode("utf-8-sig")
+        except urllib.error.HTTPError as exc:
+            raise RuntimeError(
+                f"No se pudo descargar la hoja (HTTP {exc.code}). "
+                "Verifica que el sheet esté público: "
+                "Compartir → Cualquier persona con el enlace → Lector."
+            ) from exc
+        except (TimeoutError, urllib.error.URLError) as exc:
+            ultimo = exc
+            if intento < 2:
+                print(f"  Reintento {intento + 2}/3 tras error de red...")
+                continue
+            raise RuntimeError(f"Error de conexión al descargar el sheet: {exc}") from exc
+    raise RuntimeError(f"Error de conexión al descargar el sheet: {ultimo}")
 
 
 def descargar_csv(spreadsheet_id: str, nombre_hoja: str) -> str:
@@ -318,18 +334,125 @@ def debe_filtrar_por_segmento(nombre_hoja: str, filas: list[list[str]], idx: dic
     return hoja_usa_columna_segmento(filas, idx)
 
 
+def normalizar_mes_texto_stock(mes_raw: str) -> int | None:
+    mes_texto = re.sub(r"\s+", " ", str(mes_raw or "").strip().lower()).replace(".", "")
+    mes_texto = (
+        mes_texto.replace("á", "a").replace("é", "e").replace("í", "i")
+        .replace("ó", "o").replace("ú", "u")
+    )
+    if mes_texto in MESES_FECHA_STOCK:
+        return MESES_FECHA_STOCK[mes_texto]
+    clave = mes_texto[:3]
+    return MESES_FECHA_STOCK.get(clave)
+
+
+def parsear_fecha_stock(valor: str) -> str:
+    texto = str(valor or "").strip()
+    if not texto or texto.upper() == "NA":
+        return ""
+
+    m = re.match(r"^(\d{4})-(\d{1,2})-(\d{1,2})$", texto)
+    if m:
+        return f"{int(m.group(1)):04d}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+
+    def dmy_texto(partes: re.Match[str]) -> str:
+        mes = normalizar_mes_texto_stock(partes.group(2))
+        if mes is None:
+            return ""
+        anio = int(partes.group(3))
+        if anio < 100:
+            anio += 2000
+        return f"{anio:04d}-{mes + 1:02d}-{int(partes.group(1)):02d}"
+
+    for patron in (
+        r"^(\d{1,2})[-/\s]([a-zA-Z]{3,})[-/\s](\d{4})$",
+        r"^(\d{1,2})[-/\s]([a-zA-Z]{3,})[-/\s](\d{2})$",
+    ):
+        hit = re.match(patron, texto, re.I)
+        if hit:
+            iso = dmy_texto(hit)
+            if iso:
+                return iso
+
+    m = re.match(r"^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$", texto)
+    if m:
+        d, mes, anio = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if anio < 100:
+            anio += 2000
+        return f"{anio:04d}-{mes:02d}-{d:02d}"
+
+    m = re.match(r"^(\d{1,2})\s+de\s+([a-zA-Záéíóúñ]+)\s+de\s+(\d{2,4})$", texto, re.I)
+    if m:
+        mes = normalizar_mes_texto_stock(m.group(2))
+        if mes is not None:
+            anio = int(m.group(3))
+            if anio < 100:
+                anio += 2000
+            return f"{anio:04d}-{mes + 1:02d}-{int(m.group(1)):02d}"
+
+    return ""
+
+
+def inferir_categoria_desde_ubicacion(fila: list[str], idx: dict[str, int]) -> str:
+    ubicacion = obtener_valor(fila, idx.get("ubicacion", -1)).lower()
+    if "mujer" in ubicacion:
+        return "Mujer"
+    if "hombre" in ubicacion:
+        return "Hombre"
+    return ""
+
+
+EXTENSIONES_IMAGEN_LOCAL = (".webp", ".png", ".jpg", ".jpeg")
+
+
+def carpeta_tiene_imagen_producto(raiz: Path, carpeta: str, numero: int) -> bool:
+    directorio = raiz / carpeta
+    if not directorio.is_dir():
+        return False
+    for ext in EXTENSIONES_IMAGEN_LOCAL:
+        if (directorio / f"{numero}{ext}").is_file():
+            return True
+        if (directorio / f"{numero}.1{ext}").is_file():
+            return True
+    return False
+
+
+def inferir_categoria_sin_segmento(
+    fila: list[str],
+    idx: dict[str, int],
+    raiz: Path,
+) -> str:
+    """Cuando la columna T (género) está vacía: ubicación AB, luego carpeta de fotos."""
+    inferida = inferir_categoria_desde_ubicacion(fila, idx)
+    if inferida:
+        return inferida
+    numero = parsear_numero_imagen(obtener_valor(fila, idx["imagen"]))
+    if numero is not None:
+        en_hombre = carpeta_tiene_imagen_producto(raiz, "hombre", numero)
+        en_mujer = carpeta_tiene_imagen_producto(raiz, "mujer", numero)
+        if en_hombre and not en_mujer:
+            return "Hombre"
+        if en_mujer and not en_hombre:
+            return "Mujer"
+    return "Hombre"
+
+
 def fila_pertenece_categoria(
     fila: list[str],
     idx: dict[str, int],
     categoria: str,
     usar_segmento: bool,
+    raiz: Path | None = None,
 ) -> bool:
     seg = obtener_valor(fila, idx["segmento"])
     if seg:
         return normalizar_segmento(seg) == categoria
     if not usar_segmento:
         return True
-    return False
+    if raiz is None:
+        raiz = Path(__file__).resolve().parent.parent
+    asignada = inferir_categoria_sin_segmento(fila, idx, raiz)
+    return asignada == categoria
 
 
 def normalizar_tipo(valor: str) -> str:
@@ -370,7 +493,13 @@ def resolver_imagenes(carpeta: Path, carpeta_rel: str, numero_imagen: int) -> tu
                 return f"{carpeta_rel}/{numero_imagen}{sufijo}{ext}"
         return ""
 
-    return buscar(""), buscar(".1")
+    img1 = buscar("")
+    img2 = buscar(".1")
+    if not img1:
+        img1 = f"{carpeta_rel}/{numero_imagen}.webp"
+    if not img2:
+        img2 = f"{carpeta_rel}/{numero_imagen}.1.webp"
+    return img1, img2
 
 
 def leer_productos_desde_csv(
@@ -398,13 +527,11 @@ def leer_productos_desde_csv(
 
         if not nombre:
             continue
-        if not fila_pertenece_categoria(fila, idx, categoria, usar_segmento):
+        if not fila_pertenece_categoria(
+            fila, idx, categoria, usar_segmento, raiz=carpeta_imagenes.parent
+        ):
             omitidos_segmento += 1
             continue
-        if stock <= 0:
-            omitidos += 1
-            continue
-
         talla_raw = obtener_valor(fila, idx["talla"])
         precio = parsear_precio(obtener_valor(fila, idx["precio"]))
         precio_mayoreo = parsear_precio(obtener_valor(fila, idx["precio_mayoreo"]))
@@ -416,6 +543,8 @@ def leer_productos_desde_csv(
             print(f"  [!] Fila {num_fila}: '{nombre}' sin precio válido, se omite.")
             omitidos += 1
             continue
+
+        fecha_stock = parsear_fecha_stock(obtener_valor(fila, idx["fecha_stock"]))
 
         imagen_num = parsear_numero_imagen(obtener_valor(fila, idx["imagen"]))
         ref_imagen = elegir_numero_imagen(imagen_num, nuevo_id, numeros_imagen_usados)
@@ -451,6 +580,7 @@ def leer_productos_desde_csv(
                 "precioOfertaSemanal": round(precio_oferta_semanal, 2)
                 if precio_oferta_semanal > 0
                 else 0,
+                "fechaStock": fecha_stock,
             }
         )
         productos[-1]["coleccionCatalogo"] = productos[-1]["coleccion"]
@@ -494,6 +624,7 @@ def producto_a_js(producto: dict, indent: str = "    ") -> str:
             "num",
         ),
         ("coleccionCatalogo", producto.get("coleccionCatalogo", producto.get("coleccion", "")), "str"),
+        ("fechaStock", producto.get("fechaStock", ""), "str"),
     ]
 
     lineas = [f"{indent}{{"]
@@ -521,6 +652,30 @@ const {variable_js} = [
 {bloques}
 ];
 """
+
+
+def filas_sin_categoria_en_catalogo(
+    csv_texto: str,
+    raiz: Path,
+    nombre_hoja: str = HOJA_INVENTARIO,
+) -> list[dict]:
+    """Filas con nombre y precio que no entrarían ni en hombre ni en mujer."""
+    filas = list(csv.reader(io.StringIO(csv_texto)))
+    idx = {nombre: columna_a_indice(letra) for nombre, letra in COLUMNAS.items()}
+    usar_segmento = debe_filtrar_por_segmento(nombre_hoja, filas, idx)
+    perdidas: list[dict] = []
+    for num_fila, fila in enumerate(filas[FILA_INICIO_DATOS - 1 :], start=FILA_INICIO_DATOS):
+        nombre = obtener_valor(fila, idx["nombre"])
+        if not nombre:
+            continue
+        if parsear_precio(obtener_valor(fila, idx["precio"])) <= 0:
+            continue
+        en_h = fila_pertenece_categoria(fila, idx, "Hombre", usar_segmento, raiz=raiz)
+        en_m = fila_pertenece_categoria(fila, idx, "Mujer", usar_segmento, raiz=raiz)
+        if not en_h and not en_m:
+            ref = obtener_valor(fila, idx["imagen"]).strip() or "?"
+            perdidas.append({"fila": num_fila, "ref": ref, "nombre": nombre})
+    return perdidas
 
 
 def contar_imagenes_faltantes(productos: list[dict], carpeta: Path) -> list[int]:
@@ -557,15 +712,15 @@ def main() -> int:
     archivo_salida = raiz / config["archivo_salida"]
 
     print(f"Descargando hoja '{nombre_hoja}'...")
-    try:
-        csv_texto = descargar_csv(SPREADSHEET_ID, nombre_hoja)
-    except RuntimeError:
-        if nombre_hoja == HOJA_INVENTARIO:
-            print(f"  No se encontró '{HOJA_INVENTARIO}', probando '{HOJA_INVENTARIO_LEGACY}'...")
+    if nombre_hoja == HOJA_INVENTARIO:
+        csv_texto = descargar_hoja_inventario(SPREADSHEET_ID)
+    else:
+        try:
+            csv_texto = descargar_csv(SPREADSHEET_ID, nombre_hoja)
+        except RuntimeError:
+            print(f"  No se encontró '{nombre_hoja}', probando '{HOJA_INVENTARIO_LEGACY}'...")
             csv_texto = descargar_csv(SPREADSHEET_ID, HOJA_INVENTARIO_LEGACY)
             nombre_hoja = HOJA_INVENTARIO_LEGACY
-        else:
-            raise
 
     print("Procesando filas...")
     productos = leer_productos_desde_csv(
@@ -590,6 +745,11 @@ def main() -> int:
     print(f"  IDs: 1 -> {productos[-1]['id']}")
     print(f"  Marcas: {', '.join(f'{k} ({v})' for k, v in sorted(marcas.items()))}")
     print(f"  Imágenes faltantes en {config['carpeta_imagenes']}/: {len(faltantes)}")
+    sin_cat = filas_sin_categoria_en_catalogo(csv_texto, raiz, nombre_hoja)
+    if sin_cat:
+        print(f"  [!] {len(sin_cat)} fila(s) del sheet no entran en Hombre ni Mujer (revisa T/AB/fotos):")
+        for item in sin_cat[:15]:
+            print(f"      fila {item['fila']} A={item['ref']} — {item['nombre'][:50]}")
     if faltantes and len(faltantes) <= 20:
         print(f"    IDs sin imagen: {', '.join(map(str, faltantes))}")
     elif faltantes:

@@ -19,12 +19,30 @@ function candidatosImagen(fuente) {
         .filter(function(v, i, a) { return v && a.indexOf(v) === i; });
 }
 
+function mostrarPlaceholderImagenProducto(contenedor, etiqueta) {
+    contenedor.dataset.type = 'placeholder';
+    contenedor.innerHTML = '';
+    contenedor.classList.add('product-image--placeholder');
+    var span = document.createElement('span');
+    span.className = 'product-image-placeholder-label';
+    span.textContent = etiqueta || 'Producto';
+    contenedor.appendChild(span);
+}
+
 function renderizarImagenProducto(contenedor, fuente, opciones) {
     opciones = opciones || {};
     var candidatos = candidatosImagen(fuente);
     if (!candidatos.length) {
-        contenedor.dataset.type = 'emoji';
-        contenedor.textContent = '🛍️';
+        if (typeof obtenerRutaImagenProducto === 'function' && contenedor.dataset.productId) {
+            var fallback = obtenerRutaImagenProducto(
+                { id: contenedor.dataset.productId, categoria: contenedor.dataset.productCategoria || 'Hombre' },
+                1
+            );
+            candidatos = candidatosImagen(fallback);
+        }
+    }
+    if (!candidatos.length) {
+        mostrarPlaceholderImagenProducto(contenedor, contenedor.dataset.alt || '');
         return;
     }
     if (contenedor.dataset.type === 'img' || !contenedor.dataset.type) {
@@ -45,11 +63,11 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
                 renderizarImagenProducto(contenedor, contenedor.dataset.img1);
                 return;
             }
-            contenedor.dataset.type = 'emoji';
-            contenedor.textContent = '🛍️';
+            mostrarPlaceholderImagenProducto(contenedor, contenedor.dataset.alt || alt);
         });
         img.src = candidatos[0];
         contenedor.innerHTML = '';
+        contenedor.classList.remove('product-image--placeholder');
         contenedor.appendChild(img);
         return;
     }
@@ -1717,14 +1735,21 @@ function crearTarjetaProducto(producto) {
     const imageContainer = document.createElement('div');
     imageContainer.className = 'product-image';
     imageContainer.dataset.alt = producto.nombre;
-    if (imagen1) {
+    imageContainer.dataset.productId = String(producto.id || '');
+    imageContainer.dataset.productCategoria = producto.categoria || 'Hombre';
+    var ruta1 = imagen1 || (typeof obtenerRutaImagenProducto === 'function'
+        ? obtenerRutaImagenProducto(producto, 1)
+        : '');
+    var ruta2 = imagen2 || (typeof obtenerRutaImagenProducto === 'function'
+        ? obtenerRutaImagenProducto(producto, 2)
+        : '');
+    if (ruta1) {
         imageContainer.dataset.type = 'img';
-        imageContainer.dataset.img1 = imagen1;
-        if (imagen2) imageContainer.dataset.img2 = imagen2;
-        renderizarImagenProducto(imageContainer, imagen1);
+        imageContainer.dataset.img1 = ruta1;
+        if (ruta2) imageContainer.dataset.img2 = ruta2;
+        renderizarImagenProducto(imageContainer, ruta1);
     } else {
-        imageContainer.dataset.type = 'emoji';
-        imageContainer.textContent = '🛍️';
+        mostrarPlaceholderImagenProducto(imageContainer, producto.nombre);
     }
     imageWrap.appendChild(imageContainer);
 

@@ -17,6 +17,7 @@
     var IDX_COLECCION = 23; // columna X
     var IDX_OFERTA_SEMANAL = 24; // columna Y
     var IDX_FECHA_STOCK = 10; // columna K
+    var IDX_UBICACION = 27; // columna AB
 
     var MESES_FECHA_STOCK = {
         ene: 0, enero: 0, feb: 1, febrero: 1, mar: 2, marzo: 2, abr: 3, abril: 3,
@@ -399,11 +400,41 @@
         return false;
     }
 
+    function inferirCategoriaDesdeUbicacion(fila) {
+        var u = (fila[IDX_UBICACION] || '').trim().toLowerCase();
+        if (u.indexOf('mujer') >= 0) return 'Mujer';
+        if (u.indexOf('hombre') >= 0) return 'Hombre';
+        return '';
+    }
+
+    function catalogoContieneRefImagen(catalogo, ref) {
+        if (!Array.isArray(catalogo) || ref <= 0) return false;
+        return catalogo.some(function(p) {
+            return Number(p.id) === ref;
+        });
+    }
+
+    /** Misma lógica que scripts/importar-stock.py cuando la columna T está vacía. */
+    function inferirCategoriaSinSegmento(fila) {
+        var inferida = inferirCategoriaDesdeUbicacion(fila);
+        if (inferida) return inferida;
+        var ref = parsearNumeroImagen(fila[IDX_IMAGEN]);
+        if (ref > 0) {
+            var hombre = typeof productosHombre !== 'undefined' ? productosHombre : [];
+            var mujer = typeof productosMujer !== 'undefined' ? productosMujer : [];
+            var enH = catalogoContieneRefImagen(hombre, ref);
+            var enM = catalogoContieneRefImagen(mujer, ref);
+            if (enH && !enM) return 'Hombre';
+            if (enM && !enH) return 'Mujer';
+        }
+        return 'Hombre';
+    }
+
     function filaPerteneceCategoria(fila, categoria, usarSegmento) {
         var seg = (fila[IDX_SEGMENTO] || '').trim();
         if (seg) return normalizarSegmento(seg) === categoria;
         if (!usarSegmento) return true;
-        return false;
+        return inferirCategoriaSinSegmento(fila) === categoria;
     }
 
     function setsToSortedArrays(opciones) {
@@ -669,6 +700,84 @@
         });
     }
 
+    function productoCoincideDatosSheet(producto, datosFila) {
+        if (!producto || !datosFila) return false;
+        var refProd = extraerRefImagenProducto(producto);
+        var refFila = parsearNumeroImagen(datosFila.refImagen);
+        if (refProd > 0 && refFila > 0 && refProd === refFila) {
+            var tallaP = normalizarTalla(producto.tallaBase || producto.talla);
+            var tallaF = normalizarTalla(datosFila.talla);
+            if (tallaP && tallaF && tallaP !== tallaF) return false;
+            if (datosFila.color && producto.color && normColorClave(datosFila.color) !== normColorClave(producto.color)) {
+                return false;
+            }
+            return true;
+        }
+        var claveProd = claveProducto(
+            producto.nombre,
+            normalizarTalla(producto.tallaBase || producto.talla),
+            producto.color,
+            producto.marca,
+            refProd
+        );
+        var claveFila = claveProducto(
+            datosFila.nombre,
+            normalizarTalla(datosFila.talla),
+            datosFila.color,
+            datosFila.marca,
+            refFila
+        );
+        return claveProd === claveFila;
+    }
+
+    function crearProductoDesdeDatosSheet(datosFila, categoria) {
+        var ref = parsearNumeroImagen(datosFila.refImagen);
+        var carpeta = categoria === 'Mujer' ? 'mujer' : 'hombre';
+        var imagen1 = ref ? (carpeta + '/' + ref + '.webp') : '';
+        var imagen2 = ref ? (carpeta + '/' + ref + '.1.webp') : '';
+        return {
+            id: ref || datosFila.nombre,
+            nombre: datosFila.nombre,
+            categoria: categoria,
+            precio: datosFila.precio || 0,
+            stock: datosFila.stock,
+            imagen1: imagen1,
+            imagen2: imagen2,
+            talla: datosFila.talla,
+            tallaBase: datosFila.talla,
+            tipo: datosFila.tipo || '',
+            color: datosFila.color || '',
+            marca: datosFila.marca || '',
+            precioMayoreo: datosFila.precioMayoreo || 0,
+            precioMayoreo50: datosFila.precioMayoreo50 || 0,
+            descuentoMayoreo: datosFila.descuentoMayoreo || '',
+            descuentoMayoreo50: datosFila.descuentoMayoreo50 || '',
+            mayoreo: !!datosFila.mayoreo,
+            posicionCarrusel: datosFila.posicionCarrusel || 0,
+            coleccion: datosFila.coleccion || '',
+            coleccionCatalogo: datosFila.coleccion || '',
+            precioOfertaSemanal: datosFila.precioOfertaSemanal || 0,
+            ofertaSemanal: (datosFila.precioOfertaSemanal || 0) > 0,
+            fechaStock: datosFila.fechaStock || ''
+        };
+    }
+
+    function inyectarProductosFaltantesDesdeMapa(catalogo, mapa, categoria) {
+        if (!catalogo || !mapa) return 0;
+        var agregados = 0;
+        mapa.forEach(function(datosFila) {
+            if (!datosFila) return;
+            if (!parsearNumeroImagen(datosFila.refImagen)) return;
+            var yaExiste = catalogo.some(function(p) {
+                return productoCoincideDatosSheet(p, datosFila);
+            });
+            if (yaExiste) return;
+            catalogo.push(crearProductoDesdeDatosSheet(datosFila, categoria));
+            agregados += 1;
+        });
+        return agregados;
+    }
+
     function sincronizarDesdeCsv(csv) {
         if (typeof window.preservarColeccionesCatalogo === 'function') {
             window.preservarColeccionesCatalogo();
@@ -681,11 +790,13 @@
         var opcionesSheet = {};
         if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) {
             var datosHombre = leerFilasSheet(csv, 'Hombre');
+            inyectarProductosFaltantesDesdeMapa(productosHombre, datosHombre.mapa, 'Hombre');
             sincronizarCatalogo(productosHombre, datosHombre.mapa, datosHombre.mapaPorRef);
             opcionesSheet.Hombre = datosHombre.opciones;
         }
         if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) {
             var datosMujer = leerFilasSheet(csv, 'Mujer');
+            inyectarProductosFaltantesDesdeMapa(productosMujer, datosMujer.mapa, 'Mujer');
             sincronizarCatalogo(productosMujer, datosMujer.mapa, datosMujer.mapaPorRef);
             opcionesSheet.Mujer = datosMujer.opciones;
         }

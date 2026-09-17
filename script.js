@@ -18,7 +18,7 @@ const productos = (typeof productosHombre !== 'undefined' && Array.isArray(produ
 
 
 /** Bust de caché para fotos (CDN / navegador) al corregir un archivo. */
-var VERSION_IMAGENES_PRODUCTO = '20260819';
+var VERSION_IMAGENES_PRODUCTO = '20260917';
 
 function esRutaImagen(valor) {
     return /\.(png|jpe?g|webp|gif|svg)(\?|$)/i.test(valor || '');
@@ -33,9 +33,23 @@ function conVersionImagen(ruta) {
 function obtenerRutaImagenProducto(producto, numero) {
     var guardada = numero === 2 ? (producto.imagen2 || '') : (producto.imagen1 || '');
     if (guardada && esRutaImagen(guardada)) return conVersionImagen(guardada);
-    if (numero !== 1 || !producto || !producto.id) return '';
+    if (!producto || !producto.id) return '';
     var carpeta = (producto.categoria === 'Mujer') ? 'mujer' : 'hombre';
-    return conVersionImagen(carpeta + '/' + producto.id + '.webp');
+    var ref = producto.id;
+    if (numero === 2) {
+        return conVersionImagen(carpeta + '/' + ref + '.1.webp');
+    }
+    return conVersionImagen(carpeta + '/' + ref + '.webp');
+}
+
+function mostrarPlaceholderImagenProducto(contenedor, etiqueta) {
+    contenedor.dataset.type = 'placeholder';
+    contenedor.innerHTML = '';
+    contenedor.classList.add('product-image--placeholder');
+    var span = document.createElement('span');
+    span.className = 'product-image-placeholder-label';
+    span.textContent = etiqueta || 'Producto';
+    contenedor.appendChild(span);
 }
 
 function candidatosImagen(fuente) {
@@ -56,8 +70,7 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
     opciones = opciones || {};
     var candidatos = candidatosImagen(fuente);
     if (!candidatos.length) {
-        contenedor.dataset.type = 'emoji';
-        contenedor.textContent = '🛍️';
+        mostrarPlaceholderImagenProducto(contenedor, contenedor.dataset.alt || '');
         return;
     }
     if (contenedor.dataset.type === 'img' || !contenedor.dataset.type) {
@@ -77,8 +90,7 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
                 renderizarImagenProducto(contenedor, contenedor.dataset.img1);
                 return;
             }
-            contenedor.dataset.type = 'emoji';
-            contenedor.textContent = '🛍️';
+            mostrarPlaceholderImagenProducto(contenedor, contenedor.dataset.alt || alt);
         });
         img.src = candidatos[0];
         contenedor.innerHTML = '';
@@ -248,8 +260,7 @@ function renderizarCarruselHombre(categoria = 'Hombre', mostrarTodos = false) {
             if (imagen2) imageContainer.dataset.img2 = imagen2;
             renderizarImagenProducto(imageContainer, imagen1);
         } else {
-            imageContainer.dataset.type = 'emoji';
-            imageContainer.textContent = '🛍️';
+            mostrarPlaceholderImagenProducto(imageContainer, producto.nombre);
         }
         imageWrap.appendChild(imageContainer);
 
@@ -354,8 +365,7 @@ function renderizarProductosMujer() {
             if (imagen2) imageContainer.dataset.img2 = imagen2;
             renderizarImagenProducto(imageContainer, imagen1);
         } else {
-            imageContainer.dataset.type = 'emoji';
-            imageContainer.textContent = '🛍️';
+            mostrarPlaceholderImagenProducto(imageContainer, producto.nombre);
         }
         imageWrap.appendChild(imageContainer);
 
@@ -496,8 +506,7 @@ function renderizarCarruselOfertas() {
             if (imagen2) imageContainer.dataset.img2 = imagen2;
             renderizarImagenProducto(imageContainer, imagen1);
         } else {
-            imageContainer.dataset.type = 'emoji';
-            imageContainer.textContent = '🛍️';
+            mostrarPlaceholderImagenProducto(imageContainer, producto.nombre);
         }
         imageWrap.appendChild(imageContainer);
 

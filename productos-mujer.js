@@ -21,7 +21,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 1,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 550.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 2,
@@ -40,7 +42,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 3,
@@ -59,7 +63,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 4,
@@ -78,7 +84,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 6,
@@ -97,7 +105,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 500.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 7,
@@ -116,7 +126,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 450.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 8,
@@ -135,7 +147,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 9,
@@ -154,7 +168,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 10,
@@ -173,7 +189,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 11,
@@ -192,7 +210,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 12,
@@ -211,7 +231,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 13,
@@ -230,7 +252,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 14,
@@ -249,7 +273,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 15,
@@ -268,7 +294,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 16,
@@ -287,7 +315,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 17,
@@ -306,7 +336,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 18,
@@ -325,7 +357,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 19,
@@ -344,7 +378,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 20,
@@ -363,7 +399,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 21,
@@ -382,7 +420,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 22,
@@ -401,7 +441,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 23,
@@ -420,7 +462,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 24,
@@ -439,7 +483,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 25,
@@ -458,7 +504,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 26,
@@ -477,7 +525,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 27,
@@ -496,7 +546,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 28,
@@ -515,7 +567,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 2,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 29,
@@ -534,7 +588,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 30,
@@ -553,7 +609,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 31,
@@ -572,7 +630,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 32,
@@ -591,11 +651,13 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 33,
-        nombre: "VITAL SEAMLESS SLEEVE CUT OUT TOP",
+        nombre: "VITAL SEAMLESS LONG SLEEVE CUT OUT TOP",
         categoria: "Mujer",
         precio: 650.00,
         stock: 2,
@@ -610,7 +672,30 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
+    },
+    {
+        id: 34,
+        nombre: "WAFFLE SHORT",
+        categoria: "Mujer",
+        precio: 600.00,
+        stock: 0,
+        imagen1: "mujer/34.webp",
+        imagen2: "mujer/34.1.webp",
+        talla: "S",
+        tallaBase: "S",
+        tipo: "Short",
+        color: "Amarillo",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 35,
@@ -629,7 +714,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 36,
@@ -648,7 +735,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 37,
@@ -667,7 +756,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 38,
@@ -686,7 +777,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 39,
@@ -705,7 +798,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 41,
@@ -724,7 +819,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 42,
@@ -743,7 +840,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 43,
@@ -762,7 +861,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 44,
@@ -781,7 +882,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 45,
@@ -800,7 +903,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 46,
@@ -819,7 +924,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 47,
@@ -838,7 +945,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 49,
@@ -857,7 +966,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 50,
@@ -876,7 +987,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 51,
@@ -895,7 +1008,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 52,
@@ -914,7 +1029,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 54,
@@ -933,7 +1050,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 55,
@@ -952,7 +1071,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 58,
@@ -971,7 +1092,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 59,
@@ -990,7 +1113,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 60,
@@ -1009,7 +1134,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 62,
@@ -1028,7 +1155,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 63,
@@ -1047,7 +1176,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 64,
@@ -1066,26 +1197,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
-    },
-    {
-        id: 67,
-        nombre: "COSY LUXE ZIP THROUGH HOODIE",
-        categoria: "Mujer",
-        precio: 750.00,
-        stock: 1,
-        imagen1: "mujer/67.webp",
-        imagen2: "mujer/67.1.webp",
-        talla: "S",
-        tallaBase: "S",
-        tipo: "Hoodie",
-        color: "Azul",
-        marca: "Gym Shark",
-        precioMayoreo: 660.00,
-        mayoreo: false,
-        posicionCarrusel: 0,
-        coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     },
     {
         id: 68,
@@ -1104,7 +1218,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 72,
@@ -1123,7 +1239,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 74,
@@ -1142,7 +1260,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 75,
@@ -1161,7 +1281,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 76,
@@ -1180,7 +1302,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 77,
@@ -1199,7 +1323,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 78,
@@ -1218,7 +1344,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 79,
@@ -1237,7 +1365,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 80,
@@ -1256,7 +1386,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 81,
@@ -1275,7 +1407,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 82,
@@ -1294,7 +1428,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 83,
@@ -1313,7 +1449,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 84,
@@ -1332,7 +1470,51 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
+    },
+    {
+        id: 85,
+        nombre: "VITAL CROP TOP",
+        categoria: "Mujer",
+        precio: 600.00,
+        stock: 0,
+        imagen1: "mujer/85.webp",
+        imagen2: "mujer/85.1.webp",
+        talla: "M",
+        tallaBase: "M",
+        tipo: "Crop Top",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 480.00,
+        mayoreo: true,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
+    },
+    {
+        id: 86,
+        nombre: "VITAL CROP TOP",
+        categoria: "Mujer",
+        precio: 600.00,
+        stock: 0,
+        imagen1: "mujer/86.webp",
+        imagen2: "mujer/86.1.webp",
+        talla: "S",
+        tallaBase: "S",
+        tipo: "Crop Top",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 480.00,
+        mayoreo: true,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 87,
@@ -1351,7 +1533,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 88,
@@ -1370,7 +1554,30 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
+    },
+    {
+        id: 89,
+        nombre: "TRAINING CAMI TANK WITH SHELF",
+        categoria: "Mujer",
+        precio: 550.00,
+        stock: 0,
+        imagen1: "mujer/89.webp",
+        imagen2: "mujer/89.1.webp",
+        talla: "XS",
+        tallaBase: "XS",
+        tipo: "Tank Top",
+        color: "Rojo",
+        marca: "Gym Shark",
+        precioMayoreo: 440.00,
+        mayoreo: true,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 90,
@@ -1389,7 +1596,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 91,
@@ -1408,7 +1617,30 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
+    },
+    {
+        id: 92,
+        nombre: "EVERYDAY MINI TOTE BAG",
+        categoria: "Mujer",
+        precio: 500.00,
+        stock: 0,
+        imagen1: "mujer/92.webp",
+        imagen2: "mujer/92.1.webp",
+        talla: "ONE SIZE",
+        tallaBase: "ONE SIZE",
+        tipo: "Accesorios",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 400.00,
+        mayoreo: true,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 94,
@@ -1427,7 +1659,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 95,
@@ -1446,7 +1680,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 6,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 96,
@@ -1465,7 +1701,30 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 5,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
+    },
+    {
+        id: 97,
+        nombre: "DOUBLE UP SPORTS BRA",
+        categoria: "Mujer",
+        precio: 500.00,
+        stock: 0,
+        imagen1: "mujer/97.webp",
+        imagen2: "mujer/97.1.webp",
+        talla: "S",
+        tallaBase: "S",
+        tipo: "Sport Bra",
+        color: "Blanco",
+        marca: "Gym Shark",
+        precioMayoreo: 400.00,
+        mayoreo: true,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 98,
@@ -1484,7 +1743,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 7,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 99,
@@ -1503,7 +1764,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 8,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 100,
@@ -1522,7 +1785,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 101,
@@ -1541,7 +1806,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 106,
@@ -1560,7 +1827,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 108,
@@ -1579,7 +1848,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 109,
@@ -1598,7 +1869,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 110,
@@ -1617,7 +1890,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 111,
@@ -1636,7 +1911,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 112,
@@ -1655,7 +1932,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 113,
@@ -1674,7 +1953,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 114,
@@ -1693,7 +1974,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 115,
@@ -1712,7 +1995,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 116,
@@ -1731,7 +2016,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 117,
@@ -1750,7 +2037,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 118,
@@ -1769,7 +2058,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 119,
@@ -1788,7 +2079,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 120,
@@ -1807,7 +2100,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 121,
@@ -1826,7 +2121,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 122,
@@ -1845,7 +2142,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 123,
@@ -1864,7 +2163,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 127,
@@ -1883,7 +2184,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 128,
@@ -1902,7 +2205,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 129,
@@ -1921,7 +2226,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 130,
@@ -1940,7 +2247,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 131,
@@ -1959,7 +2268,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 132,
@@ -1978,7 +2289,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 133,
@@ -1997,7 +2310,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 134,
@@ -2016,7 +2331,9 @@ const productosMujer = [
         mayoreo: true,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 137,
@@ -2035,7 +2352,9 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-07-07"
     },
     {
         id: 261,
@@ -2054,6 +2373,29 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        coleccionCatalogo: ""
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-08-14"
+    },
+    {
+        id: 288,
+        nombre: "VITAL SEAMLESS 2.0 CROP TOP",
+        categoria: "Mujer",
+        precio: 600.00,
+        stock: 1,
+        imagen1: "mujer/288.webp",
+        imagen2: "mujer/288.1.webp",
+        talla: "XS",
+        tallaBase: "XS",
+        tipo: "Crop Top",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: "2026-09-12"
     }
 ];
