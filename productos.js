@@ -229,6 +229,22 @@ function obtenerCategoriaFiltroGenero() {
     return (params.get('categoria') || '').trim();
 }
 
+function categoriaEfectivaParaTitulo() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.has('categoria')) {
+        var cat = (params.get('categoria') || '').trim();
+        return cat || 'Hombre';
+    }
+    if (debeMostrarFiltroGenero()) return '';
+    return 'Hombre';
+}
+
+function tituloAtletasSegunGenero(cat) {
+    if (cat === 'Mujer') return 'PARA NUESTRAS ATLETAS';
+    if (cat === 'Hombre') return 'PARA NUESTROS ATLETAS';
+    return 'Productos';
+}
+
 function actualizarMayoreoPageSwitch() {
     var cont = document.getElementById('mayoreoPageSwitch');
     var link20 = document.getElementById('mayoreoSwitch20Link');
@@ -1868,13 +1884,12 @@ function renderizarProductos(productosParaRenderizar) {
 
 // Función principal para renderizar todos los productos
 function renderizarTodosLosProductos() {
-    const categoria = obtenerCategoriaDeURL();
     const marca = obtenerMarcaDeURL();
     const pageTitle = document.getElementById('pageTitle');
     
     function actualizarTituloPagina() {
         if (!pageTitle) return;
-        var tituloBase = categoria === 'Hombre' ? 'PARA NUESTROS ATLETAS' : (categoria === 'Mujer' ? 'PARA NUESTRAS ATLETAS' : 'Productos');
+        var tituloBase = tituloAtletasSegunGenero(categoriaEfectivaParaTitulo());
         if (esModoColeccion()) {
             var colNombre = (obtenerColeccionDeURL() || '').trim();
             tituloBase = colNombre ? ('COLECCIÓN ' + colNombre.toUpperCase()) : 'COLECCIÓN';
