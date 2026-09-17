@@ -178,6 +178,33 @@
         return String(anio) + '-' + pad2(mes + 1) + '-' + pad2(dia);
     }
 
+    function normalizarMesTextoStock(mesRaw) {
+        var mesTexto = String(mesRaw || '').trim().toLowerCase().replace(/\./g, '');
+        if (typeof mesTexto.normalize === 'function') {
+            mesTexto = mesTexto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+        var mes = MESES_FECHA_STOCK[mesTexto];
+        if (mes === undefined) mes = MESES_FECHA_STOCK[mesTexto.slice(0, 3)];
+        return mes;
+    }
+
+    function fusionarFechaStockIso(anterior, nueva) {
+        if (!nueva) return anterior || '';
+        if (!anterior) return nueva;
+        var ta = new Date(anterior + 'T12:00:00').getTime();
+        var tn = new Date(nueva + 'T12:00:00').getTime();
+        if (isNaN(ta)) return nueva;
+        if (isNaN(tn)) return anterior;
+        return tn >= ta ? nueva : anterior;
+    }
+
+    function parsearFechaStockDesdeSerial(serial) {
+        if (serial < 40000 || serial > 65000) return '';
+        var utc = Date.UTC(1899, 11, 30) + Math.round(serial * 86400000);
+        var d = new Date(utc);
+        return fechaStockAISO(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+    }
+
     function parsearFechaStock(valor) {
         var texto = String(valor || '').trim();
         if (!texto) return '';
@@ -186,22 +213,42 @@
         if (iso) return fechaStockAISO(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10));
 
         function parsearDmyTexto(partes) {
-            var mesTexto = partes[2].toLowerCase().replace(/\./g, '');
-            var mes = MESES_FECHA_STOCK[mesTexto];
-            if (mes === undefined) mes = MESES_FECHA_STOCK[mesTexto.slice(0, 3)];
+            var mes = normalizarMesTextoStock(partes[2]);
             if (mes === undefined) return '';
             var anio = parseInt(partes[3], 10);
             if (anio < 100) anio += 2000;
             return fechaStockAISO(anio, mes, parseInt(partes[1], 10));
         }
 
-        var dmyTexto = texto.match(/^(\d{1,2})[-\/]([a-zA-Z]{3,})[-\/](\d{4})$/);
+        function parsearDmyNumerico(d, m, y) {
+            var anio = y < 100 ? y + 2000 : y;
+            return fechaStockAISO(anio, m - 1, d);
+        }
+
+        var serialMatch = texto.replace(/\s/g, '').match(/^(\d{4,6})(\.\d+)?$/);
+        if (serialMatch) {
+            var serial = parseFloat(serialMatch[1] + (serialMatch[2] || ''));
+            var desdeSerial = parsearFechaStockDesdeSerial(serial);
+            if (desdeSerial) return desdeSerial;
+        }
+
+        var espanolLargo = texto.match(/^(\d{1,2})\s+de\s+([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)\s+de\s+(\d{2,4})$/i);
+        if (espanolLargo) {
+            var mesEs = normalizarMesTextoStock(espanolLargo[2]);
+            if (mesEs !== undefined) {
+                var anioEs = parseInt(espanolLargo[3], 10);
+                if (anioEs < 100) anioEs += 2000;
+                return fechaStockAISO(anioEs, mesEs, parseInt(espanolLargo[1], 10));
+            }
+        }
+
+        var dmyTexto = texto.match(/^(\d{1,2})[-\/\s]([a-zA-Z]{3,})[-\/\s](\d{4})$/i);
         if (dmyTexto) {
             var isoTexto = parsearDmyTexto(dmyTexto);
             if (isoTexto) return isoTexto;
         }
 
-        var dmyTextoCorto = texto.match(/^(\d{1,2})[-\/]([a-zA-Z]{3,})[-\/](\d{2})$/);
+        var dmyTextoCorto = texto.match(/^(\d{1,2})[-\/\s]([a-zA-Z]{3,})[-\/\s](\d{2})$/i);
         if (dmyTextoCorto) {
             var isoCorto = parsearDmyTexto(dmyTextoCorto);
             if (isoCorto) return isoCorto;
@@ -209,7 +256,20 @@
 
         var dmyNum = texto.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
         if (dmyNum) {
-            return fechaStockAISO(parseInt(dmyNum[3], 10), parseInt(dmyNum[2], 10) - 1, parseInt(dmyNum[1], 10));
+            return parsearDmyNumerico(
+                parseInt(dmyNum[1], 10),
+                parseInt(dmyNum[2], 10),
+                parseInt(dmyNum[3], 10)
+            );
+        }
+
+        var dmyNumCorto = texto.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2})$/);
+        if (dmyNumCorto) {
+            return parsearDmyNumerico(
+                parseInt(dmyNumCorto[1], 10),
+                parseInt(dmyNumCorto[2], 10),
+                parseInt(dmyNumCorto[3], 10)
+            );
         }
 
         var parsed = Date.parse(texto);
@@ -428,7 +488,7 @@
                 if (descuentoMayoreo50) previo.descuentoMayoreo50 = descuentoMayoreo50;
                 previo.mayoreo = previo.mayoreo || mayoreo;
                 if (posicionCarrusel > 0) previo.posicionCarrusel = posicionCarrusel;
-                if (fechaStock) previo.fechaStock = fechaStock;
+                previo.fechaStock = fusionarFechaStockIso(previo.fechaStock, fechaStock);
                 if (tipo) previo.tipo = tipo;
                 if (color) previo.color = color;
                 if (marca) previo.marca = marca;
@@ -670,6 +730,9 @@
 
     window.refrescarTiendaTrasSyncStock = function() {
         if (typeof actualizarEtiquetaNuevoStock === 'function') actualizarEtiquetaNuevoStock();
+        if (typeof window.obebeActualizarTituloPaginaFn === 'function') {
+            window.obebeActualizarTituloPaginaFn();
+        }
         if (typeof actualizarHeroOfertasSemanales === 'function') actualizarHeroOfertasSemanales();
         if (typeof renderizarCarruselOfertas === 'function') renderizarCarruselOfertas();
         if (typeof renderizarCarruselHombre === 'function') renderizarCarruselHombre('Hombre', false);
