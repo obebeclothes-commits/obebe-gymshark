@@ -637,25 +637,47 @@
         return true;
     }
 
+    function datosSheetParaProducto(p, mapaSheet, mapaPorRef) {
+        if (!p) return null;
+        var talla = normalizarTalla(p.tallaBase || String(p.talla || '').split('-')[0].trim());
+        var refImagen = extraerRefImagenProducto(p);
+        var datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca, refImagen);
+        if (!datos && p.id) {
+            datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca, p.id);
+        }
+        if (!datos) {
+            datos = buscarEnMapaPorRef(mapaPorRef, p, mapaSheet);
+        }
+        return datos;
+    }
+
     function sincronizarCatalogo(catalogo, mapaSheet, mapaPorRef) {
         if (!Array.isArray(catalogo)) return 0;
         var actualizados = 0;
         catalogo.forEach(function(p) {
-            var talla = normalizarTalla(p.tallaBase || String(p.talla || '').split('-')[0].trim());
-            var refImagen = extraerRefImagenProducto(p);
-            var datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca, refImagen);
-            if (!datos && p.id) {
-                datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca, p.id);
-            }
-            if (!datos) {
-                datos = buscarEnMapaPorRef(mapaPorRef, p, mapaSheet);
-            }
+            var datos = datosSheetParaProducto(p, mapaSheet, mapaPorRef);
             if (datos) {
                 aplicarDatosSheetEnProducto(p, datos);
                 actualizados += 1;
             }
         });
         return actualizados;
+    }
+
+    /** Quita del array productos que ya no tienen fila en INVENTARIO (p. ej. borrados del sheet). */
+    function podarCatalogoSegunSheet(catalogo, mapaSheet, mapaPorRef) {
+        if (!Array.isArray(catalogo)) return 0;
+        var removidos = 0;
+        for (var i = catalogo.length - 1; i >= 0; i--) {
+            if (!datosSheetParaProducto(catalogo[i], mapaSheet, mapaPorRef)) {
+                catalogo.splice(i, 1);
+                removidos += 1;
+            }
+        }
+        if (removidos > 0) {
+            console.info('[stock-sheet] Productos quitados (no están en el sheet):', removidos);
+        }
+        return removidos;
     }
 
     function fetchConTimeout(url, opciones, ms) {
@@ -792,12 +814,14 @@
             var datosHombre = leerFilasSheet(csv, 'Hombre');
             inyectarProductosFaltantesDesdeMapa(productosHombre, datosHombre.mapa, 'Hombre');
             sincronizarCatalogo(productosHombre, datosHombre.mapa, datosHombre.mapaPorRef);
+            podarCatalogoSegunSheet(productosHombre, datosHombre.mapa, datosHombre.mapaPorRef);
             opcionesSheet.Hombre = datosHombre.opciones;
         }
         if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) {
             var datosMujer = leerFilasSheet(csv, 'Mujer');
             inyectarProductosFaltantesDesdeMapa(productosMujer, datosMujer.mapa, 'Mujer');
             sincronizarCatalogo(productosMujer, datosMujer.mapa, datosMujer.mapaPorRef);
+            podarCatalogoSegunSheet(productosMujer, datosMujer.mapa, datosMujer.mapaPorRef);
             opcionesSheet.Mujer = datosMujer.opciones;
         }
         window.opcionesInventarioSheet = opcionesSheet;

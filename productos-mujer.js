@@ -6,7 +6,7 @@
 const productosMujer = [
     {
         id: 1,
-        nombre: "ADAPT ANIMAL SEMALESS CROP TOP",
+        nombre: "ADAPT ANIMAL SEAMLESS CROP TOP",
         categoria: "Mujer",
         precio: 650.00,
         stock: 2,
@@ -21,7 +21,7 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 1,
         coleccion: "",
-        precioOfertaSemanal: 550.00,
+        precioOfertaSemanal: 0.00,
         coleccionCatalogo: "",
         fechaStock: ""
     },
@@ -42,7 +42,7 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        precioOfertaSemanal: 0.00,
+        precioOfertaSemanal: 450.00,
         coleccionCatalogo: "",
         fechaStock: ""
     },
@@ -63,7 +63,7 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        precioOfertaSemanal: 0.00,
+        precioOfertaSemanal: 750.00,
         coleccionCatalogo: "",
         fechaStock: ""
     },
@@ -84,7 +84,7 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        precioOfertaSemanal: 0.00,
+        precioOfertaSemanal: 500.00,
         coleccionCatalogo: "",
         fechaStock: ""
     },
@@ -147,7 +147,7 @@ const productosMujer = [
         mayoreo: false,
         posicionCarrusel: 0,
         coleccion: "",
-        precioOfertaSemanal: 0.00,
+        precioOfertaSemanal: 550.00,
         coleccionCatalogo: "",
         fechaStock: ""
     },
@@ -2397,5 +2397,26 @@ const productosMujer = [
         precioOfertaSemanal: 0.00,
         coleccionCatalogo: "",
         fechaStock: "2026-09-12"
+    },
+    {
+        id: 289,
+        nombre: "CREW SOCKS 3PK",
+        categoria: "Mujer",
+        precio: 500.00,
+        stock: 1,
+        imagen1: "mujer/289.webp",
+        imagen2: "mujer/289.1.webp",
+        talla: "S",
+        tallaBase: "S",
+        tipo: "Accesorios",
+        color: "Negro",
+        marca: "Gym Shark",
+        precioMayoreo: 0.00,
+        mayoreo: false,
+        posicionCarrusel: 0,
+        coleccion: "",
+        precioOfertaSemanal: 0.00,
+        coleccionCatalogo: "",
+        fechaStock: ""
     }
 ];

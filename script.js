@@ -506,7 +506,8 @@ function renderizarCarruselOfertas() {
             if (imagen2) imageContainer.dataset.img2 = imagen2;
             renderizarImagenProducto(imageContainer, imagen1);
         } else {
-            mostrarPlaceholderImagenProducto(imageContainer, producto.nombre);
+            imageContainer.dataset.type = 'emoji';
+            imageContainer.textContent = '🛍️';
         }
         imageWrap.appendChild(imageContainer);
 
