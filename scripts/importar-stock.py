@@ -402,7 +402,7 @@ def inferir_categoria_desde_ubicacion(fila: list[str], idx: dict[str, int]) -> s
     return ""
 
 
-EXTENSIONES_IMAGEN_LOCAL = (".webp", ".png", ".jpg", ".jpeg")
+EXTENSIONES_IMAGEN_LOCAL = (".webp", ".avif", ".png", ".jpg", ".jpeg")
 
 
 def carpeta_tiene_imagen_producto(raiz: Path, carpeta: str, numero: int) -> bool:
@@ -485,7 +485,7 @@ def obtener_valor(fila: list[str], indice: int) -> str:
 
 
 def resolver_imagenes(carpeta: Path, carpeta_rel: str, numero_imagen: int) -> tuple[str, str]:
-    extensiones = (".webp", ".png", ".jpg", ".jpeg")
+    extensiones = (".webp", ".avif", ".png", ".jpg", ".jpeg")
 
     def buscar(sufijo: str) -> str:
         for ext in extensiones:

@@ -1,5 +1,5 @@
 (function(w, d) {
-    var VERSION = '20260926a';
+    var VERSION = '20261006a';
 
     function cargarExtra(src, alTerminar) {
         if (d.querySelector('script[data-obebe-extra="' + src + '"]')) {

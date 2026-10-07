@@ -18,10 +18,10 @@ const productos = (typeof productosHombre !== 'undefined' && Array.isArray(produ
 
 
 /** Bust de caché para fotos (CDN / navegador) al corregir un archivo. */
-var VERSION_IMAGENES_PRODUCTO = '20260917';
+var VERSION_IMAGENES_PRODUCTO = '20261006a';
 
 function esRutaImagen(valor) {
-    return /\.(png|jpe?g|webp|gif|svg)(\?|$)/i.test(valor || '');
+    return /\.(png|jpe?g|webp|avif|gif|svg)(\?|$)/i.test(valor || '');
 }
 
 function conVersionImagen(ruta) {
@@ -61,8 +61,8 @@ function candidatosImagen(fuente) {
         q = fuente.slice(qi);
         path = fuente.slice(0, qi);
     }
-    var base = path.replace(/\.(png|jpe?g|webp)$/i, '');
-    return [path + q, base + '.webp' + q, base + '.png' + q, base + '.jpeg' + q, base + '.jpg' + q]
+    var base = path.replace(/\.(png|jpe?g|webp|avif)$/i, '');
+    return [path + q, base + '.webp' + q, base + '.avif' + q, base + '.png' + q, base + '.jpeg' + q, base + '.jpg' + q]
         .filter(function(v, i, a) { return v && a.indexOf(v) === i; });
 }
 
