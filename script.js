@@ -18,7 +18,7 @@ const productos = (typeof productosHombre !== 'undefined' && Array.isArray(produ
 
 
 /** Bust de caché para fotos (CDN / navegador) al corregir un archivo. */
-var VERSION_IMAGENES_PRODUCTO = '20261006a';
+var VERSION_IMAGENES_PRODUCTO = '20261009a';
 
 function esRutaImagen(valor) {
     return /\.(png|jpe?g|webp|avif|gif|svg)(\?|$)/i.test(valor || '');
@@ -61,8 +61,8 @@ function candidatosImagen(fuente) {
         q = fuente.slice(qi);
         path = fuente.slice(0, qi);
     }
-    var base = path.replace(/\.(png|jpe?g|webp|avif)$/i, '');
-    return [path + q, base + '.webp' + q, base + '.avif' + q, base + '.png' + q, base + '.jpeg' + q, base + '.jpg' + q]
+    var base = path.replace(/\.(png|jpe?g|webp|avif|gif)$/i, '');
+    return [base + '.avif' + q, base + '.webp' + q, base + '.png' + q, base + '.jpeg' + q, base + '.jpg' + q, path + q]
         .filter(function(v, i, a) { return v && a.indexOf(v) === i; });
 }
 
@@ -80,6 +80,10 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
         img.alt = alt;
         img.loading = 'lazy';
         var intento = 0;
+        img.addEventListener('load', function() {
+            var ok = img.currentSrc || img.src;
+            if (ok) contenedor.dataset.resolvedSrc = ok;
+        });
         img.addEventListener('error', function() {
             intento += 1;
             if (intento < candidatos.length) {
@@ -90,8 +94,10 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
                 renderizarImagenProducto(contenedor, contenedor.dataset.img1);
                 return;
             }
+            delete contenedor.dataset.resolvedSrc;
             mostrarPlaceholderImagenProducto(contenedor, contenedor.dataset.alt || alt);
         });
+        if (opciones.eager) img.loading = 'eager';
         img.src = candidatos[0];
         contenedor.innerHTML = '';
         contenedor.appendChild(img);
