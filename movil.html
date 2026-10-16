@@ -7823,8 +7823,8 @@ function candidatosImagen(fuente) {
         q = fuente.slice(qi);
         path = fuente.slice(0, qi);
     }
-    var base = path.replace(/\.(png|jpe?g|webp|avif)$/i, '');
-    return [path + q, base + '.webp' + q, base + '.avif' + q, base + '.png' + q, base + '.jpeg' + q, base + '.jpg' + q]
+    var base = path.replace(/\.(png|jpe?g|webp|avif|gif)$/i, '');
+    return [base + '.avif' + q, base + '.webp' + q, base + '.png' + q, base + '.jpeg' + q, base + '.jpg' + q, path + q]
         .filter(function(v, i, a) { return v && a.indexOf(v) === i; });
 }
 
@@ -7843,6 +7843,10 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
         img.alt = alt;
         img.loading = 'lazy';
         var intento = 0;
+        img.addEventListener('load', function() {
+            var ok = img.currentSrc || img.src;
+            if (ok) contenedor.dataset.resolvedSrc = ok;
+        });
         img.addEventListener('error', function() {
             intento += 1;
             if (intento < candidatos.length) {
@@ -7853,9 +7857,11 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
                 renderizarImagenProducto(contenedor, contenedor.dataset.img1);
                 return;
             }
+            delete contenedor.dataset.resolvedSrc;
             contenedor.dataset.type = 'emoji';
             contenedor.textContent = '🛍️';
         });
+        if (opciones.eager) img.loading = 'eager';
         img.src = candidatos[0];
         contenedor.innerHTML = '';
         contenedor.appendChild(img);
@@ -8748,8 +8754,8 @@ function candidatosImagen(fuente) {
         q = fuente.slice(qi);
         path = fuente.slice(0, qi);
     }
-    var base = path.replace(/\.(png|jpe?g|webp|avif)$/i, '');
-    return [path + q, base + '.webp' + q, base + '.avif' + q, base + '.png' + q, base + '.jpeg' + q, base + '.jpg' + q]
+    var base = path.replace(/\.(png|jpe?g|webp|avif|gif)$/i, '');
+    return [base + '.avif' + q, base + '.webp' + q, base + '.png' + q, base + '.jpeg' + q, base + '.jpg' + q, path + q]
         .filter(function(v, i, a) { return v && a.indexOf(v) === i; });
 }
 
@@ -8769,6 +8775,10 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
         img.loading = 'lazy';
         img.decoding = 'async';
         var intento = 0;
+        img.addEventListener('load', function() {
+            var ok = img.currentSrc || img.src;
+            if (ok) contenedor.dataset.resolvedSrc = ok;
+        });
         img.addEventListener('error', function() {
             intento += 1;
             if (intento < candidatos.length) {
@@ -8779,9 +8789,11 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
                 renderizarImagenProducto(contenedor, contenedor.dataset.img1);
                 return;
             }
+            delete contenedor.dataset.resolvedSrc;
             contenedor.dataset.type = 'emoji';
             contenedor.textContent = '🛍️';
         });
+        if (opciones.eager) img.loading = 'eager';
         img.src = candidatos[0];
         contenedor.innerHTML = '';
         contenedor.appendChild(img);
@@ -10500,7 +10512,7 @@ function arrancarProductosPagina() {
 </script>
     <script>
 (function(w, d) {
-    var VERSION = '20261006a';
+    var VERSION = '20261015b';
 
     function cargarExtra(src, alTerminar) {
         if (d.querySelector('script[data-obebe-extra="' + src + '"]')) {

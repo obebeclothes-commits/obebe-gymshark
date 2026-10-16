@@ -18,7 +18,7 @@ const productos = (typeof productosHombre !== 'undefined' && Array.isArray(produ
 
 
 /** Bust de caché para fotos (CDN / navegador) al corregir un archivo. */
-var VERSION_IMAGENES_PRODUCTO = '20261009a';
+var VERSION_IMAGENES_PRODUCTO = '20261015b';
 
 function esRutaImagen(valor) {
     return /\.(png|jpe?g|webp|avif|gif|svg)(\?|$)/i.test(valor || '');
