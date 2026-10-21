@@ -1430,7 +1430,7 @@ function inicializarHeroCarrusel() {
     var arrowRight = document.getElementById('heroArrowRight');
     var hero = document.querySelector('section.hero');
     var welcome = document.getElementById('heroWelcomeContent');
-    var autoplayMs = 3000;
+    var autoplayMs = 5000;
     var timer = null;
 
     function actualizarOverlay() {
