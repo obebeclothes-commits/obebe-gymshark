@@ -720,6 +720,67 @@ function configurarPlaceholdersImagenesInventario() {
     });
 }
 
+function inicializarCarouselMarcas() {
+    var track = document.getElementById('marcasCarousel');
+    var outer = document.getElementById('marcasCarouselOuter');
+    if (!track || !outer) return;
+
+    var pages = track.querySelectorAll('.marcas-carousel-page');
+    if (!pages.length) return;
+
+    var arrowLeft = document.getElementById('marcasArrowLeft');
+    var arrowRight = document.getElementById('marcasArrowRight');
+    var currentPage = 0;
+    var autoTimer = null;
+    var AUTO_MS = 5000;
+
+    function irAPagina(n) {
+        var total = pages.length;
+        if (total <= 1) {
+            track.style.transform = 'translateX(0)';
+            if (arrowLeft) arrowLeft.disabled = true;
+            if (arrowRight) arrowRight.disabled = true;
+            return;
+        }
+        currentPage = ((n % total) + total) % total;
+        track.style.transform = 'translateX(-' + (currentPage * 100) + '%)';
+        var unaSola = total <= 1;
+        if (arrowLeft) arrowLeft.disabled = unaSola;
+        if (arrowRight) arrowRight.disabled = unaSola;
+    }
+
+    function reiniciarAuto() {
+        if (autoTimer) clearInterval(autoTimer);
+        if (pages.length <= 1) return;
+        autoTimer = setInterval(function() {
+            irAPagina(currentPage + 1);
+        }, AUTO_MS);
+    }
+
+    if (arrowLeft) {
+        arrowLeft.addEventListener('click', function() {
+            irAPagina(currentPage - 1);
+            reiniciarAuto();
+        });
+    }
+    if (arrowRight) {
+        arrowRight.addEventListener('click', function() {
+            irAPagina(currentPage + 1);
+            reiniciarAuto();
+        });
+    }
+
+    outer.addEventListener('mouseenter', function() {
+        if (autoTimer) clearInterval(autoTimer);
+    });
+    outer.addEventListener('mouseleave', reiniciarAuto);
+
+    window.addEventListener('resize', function() { irAPagina(currentPage); });
+
+    irAPagina(0);
+    reiniciarAuto();
+}
+
 function inicializarCarouselColecciones() {
     var carousel = document.getElementById('coleccionesCarousel');
     var wrapper = document.getElementById('coleccionesCarouselWrapper');
@@ -1499,6 +1560,7 @@ function arrancarIndexPagina() {
     renderizarCarruselOfertas();
     inicializarCarousel();
     inicializarCarouselColecciones();
+    inicializarCarouselMarcas();
     inicializarNavegacion();
     inicializarPromoBar();
     actualizarHeroOfertasSemanales();

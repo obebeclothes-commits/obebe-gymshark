@@ -51,8 +51,8 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261021b" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20261021b"></noscript>
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261021c" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20261021c"></noscript>
     <script>
     // Respaldo: si el onload del <link> no dispara, la hoja quedaria en media=print y sin aplicar.
     (function(w, d) {
@@ -275,32 +275,67 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                         </div>
                     </div>
                 </div>
-                <h3 class="brand-filter-title">MARCAS</h3>
-                <div class="brand-filter-row" aria-label="Marcas">
-                    <a href="productos.html?categoria=Hombre&marca=Gym%20Shark" class="brand-pill brand-pill-gymshark home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="Gym Shark">
-                        <div class="home-tile-photo-wrap coleccion-card-image" data-label="GYMSHARK">
-                            <img src="secciones/marca-gymshark.jpg?v=20260915k" alt="" loading="lazy" width="160" height="150">
-                            <span class="home-tile-marca-label home-tile-marca-label--gymshark">GYMSHARK</span>
+                <div class="marcas-block">
+                    <h3 class="brand-filter-title">MARCAS</h3>
+                    <div class="inventory-header colecciones-arrows-header marcas-arrows-header">
+                        <div class="inventory-title-section" aria-hidden="true"></div>
+                        <div class="inventory-nav-arrows">
+                            <button type="button" class="nav-arrow nav-arrow-left" id="marcasArrowLeft" aria-label="Ver marcas anteriores">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="nav-arrow nav-arrow-right" id="marcasArrowRight" aria-label="Ver más marcas">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                                </svg>
+                            </button>
                         </div>
-                    </a>
-                    <a href="productos.html?categoria=Hombre&marca=YoungLA" class="brand-pill brand-pill-youngla home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="YoungLA">
-                        <div class="home-tile-photo-wrap coleccion-card-image" data-label="YOUNGLA">
-                            <img src="secciones/marca-youngla.jpg?v=20260915k" alt="" loading="lazy" width="160" height="150">
-                            <span class="home-tile-marca-label home-tile-marca-label--youngla">YOUNGLA</span>
+                    </div>
+                    <div class="marcas-carousel-outer" id="marcasCarouselOuter">
+                        <div class="marcas-carousel-track" id="marcasCarousel">
+                            <div class="brand-filter-row marcas-carousel-page" aria-label="Marcas">
+                                <a href="productos.html?categoria=Hombre&marca=Gym%20Shark" class="brand-pill brand-pill-gymshark home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="Gym Shark">
+                                    <div class="home-tile-photo-wrap coleccion-card-image" data-label="GYMSHARK">
+                                        <img src="secciones/marca-gymshark.jpg?v=20260915k" alt="" loading="lazy" width="160" height="150">
+                                        <span class="home-tile-marca-label home-tile-marca-label--gymshark">GYMSHARK</span>
+                                    </div>
+                                </a>
+                                <a href="productos.html?categoria=Hombre&marca=YoungLA" class="brand-pill brand-pill-youngla home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="YoungLA">
+                                    <div class="home-tile-photo-wrap coleccion-card-image" data-label="YOUNGLA">
+                                        <img src="secciones/marca-youngla.jpg?v=20260915k" alt="" loading="lazy" width="160" height="150">
+                                        <span class="home-tile-marca-label home-tile-marca-label--youngla">YOUNGLA</span>
+                                    </div>
+                                </a>
+                                <a href="productos.html?categoria=Hombre&marca=Uniqlo" class="brand-pill brand-pill-uniqlo home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="Uniqlo">
+                                    <div class="home-tile-photo-wrap coleccion-card-image" data-label="UNIQLO">
+                                        <img src="secciones/marca-uniqlo.jpg?v=20260915k" alt="" loading="lazy" width="160" height="150">
+                                        <span class="home-tile-marca-label home-tile-marca-label--uniqlo">UNIQLO</span>
+                                    </div>
+                                </a>
+                                <a href="productos.html?categoria=Hombre&marca=On%20Cloud" class="brand-pill brand-pill-oncloud home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="On Cloud">
+                                    <div class="home-tile-photo-wrap coleccion-card-image" data-label="ON CLOUD">
+                                        <img src="secciones/marca-oncloud.jpg?v=20260915k" alt="" loading="lazy" width="160" height="150">
+                                        <span class="home-tile-marca-label home-tile-marca-label--oncloud">ON CLOUD</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="brand-filter-row marcas-carousel-page" aria-label="Marcas">
+                                <a href="productos.html?categoria=Hombre&marca=DFYNE" class="brand-pill brand-pill-dfyne home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="DFYNE">
+                                    <div class="home-tile-photo-wrap coleccion-card-image" data-label="DFYNE">
+                                        <img src="secciones/marca-dfyne.jpg?v=20261021c" alt="" loading="lazy" width="160" height="150">
+                                        <span class="home-tile-marca-label home-tile-marca-label--dfyne">DFYNE</span>
+                                    </div>
+                                </a>
+                                <a href="productos.html?categoria=Hombre&marca=Alo%20Yoga" class="brand-pill brand-pill-aloyoga home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="Alo Yoga">
+                                    <div class="home-tile-photo-wrap coleccion-card-image" data-label="ALO YOGA">
+                                        <img src="secciones/marca-aloyoga.jpg?v=20261021c" alt="" loading="lazy" width="160" height="150">
+                                        <span class="home-tile-marca-label home-tile-marca-label--aloyoga">ALO YOGA</span>
+                                    </div>
+                                </a>
+                            </div>
                         </div>
-                    </a>
-                    <a href="productos.html?categoria=Hombre&marca=Uniqlo" class="brand-pill brand-pill-uniqlo home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="Uniqlo">
-                        <div class="home-tile-photo-wrap coleccion-card-image" data-label="UNIQLO">
-                            <img src="secciones/marca-uniqlo.jpg?v=20260915k" alt="" loading="lazy" width="160" height="150">
-                            <span class="home-tile-marca-label home-tile-marca-label--uniqlo">UNIQLO</span>
-                        </div>
-                    </a>
-                    <a href="productos.html?categoria=Hombre&marca=On%20Cloud" class="brand-pill brand-pill-oncloud home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="On Cloud">
-                        <div class="home-tile-photo-wrap coleccion-card-image" data-label="ON CLOUD">
-                            <img src="secciones/marca-oncloud.jpg?v=20260915k" alt="" loading="lazy" width="160" height="150">
-                            <span class="home-tile-marca-label home-tile-marca-label--oncloud">ON CLOUD</span>
-                        </div>
-                    </a>
+                    </div>
                 </div>
                 <h3 class="brand-filter-title">MAYOREO</h3>
                 <div class="mayoreo-filter-block mayoreo-filter-row">
@@ -501,11 +536,11 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
         </div>
     </div>
 
-    <script defer src="productos-hombre.js?v=20261021b"></script>
-    <script defer src="productos-mujer.js?v=20261021b"></script>
-    <script defer src="script.js?v=20261021b"></script>
+    <script defer src="productos-hombre.js?v=20261021c"></script>
+    <script defer src="productos-mujer.js?v=20261021c"></script>
+    <script defer src="script.js?v=20261021c"></script>
     <script defer src="productos.js?v=20260916u"></script>
-    <script defer src="obebe-listo.js?v=20261021b"></script>
+    <script defer src="obebe-listo.js?v=20261021c"></script>
     <script>
     // Si la tienda no arranca, avisar en pantalla en vez de quedarse muda.
     (function(w, d) {

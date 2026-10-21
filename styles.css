@@ -2188,7 +2188,9 @@ a.home-tile-card--marca-centro.brand-pill:active {
 .home-tile-marca-label--gymshark,
 .home-tile-marca-label--youngla,
 .home-tile-marca-label--uniqlo,
-.home-tile-marca-label--oncloud {
+.home-tile-marca-label--oncloud,
+.home-tile-marca-label--dfyne,
+.home-tile-marca-label--aloyoga {
     font-family: "Bebas Neue", "Arial Narrow", sans-serif;
     font-size: clamp(1.85rem, 5.5vw, 2.35rem);
     font-weight: 400;
@@ -2228,6 +2230,22 @@ a.home-tile-card--marca-centro.brand-pill:active {
         0 0 24px rgba(255, 255, 255, 0.95),
         0 0 14px rgba(255, 255, 255, 0.8),
         0 2px 0 rgba(220, 220, 220, 0.75),
+        0 4px 18px rgba(0, 0, 0, 0.85);
+}
+
+.home-tile-marca-label--dfyne {
+    letter-spacing: 0.06em;
+    text-shadow:
+        0 0 20px rgba(180, 140, 255, 0.7),
+        0 2px 0 rgba(60, 40, 100, 0.95),
+        0 4px 18px rgba(0, 0, 0, 0.85);
+}
+
+.home-tile-marca-label--aloyoga {
+    letter-spacing: 0.05em;
+    text-shadow:
+        0 0 20px rgba(255, 180, 200, 0.75),
+        0 2px 0 rgba(100, 40, 60, 0.95),
         0 4px 18px rgba(0, 0, 0, 0.85);
 }
 
@@ -2371,6 +2389,39 @@ a.home-tile-card--mayoreo-foto.mayoreo-cta-50:active {
 .colecciones-arrows-header {
     margin-bottom: 1rem;
     margin-top: -0.25rem;
+}
+
+.marcas-block {
+    margin: 0 auto 1.25rem;
+}
+
+.marcas-block .brand-filter-title {
+    margin-bottom: 0.5rem;
+}
+
+.marcas-arrows-header {
+    max-width: 860px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.marcas-carousel-outer {
+    overflow: hidden;
+    max-width: 860px;
+    margin: 0 auto 1.25rem;
+}
+
+.marcas-carousel-track {
+    display: flex;
+    width: 100%;
+    transition: transform 0.45s ease-out;
+    will-change: transform;
+}
+
+.marcas-carousel-page.brand-filter-row {
+    flex: 0 0 100%;
+    width: 100%;
+    margin-bottom: 0;
 }
 
 .coleccion-card-image.is-placeholder .product-image,
