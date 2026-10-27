@@ -18,6 +18,9 @@ npm-debug.log*
 # Local / no subir a GitHub
 # -----------------------------------------------------------------------------
 
+# Panel admin: publicado en GitHub Pages (credenciales MVP en admin-auth.js — migrar antes de escala)
+# admin/ ya no se ignora
+
 # Imágenes con etiqueta (nombre, talla, precio) — solo uso local / redes
 hombre-etiquetado/
 mujer-etiquetado/
@@ -36,6 +39,10 @@ sincronizar-mercadolibre.bat
 # Scripts de automatización local (Sheets, Selenium, etiquetado, etc.)
 scripts/*
 !scripts/importar-stock.py
+!scripts/actualizar-columna-j-imagenes.py
+!scripts/google-apps-script-columna-j.gs
+!scripts/google-apps-script-admin-inventario.gs
+scripts/google-sheets-service-account.json
 scripts/.chrome-sheet-profile/
 scripts/.chrome-marketplace-profile/
 scripts/__pycache__/

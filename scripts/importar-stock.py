@@ -34,6 +34,11 @@ SPREADSHEET_ID = "195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko"
 HOJA_INVENTARIO = "INVENTARIO"
 HOJA_INVENTARIO_LEGACY = "HOMBRE"
 GID_INVENTARIO = 0  # pestaña INVENTARIO
+GID_VENTAS = 915963655
+GID_POR_HOJA = {
+    HOJA_INVENTARIO: GID_INVENTARIO,
+    "VENTAS": GID_VENTAS,
+}
 BASE_URL_IMAGENES = "https://obebeclothes-commits.github.io/obebe-gymshark"
 
 HOJAS = {
@@ -165,6 +170,15 @@ def _bajar(url: str, timeout: int = 120) -> str:
 def descargar_csv(spreadsheet_id: str, nombre_hoja: str) -> str:
     from urllib.parse import quote
 
+    clave = nombre_hoja.strip()
+    gid = GID_POR_HOJA.get(clave) or GID_POR_HOJA.get(clave.upper())
+    if gid is None and clave.upper() == HOJA_INVENTARIO:
+        gid = GID_INVENTARIO
+    if gid is not None:
+        try:
+            return descargar_csv_por_gid(spreadsheet_id, gid)
+        except RuntimeError:
+            pass
     return _bajar(
         f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
         f"/gviz/tq?tqx=out:csv&sheet={quote(nombre_hoja)}"
@@ -196,8 +210,17 @@ def carpeta_imagen_por_segmento(valor_segmento: str) -> str:
     return "mujer" if normalizar_segmento(valor_segmento) == "Mujer" else "hombre"
 
 
+def resolver_carpeta_imagen_fila(fila: list[str], idx: dict[str, int], raiz: Path) -> str:
+    """Carpeta hombre/ o mujer/ según columna T; si T vacía, AB o dónde exista la foto."""
+    seg = obtener_valor(fila, idx["segmento"])
+    if seg:
+        return carpeta_imagen_por_segmento(seg)
+    categoria = inferir_categoria_sin_segmento(fila, idx, raiz)
+    return "mujer" if categoria == "Mujer" else "hombre"
+
+
 def url_imagen_publica(carpeta: str, numero_imagen: int, raiz: Path, base_url: str = BASE_URL_IMAGENES) -> str:
-    extensiones = (".webp", ".png", ".jpg", ".jpeg")
+    extensiones = (".webp", ".avif", ".png", ".jpg", ".jpeg")
     carpeta_path = raiz / carpeta
     for ext in extensiones:
         if (carpeta_path / f"{numero_imagen}{ext}").exists():
@@ -485,7 +508,7 @@ def obtener_valor(fila: list[str], indice: int) -> str:
 
 
 def resolver_imagenes(carpeta: Path, carpeta_rel: str, numero_imagen: int) -> tuple[str, str]:
-    extensiones = (".webp", ".avif", ".png", ".jpg", ".jpeg")
+    extensiones = (".avif", ".webp", ".png", ".jpg", ".jpeg")
 
     def buscar(sufijo: str) -> str:
         for ext in extensiones:
@@ -495,10 +518,6 @@ def resolver_imagenes(carpeta: Path, carpeta_rel: str, numero_imagen: int) -> tu
 
     img1 = buscar("")
     img2 = buscar(".1")
-    if not img1:
-        img1 = f"{carpeta_rel}/{numero_imagen}.webp"
-    if not img2:
-        img2 = f"{carpeta_rel}/{numero_imagen}.1.webp"
     return img1, img2
 
 

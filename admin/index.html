@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Obebe Admin</title>
+    <link rel="preconnect" href="https://docs.google.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="admin.css?v=20261050">
+</head>
+<body>
+    <div id="adminLoginView" class="admin-login-wrap">
+        <div class="admin-login-card">
+            <h1>OBEBE CLOTHES</h1>
+            <p class="sub">Panel administrativo · acceso restringido</p>
+            <div id="adminLoginError" class="admin-login-error" role="alert"></div>
+            <form id="adminLoginForm" autocomplete="on">
+                <div class="admin-field">
+                    <label for="adminUsuario">Usuario</label>
+                    <input id="adminUsuario" name="usuario" type="text" required autocomplete="username" autocapitalize="characters">
+                </div>
+                <div class="admin-field">
+                    <label for="adminPassword">Contraseña</label>
+                    <input id="adminPassword" name="password" type="password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="admin-btn admin-btn-primary">Iniciar sesión</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="adminAppView" class="admin-app admin-hidden">
+        <div id="adminSidebarBackdrop" class="admin-sidebar-backdrop admin-hidden" aria-hidden="true"></div>
+        <aside id="adminSidebar" class="admin-sidebar" aria-label="Menú administrativo">
+            <div class="admin-brand" id="adminBrand">
+                <strong id="adminBrandTitle">OBEBE ADMIN</strong>
+                <span id="adminBrandSub">ERP · Fase MVP</span>
+            </div>
+            <nav id="adminNav" class="admin-nav"></nav>
+        </aside>
+        <div class="admin-main">
+            <header class="admin-topbar">
+                <button type="button" id="adminMenuToggle" class="admin-menu-toggle" aria-label="Abrir menú">☰</button>
+                <h2 id="adminPageTitle">Dashboard</h2>
+                <div class="admin-topbar-actions">
+                    <span id="adminSyncStatus" class="admin-user-chip"></span>
+                    <span id="adminUserChip" class="admin-user-chip"></span>
+                    <button type="button" id="adminRefreshBtn" class="admin-btn admin-btn-ghost">Actualizar</button>
+                    <button type="button" id="adminLogoutBtn" class="admin-btn admin-btn-ghost">Salir</button>
+                </div>
+            </header>
+            <main id="adminModuleContent" class="admin-content"></main>
+        </div>
+    </div>
+
+    <script src="admin-config.js?v=20261050"></script>
+    <script src="admin-auth.js?v=20261050"></script>
+    <script src="admin-data.js?v=20261050"></script>
+    <script src="admin-dialog.js?v=20261050"></script>
+    <script src="admin-inventario.js?v=20261050"></script>
+    <script src="admin-pedidos.js?v=20261050"></script>
+    <script src="admin-clientes.js?v=20261050"></script>
+    <script src="admin-mayoreo-store.js?v=20261050"></script>
+    <script src="admin-mayoreo.js?v=20261050"></script>
+    <script src="admin-mayoreo-ventas.js?v=20261050"></script>
+    <script src="admin-mayoreo-clientes.js?v=20261050"></script>
+    <script src="admin-mayoreo-pedidos-store.js?v=20261050"></script>
+    <script src="admin-mayoreo-calendario.js?v=20261050"></script>
+    <script src="admin-mayoreo-pedidos.js?v=20261050"></script>
+    <script src="admin-app.js?v=20261050"></script>
+</body>
+</html>

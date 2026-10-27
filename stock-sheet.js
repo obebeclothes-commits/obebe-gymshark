@@ -5,6 +5,7 @@
     var HOJA_INVENTARIO = 'INVENTARIO';
     var HOJA_INVENTARIO_LEGACY = 'HOMBRE';
     var GID_INVENTARIO = 0; // pestana INVENTARIO
+    var GID_POR_HOJA = { INVENTARIO: 0, VENTAS: 915963655 };
     var FILA_INICIO = 2; // fila 3 del sheet (0-based en CSV)
     var IDX_IMAGEN = 0; // columna A (número de imagen / referencia de producto)
     var IDX_SEGMENTO = 19; // columna T
@@ -707,6 +708,13 @@
             '&_=' + Date.now();
     }
 
+    function urlCsvHojaCompleta(nombreHoja) {
+        var clave = String(nombreHoja || '').trim().toUpperCase();
+        var gid = GID_POR_HOJA[clave];
+        if (gid !== undefined) return urlExport(gid);
+        return urlPorNombreDeHoja(nombreHoja);
+    }
+
     function descargarCsv(url, etiqueta, intento) {
         var n = intento || 0;
         var ms = window.__obebeRedMovil ? 25000 : 15000;
@@ -846,12 +854,12 @@
 
         return descargarCsv(urlExport(GID_INVENTARIO), HOJA_INVENTARIO)
             .catch(function() {
-                console.warn('[stock-sheet] Probando ' + HOJA_INVENTARIO + ' por nombre de hoja');
-                return descargarCsv(urlPorNombreDeHoja(HOJA_INVENTARIO), HOJA_INVENTARIO);
+                console.warn('[stock-sheet] Reintento export ' + HOJA_INVENTARIO);
+                return descargarCsv(urlExport(GID_INVENTARIO), HOJA_INVENTARIO);
             })
             .catch(function() {
                 console.warn('[stock-sheet] Probando hoja legacy ' + HOJA_INVENTARIO_LEGACY);
-                return descargarCsv(urlPorNombreDeHoja(HOJA_INVENTARIO_LEGACY), HOJA_INVENTARIO_LEGACY);
+                return descargarCsv(urlCsvHojaCompleta(HOJA_INVENTARIO_LEGACY), HOJA_INVENTARIO_LEGACY);
             })
             .then(function(csv) {
                 sincronizarDesdeCsv(csv);
