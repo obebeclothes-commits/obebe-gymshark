@@ -233,6 +233,7 @@ async function importInventarioReplace(filas: { celdas: unknown[] }[]) {
 }
 
 async function importVentasReplace(ventas: unknown[][]) {
+  const sb = adminClient();
   await vaciarTabla("ventas_lineas");
   const rows = ventas.map(ventaLineToRow);
   const chunk = 300;
