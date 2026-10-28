@@ -75,6 +75,22 @@ async function getVentas() {
   return { ok: true, ventas };
 }
 
+function parseNum(val: unknown): number {
+  let t = String(val ?? "").trim();
+  if (!t) return 0;
+  t = t.replace(/\$/g, "").replace(/\s/g, "");
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) {
+    t = t.replace(/\./g, "").replace(",", ".");
+  } else if (/^\d+,\d{1,2}$/.test(t)) {
+    t = t.replace(",", ".");
+  } else {
+    t = t.replace(/,/g, "");
+  }
+  t = t.replace(/[^\d.-]/g, "");
+  const n = parseFloat(t);
+  return isNaN(n) ? 0 : n;
+}
+
 function ventaLineToRow(v: unknown[]) {
   const a = v as string[];
   return {
@@ -82,7 +98,7 @@ function ventaLineToRow(v: unknown[]) {
     fecha_iso: parseFechaIso(a[0] ?? ""),
     nombre: a[1] ?? "",
     tipo: a[2] ?? "",
-    precio: parseFloat(String(a[3] ?? "0")) || 0,
+    precio: parseNum(a[3]),
     talla: a[4] ?? "",
     color: a[5] ?? "",
     segmento: a[6] ?? "",
@@ -275,6 +291,50 @@ const SPREADSHEET_ID = "195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko";
 const GID_INVENTARIO = 0;
 const GID_VENTAS = 915963655;
 const FILA_DATOS_INICIO = 2;
+const FILA_ENCABEZADOS_VENTAS = 1;
+
+function resolverIndicesVentas(grid: string[][]) {
+  const idx = {
+    fecha: 1,
+    nombre: 2,
+    tipo: 3,
+    precio: 4,
+    talla: 5,
+    color: 6,
+    segmento: 7,
+    cliente: 8,
+    vendedor: 9,
+    cuenta: 10,
+    redSocial: 11,
+    link: 12,
+    telefono: 13,
+  };
+  const hdr = grid[FILA_ENCABEZADOS_VENTAS] || [];
+  for (let c = 0; c < hdr.length; c++) {
+    const t = String(hdr[c] || "").trim().toUpperCase();
+    if (t === "FECHA") idx.fecha = c;
+    else if (t === "ARTICULO" || t === "ARTÍCULO" || t === "NOMBRE") idx.nombre = c;
+    else if (t === "TIPO") idx.tipo = c;
+    else if (t === "PRECIO") idx.precio = c;
+    else if (t === "TALLA") idx.talla = c;
+    else if (t === "COLOR") idx.color = c;
+    else if (t.indexOf("HOMBRE") >= 0 && t.indexOf("MUJER") >= 0) idx.segmento = c;
+    else if (t === "CLIENTE" || t.indexOf("CLIENTE") >= 0) idx.cliente = c;
+    else if (t.indexOf("VEND") >= 0) idx.vendedor = c;
+    else if (t.indexOf("CUENTA") >= 0) idx.cuenta = c;
+    else if (t.indexOf("RED") >= 0 && t.indexOf("SOCIAL") >= 0) idx.redSocial = c;
+    else if (t === "LINK" || t.indexOf("LINK") >= 0 || t.indexOf("PERFIL") >= 0) idx.link = c;
+    else if (
+      t.indexOf("TEL") >= 0 || t.indexOf("WHATS") >= 0 || t.indexOf("CEL") >= 0 ||
+      t.indexOf("NÚMERO") >= 0 || t.indexOf("NUMERO") >= 0
+    ) idx.telefono = c;
+  }
+  return idx;
+}
+
+function celdaVentas(f: string[], col: number) {
+  return col < f.length ? f[col] : "";
+}
 
 function parseCSV(texto: string): string[][] {
   const filas: string[][] = [];
@@ -373,32 +433,7 @@ async function importFromGoogleRetail() {
     throw new Error("INVENTARIO: no se encontraron filas de datos en el CSV.");
   }
 
-  const ventText = await fetchCsvHoja(GID_VENTAS, "VENTAS");
-  const vGrid = parseCSV(ventText);
-  const ventasLines: unknown[][] = [];
-  for (let i = FILA_DATOS_INICIO; i < vGrid.length; i++) {
-    const f = vGrid[i] || [];
-    const get = (idx: number) => (idx < f.length ? String(f[idx] ?? "").trim() : "");
-    const nombre = get(2) || get(1);
-    const fechaRaw = get(1) || get(0);
-    if (!nombre && !fechaRaw) continue;
-    if (nombre.toUpperCase() === "ARTICULO" || nombre.toUpperCase() === "ARTÍCULO") continue;
-    ventasLines.push([
-      fechaRaw,
-      nombre,
-      get(3),
-      get(4),
-      get(5),
-      get(6),
-      get(7),
-      get(8),
-      get(9),
-      get(10),
-      get(11),
-      get(12),
-      get(13),
-    ]);
-  }
+  const ventasLines = await parseVentasDesdeCsvGoogle();
 
   const nInv = await importInventarioPayloadEnChunks(invPayload);
   const nVent = await importVentasLinesEnChunks(ventasLines);
@@ -408,28 +443,30 @@ async function importFromGoogleRetail() {
 async function parseVentasDesdeCsvGoogle() {
   const ventText = await fetchCsvHoja(GID_VENTAS, "VENTAS");
   const vGrid = parseCSV(ventText);
+  const idx = resolverIndicesVentas(vGrid);
   const ventasLines: unknown[][] = [];
   for (let i = FILA_DATOS_INICIO; i < vGrid.length; i++) {
     const f = vGrid[i] || [];
-    const get = (idx: number) => (idx < f.length ? String(f[idx] ?? "").trim() : "");
-    const nombre = get(2) || get(1);
-    const fechaRaw = get(1) || get(0);
+    const nombre = String(celdaVentas(f, idx.nombre) || "").trim();
+    const fechaRaw = String(celdaVentas(f, idx.fecha) || "").trim();
     if (!nombre && !fechaRaw) continue;
     if (nombre.toUpperCase() === "ARTICULO" || nombre.toUpperCase() === "ARTÍCULO") continue;
+    const precio = parseNum(celdaVentas(f, idx.precio));
+    if (!nombre && precio <= 0) continue;
     ventasLines.push([
       fechaRaw,
       nombre,
-      get(3),
-      get(4),
-      get(5),
-      get(6),
-      get(7),
-      get(8),
-      get(9),
-      get(10),
-      get(11),
-      get(12),
-      get(13),
+      String(celdaVentas(f, idx.tipo) || "").trim(),
+      String(precio),
+      String(celdaVentas(f, idx.talla) || "").trim(),
+      String(celdaVentas(f, idx.color) || "").trim(),
+      String(celdaVentas(f, idx.segmento) || "").trim(),
+      String(celdaVentas(f, idx.cliente) || "").trim(),
+      String(celdaVentas(f, idx.vendedor) || "").trim(),
+      String(celdaVentas(f, idx.cuenta) || "").trim(),
+      String(celdaVentas(f, idx.redSocial) || "").trim(),
+      String(celdaVentas(f, idx.link) || "").trim(),
+      String(celdaVentas(f, idx.telefono) || "").trim(),
     ]);
   }
   return ventasLines;
