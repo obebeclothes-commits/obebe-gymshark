@@ -1572,10 +1572,48 @@
         });
     }
 
+    function probarConexionSupabase() {
+        if (!supabaseListo()) {
+            return Promise.resolve({ ok: false, error: 'Faltan URL o claves en admin-config.js' });
+        }
+        return ObebeAdminBackend.callAdminApi('ping', {}).then(function (ping) {
+            return ObebeAdminBackend.callAdminApi('getDbStats', {}).then(function (stats) {
+                return ObebeAdminBackend.fetchInventarioRaw().then(function (rows) {
+                    return {
+                        ok: true,
+                        ping: ping,
+                        stats: stats,
+                        inventarioLeido: (rows || []).length
+                    };
+                });
+            });
+        }).catch(function (e) {
+            return { ok: false, error: e.message || String(e) };
+        });
+    }
+
     function migrarDesdeGoogleSheets() {
         if (!supabaseListo()) {
             return Promise.reject(new Error('Configura Supabase y despliega admin-api antes de migrar.'));
         }
+        return apiAdminScript('importFromGoogleRetail', {}).then(function (res) {
+            limpiarPendienteSync();
+            estado.avisoSupabase = '';
+            return cargarInventario(true).then(function () {
+                return cargarVentas(true);
+            }).then(function () {
+                return res;
+            });
+        }).catch(function (err) {
+            var msg = err.message || String(err);
+            if (msg.indexOf('desconocida') >= 0 || msg.indexOf('Acción') >= 0) {
+                return migrarDesdeGoogleSheetsLegacy();
+            }
+            throw err;
+        });
+    }
+
+    function migrarDesdeGoogleSheetsLegacy() {
         return Promise.all([
             fetchTextoHoja(HOJA_INVENTARIO),
             fetchTextoHoja(HOJA_VENTAS)
@@ -2001,6 +2039,7 @@
         usarSupabase: usarSupabase,
         supabaseListo: supabaseListo,
         migrarDesdeGoogleSheets: migrarDesdeGoogleSheets,
+        probarConexionSupabase: probarConexionSupabase,
         fetchTextoHoja: fetchTextoHoja,
         normalizarMarca: normalizarMarca,
         urlImagenFilaInventario: urlImagenFilaInventario,

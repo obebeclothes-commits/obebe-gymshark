@@ -259,6 +259,153 @@ async function importVentasAppend(ventas: unknown[][]) {
   return { ok: true, inserted: rows.length };
 }
 
+const SPREADSHEET_ID = "195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko";
+const GID_INVENTARIO = 0;
+const GID_VENTAS = 915963655;
+const FILA_DATOS_INICIO = 2;
+
+function parseCSV(texto: string): string[][] {
+  const filas: string[][] = [];
+  let fila: string[] = [];
+  let celda = "";
+  let enComillas = false;
+  for (let i = 0; i < texto.length; i++) {
+    const c = texto[i];
+    const sig = texto[i + 1];
+    if (c === '"') {
+      if (enComillas && sig === '"') {
+        celda += '"';
+        i++;
+      } else enComillas = !enComillas;
+    } else if ((c === "," || c === "\n" || c === "\r") && !enComillas) {
+      if (c === "\r" && sig === "\n") i++;
+      fila.push(celda);
+      celda = "";
+      if (c === "\n" || c === "\r") {
+        if (fila.length > 1 || (fila[0] && fila[0].trim())) filas.push(fila);
+        fila = [];
+      }
+    } else celda += c;
+  }
+  if (celda.length || fila.length) {
+    fila.push(celda);
+    if (fila.length > 1 || (fila[0] && fila[0].trim())) filas.push(fila);
+  }
+  return filas;
+}
+
+function filaInventarioVacia(celdas: string[]) {
+  for (const v of celdas) {
+    if (String(v || "").trim()) return false;
+  }
+  return true;
+}
+
+async function fetchCsvHoja(gid: number, etiqueta: string) {
+  const url =
+    `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${gid}&_=` +
+    Date.now();
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${etiqueta}: HTTP ${res.status} al descargar Sheet`);
+  const text = await res.text();
+  if (!text || text.length < 30) {
+    throw new Error(
+      `${etiqueta}: CSV vacío. El libro debe ser visible con enlace (cualquiera con el enlace).`,
+    );
+  }
+  if (text.toLowerCase().includes("<!doctype") || text.toLowerCase().includes("<html")) {
+    throw new Error(`${etiqueta}: Google devolvió HTML en lugar de CSV (permisos del Sheet).`);
+  }
+  return text;
+}
+
+async function importInventarioPayloadEnChunks(
+  payload: { celdas: unknown[]; legacy_sheet_row?: number }[],
+) {
+  const CHUNK = 60;
+  if (!payload.length) return 0;
+  await importInventarioReplace(payload.slice(0, CHUNK));
+  let i = CHUNK;
+  while (i < payload.length) {
+    await importInventarioAppend(payload.slice(i, i + CHUNK));
+    i += CHUNK;
+  }
+  return payload.length;
+}
+
+async function importVentasLinesEnChunks(ventasLines: unknown[][]) {
+  const CHUNK = 200;
+  if (!ventasLines.length) return 0;
+  await importVentasReplace(ventasLines.slice(0, CHUNK));
+  let i = CHUNK;
+  while (i < ventasLines.length) {
+    await importVentasAppend(ventasLines.slice(i, i + CHUNK));
+    i += CHUNK;
+  }
+  return ventasLines.length;
+}
+
+async function importFromGoogleRetail() {
+  const invText = await fetchCsvHoja(GID_INVENTARIO, "INVENTARIO");
+  const grid = parseCSV(invText);
+  const invPayload: { celdas: unknown[]; legacy_sheet_row: number }[] = [];
+  for (let i = FILA_DATOS_INICIO; i < grid.length; i++) {
+    const celdas = padCeldas(grid[i] || []);
+    const nombre = (celdas[1] || "").trim();
+    if (nombre.toUpperCase() === "NOMBRE") continue;
+    if (filaInventarioVacia(celdas)) continue;
+    if (!nombre && !(celdas[0] || "").trim()) continue;
+    invPayload.push({ celdas, legacy_sheet_row: i + 1 });
+  }
+  if (!invPayload.length) {
+    throw new Error("INVENTARIO: no se encontraron filas de datos en el CSV.");
+  }
+
+  const ventText = await fetchCsvHoja(GID_VENTAS, "VENTAS");
+  const vGrid = parseCSV(ventText);
+  const ventasLines: unknown[][] = [];
+  for (let i = FILA_DATOS_INICIO; i < vGrid.length; i++) {
+    const f = vGrid[i] || [];
+    const get = (idx: number) => (idx < f.length ? String(f[idx] ?? "").trim() : "");
+    const nombre = get(2) || get(1);
+    const fechaRaw = get(1) || get(0);
+    if (!nombre && !fechaRaw) continue;
+    if (nombre.toUpperCase() === "ARTICULO" || nombre.toUpperCase() === "ARTÍCULO") continue;
+    ventasLines.push([
+      fechaRaw,
+      nombre,
+      get(3),
+      get(4),
+      get(5),
+      get(6),
+      get(7),
+      get(8),
+      get(9),
+      get(10),
+      get(11),
+      get(12),
+      get(13),
+    ]);
+  }
+
+  const nInv = await importInventarioPayloadEnChunks(invPayload);
+  const nVent = await importVentasLinesEnChunks(ventasLines);
+  return { ok: true, inventario: nInv, ventas: nVent };
+}
+
+async function getDbStats() {
+  const sb = adminClient();
+  const inv = await sb.from("inventario_filas").select("id", { count: "exact", head: true });
+  const ven = await sb.from("ventas_lineas").select("id", { count: "exact", head: true });
+  if (inv.error) throw inv.error;
+  if (ven.error) throw ven.error;
+  return {
+    ok: true,
+    inventarioFilas: inv.count ?? 0,
+    ventasLineas: ven.count ?? 0,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: cors });
@@ -272,6 +419,10 @@ Deno.serve(async (req) => {
     if (action === "ping") return json({ ok: true, message: "admin-api Supabase OK" });
 
     if (action === "getVentas") return json(await getVentas());
+    if (action === "getDbStats") return json(await getDbStats());
+    if (action === "importFromGoogleRetail") {
+      return json(await importFromGoogleRetail());
+    }
 
     if (action === "registrarVentaRetail") {
       return json(await registrarVentaRetail(body));

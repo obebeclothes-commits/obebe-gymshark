@@ -670,10 +670,33 @@
             '<li>Pulsa importar (copia INVENTARIO + VENTAS del Sheet una última vez)</li>' +
             '</ol>' +
             '<p id="adminMigracionMsg" class="admin-login-error" role="alert"></p>' +
+            '<button type="button" class="admin-btn admin-btn-ghost" id="adminProbarSupabaseBtn"' +
+            (supabaseOk ? '' : ' disabled') + '>Probar conexión Supabase</button> ' +
             '<button type="button" class="admin-btn admin-btn-primary" id="adminMigrarSheetsBtn"' +
             (supabaseOk ? '' : ' disabled') + '>Importar INVENTARIO + VENTAS desde Google</button>' +
-            '<p class="admin-muted-text" style="margin-top:0.75rem">Reemplaza tablas en Supabase. Mayoreo no se importa aquí.</p>' +
+            '<p class="admin-muted-text" style="margin-top:0.75rem">La importación la hace la Edge Function (admin-api) descargando el Sheet. ' +
+            'Si inventario_filas sigue en 0, vuelve a desplegar admin-api con el código nuevo del repo.</p>' +
             '</div></div>';
+
+        var btnProbar = document.getElementById('adminProbarSupabaseBtn');
+        if (btnProbar) {
+            btnProbar.onclick = function () {
+                var msg = document.getElementById('adminMigracionMsg');
+                if (msg) msg.textContent = 'Probando…';
+                ObebeAdminData.probarConexionSupabase().then(function (r) {
+                    if (!r.ok) {
+                        if (msg) msg.textContent = r.error || 'Error';
+                        return;
+                    }
+                    var n = (r.stats && r.stats.inventarioFilas) || r.inventarioLeido || 0;
+                    var v = (r.stats && r.stats.ventasLineas) || 0;
+                    if (msg) {
+                        msg.textContent = 'OK · inventario_filas: ' + n + ' · ventas_lineas: ' + v +
+                            (n === 0 ? ' → pulsa Importar' : '');
+                    }
+                });
+            };
+        }
 
         var btn = document.getElementById('adminMigrarSheetsBtn');
         if (btn) {
