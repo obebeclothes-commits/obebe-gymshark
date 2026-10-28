@@ -1592,6 +1592,25 @@
         });
     }
 
+    function importarSoloVentasDesdeGoogle() {
+        if (!supabaseListo()) {
+            return Promise.reject(new Error('Configura Supabase y despliega admin-api.'));
+        }
+        return apiAdminScript('importVentasFromGoogle', {}).then(function (res) {
+            return cargarVentas(true).then(function () {
+                return res;
+            });
+        }).catch(function (err) {
+            var msg = err.message || String(err);
+            if (msg.indexOf('desconocida') >= 0 || msg.indexOf('Acción') >= 0) {
+                return Promise.reject(new Error(
+                    'La Edge Function no tiene importVentasFromGoogle. Redeploy admin-api con el index.ts del repo.'
+                ));
+            }
+            throw err;
+        });
+    }
+
     function migrarDesdeGoogleSheets() {
         if (!supabaseListo()) {
             return Promise.reject(new Error('Configura Supabase y despliega admin-api antes de migrar.'));
@@ -2039,6 +2058,7 @@
         usarSupabase: usarSupabase,
         supabaseListo: supabaseListo,
         migrarDesdeGoogleSheets: migrarDesdeGoogleSheets,
+        importarSoloVentasDesdeGoogle: importarSoloVentasDesdeGoogle,
         probarConexionSupabase: probarConexionSupabase,
         fetchTextoHoja: fetchTextoHoja,
         normalizarMarca: normalizarMarca,

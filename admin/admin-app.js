@@ -673,7 +673,9 @@
             '<button type="button" class="admin-btn admin-btn-ghost" id="adminProbarSupabaseBtn"' +
             (supabaseOk ? '' : ' disabled') + '>Probar conexión Supabase</button> ' +
             '<button type="button" class="admin-btn admin-btn-primary" id="adminMigrarSheetsBtn"' +
-            (supabaseOk ? '' : ' disabled') + '>Importar INVENTARIO + VENTAS desde Google</button>' +
+            (supabaseOk ? '' : ' disabled') + '>Importar INVENTARIO + VENTAS desde Google</button> ' +
+            '<button type="button" class="admin-btn admin-btn-ghost" id="adminImportVentasBtn"' +
+            (supabaseOk ? '' : ' disabled') + '>Solo VENTAS (inventario ya está)</button>' +
             '<p class="admin-muted-text" style="margin-top:0.75rem">La importación la hace la Edge Function (admin-api) descargando el Sheet. ' +
             'Si inventario_filas sigue en 0, vuelve a desplegar admin-api con el código nuevo del repo.</p>' +
             '</div></div>';
@@ -694,6 +696,25 @@
                         msg.textContent = 'OK · inventario_filas: ' + n + ' · ventas_lineas: ' + v +
                             (n === 0 ? ' → pulsa Importar' : '');
                     }
+                });
+            };
+        }
+
+        var btnVentas = document.getElementById('adminImportVentasBtn');
+        if (btnVentas) {
+            btnVentas.onclick = function () {
+                var msg = document.getElementById('adminMigracionMsg');
+                if (msg) msg.textContent = 'Importando ventas…';
+                ObebeAdminData.importarSoloVentasDesdeGoogle().then(function (res) {
+                    if (msg) {
+                        msg.textContent = 'Ventas importadas: ' + (res.ventas || '—') + '. Pulsa Actualizar.';
+                    }
+                    return cargarDatos(true);
+                }).then(function (d) {
+                    datosCache = d;
+                    renderConfig();
+                }).catch(function (e) {
+                    if (msg) msg.textContent = e.message || String(e);
                 });
             };
         }

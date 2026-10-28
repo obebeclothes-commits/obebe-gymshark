@@ -405,6 +405,43 @@ async function importFromGoogleRetail() {
   return { ok: true, inventario: nInv, ventas: nVent };
 }
 
+async function parseVentasDesdeCsvGoogle() {
+  const ventText = await fetchCsvHoja(GID_VENTAS, "VENTAS");
+  const vGrid = parseCSV(ventText);
+  const ventasLines: unknown[][] = [];
+  for (let i = FILA_DATOS_INICIO; i < vGrid.length; i++) {
+    const f = vGrid[i] || [];
+    const get = (idx: number) => (idx < f.length ? String(f[idx] ?? "").trim() : "");
+    const nombre = get(2) || get(1);
+    const fechaRaw = get(1) || get(0);
+    if (!nombre && !fechaRaw) continue;
+    if (nombre.toUpperCase() === "ARTICULO" || nombre.toUpperCase() === "ARTÍCULO") continue;
+    ventasLines.push([
+      fechaRaw,
+      nombre,
+      get(3),
+      get(4),
+      get(5),
+      get(6),
+      get(7),
+      get(8),
+      get(9),
+      get(10),
+      get(11),
+      get(12),
+      get(13),
+    ]);
+  }
+  return ventasLines;
+}
+
+/** Solo VENTAS (no toca inventario_filas). */
+async function importVentasFromGoogle() {
+  const ventasLines = await parseVentasDesdeCsvGoogle();
+  const nVent = await importVentasLinesEnChunks(ventasLines);
+  return { ok: true, ventas: nVent };
+}
+
 async function getDbStats() {
   const sb = adminClient();
   const inv = await sb.from("inventario_filas").select("id", { count: "exact", head: true });
@@ -434,6 +471,9 @@ Deno.serve(async (req) => {
     if (action === "getDbStats") return json(await getDbStats());
     if (action === "importFromGoogleRetail") {
       return json(await importFromGoogleRetail());
+    }
+    if (action === "importVentasFromGoogle") {
+      return json(await importVentasFromGoogle());
     }
 
     if (action === "registrarVentaRetail") {
