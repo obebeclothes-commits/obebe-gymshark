@@ -203,9 +203,21 @@ async function deleteRows(filas: number[]) {
   return { ok: true, deleted: ids.length };
 }
 
+async function vaciarTabla(nombre: "inventario_filas" | "ventas_lineas") {
+  const sb = adminClient();
+  for (let n = 0; n < 80; n++) {
+    const { data, error } = await sb.from(nombre).select("id").limit(400);
+    if (error) throw error;
+    if (!data?.length) break;
+    const ids = data.map((r) => r.id);
+    const { error: e2 } = await sb.from(nombre).delete().in("id", ids);
+    if (e2) throw e2;
+  }
+}
+
 async function importInventarioReplace(filas: { celdas: unknown[] }[]) {
   const sb = adminClient();
-  await sb.from("inventario_filas").delete().neq("id", 0);
+  await vaciarTabla("inventario_filas");
   const chunk = 200;
   let inserted = 0;
   for (let i = 0; i < filas.length; i += chunk) {
@@ -221,8 +233,7 @@ async function importInventarioReplace(filas: { celdas: unknown[] }[]) {
 }
 
 async function importVentasReplace(ventas: unknown[][]) {
-  const sb = adminClient();
-  await sb.from("ventas_lineas").delete().neq("id", 0);
+  await vaciarTabla("ventas_lineas");
   const rows = ventas.map(ventaLineToRow);
   const chunk = 300;
   for (let i = 0; i < rows.length; i += chunk) {
@@ -454,6 +465,8 @@ Deno.serve(async (req) => {
 
     return json({ ok: false, error: "Acción desconocida" }, 400);
   } catch (err) {
-    return json({ ok: false, error: String(err) }, 500);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[admin-api]", msg, err);
+    return json({ ok: false, error: msg }, 500);
   }
 });
