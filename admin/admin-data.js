@@ -37,8 +37,27 @@
         ubicacion: 27
     };
 
+    /** Hoja VENTAS: datos en columnas B–N (A suele quedar vacía). Índices 0-based en CSV. */
+    var VENTAS_COL_B = 1;
+    var VENTAS_COL_N = 13;
+    var VENTAS_ETIQUETAS = {
+        1: 'B · Fecha',
+        2: 'C · Artículo',
+        3: 'D · Tipo',
+        4: 'E · Precio',
+        5: 'F · Talla',
+        6: 'G · Color',
+        7: 'H · Cat.',
+        8: 'I · Cliente',
+        9: 'J · Vendedor',
+        10: 'K · Cuenta',
+        11: 'L · Red social',
+        12: 'M · Link',
+        13: 'N · Teléfono'
+    };
+
     var IDX_V = {
-        fecha: 1,
+        fecha: VENTAS_COL_B,
         nombre: 2,
         tipo: 3,
         precio: 4,
@@ -50,7 +69,7 @@
         cuenta: 10,
         redSocial: 11,
         link: 12,
-        telefono: 13
+        telefono: VENTAS_COL_N
     };
 
     var MESES_FECHA = {
@@ -73,6 +92,11 @@
     };
 
     var CACHE_INV_KEY = 'obebe_admin_inv_cache_v1';
+    var CACHE_VENTAS_KEY = 'obebe_admin_ventas_cache_v1';
+    /** Ventas/stock hechos sin Apps Script; se fusionan al refrescar desde Sheets */
+    var PENDING_SYNC_KEY = 'obebe_admin_pending_sync_v1';
+    var MEMORY_VENTAS_TTL_MS = 5 * 60 * 1000;
+    var STORAGE_VENTAS_TTL_MS = 20 * 60 * 1000;
     /** Memoria: evita re-fetch al cambiar de módulo */
     var MEMORY_INV_TTL_MS = 5 * 60 * 1000;
     /** localStorage: abre el panel al instante y refresca en segundo plano */
@@ -90,7 +114,8 @@
         errorVentas: null,
         errorMayoreo: null,
         sheetUrl: 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/edit',
-        inventarioSyncEnCurso: false
+        inventarioSyncEnCurso: false,
+        ventasSyncEnCurso: false
     };
 
     function guardarCacheInventarioLocal() {
@@ -145,11 +170,23 @@
     }
 
     function refrescarInventarioEnFondo() {
+        if (escrituraLocalHabilitada()) return;
+        if (usarSupabase() && supabaseListo()) {
+            if (estado.inventarioSyncEnCurso) return;
+            estado.inventarioSyncEnCurso = true;
+            cargarInventarioDesdeSupabase().catch(function (err) {
+                console.warn('[admin-data] sync inventario supabase', err.message || err);
+            }).finally(function () {
+                estado.inventarioSyncEnCurso = false;
+            });
+            return;
+        }
         if (estado.inventarioSyncEnCurso) return;
         estado.inventarioSyncEnCurso = true;
         fetchTextoHoja(HOJA_INVENTARIO).then(function (texto) {
             estado.encabezadosFila2 = leerEncabezadosInventario(texto);
             estado.filas = parsearFilasInventario(texto);
+            aplicarOverridesStockEnFilas(estado.filas, leerPendienteSync().stockByRow);
             estado.cargadoEn = Date.now();
             guardarCacheInventarioLocal();
         }).catch(function (err) {
@@ -763,13 +800,13 @@
         for (var c = 0; c < hdr.length; c++) {
             var t = String(hdr[c] || '').trim().toUpperCase();
             if (t === 'FECHA') idx.fecha = c;
-            else if (t === 'ARTICULO' || t === 'ARTÍCULO') idx.nombre = c;
+            else if (t === 'ARTICULO' || t === 'ARTÍCULO' || t === 'NOMBRE') idx.nombre = c;
             else if (t === 'TIPO') idx.tipo = c;
             else if (t === 'PRECIO') idx.precio = c;
             else if (t === 'TALLA') idx.talla = c;
             else if (t === 'COLOR') idx.color = c;
             else if (t.indexOf('HOMBRE') >= 0 && t.indexOf('MUJER') >= 0) idx.segmento = c;
-            else if (t === 'CLIENTE') idx.cliente = c;
+            else if (t === 'CLIENTE' || t.indexOf('CLIENTE') >= 0) idx.cliente = c;
             else if (t.indexOf('VEND') >= 0) idx.vendedor = c;
             else if (t.indexOf('CUENTA') >= 0) idx.cuenta = c;
             else if (t.indexOf('RED') >= 0 && t.indexOf('SOCIAL') >= 0) idx.redSocial = c;
@@ -778,6 +815,76 @@
                 t.indexOf('NÚMERO') >= 0 || t.indexOf('NUMERO') >= 0) idx.telefono = c;
         }
         return idx;
+    }
+
+    function guardarCacheVentasLocal() {
+        if (!estado.ventas.length) return;
+        try {
+            localStorage.setItem(CACHE_VENTAS_KEY, JSON.stringify({
+                t: Date.now(),
+                ventas: estado.ventas
+            }));
+        } catch (e) {
+            console.warn('[admin-data] cache ventas', e);
+        }
+    }
+
+    function leerCacheVentasLocal() {
+        try {
+            var raw = localStorage.getItem(CACHE_VENTAS_KEY);
+            if (!raw) return null;
+            var o = JSON.parse(raw);
+            if (!o || !o.t || !Array.isArray(o.ventas)) return null;
+            if (Date.now() - o.t > STORAGE_VENTAS_TTL_MS) return null;
+            return o;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function paqueteVentasDesdeEstado() {
+        return {
+            ventas: estado.ventas,
+            resumenVentas: calcularResumenVentas(estado.ventas),
+            clientes: calcularPerfilesClientes(estado.ventas)
+        };
+    }
+
+    function snapshotVentasCacheLocal() {
+        if (estado.ventas.length && estado.ventasCargadoEn) {
+            return paqueteVentasDesdeEstado();
+        }
+        var c = leerCacheVentasLocal();
+        if (!c) return null;
+        estado.ventas = c.ventas;
+        estado.ventasCargadoEn = c.t;
+        return paqueteVentasDesdeEstado();
+    }
+
+    function refrescarVentasEnFondo() {
+        if (escrituraLocalHabilitada()) return;
+        if (usarSupabase() && supabaseListo()) {
+            if (estado.ventasSyncEnCurso) return;
+            estado.ventasSyncEnCurso = true;
+            cargarVentasDesdeSupabase().catch(function (err) {
+                console.warn('[admin-data] sync ventas supabase', err.message || err);
+            }).finally(function () {
+                estado.ventasSyncEnCurso = false;
+            });
+            return;
+        }
+        if (estado.ventasSyncEnCurso) return;
+        estado.ventasSyncEnCurso = true;
+        var pend = leerPendienteSync();
+        fetchTextoHoja(HOJA_VENTAS).then(function (texto) {
+            estado.ventas = fusionarVentasConPendientes(parsearFilasVentas(texto), pend.ventasLocales);
+            estado.ventasCargadoEn = Date.now();
+            guardarCacheVentasLocal();
+        }).catch(function (err) {
+            console.warn('[admin-data] sync ventas fondo', err.message || err);
+        }).finally(function () {
+            estado.ventasSyncEnCurso = false;
+        });
     }
 
     function normTelefono(val) {
@@ -821,6 +928,8 @@
                     link: '',
                     redSocial: {},
                     tipos: {},
+                    vendedores: {},
+                    cuentas: {},
                     articulos: 0,
                     gasto: 0,
                     ultimaCompraIso: '',
@@ -828,20 +937,27 @@
                 };
             }
             var c = map[key];
-            if (v.telefono && !c.telefono) c.telefono = String(v.telefono).trim();
-            if (v.link && !c.link) c.link = String(v.link).trim();
             var red = String(v.redSocial || '').trim() || 'Sin dato';
             c.redSocial[red] = (c.redSocial[red] || 0) + 1;
             var tipo = String(v.tipo || '').trim() || 'Sin tipo';
             c.tipos[tipo] = (c.tipos[tipo] || 0) + 1;
+            var vend = String(v.vendedor || '').trim() || 'Sin vendedor';
+            c.vendedores[vend] = (c.vendedores[vend] || 0) + 1;
+            var cta = String(v.cuenta || '').trim() || 'Sin cuenta';
+            c.cuentas[cta] = (c.cuentas[cta] || 0) + 1;
             c.articulos += 1;
             c.gasto += v.precio || 0;
-            if (v.fechaIso && (!c.ultimaCompraIso || v.fechaIso > c.ultimaCompraIso)) {
-                c.ultimaCompraIso = v.fechaIso;
-                c.ultimaCompraRaw = v.fechaRaw || '';
+            if (v.fechaIso && (!c.ultimaCompraIso || v.fechaIso >= c.ultimaCompraIso)) {
+                if (!c.ultimaCompraIso || v.fechaIso >= c.ultimaCompraIso) {
+                    c.ultimaCompraIso = v.fechaIso;
+                    c.ultimaCompraRaw = v.fechaRaw || '';
+                    if (v.telefono) c.telefono = String(v.telefono).trim();
+                    if (v.link) c.link = String(v.link).trim();
+                }
+            } else {
+                if (v.telefono && !c.telefono) c.telefono = String(v.telefono).trim();
+                if (v.link && !c.link) c.link = String(v.link).trim();
             }
-            if (v.telefono) c.telefono = String(v.telefono).trim();
-            if (v.link) c.link = String(v.link).trim();
         });
         var lista = Object.keys(map).map(function (k) {
             var c = map[k];
@@ -852,6 +968,8 @@
                 link: c.link,
                 redPrincipal: elegirRedPrincipal(c.redSocial),
                 tipoPrincipal: elegirTipoPrincipal(c.tipos),
+                vendedorPrincipal: elegirRedPrincipal(c.vendedores),
+                cuentaPrincipal: elegirRedPrincipal(c.cuentas),
                 redSocial: c.redSocial,
                 tipos: c.tipos,
                 articulos: c.articulos,
@@ -874,7 +992,7 @@
         return (clientes || []).filter(function (c) {
             var blob = [
                 c.nombre, c.telefono, c.link, c.redPrincipal, c.tipoPrincipal,
-                String(c.ranking)
+                c.vendedorPrincipal, c.cuentaPrincipal, String(c.ranking)
             ].join(' ').toLowerCase();
             return blob.indexOf(query) >= 0;
         });
@@ -944,43 +1062,57 @@
         return padCeldas(grid[FILA_ENCABEZADOS]);
     }
 
+    function filaInventarioDesdeCeldas(celdas, filaSheet) {
+        celdas = padCeldas(celdas || []);
+        var nombre = (celdas[IDX.nombre] || '').trim();
+        if (nombre.toUpperCase() === 'NOMBRE') return null;
+        if (filaInventarioVacia(celdas)) return null;
+        if (!nombre && !parseRef(celdas[IDX.imagen])) return null;
+        var ref = parseRef(celdas[IDX.imagen]);
+        var stock = parseStock(celdas[IDX.stock]);
+        var precio = parseNum(celdas[IDX.precio]);
+        var valorLinea = parseNum(celdas[8]);
+        if (!valorLinea && precio > 0 && stock > 0) valorLinea = precio * stock;
+        var segmento = inferirSegmento(celdas);
+        return {
+            ref: ref,
+            nombre: nombre,
+            stock: stock,
+            talla: (celdas[IDX.talla] || '').trim(),
+            color: (celdas[IDX.color] || '').trim(),
+            tipo: (celdas[IDX.tipo] || '').trim(),
+            marca: normalizarMarca(celdas[IDX.marca]),
+            precio: precio,
+            precioMayoreo: parseNum(celdas[IDX.precioMayoreo]),
+            precioMayoreo50: parseNum(celdas[IDX.precioMayoreo50]),
+            mayoreo: parseMayoreoFlag(celdas[IDX.mayoreo]),
+            fechaStockIso: parseFechaVenta(celdas[IDX.fechaStock]),
+            valorLinea: valorLinea,
+            segmento: segmento,
+            ubicacion: (celdas[IDX.ubicacion] || '').trim(),
+            fotoUrl: normalizarRutaImagenAdmin(celdas[9]),
+            filaSheet: filaSheet,
+            celdas: celdas
+        };
+    }
+
     function parsearFilasInventario(csvTexto) {
         var grid = parseCSV(csvTexto);
         var out = [];
         for (var i = FILA_INICIO; i < grid.length; i++) {
             var f = grid[i];
-            var celdas = padCeldas(f);
-            var nombre = (celdas[IDX.nombre] || '').trim();
-            if (nombre.toUpperCase() === 'NOMBRE') continue;
-            if (filaInventarioVacia(celdas)) continue;
-            if (!nombre && !parseRef(celdas[IDX.imagen])) continue;
-            var ref = parseRef(celdas[IDX.imagen]);
-            var stock = parseStock(celdas[IDX.stock]);
-            var precio = parseNum(celdas[IDX.precio]);
-            var valorLinea = parseNum(celdas[8]);
-            if (!valorLinea && precio > 0 && stock > 0) valorLinea = precio * stock;
-            var segmento = inferirSegmento(f);
-            out.push({
-                ref: ref,
-                nombre: nombre,
-                stock: stock,
-                talla: (celdas[IDX.talla] || '').trim(),
-                color: (celdas[IDX.color] || '').trim(),
-                tipo: (celdas[IDX.tipo] || '').trim(),
-                marca: normalizarMarca(celdas[IDX.marca]),
-                precio: precio,
-                precioMayoreo: parseNum(celdas[IDX.precioMayoreo]),
-                precioMayoreo50: parseNum(celdas[IDX.precioMayoreo50]),
-                mayoreo: parseMayoreoFlag(celdas[IDX.mayoreo]),
-                fechaStockIso: parseFechaVenta(celdas[IDX.fechaStock]),
-                valorLinea: valorLinea,
-                segmento: segmento,
-                ubicacion: (celdas[IDX.ubicacion] || '').trim(),
-                fotoUrl: normalizarRutaImagenAdmin(celdas[9]),
-                filaSheet: i + 1,
-                celdas: celdas
-            });
+            var row = filaInventarioDesdeCeldas(padCeldas(f), i + 1);
+            if (row) out.push(row);
         }
+        return out;
+    }
+
+    function parsearFilasInventarioSupabase(rows) {
+        var out = [];
+        (rows || []).forEach(function (r) {
+            var row = filaInventarioDesdeCeldas(r.celdas, r.id);
+            if (row) out.push(row);
+        });
         return out;
     }
 
@@ -1161,6 +1293,342 @@
         return rv;
     }
 
+    function cfgAdmin() {
+        return global.OBEBE_ADMIN_CONFIG || { appsScriptUrl: '', inventarioSecret: '', permitirEscrituraLocal: true };
+    }
+
+    function appsScriptConfigurado() {
+        return !!String(cfgAdmin().appsScriptUrl || '').trim();
+    }
+
+    function usarSupabase() {
+        return global.ObebeAdminBackend && ObebeAdminBackend.usarSupabaseAdmin();
+    }
+
+    function supabaseListo() {
+        return global.ObebeAdminBackend && ObebeAdminBackend.supabaseListoAdmin();
+    }
+
+    function escrituraLocalHabilitada() {
+        if (usarSupabase() && supabaseListo()) return false;
+        var c = cfgAdmin();
+        if (appsScriptConfigurado()) return false;
+        return c.permitirEscrituraLocal !== false;
+    }
+
+    function leerPendienteSync() {
+        try {
+            var raw = localStorage.getItem(PENDING_SYNC_KEY);
+            if (!raw) return { stockByRow: {}, ventasLocales: [] };
+            var o = JSON.parse(raw);
+            if (!o || typeof o !== 'object') return { stockByRow: {}, ventasLocales: [] };
+            return {
+                stockByRow: o.stockByRow && typeof o.stockByRow === 'object' ? o.stockByRow : {},
+                ventasLocales: Array.isArray(o.ventasLocales) ? o.ventasLocales : []
+            };
+        } catch (e) {
+            return { stockByRow: {}, ventasLocales: [] };
+        }
+    }
+
+    function guardarPendienteSync(pend) {
+        try {
+            localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pend || { stockByRow: {}, ventasLocales: [] }));
+        } catch (e) {
+            console.warn('[admin-data] pending sync', e);
+        }
+    }
+
+    function limpiarPendienteSync() {
+        try {
+            localStorage.removeItem(PENDING_SYNC_KEY);
+        } catch (e) { /* ignore */ }
+    }
+
+    function aplicarOverridesStockEnFilas(filas, stockByRow) {
+        if (!filas || !stockByRow) return;
+        Object.keys(stockByRow).forEach(function (k) {
+            var row = parseInt(k, 10);
+            var stock = parseInt(stockByRow[k], 10);
+            if (isNaN(row) || isNaN(stock)) return;
+            filas.forEach(function (f) {
+                if (f.filaSheet !== row) return;
+                f.stock = stock;
+                if (f.celdas) f.celdas[IDX.stock] = String(stock);
+            });
+        });
+    }
+
+    function fusionarVentasConPendientes(desdeSheet, pendientes) {
+        var sheet = desdeSheet || [];
+        var extra = pendientes || [];
+        if (!extra.length) return sheet;
+        var vistos = {};
+        sheet.forEach(function (v) {
+            var k = [v.fechaRaw, v.nombre, v.precio, v.talla, v.cliente, v.vendedor].join('|');
+            vistos[k] = true;
+        });
+        var unicas = extra.filter(function (v) {
+            var k = [v.fechaRaw, v.nombre, v.precio, v.talla, v.cliente, v.vendedor].join('|');
+            if (vistos[k]) return false;
+            vistos[k] = true;
+            return true;
+        });
+        return unicas.concat(sheet);
+    }
+
+    function registrarPendienteTrasVentaLocal(stockUpdates, ventasLocal) {
+        var pend = leerPendienteSync();
+        (stockUpdates || []).forEach(function (u) {
+            if (u.row != null) pend.stockByRow[String(u.row)] = u.stock;
+        });
+        (ventasLocal || []).forEach(function (v) {
+            pend.ventasLocales.unshift(v);
+        });
+        guardarPendienteSync(pend);
+    }
+
+    function aplicarVentaRetailEnEstado(stockUpdates, ventasLocal) {
+        (stockUpdates || []).forEach(function (u) {
+            var hit = estado.filas.find(function (x) { return x.filaSheet === u.row; });
+            if (hit) {
+                hit.stock = u.stock;
+                if (hit.celdas) hit.celdas[IDX.stock] = String(u.stock);
+            }
+        });
+        (ventasLocal || []).forEach(function (v) {
+            estado.ventas.unshift(v);
+        });
+        estado.ventasCargadoEn = Date.now();
+        guardarCacheInventarioLocal();
+        guardarCacheVentasLocal();
+    }
+
+    function fechaTextoHoyVentas() {
+        var d = new Date();
+        return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + d.getFullYear();
+    }
+
+    function lineaVentaDesdeFila(f, meta) {
+        meta = meta || {};
+        return [
+            meta.fechaRaw || fechaTextoHoyVentas(),
+            f.nombre || '',
+            f.tipo || '',
+            String(meta.precio != null ? meta.precio : f.precio || 0),
+            f.talla || '',
+            f.color || '',
+            f.segmento || '',
+            meta.cliente || '',
+            meta.vendedor || '',
+            meta.cuenta || '',
+            meta.redSocial || '',
+            meta.link || '',
+            meta.telefono || ''
+        ];
+    }
+
+    function ventaObjetoDesdeFila(f, meta) {
+        meta = meta || {};
+        var fechaRaw = meta.fechaRaw || fechaTextoHoyVentas();
+        var precio = meta.precio != null ? meta.precio : f.precio || 0;
+        return {
+            fechaIso: parseFechaVenta(fechaRaw) || fechaLocalIso(new Date()),
+            fechaRaw: fechaRaw,
+            nombre: f.nombre,
+            tipo: f.tipo,
+            precio: precio,
+            talla: f.talla,
+            color: f.color,
+            segmento: f.segmento,
+            cliente: meta.cliente || '',
+            vendedor: meta.vendedor || '',
+            cuenta: meta.cuenta || '',
+            redSocial: meta.redSocial || '',
+            link: meta.link || '',
+            telefono: meta.telefono || '',
+            filaSheet: 0
+        };
+    }
+
+    function apiAdminScript(action, payload) {
+        if (usarSupabase()) {
+            if (!supabaseListo()) {
+                return Promise.reject(new Error(
+                    'Supabase incompleto: supabaseUrl, supabaseAnonKey y adminApiUrl en admin-config.js.'
+                ));
+            }
+            return ObebeAdminBackend.callAdminApi(action, payload).then(function (res) {
+                if (!res || res.ok === false) {
+                    throw new Error((res && res.error) || 'Error API Supabase');
+                }
+                return res;
+            });
+        }
+        var c = cfgAdmin();
+        if (!c.appsScriptUrl) {
+            return Promise.reject(new Error('Falta appsScriptUrl en admin-config.js (Web App Apps Script).'));
+        }
+        var body = Object.assign({ action: action, secret: c.inventarioSecret || '' }, payload || {});
+        return fetch(c.appsScriptUrl, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(body)
+        }).then(function (res) { return res.json(); });
+    }
+
+    function cargarInventarioDesdeSupabase() {
+        return ObebeAdminBackend.fetchInventarioRaw().then(function (rows) {
+            estado.encabezadosFila2 = inventarioHeaders().map(function (h) { return h.title; });
+            estado.filas = parsearFilasInventarioSupabase(rows);
+            aplicarOverridesStockEnFilas(estado.filas, leerPendienteSync().stockByRow);
+            estado.cargadoEn = Date.now();
+            guardarCacheInventarioLocal();
+            return paqueteInventarioDesdeEstado();
+        });
+    }
+
+    function cargarVentasDesdeSupabase() {
+        return ObebeAdminBackend.fetchVentasDesdeApi().then(function (ventas) {
+            var pend = leerPendienteSync();
+            estado.ventas = fusionarVentasConPendientes(ventas, pend.ventasLocales);
+            estado.ventasCargadoEn = Date.now();
+            guardarCacheVentasLocal();
+            var pack = paqueteVentasDesdeEstado();
+            return {
+                ventas: pack.ventas,
+                resumenVentas: pack.resumenVentas,
+                clientes: pack.clientes
+            };
+        });
+    }
+
+    function migrarDesdeGoogleSheets() {
+        if (!supabaseListo()) {
+            return Promise.reject(new Error('Configura Supabase y despliega admin-api antes de migrar.'));
+        }
+        return Promise.all([
+            fetchTextoHoja(HOJA_INVENTARIO),
+            fetchTextoHoja(HOJA_VENTAS)
+        ]).then(function (parts) {
+            var filas = parsearFilasInventario(parts[0]);
+            var ventasGrid = parseCSV(parts[1]);
+            var idx = resolverIndicesVentas(ventasGrid);
+            var ventasLines = [];
+            for (var i = FILA_INICIO; i < ventasGrid.length; i++) {
+                var f = ventasGrid[i];
+                var nombre = String(celda(f, idx.nombre) || '').trim();
+                var fechaRaw = String(celda(f, idx.fecha) || '').trim();
+                if (esFilaEncabezadoVenta(nombre, fechaRaw)) continue;
+                if (!nombre && !fechaRaw) continue;
+                ventasLines.push([
+                    fechaRaw,
+                    nombre,
+                    String(celda(f, idx.tipo) || '').trim(),
+                    String(parseNum(celda(f, idx.precio))),
+                    String(celda(f, idx.talla) || '').trim(),
+                    String(celda(f, idx.color) || '').trim(),
+                    normSegmento(celda(f, idx.segmento)),
+                    String(celda(f, idx.cliente) || '').trim(),
+                    String(celda(f, idx.vendedor) || '').trim(),
+                    String(celda(f, idx.cuenta) || '').trim(),
+                    String(celda(f, idx.redSocial) || '').trim(),
+                    String(celda(f, idx.link) || '').trim(),
+                    String(celda(f, idx.telefono) || '').trim()
+                ]);
+            }
+            return apiAdminScript('importInventarioReplace', {
+                filas: filas.map(function (r) {
+                    return { celdas: r.celdas, legacy_sheet_row: r.filaSheet };
+                })
+            }).then(function () {
+                return apiAdminScript('importVentasReplace', { ventas: ventasLines });
+            }).then(function () {
+                limpiarPendienteSync();
+                return cargarInventario(true).then(function () {
+                    return cargarVentas(true);
+                });
+            });
+        });
+    }
+
+    function registrarVentaRetail(carrito, meta) {
+        meta = meta || {};
+        if (!carrito || !carrito.length) {
+            return Promise.resolve({ ok: false, error: 'Agrega al menos un artículo.' });
+        }
+        var ventas = [];
+        var ventasLocal = [];
+        var stockByRow = {};
+        carrito.forEach(function (c) {
+            var f = c.fila;
+            if (!f || !f.filaSheet) return;
+            var qty = c.cantidad || 1;
+            if (stockByRow[f.filaSheet] == null) stockByRow[f.filaSheet] = f.stock || 0;
+            var precioU = c.precioUnitario != null ? c.precioUnitario : f.precio || 0;
+            var lineMeta = Object.assign({}, meta, { precio: precioU });
+            for (var i = 0; i < qty; i++) {
+                ventas.push(lineaVentaDesdeFila(f, lineMeta));
+                ventasLocal.push(ventaObjetoDesdeFila(f, lineMeta));
+            }
+            stockByRow[f.filaSheet] = Math.max(0, stockByRow[f.filaSheet] - qty);
+        });
+        var stockUpdates = Object.keys(stockByRow).map(function (k) {
+            return { row: parseInt(k, 10), stock: stockByRow[k] };
+        });
+        if (escrituraLocalHabilitada()) {
+            aplicarVentaRetailEnEstado(stockUpdates, ventasLocal);
+            registrarPendienteTrasVentaLocal(stockUpdates, ventasLocal);
+            return Promise.resolve({
+                ok: true,
+                soloLocal: true,
+                ventas: ventasLocal.length,
+                clientes: calcularPerfilesClientes(estado.ventas)
+            });
+        }
+        return apiAdminScript('registrarVentaRetail', { ventas: ventas, stockUpdates: stockUpdates })
+            .then(function (res) {
+                if (!res || res.ok === false) {
+                    throw new Error((res && res.error) || 'Error al registrar venta');
+                }
+                limpiarPendienteSync();
+                aplicarVentaRetailEnEstado(stockUpdates, ventasLocal);
+                return { ok: true, ventas: ventasLocal.length, clientes: calcularPerfilesClientes(estado.ventas) };
+            });
+    }
+
+    function actualizarStockFila(filaSheet, stock) {
+        stock = parseInt(stock, 10);
+        if (isNaN(stock) || stock < 0) {
+            return Promise.resolve({ ok: false, error: 'Stock inválido.' });
+        }
+        if (escrituraLocalHabilitada()) {
+            var hitL = estado.filas.find(function (x) { return x.filaSheet === filaSheet; });
+            if (hitL) {
+                hitL.stock = stock;
+                if (hitL.celdas) hitL.celdas[IDX.stock] = String(stock);
+            }
+            var pend = leerPendienteSync();
+            pend.stockByRow[String(filaSheet)] = stock;
+            guardarPendienteSync(pend);
+            guardarCacheInventarioLocal();
+            return Promise.resolve({ ok: true, stock: stock, soloLocal: true });
+        }
+        return apiAdminScript('actualizarStock', { filaSheet: filaSheet, stock: stock }).then(function (res) {
+            if (!res || res.ok === false) {
+                throw new Error((res && res.error) || 'No se pudo actualizar stock');
+            }
+            var hit = estado.filas.find(function (x) { return x.filaSheet === filaSheet; });
+            if (hit) {
+                hit.stock = stock;
+                if (hit.celdas) hit.celdas[IDX.stock] = String(stock);
+            }
+            guardarCacheInventarioLocal();
+            return { ok: true, stock: stock };
+        });
+    }
+
     function cargarInventario(forzar) {
         if (!forzar && estado.filas.length && estado.cargadoEn &&
             (Date.now() - estado.cargadoEn < MEMORY_INV_TTL_MS)) {
@@ -1175,10 +1643,25 @@
             }
         }
         estado.error = null;
+        if (usarSupabase()) {
+            if (!supabaseListo()) {
+                estado.error = 'Supabase: completa supabaseUrl, supabaseAnonKey y adminApiUrl.';
+                throw new Error(estado.error);
+            }
+            return cargarInventarioDesdeSupabase().catch(function (err) {
+                if (estado.filas.length) {
+                    console.warn('[admin-data] inventario supabase falló, cache', err.message || err);
+                    return paqueteInventarioDesdeEstado();
+                }
+                estado.error = err.message || String(err);
+                throw err;
+            });
+        }
         return fetchTextoHoja(HOJA_INVENTARIO)
             .then(function (texto) {
                 estado.encabezadosFila2 = leerEncabezadosInventario(texto);
                 estado.filas = parsearFilasInventario(texto);
+                aplicarOverridesStockEnFilas(estado.filas, leerPendienteSync().stockByRow);
                 estado.cargadoEn = Date.now();
                 guardarCacheInventarioLocal();
                 return paqueteInventarioDesdeEstado();
@@ -1194,28 +1677,87 @@
     }
 
     function cargarVentas(forzar) {
-        if (!forzar && estado.ventas.length >= 50 && estado.ventasCargadoEn && (Date.now() - estado.ventasCargadoEn < 60000)) {
+        if (!forzar && estado.ventas.length && estado.ventasCargadoEn &&
+            (Date.now() - estado.ventasCargadoEn < MEMORY_VENTAS_TTL_MS)) {
+            var packMem = paqueteVentasDesdeEstado();
             return Promise.resolve({
-                ventas: estado.ventas,
-                resumenVentas: calcularResumenVentas(estado.ventas)
+                ventas: packMem.ventas,
+                resumenVentas: packMem.resumenVentas,
+                clientes: packMem.clientes
             });
         }
+        if (!forzar && !estado.ventas.length) {
+            var cacheV = leerCacheVentasLocal();
+            if (cacheV) {
+                estado.ventas = cacheV.ventas;
+                estado.ventasCargadoEn = cacheV.t;
+                refrescarVentasEnFondo();
+                var packCache = paqueteVentasDesdeEstado();
+                return Promise.resolve({
+                    ventas: packCache.ventas,
+                    resumenVentas: packCache.resumenVentas,
+                    clientes: packCache.clientes
+                });
+            }
+        }
         estado.errorVentas = null;
+        if (usarSupabase()) {
+            if (!supabaseListo()) {
+                estado.errorVentas = 'Supabase: completa adminApiUrl y claves.';
+                return Promise.resolve({
+                    ventas: estado.ventas,
+                    resumenVentas: calcularResumenVentas(estado.ventas),
+                    clientes: calcularPerfilesClientes(estado.ventas),
+                    error: estado.errorVentas
+                });
+            }
+            return cargarVentasDesdeSupabase().catch(function (err) {
+                if (estado.ventas.length) {
+                    var packOk = paqueteVentasDesdeEstado();
+                    return {
+                        ventas: packOk.ventas,
+                        resumenVentas: packOk.resumenVentas,
+                        clientes: packOk.clientes
+                    };
+                }
+                estado.errorVentas = err.message || String(err);
+                return {
+                    ventas: [],
+                    resumenVentas: calcularResumenVentas([]),
+                    clientes: [],
+                    error: estado.errorVentas
+                };
+            });
+        }
+        var pendV = leerPendienteSync();
         return fetchTextoHoja(HOJA_VENTAS)
             .then(function (texto) {
-                estado.ventas = parsearFilasVentas(texto);
+                estado.ventas = fusionarVentasConPendientes(parsearFilasVentas(texto), pendV.ventasLocales);
                 estado.ventasCargadoEn = Date.now();
+                guardarCacheVentasLocal();
+                var pack = paqueteVentasDesdeEstado();
                 return {
-                    ventas: estado.ventas,
-                    resumenVentas: calcularResumenVentas(estado.ventas)
+                    ventas: pack.ventas,
+                    resumenVentas: pack.resumenVentas,
+                    clientes: pack.clientes
                 };
             })
             .catch(function (err) {
+                if (estado.ventas.length) {
+                    console.warn('[admin-data] ventas red falló, usando cache', err.message || err);
+                    var packOk = paqueteVentasDesdeEstado();
+                    return {
+                        ventas: packOk.ventas,
+                        resumenVentas: packOk.resumenVentas,
+                        clientes: packOk.clientes
+                    };
+                }
                 estado.errorVentas = err.message || String(err);
                 estado.ventas = [];
                 return {
                     ventas: [],
                     resumenVentas: calcularResumenVentas([]),
+                    clientes: [],
                     error: estado.errorVentas
                 };
             });
@@ -1281,7 +1823,7 @@
                 base.ventas = parts[0].ventas;
                 base.resumenVentas = parts[0].resumenVentas;
                 base.errorVentas = parts[0].error || null;
-                base.clientes = calcularPerfilesClientes(parts[0].ventas);
+                base.clientes = parts[0].clientes || calcularPerfilesClientes(parts[0].ventas);
                 base.lineasMayoreo = parts[1].lineasMayoreo;
                 base.clientesMayoreo = parts[1].clientesMayoreo;
                 base.resumenMayoreo = parts[1].resumenMayoreo;
@@ -1317,7 +1859,7 @@
             var blob = [
                 v.nombre, v.tipo, v.talla, v.color, v.segmento, v.cliente,
                 v.vendedor, v.cuenta, v.redSocial, v.link, v.telefono,
-                v.fechaRaw, v.fechaIso
+                v.fechaRaw, v.fechaIso, String(v.filaSheet || '')
             ].join(' ').toLowerCase();
             return blob.indexOf(query) >= 0;
         });
@@ -1345,6 +1887,9 @@
         cargarInventario: cargarInventario,
         snapshotInventarioCacheLocal: snapshotInventarioCacheLocal,
         cargarVentas: cargarVentas,
+        calcularPerfilesClientes: calcularPerfilesClientes,
+        snapshotVentasCacheLocal: snapshotVentasCacheLocal,
+        VENTAS_ETIQUETAS: VENTAS_ETIQUETAS,
         cargarMayoreo: cargarMayoreo,
         cargarTodo: cargarTodo,
         cargarSoloMayoreo: cargarSoloMayoreo,
@@ -1381,6 +1926,16 @@
             return '../producto.html?id=' + encodeURIComponent(r.ref) + '&categoria=' + encodeURIComponent(cat);
         },
         idFilaInventario: idFilaInventario,
+        registrarVentaRetail: registrarVentaRetail,
+        actualizarStockFila: actualizarStockFila,
+        apiAdminScript: apiAdminScript,
+        appsScriptConfigurado: appsScriptConfigurado,
+        escrituraLocalHabilitada: escrituraLocalHabilitada,
+        leerPendienteSync: leerPendienteSync,
+        usarSupabase: usarSupabase,
+        supabaseListo: supabaseListo,
+        migrarDesdeGoogleSheets: migrarDesdeGoogleSheets,
+        fetchTextoHoja: fetchTextoHoja,
         normalizarMarca: normalizarMarca,
         urlImagenFilaInventario: urlImagenFilaInventario,
         INVENTARIO_COLS_VISTA: 25,

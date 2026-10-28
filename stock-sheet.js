@@ -836,6 +836,50 @@
         return opcionesSheet;
     }
 
+    function usarSupabaseTienda() {
+        var cfg = window.OBEBE_DATA_CONFIG || {};
+        if (String(cfg.dataSource || '').toLowerCase() === 'supabase') return true;
+        var adm = window.OBEBE_ADMIN_CONFIG || {};
+        return String(adm.dataSource || '').toLowerCase() === 'supabase';
+    }
+
+    function csvDesdeFilasSupabase(rows) {
+        function escCell(v) {
+            var s = String(v == null ? '' : v);
+            if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+            return s;
+        }
+        var lines = ['', ''];
+        (rows || []).forEach(function(r) {
+            var c = r.celdas || [];
+            var line = [];
+            for (var i = 0; i < 29; i++) {
+                line.push(escCell(i < c.length ? c[i] : ''));
+            }
+            lines.push(line.join(','));
+        });
+        return lines.join('\n');
+    }
+
+    function sincronizarDesdeSupabase() {
+        var cfg = window.OBEBE_DATA_CONFIG || {};
+        var url = String(cfg.supabaseUrl || '').replace(/\/$/, '');
+        var key = String(cfg.supabaseAnonKey || '').trim();
+        if (!url || !key) {
+            return Promise.reject(new Error('Faltan supabaseUrl o supabaseAnonKey en obebe-data-config.js'));
+        }
+        var api = url + '/rest/v1/inventario_filas?select=celdas&order=id.asc&limit=5000';
+        return fetchConTimeout(api, {
+            cache: 'no-store',
+            headers: { apikey: key, Authorization: 'Bearer ' + key }
+        }, window.__obebeRedMovil ? 25000 : 15000).then(function(res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        }).then(function(rows) {
+            sincronizarDesdeCsv(csvDesdeFilasSupabase(rows));
+        });
+    }
+
     window.sincronizarStockDesdeSheets = function() {
         var tieneHombre = typeof productosHombre !== 'undefined' && Array.isArray(productosHombre);
         var tieneMujer = typeof productosMujer !== 'undefined' && Array.isArray(productosMujer);
@@ -851,6 +895,14 @@
         }
 
         window.__obebeSheetSyncOk = false;
+
+        if (usarSupabaseTienda()) {
+            return sincronizarDesdeSupabase().catch(function(err) {
+                window.__obebeSheetSyncOk = false;
+                console.warn('[stock-sheet] inventario supabase:', err);
+                return null;
+            });
+        }
 
         return descargarCsv(urlExport(GID_INVENTARIO), HOJA_INVENTARIO)
             .catch(function() {

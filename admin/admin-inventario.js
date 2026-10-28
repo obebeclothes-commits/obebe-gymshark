@@ -50,7 +50,7 @@
 
     function filasVisibles() {
         var base = state.filas.concat(state.nuevasFilas);
-        return ObebeAdminData.filtrarFilas(base, state.filtro, {});
+        return ObebeAdminData.filtrarFilas(base, state.filtro, { soloStock: true });
     }
 
     function keyFila(f) {
@@ -74,22 +74,21 @@
     }
 
     function apiInventario(action, payload) {
-        var c = cfg();
-        if (!c.appsScriptUrl) {
-            return Promise.reject(new Error('Falta appsScriptUrl en admin-config.js (Web App de Apps Script).'));
-        }
-        var body = Object.assign({ action: action, secret: c.inventarioSecret || '' }, payload || {});
-        return fetch(c.appsScriptUrl, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(body)
-        }).then(function (res) { return res.json(); });
+        return ObebeAdminData.apiAdminScript(action, payload);
     }
 
     function renderToolbar() {
         var c = cfg();
-        var apiOk = c.appsScriptUrl ? 'Guardar → Apps Script' : 'Guardar requiere appsScriptUrl';
+        var apiOk = 'Guardar requiere backend';
+        if (ObebeAdminData.usarSupabase && ObebeAdminData.usarSupabase()) {
+            apiOk = ObebeAdminData.supabaseListo && ObebeAdminData.supabaseListo()
+                ? 'Guardar → Supabase'
+                : 'Completa Supabase en admin-config.js';
+        } else if (c.appsScriptUrl) {
+            apiOk = 'Guardar → Apps Script';
+        } else if (ObebeAdminData.escrituraLocalHabilitada && ObebeAdminData.escrituraLocalHabilitada()) {
+            apiOk = 'Sin URL: solo caché local al guardar (no implementado aquí)';
+        }
         var modo = state.modoEdicion
             ? '<span class="admin-inv-modo admin-inv-modo-edit">Editando</span>'
             : '<span class="admin-inv-modo">Solo vista</span>';
@@ -167,8 +166,8 @@
         }).join('');
 
         var foot = edit
-            ? 'Modo edición · columnas A–Y'
-            : 'Solo vista · pulsa Editar para modificar · columna J = foto';
+            ? 'Modo edición · columnas A–Y · solo artículos con stock'
+            : 'Solo artículos con stock &gt; 0 · agotados en módulo Histórico · columna J = foto';
 
         return '<div class="admin-inv-scroll' + (edit ? ' admin-inv-scroll--edit' : '') + '">' +
             '<table class="admin-table admin-inv-grid' + (edit ? ' admin-inv-grid--edit' : '') + '"><thead>' + headLetters + headSheet +

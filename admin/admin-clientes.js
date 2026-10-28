@@ -31,13 +31,16 @@
                 '<td>' + esc(c.redPrincipal) + '</td>' +
                 '<td>' + c.articulos + '</td>' +
                 '<td>' + ObebeAdminData.formatoMoney(c.gasto) + '</td>' +
+                '<td>' + esc(c.vendedorPrincipal || '—') + '</td>' +
+                '<td>' + esc(c.cuentaPrincipal || '—') + '</td>' +
                 '<td>' + esc(c.tipoPrincipal) + '</td>' +
                 '<td>' + esc(ObebeAdminData.formatoFecha(c.ultimaCompraIso, c.ultimaCompraRaw)) + '</td>' +
                 '</tr>';
         }).join('');
         return '<div class="admin-table-wrap"><table class="admin-table admin-table-clientes"><thead><tr>' +
-            '<th>#</th><th>Cliente</th><th>Tel. (col. N)</th><th>Link (col. M)</th><th>Red principal</th>' +
-            '<th>Artículos</th><th>Total gastado</th><th>Tipo favorito</th><th>Última compra</th>' +
+            '<th>#</th><th>I · Cliente</th><th>N · Teléfono</th><th>M · Link</th><th>L · Red</th>' +
+            '<th>Artículos</th><th>Total gastado</th><th>J · Vendedor</th><th>K · Cuenta</th>' +
+            '<th>Tipo favorito</th><th>Última compra</th>' +
             '</tr></thead><tbody>' + rows + '</tbody></table></div>';
     }
 
@@ -58,7 +61,7 @@
         container.innerHTML =
             '<div class="admin-kpi-grid">' +
             '<div class="admin-kpi"><div class="label">Clientes únicos</div><div class="value">' + clientes.length + '</div>' +
-            '<div class="hint">Columna CLIENTE en VENTAS</div></div>' +
+            '<div class="hint">Columna I · VENTAS (B–N)</div></div>' +
             '<div class="admin-kpi"><div class="label">Top gasto</div><div class="value">' +
             (clientes[0] ? esc(clientes[0].nombre) : '—') + '</div>' +
             '<div class="hint">' + (clientes[0] ? ObebeAdminData.formatoMoney(clientes[0].gasto) : '') + '</div></div>' +
@@ -67,8 +70,9 @@
             '<input type="search" class="admin-search" id="adminSearchClientes" placeholder="Buscar nombre, teléfono, red…"></div>' +
             '<p id="adminClientesTotales" class="admin-muted-text" style="padding:0 1rem 0.5rem;margin:0"></p>' +
             '<div id="adminClientesTable"></div></div>' +
-            '<div class="admin-banner">Teléfono = columna <strong>N</strong>, link = <strong>M</strong>, red = <strong>L</strong> (VENTAS). ' +
-            '<strong>NATY</strong> no aparece aquí (cliente de mayoreo en módulo <em>Mayoreo</em>); sus ventas siguen en <em>Ventas</em>.</div>';
+            '<div class="admin-banner info">Perfiles generados desde la hoja <strong>VENTAS</strong> (columnas B–N). ' +
+            'Contacto: teléfono <strong>N</strong>, link <strong>M</strong>, red <strong>L</strong> (última compra). ' +
+            '<strong>NATY</strong> (mayoreo) no aparece aquí; usa el módulo <em>Mayoreo</em>.</div>';
 
         pintar('');
         var input = document.getElementById('adminSearchClientes');

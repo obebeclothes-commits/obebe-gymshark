@@ -4,6 +4,7 @@
     var MODULOS_ADMIN = [
         { id: 'dashboard', label: 'Dashboard', live: true },
         { id: 'inventario', label: 'Inventario', live: true },
+        { id: 'historico', label: 'Histórico', live: true },
         { id: 'ventas', label: 'Ventas', live: true },
         { id: 'pedidos', label: 'Pedidos', live: true },
         { id: 'clientes', label: 'Clientes', live: true },
@@ -492,6 +493,14 @@
         ObebeAdminInventario.mount(elContent, datosCache.filas, onReloadInventario, datosCache.encabezadosFila2);
     }
 
+    function linkCortoVentas(url) {
+        var u = String(url || '').trim();
+        if (!u) return '—';
+        var href = u.indexOf('http') === 0 ? u : 'https://' + u.replace(/^\/+/, '');
+        var txt = u.length > 28 ? u.slice(0, 26) + '…' : u;
+        return '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + esc(txt) + '</a>';
+    }
+
     function tablaVentas(ventas, limite) {
         limite = limite || 500;
         var slice = ventas.slice(0, limite);
@@ -501,14 +510,25 @@
                 '<td>' + ObebeAdminData.formatoMoney(v.precio) + '</td>' +
                 '<td>' + esc(v.talla) + '</td><td>' + esc(v.color) + '</td>' +
                 '<td>' + esc(v.segmento) + '</td><td>' + esc(v.cliente) + '</td>' +
-                '<td>' + esc(v.vendedor) + '</td><td>' + esc(v.cuenta) + '</td></tr>';
+                '<td>' + esc(v.vendedor) + '</td><td>' + esc(v.cuenta) + '</td>' +
+                '<td>' + esc(v.redSocial) + '</td><td>' + linkCortoVentas(v.link) + '</td>' +
+                '<td>' + esc(v.telefono) + '</td></tr>';
         }).join('');
         var extra = ventas.length > limite
             ? '<p style="padding:0.5rem 1rem;font-size:0.75rem;color:var(--admin-muted)">Mostrando ' + limite + ' de ' + ventas.length + '.</p>' : '';
-        return extra + '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>' +
-            '<th>Fecha</th><th>Artículo</th><th>Tipo</th><th>Precio</th><th>Talla</th><th>Color</th>' +
-            '<th>Cat.</th><th>Cliente</th><th>Vendedor</th><th>Cuenta</th></tr></thead><tbody>' +
-            (rows || '<tr><td colspan="10">Sin ventas</td></tr>') + '</tbody></table></div>';
+        return extra + '<div class="admin-table-wrap"><table class="admin-table admin-table-ventas"><thead><tr>' +
+            '<th>B · Fecha</th><th>C · Artículo</th><th>D · Tipo</th><th>E · Precio</th><th>F · Talla</th><th>G · Color</th>' +
+            '<th>H · Cat.</th><th>I · Cliente</th><th>J · Vendedor</th><th>K · Cuenta</th>' +
+            '<th>L · Red</th><th>M · Link</th><th>N · Tel.</th></tr></thead><tbody>' +
+            (rows || '<tr><td colspan="13">Sin ventas</td></tr>') + '</tbody></table></div>';
+    }
+
+    function pintarTablaVentasRegistro() {
+        var el = document.getElementById('adminVentasTable');
+        if (!el) return;
+        var q = (document.getElementById('adminSearchVentas') || {}).value || '';
+        var f = ObebeAdminData.filtrarVentas(datosCache.ventas || [], q);
+        el.innerHTML = tablaVentas(f);
     }
 
     function renderVentas() {
@@ -517,6 +537,7 @@
             return '<tr><td>' + esc(x.key) + '</td><td>' + ObebeAdminData.formatoMoney(x.val) + '</td></tr>';
         }).join('');
         elContent.innerHTML =
+            '<div id="adminVentaRetailMount"></div>' +
             panelVentasDashboard(sv) +
             '<div class="admin-panel"><div class="admin-panel-head"><h3>Dinero por cuenta (mes)</h3></div>' +
             '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Cuenta</th><th>Total</th></tr></thead><tbody>' +
@@ -525,14 +546,41 @@
             '<div class="admin-panel-head"><h3>Registro de ventas</h3>' +
             '<input type="search" class="admin-search" id="adminSearchVentas" placeholder="Buscar artículo, cliente, vendedor…"></div>' +
             '<div id="adminVentasTable"></div></div>' +
-            '<div class="admin-banner">Lectura desde la hoja VENTAS. Registrar ventas nuevas aquí (con baja de stock) llegará con Apps Script.</div>';
+            (ObebeAdminData.usarSupabase && ObebeAdminData.usarSupabase()
+                ? '<div class="admin-banner info">Ventas y stock en <strong>Supabase</strong>. La tienda debe usar <code>obebe-data-config.js</code> con el mismo origen.</div>'
+                : (ObebeAdminData.escrituraLocalHabilitada && ObebeAdminData.escrituraLocalHabilitada()
+                    ? '<div class="admin-banner warn">Modo <strong>solo admin (local)</strong>: no escribe en Google Sheets. Configura Supabase o <code>appsScriptUrl</code>.</div>'
+                    : '<div class="admin-banner info">Las ventas se escriben en <strong>VENTAS (B–N)</strong> y bajan stock vía Apps Script.</div>'));
 
-        function pintar(q) {
-            var f = ObebeAdminData.filtrarVentas(datosCache.ventas || [], q);
-            document.getElementById('adminVentasTable').innerHTML = tablaVentas(f);
-        }
-        pintar('');
-        bindSearch('adminSearchVentas', pintar);
+        ObebeAdminVentasRetail.mount(document.getElementById('adminVentaRetailMount'), {
+            filas: datosCache.filas || [],
+            clientes: datosCache.clientes || [],
+            vendedor: (userActual && userActual.nombre) ? userActual.nombre : 'OBEBE',
+            getFilas: function () { return datosCache.filas || []; },
+            onVentaRegistrada: function (res) {
+                var st = ObebeAdminData.getEstado();
+                datosCache.filas = st.filas || datosCache.filas;
+                datosCache.ventas = st.ventas || datosCache.ventas;
+                datosCache.resumenVentas = ObebeAdminData.calcularResumenVentas(datosCache.ventas);
+                datosCache.clientes = res.clientes || ObebeAdminData.calcularPerfilesClientes(datosCache.ventas);
+                datosCache.resumen = ObebeAdminData.calcularResumen(datosCache.filas);
+                pintarTablaVentasRegistro();
+            }
+        });
+
+        pintarTablaVentasRegistro();
+        bindSearch('adminSearchVentas', pintarTablaVentasRegistro);
+    }
+
+    function renderHistorico() {
+        ObebeAdminHistorico.mount(elContent, {
+            filas: datosCache.filas || [],
+            onStockRestaurado: function (row, stock) {
+                var st = ObebeAdminData.getEstado();
+                datosCache.filas = st.filas || datosCache.filas;
+                datosCache.resumen = ObebeAdminData.calcularResumen(datosCache.filas);
+            }
+        });
     }
 
     function renderPlaceholder(titulo, texto, items) {
@@ -577,17 +625,69 @@
 
     function renderConfig() {
         var st = ObebeAdminData.getEstado();
+        var cfg = window.OBEBE_ADMIN_CONFIG || {};
+        var modo = (cfg.dataSource || 'sheets').toLowerCase();
+        var supabaseOk = ObebeAdminData.supabaseListo && ObebeAdminData.supabaseListo();
         elContent.innerHTML = bannerFase() +
             '<div class="admin-panel"><div class="admin-panel-head"><h3>Fuente de verdad</h3></div>' +
             '<div style="padding:1rem;font-size:0.85rem;line-height:1.6">' +
-            '<p><strong>Google Sheet</strong><br><a href="' + esc(st.sheetUrl) + '" target="_blank" rel="noopener">Abrir libro</a></p>' +
+            '<p><strong>Modo:</strong> ' + esc(modo) +
+            (modo === 'supabase' ? (supabaseOk ? ' · conectado' : ' · falta configurar URLs') : '') + '</p>' +
+            (modo !== 'supabase'
+                ? '<p><strong>Google Sheet</strong> (lectura)<br><a href="' + esc(st.sheetUrl) + '" target="_blank" rel="noopener">Abrir libro</a></p>'
+                : '<p><strong>Supabase</strong> · INVENTARIO + VENTAS retail. Mayoreo sigue en Sheet hasta migrar.</p>') +
             '<p><strong>INVENTARIO:</strong> ' + (st.cargadoEn ? new Date(st.cargadoEn).toLocaleString('es-MX') : '—') +
             ' · <strong>VENTAS:</strong> ' + (st.ventasCargadoEn ? new Date(st.ventasCargadoEn).toLocaleString('es-MX') : '—') +
             ' · <strong>MAYOREO:</strong> ' + (st.mayoreoCargadoEn ? new Date(st.mayoreoCargadoEn).toLocaleString('es-MX') : '—') + '</p>' +
-            '<p><strong>Registros:</strong> ventas ' + (st.ventas ? st.ventas.length : 0) +
-            ' · líneas mayoreo ' + (st.lineasMayoreo ? st.lineasMayoreo.length : 0) + '</p>' +
+            '<p><strong>Registros:</strong> inventario ' + (st.filas ? st.filas.length : 0) +
+            ' · ventas ' + (st.ventas ? st.ventas.length : 0) +
+            ' · mayoreo ' + (st.lineasMayoreo ? st.lineasMayoreo.length : 0) + '</p>' +
             '<p><strong>Sesión:</strong> ' + esc(userActual.usuario || userActual.nombre) + ' · ' + esc(userActual.rol) + '</p>' +
-            '<p style="color:var(--admin-muted)">Migración a PostgreSQL (Supabase): pendiente Fase 5.</p></div></div>';
+            '</div></div>' +
+            '<div class="admin-panel"><div class="admin-panel-head"><h3>Migrar a Supabase</h3></div>' +
+            '<div style="padding:1rem;font-size:0.85rem;line-height:1.6">' +
+            '<ol style="margin:0 0 1rem 1.1rem;line-height:1.55">' +
+            '<li>Crea proyecto en <a href="https://supabase.com" target="_blank" rel="noopener">supabase.com</a></li>' +
+            '<li>Ejecuta <code>scripts/supabase/schema.sql</code> en SQL Editor</li>' +
+            '<li>Despliega Edge Function <code>admin-api</code> (carpeta en repo) con secret <code>ADMIN_SECRET</code></li>' +
+            '<li>En <code>admin-config.js</code>: <code>dataSource: \'supabase\'</code> + URL + anon key + adminApiUrl</li>' +
+            '<li>Copia URL y anon key a <code>obebe-data-config.js</code> en la raíz (tienda)</li>' +
+            '<li>Pulsa importar (copia INVENTARIO + VENTAS del Sheet una última vez)</li>' +
+            '</ol>' +
+            '<p id="adminMigracionMsg" class="admin-login-error" role="alert"></p>' +
+            '<button type="button" class="admin-btn admin-btn-primary" id="adminMigrarSheetsBtn"' +
+            (supabaseOk ? '' : ' disabled') + '>Importar INVENTARIO + VENTAS desde Google</button>' +
+            '<p class="admin-muted-text" style="margin-top:0.75rem">Reemplaza tablas en Supabase. Mayoreo no se importa aquí.</p>' +
+            '</div></div>';
+
+        var btn = document.getElementById('adminMigrarSheetsBtn');
+        if (btn) {
+            btn.onclick = function () {
+                var msg = document.getElementById('adminMigracionMsg');
+                if (msg) msg.textContent = 'Importando… puede tardar un minuto.';
+                ObebeAdminDialog.confirm({
+                    title: '¿Importar desde Google Sheets?',
+                    message: 'Se borrarán inventario_filas y ventas_lineas en Supabase y se copiarán desde el libro actual.',
+                    confirmText: 'Importar',
+                    cancelText: 'Cancelar',
+                    variant: 'warn'
+                }).then(function (ok) {
+                    if (!ok) {
+                        if (msg) msg.textContent = '';
+                        return;
+                    }
+                    ObebeAdminData.migrarDesdeGoogleSheets().then(function () {
+                        if (msg) msg.textContent = 'Listo. Recarga datos con Actualizar.';
+                        return cargarDatos(true);
+                    }).then(function (d) {
+                        datosCache = d;
+                        renderConfig();
+                    }).catch(function (e) {
+                        if (msg) msg.textContent = e.message || String(e);
+                    });
+                });
+            };
+        }
     }
 
     function renderModulo(id) {
@@ -606,12 +706,13 @@
         switch (id) {
             case 'dashboard': renderDashboard(); break;
             case 'inventario': renderInventario(); break;
+            case 'historico': renderHistorico(); break;
             case 'ventas': renderVentas(); break;
             case 'pedidos':
                 ObebeAdminPedidos.mount(elContent);
                 break;
             case 'clientes':
-                ObebeAdminClientes.mount(elContent, datosCache.clientes || []);
+                ObebeAdminClientes.mount(elContent, ObebeAdminData.calcularPerfilesClientes(datosCache.ventas || []));
                 break;
             case 'mayoreo':
                 ObebeAdminMayoreo.mount(elContent, datosMayoreoParaVista());

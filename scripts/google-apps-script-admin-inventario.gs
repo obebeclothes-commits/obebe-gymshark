@@ -9,7 +9,9 @@
 
 var SPREADSHEET_ID = '195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko';
 var HOJA_INVENTARIO = 'INVENTARIO';
+var HOJA_VENTAS = 'VENTAS';
 var ADMIN_SECRET = 'OBebeClotes.1';
+var COL_STOCK = 3;
 var FILA_DATOS_INICIO = 3;
 var NUM_COLUMNAS = 29;
 
@@ -41,6 +43,12 @@ function doPost(e) {
     }
     if (body.action === 'deleteRows') {
       return jsonOut(deleteRows(body.filas || []));
+    }
+    if (body.action === 'registrarVentaRetail') {
+      return jsonOut(registrarVentaRetail(body));
+    }
+    if (body.action === 'actualizarStock') {
+      return jsonOut(actualizarStock(body.filaSheet, body.stock));
     }
     return jsonOut({ ok: false, error: 'Acción desconocida' });
   } catch (err) {
@@ -86,6 +94,51 @@ function appendRow(celdas) {
   ws.appendRow(row);
   SpreadsheetApp.flush();
   return { ok: true, fila: ws.getLastRow() };
+}
+
+function getSheetVentas_() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var ws = ss.getSheetByName(HOJA_VENTAS);
+  if (!ws) throw new Error('No existe la hoja VENTAS');
+  return ws;
+}
+
+/** ventas: filas B–N (array de 13 valores). stockUpdates: { row, stock } */
+function registrarVentaRetail(body) {
+  body = body || {};
+  var ventas = body.ventas || [];
+  var stockUpdates = body.stockUpdates || [];
+  if (!ventas.length) {
+    return { ok: false, error: 'Sin líneas de venta.' };
+  }
+  var wsV = getSheetVentas_();
+  var wsI = getSheet_();
+  ventas.forEach(function (v) {
+    var row = [''];
+    for (var i = 0; i < 13; i++) {
+      row.push(v[i] != null ? v[i] : '');
+    }
+    wsV.appendRow(row);
+  });
+  stockUpdates.forEach(function (u) {
+    var row = parseInt(u.row, 10);
+    var stock = parseInt(u.stock, 10);
+    if (row < FILA_DATOS_INICIO || isNaN(stock) || stock < 0) return;
+    wsI.getRange(row, COL_STOCK).setValue(stock);
+  });
+  SpreadsheetApp.flush();
+  return { ok: true, ventas: ventas.length, stockUpdates: stockUpdates.length };
+}
+
+function actualizarStock(filaSheet, stock) {
+  var row = parseInt(filaSheet, 10);
+  var n = parseInt(stock, 10);
+  if (row < FILA_DATOS_INICIO || isNaN(n) || n < 0) {
+    return { ok: false, error: 'Fila o stock inválido.' };
+  }
+  getSheet_().getRange(row, COL_STOCK).setValue(n);
+  SpreadsheetApp.flush();
+  return { ok: true, row: row, stock: n };
 }
 
 function deleteRows(filasSheet) {
