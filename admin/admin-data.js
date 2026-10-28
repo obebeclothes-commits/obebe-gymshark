@@ -115,7 +115,8 @@
         errorMayoreo: null,
         sheetUrl: 'https://docs.google.com/spreadsheets/d/' + SPREADSHEET_ID + '/edit',
         inventarioSyncEnCurso: false,
-        ventasSyncEnCurso: false
+        ventasSyncEnCurso: false,
+        avisoSupabase: ''
     };
 
     function guardarCacheInventarioLocal() {
@@ -1107,13 +1108,73 @@
         return out;
     }
 
+    function celdasDesdeRegistroSupabase(raw) {
+        if (Array.isArray(raw)) return raw;
+        if (typeof raw === 'string') {
+            try {
+                var p = JSON.parse(raw);
+                return Array.isArray(p) ? p : [];
+            } catch (e) {
+                return [];
+            }
+        }
+        return [];
+    }
+
     function parsearFilasInventarioSupabase(rows) {
         var out = [];
         (rows || []).forEach(function (r) {
-            var row = filaInventarioDesdeCeldas(r.celdas, r.id);
+            var row = filaInventarioDesdeCeldas(celdasDesdeRegistroSupabase(r.celdas), r.id);
             if (row) out.push(row);
         });
         return out;
+    }
+
+    function cargarInventarioDesdeSheetsRed() {
+        return fetchTextoHoja(HOJA_INVENTARIO).then(function (texto) {
+            estado.encabezadosFila2 = leerEncabezadosInventario(texto);
+            estado.filas = parsearFilasInventario(texto);
+            aplicarOverridesStockEnFilas(estado.filas, leerPendienteSync().stockByRow);
+            estado.cargadoEn = Date.now();
+            guardarCacheInventarioLocal();
+            return paqueteInventarioDesdeEstado();
+        });
+    }
+
+    function importarFilasSupabaseEnChunks(actionReplace, actionAppend, filasPayload) {
+        var CHUNK = 60;
+        if (!filasPayload.length) return Promise.resolve({ ok: true, inserted: 0 });
+        var first = filasPayload.slice(0, CHUNK);
+        var rest = filasPayload.slice(CHUNK);
+        return apiAdminScript(actionReplace, { filas: first }).then(function () {
+            if (!rest.length) return { ok: true };
+            var i = 0;
+            function next() {
+                if (i >= rest.length) return Promise.resolve({ ok: true });
+                var batch = rest.slice(i, i + CHUNK);
+                i += CHUNK;
+                return apiAdminScript(actionAppend, { filas: batch }).then(next);
+            }
+            return next();
+        });
+    }
+
+    function importarVentasSupabaseEnChunks(ventasLines) {
+        var CHUNK = 200;
+        if (!ventasLines.length) return Promise.resolve({ ok: true, inserted: 0 });
+        var first = ventasLines.slice(0, CHUNK);
+        var rest = ventasLines.slice(CHUNK);
+        return apiAdminScript('importVentasReplace', { ventas: first }).then(function () {
+            if (!rest.length) return { ok: true };
+            var i = 0;
+            function next() {
+                if (i >= rest.length) return Promise.resolve({ ok: true });
+                var batch = rest.slice(i, i + CHUNK);
+                i += CHUNK;
+                return apiAdminScript('importVentasAppend', { ventas: batch }).then(next);
+            }
+            return next();
+        });
     }
 
     function celda(f, col) {
@@ -1483,6 +1544,13 @@
             estado.encabezadosFila2 = inventarioHeaders().map(function (h) { return h.title; });
             estado.filas = parsearFilasInventarioSupabase(rows);
             aplicarOverridesStockEnFilas(estado.filas, leerPendienteSync().stockByRow);
+            if (!rows.length || !estado.filas.length) {
+                estado.avisoSupabase =
+                    'Supabase no tiene inventario todavía. Ve a Configuración → Importar desde Google. ' +
+                    'Mientras tanto se muestra el Sheet (solo lectura).';
+                return cargarInventarioDesdeSheetsRed();
+            }
+            estado.avisoSupabase = '';
             estado.cargadoEn = Date.now();
             guardarCacheInventarioLocal();
             return paqueteInventarioDesdeEstado();
@@ -1538,14 +1606,21 @@
                     String(celda(f, idx.telefono) || '').trim()
                 ]);
             }
-            return apiAdminScript('importInventarioReplace', {
-                filas: filas.map(function (r) {
-                    return { celdas: r.celdas, legacy_sheet_row: r.filaSheet };
-                })
-            }).then(function () {
-                return apiAdminScript('importVentasReplace', { ventas: ventasLines });
+            var invPayload = filas.map(function (r) {
+                return { celdas: r.celdas, legacy_sheet_row: r.filaSheet };
+            });
+            if (!invPayload.length) {
+                return Promise.reject(new Error('No se leyeron filas de INVENTARIO desde Google.'));
+            }
+            return importarFilasSupabaseEnChunks(
+                'importInventarioReplace',
+                'importInventarioAppend',
+                invPayload
+            ).then(function () {
+                return importarVentasSupabaseEnChunks(ventasLines);
             }).then(function () {
                 limpiarPendienteSync();
+                estado.avisoSupabase = '';
                 return cargarInventario(true).then(function () {
                     return cargarVentas(true);
                 });
@@ -1657,23 +1732,14 @@
                 throw err;
             });
         }
-        return fetchTextoHoja(HOJA_INVENTARIO)
-            .then(function (texto) {
-                estado.encabezadosFila2 = leerEncabezadosInventario(texto);
-                estado.filas = parsearFilasInventario(texto);
-                aplicarOverridesStockEnFilas(estado.filas, leerPendienteSync().stockByRow);
-                estado.cargadoEn = Date.now();
-                guardarCacheInventarioLocal();
+        return cargarInventarioDesdeSheetsRed().catch(function (err) {
+            if (estado.filas.length) {
+                console.warn('[admin-data] inventario red falló, usando cache', err.message || err);
                 return paqueteInventarioDesdeEstado();
-            })
-            .catch(function (err) {
-                if (estado.filas.length) {
-                    console.warn('[admin-data] inventario red falló, usando cache', err.message || err);
-                    return paqueteInventarioDesdeEstado();
-                }
-                estado.error = err.message || String(err);
-                throw err;
-            });
+            }
+            estado.error = err.message || String(err);
+            throw err;
+        });
     }
 
     function cargarVentas(forzar) {

@@ -382,7 +382,9 @@
             '<div class="admin-panel admin-panel-inventario">' +
             '<div class="admin-panel-head"><h3>Inventario (A–Y)</h3></div>' +
             '<div class="admin-inv-wrap">' + renderToolbar() + renderGrid() + '</div></div>' +
-            '<div class="admin-banner info">Para <strong>guardar</strong>: despliega <code>scripts/google-apps-script-admin-inventario.gs</code> como Web App y pega la URL en <code>admin-config.js</code>.</div>';
+            (ObebeAdminData.usarSupabase && ObebeAdminData.usarSupabase()
+                ? '<div class="admin-banner info">Guardar cambios → <strong>Supabase</strong>. Si la tabla está vacía, importa desde Configuración.</div>'
+                : '<div class="admin-banner info">Para <strong>guardar</strong>: Web App Apps Script o modo Supabase en <code>admin-config.js</code>.</div>');
         bindEvents(container, onReload);
     }
 

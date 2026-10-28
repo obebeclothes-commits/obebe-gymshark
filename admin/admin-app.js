@@ -481,16 +481,31 @@
         });
     }
 
+    function bannerAvisoSupabase() {
+        var st = ObebeAdminData.getEstado();
+        var msg = st && st.avisoSupabase ? String(st.avisoSupabase).trim() : '';
+        if (!msg) return '';
+        return '<div class="admin-banner warn" style="margin-bottom:1rem">' + esc(msg) + '</div>';
+    }
+
     function renderInventario() {
+        function pintarInv() {
+            elContent.innerHTML = bannerAvisoSupabase() +
+                '<div id="adminInvMount"></div>';
+            ObebeAdminInventario.mount(
+                document.getElementById('adminInvMount'),
+                datosCache.filas,
+                onReloadInventario,
+                datosCache.encabezadosFila2
+            );
+        }
         function onReloadInventario() {
             return cargarDatos(true).then(function (d) {
                 datosCache = d;
-                if (vistaActual === 'inventario') {
-                    ObebeAdminInventario.mount(elContent, datosCache.filas, onReloadInventario, datosCache.encabezadosFila2);
-                }
+                if (vistaActual === 'inventario') pintarInv();
             });
         }
-        ObebeAdminInventario.mount(elContent, datosCache.filas, onReloadInventario, datosCache.encabezadosFila2);
+        pintarInv();
     }
 
     function linkCortoVentas(url) {

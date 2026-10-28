@@ -232,6 +232,33 @@ async function importVentasReplace(ventas: unknown[][]) {
   return { ok: true, inserted: rows.length };
 }
 
+async function importInventarioAppend(filas: { celdas: unknown[] }[]) {
+  const sb = adminClient();
+  const chunk = 200;
+  let inserted = 0;
+  for (let i = 0; i < filas.length; i += chunk) {
+    const slice = filas.slice(i, i + chunk).map((f) => ({
+      celdas: padCeldas(f.celdas || []),
+      legacy_sheet_row: f.legacy_sheet_row ?? null,
+    }));
+    const { error } = await sb.from("inventario_filas").insert(slice);
+    if (error) throw error;
+    inserted += slice.length;
+  }
+  return { ok: true, inserted };
+}
+
+async function importVentasAppend(ventas: unknown[][]) {
+  const sb = adminClient();
+  const rows = ventas.map(ventaLineToRow);
+  const chunk = 300;
+  for (let i = 0; i < rows.length; i += chunk) {
+    const { error } = await sb.from("ventas_lineas").insert(rows.slice(i, i + chunk));
+    if (error) throw error;
+  }
+  return { ok: true, inserted: rows.length };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: cors });
@@ -266,6 +293,12 @@ Deno.serve(async (req) => {
     }
     if (action === "importVentasReplace") {
       return json(await importVentasReplace(body.ventas || []));
+    }
+    if (action === "importInventarioAppend") {
+      return json(await importInventarioAppend(body.filas || []));
+    }
+    if (action === "importVentasAppend") {
+      return json(await importVentasAppend(body.ventas || []));
     }
 
     return json({ ok: false, error: "Acción desconocida" }, 400);

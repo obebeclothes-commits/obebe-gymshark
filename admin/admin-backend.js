@@ -58,7 +58,20 @@
             mode: 'cors',
             headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + supabaseAnonKey() },
             body: JSON.stringify(body)
-        }).then(function (res) { return res.json(); });
+        }).then(function (res) {
+            return res.text().then(function (text) {
+                var data;
+                try {
+                    data = text ? JSON.parse(text) : {};
+                } catch (e) {
+                    throw new Error('Respuesta no JSON (HTTP ' + res.status + '): ' + text.slice(0, 200));
+                }
+                if (!res.ok && (!data || data.ok !== true)) {
+                    throw new Error((data && data.error) || ('HTTP ' + res.status));
+                }
+                return data;
+            });
+        });
     }
 
     function fetchInventarioRaw() {
