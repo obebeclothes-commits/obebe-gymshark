@@ -7,6 +7,7 @@
         modoEdicion: false,
         snapshot: null,
         seleccion: {},
+        modoEliminar: false,
         nuevasFilas: [],
         encabezadosFila2: [],
         msg: '',
@@ -98,9 +99,15 @@
             acciones += '<button type="button" class="admin-btn admin-btn-ghost" id="adminInvCancel">Cancelar</button>' +
                 '<button type="button" class="admin-btn admin-btn-primary" id="adminInvSave">Guardar cambios</button>' +
                 '<button type="button" class="admin-btn admin-btn-ghost" id="adminInvAddRow">+ Fila</button>' +
-                '<button type="button" class="admin-btn admin-btn-ghost" id="adminInvDelRows">Eliminar filas</button>';
+                '<button type="button" class="admin-btn admin-btn-danger" id="adminInvDelRows">Eliminar marcados</button>';
         } else {
             acciones += '<button type="button" class="admin-btn admin-btn-primary" id="adminInvEdit">Editar</button>';
+            if (state.modoEliminar) {
+                acciones += '<button type="button" class="admin-btn admin-btn-ghost" id="adminInvCancelPick">Cancelar</button>' +
+                    '<button type="button" class="admin-btn admin-btn-danger" id="adminInvDelRows">Eliminar marcados</button>';
+            } else {
+                acciones += '<button type="button" class="admin-btn admin-btn-ghost" id="adminInvPickDel">Eliminar artículos</button>';
+            }
         }
 
         return '<div class="admin-inv-toolbar">' +
@@ -111,11 +118,14 @@
             (state.msg ? '<div class="admin-banner ' + (state.msgOk ? 'info' : '') + '">' + esc(state.msg) + '</div>' : '');
     }
 
-    var IDX_COL_IMAGEN = 9;
+    function colFotoInventario() {
+        var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : { foto: 9 };
+        return idx.foto != null ? idx.foto : 9;
+    }
 
     function renderCeldaInventario(f, colIdx, edit) {
         var val = (f.celdas[colIdx] == null ? '' : String(f.celdas[colIdx]));
-        if (colIdx === IDX_COL_IMAGEN && !edit) {
+        if (colIdx === colFotoInventario() && !edit) {
             var url = ObebeAdminData.urlImagenFilaInventario(f);
             if (url) {
                 return '<td class="admin-inv-thumb-cell"><img src="' + esc(url) + '" alt="" class="admin-inv-thumb" loading="lazy" ' +
@@ -130,24 +140,33 @@
     }
 
     function renderGrid() {
-        var numCols = ObebeAdminData.INVENTARIO_COLS_VISTA || 25;
-        var enc = state.encabezadosFila2 || [];
+        var colsVista = ObebeAdminData.columnasVistaInventario
+            ? ObebeAdminData.columnasVistaInventario()
+            : [];
+        var enc = ObebeAdminData.encabezadosInventarioActuales
+            ? ObebeAdminData.encabezadosInventarioActuales()
+            : (state.encabezadosFila2 || []);
+        if (!enc.length && ObebeAdminData.combinarEncabezadosInventario) {
+            enc = ObebeAdminData.combinarEncabezadosInventario(state.encabezadosFila2);
+        }
         var vis = filasVisibles();
         var edit = state.modoEdicion;
+        var pick = edit || state.modoEliminar;
 
         var thLetters = '';
         var thSheet = '';
-        var c;
-        for (c = 0; c < numCols; c++) {
+        var i;
+        for (i = 0; i < colsVista.length; i++) {
+            var c = colsVista[i];
             thLetters += '<th class="admin-inv-th-letter" title="Columna ' + esc(ObebeAdminData.colLetter(c)) + '">' +
                 esc(ObebeAdminData.colLetter(c)) + '</th>';
             var titulo = (enc[c] || '').trim();
             thSheet += '<th class="admin-inv-th-title" title="' + esc(titulo) + '">' + esc(titulo) + '</th>';
         }
-        var selHead = edit ? '<th class="admin-inv-sel admin-inv-sticky-corner">✓</th>' : '';
+        var selHead = pick ? '<th class="admin-inv-sel admin-inv-sticky-corner">✓</th>' : '';
         var headLetters = '<tr class="admin-inv-head-letters">' + selHead +
             '<th class="admin-inv-row admin-inv-sticky-corner2">#</th>' + thLetters + '</tr>';
-        var headSheet = '<tr class="admin-inv-head-sheet">' + (edit ? '<th class="admin-inv-sel admin-inv-sticky-corner"></th>' : '') +
+        var headSheet = '<tr class="admin-inv-head-sheet">' + (pick ? '<th class="admin-inv-sel admin-inv-sticky-corner"></th>' : '') +
             '<th class="admin-inv-row admin-inv-sticky-corner2">2</th>' + thSheet + '</tr>';
 
         var tbody = vis.map(function (f) {
@@ -155,10 +174,10 @@
             var checked = state.seleccion[k] ? ' checked' : '';
             var rowNum = f.filaSheet || 'nueva';
             var cells = '';
-            for (var colIdx = 0; colIdx < numCols; colIdx++) {
-                cells += renderCeldaInventario(f, colIdx, edit);
+            for (i = 0; i < colsVista.length; i++) {
+                cells += renderCeldaInventario(f, colsVista[i], edit);
             }
-            var sel = edit
+            var sel = pick
                 ? '<td class="admin-inv-sel"><input type="checkbox" class="admin-inv-pick" data-key="' + esc(k) + '"' + checked + '></td>'
                 : '';
             return '<tr>' + sel +
@@ -166,58 +185,36 @@
         }).join('');
 
         var foot = edit
-            ? 'Modo edición · columnas A–Y · solo artículos con stock'
-            : 'Solo artículos con stock &gt; 0 · agotados en módulo Histórico · columna J = foto';
+            ? 'Modo edición · A–Y (sin FALTANTE) · encabezados por título'
+            : (state.modoEliminar
+                ? 'Marca artículos y pulsa Eliminar marcados (pide contraseña OBEBE)'
+                : 'Solo artículos con stock &gt; 0 · agotados en Histórico · carrusel/ofertas por nombre de columna');
 
+        var colSpan = colsVista.length + 1 + (pick ? 1 : 0);
         return '<div class="admin-inv-scroll' + (edit ? ' admin-inv-scroll--edit' : '') + '">' +
             '<table class="admin-table admin-inv-grid' + (edit ? ' admin-inv-grid--edit' : '') + '"><thead>' + headLetters + headSheet +
-            '</thead><tbody>' + (tbody || '<tr><td colspan="' + (numCols + (edit ? 2 : 1)) + '">Sin filas</td></tr>') + '</tbody></table></div>' +
+            '</thead><tbody>' + (tbody || '<tr><td colspan="' + colSpan + '">Sin filas</td></tr>') + '</tbody></table></div>' +
             '<p class="admin-inv-foot">' + vis.length + ' filas · ' + foot + '</p>';
+    }
+
+    function refreshGrid(container, onReload) {
+        var mount = container.querySelector('#adminInvGridMount');
+        if (!mount) return;
+        mount.innerHTML = renderGrid();
+        bindGridEvents(container, onReload);
     }
 
     function refreshUi(container, onReload) {
         var wrap = container.querySelector('.admin-inv-wrap');
         if (!wrap) return;
         wrap.className = 'admin-inv-wrap' + (state.modoEdicion ? ' admin-inv-wrap--edit' : '');
-        wrap.innerHTML = renderToolbar() + renderGrid();
+        wrap.innerHTML =
+            '<div id="adminInvToolbarMount">' + renderToolbar() + '</div>' +
+            '<div id="adminInvGridMount">' + renderGrid() + '</div>';
         bindEvents(container, onReload);
     }
 
-    function bindEvents(container, onReload) {
-        container.querySelector('#adminInvSearch').addEventListener('input', function (e) {
-            state.filtro = e.target.value;
-            refreshUi(container, onReload);
-        });
-        container.querySelector('#adminInvReload').addEventListener('click', function () {
-            state.modoEdicion = false;
-            state.snapshot = null;
-            if (onReload) onReload();
-        });
-
-        var btnEdit = container.querySelector('#adminInvEdit');
-        if (btnEdit) {
-            btnEdit.addEventListener('click', function () {
-                state.snapshot = clonarFilas(state.filas);
-                state.modoEdicion = true;
-                state.msg = '';
-                refreshUi(container, onReload);
-            });
-        }
-
-        var btnCancel = container.querySelector('#adminInvCancel');
-        if (btnCancel) {
-            btnCancel.addEventListener('click', function () {
-                state.filas = clonarFilas(state.snapshot || state.filas);
-                state.nuevasFilas = [];
-                state.seleccion = {};
-                state.modoEdicion = false;
-                state.snapshot = null;
-                state.msg = 'Edición cancelada.';
-                state.msgOk = true;
-                refreshUi(container, onReload);
-            });
-        }
-
+    function bindGridEvents(container, onReload) {
         if (state.modoEdicion) {
             container.querySelectorAll('.admin-inv-cell').forEach(function (input) {
                 input.addEventListener('change', function () {
@@ -231,11 +228,82 @@
                     syncDerived(f);
                 });
             });
+        }
+        if (state.modoEdicion || state.modoEliminar) {
             container.querySelectorAll('.admin-inv-pick').forEach(function (cb) {
                 cb.addEventListener('change', function () {
                     state.seleccion[cb.getAttribute('data-key')] = cb.checked;
                 });
             });
+        }
+    }
+
+    function bindEvents(container, onReload) {
+        var searchEl = container.querySelector('#adminInvSearch');
+        if (searchEl) {
+            searchEl.addEventListener('input', function (e) {
+                state.filtro = e.target.value;
+                refreshGrid(container, onReload);
+            });
+        }
+        container.querySelector('#adminInvReload').addEventListener('click', function () {
+            state.modoEdicion = false;
+            state.modoEliminar = false;
+            state.seleccion = {};
+            state.snapshot = null;
+            if (onReload) onReload();
+        });
+
+        var btnEdit = container.querySelector('#adminInvEdit');
+        if (btnEdit) {
+            btnEdit.addEventListener('click', function () {
+                state.snapshot = clonarFilas(state.filas);
+                state.modoEdicion = true;
+                state.modoEliminar = false;
+                state.msg = '';
+                refreshUi(container, onReload);
+            });
+        }
+
+        var btnPickDel = container.querySelector('#adminInvPickDel');
+        if (btnPickDel) {
+            btnPickDel.addEventListener('click', function () {
+                state.modoEliminar = true;
+                state.seleccion = {};
+                state.msg = 'Marca los artículos a borrar del inventario.';
+                state.msgOk = true;
+                refreshUi(container, onReload);
+            });
+        }
+
+        var btnCancelPick = container.querySelector('#adminInvCancelPick');
+        if (btnCancelPick) {
+            btnCancelPick.addEventListener('click', function () {
+                state.modoEliminar = false;
+                state.seleccion = {};
+                state.msg = '';
+                refreshUi(container, onReload);
+            });
+        }
+
+        var btnCancel = container.querySelector('#adminInvCancel');
+        if (btnCancel) {
+            btnCancel.addEventListener('click', function () {
+                state.filas = clonarFilas(state.snapshot || state.filas);
+                state.nuevasFilas = [];
+                state.seleccion = {};
+                state.modoEdicion = false;
+                state.modoEliminar = false;
+                state.snapshot = null;
+                state.msg = 'Edición cancelada.';
+                state.msgOk = true;
+                refreshUi(container, onReload);
+            });
+        }
+
+        bindGridEvents(container, onReload);
+
+        if (state.modoEdicion) {
             var addBtn = container.querySelector('#adminInvAddRow');
             if (addBtn) {
                 addBtn.addEventListener('click', function () {
@@ -257,8 +325,10 @@
             }
             var saveBtn = container.querySelector('#adminInvSave');
             if (saveBtn) saveBtn.addEventListener('click', function () { guardar(onReload, container); });
-            var delBtn = container.querySelector('#adminInvDelRows');
-            if (delBtn) delBtn.addEventListener('click', function () { eliminarSeleccion(onReload, container); });
+        }
+        var delBtn = container.querySelector('#adminInvDelRows');
+        if (delBtn) {
+            delBtn.addEventListener('click', function () { eliminarSeleccion(onReload, container); });
         }
     }
 
@@ -274,11 +344,12 @@
     }
 
     function syncDerived(f) {
-        f.nombre = (f.celdas[1] || '').trim();
-        f.stock = parseInt(f.celdas[2], 10) || 0;
-        f.ref = parseInt(f.celdas[0], 10) || 0;
-        f.marca = (f.celdas[6] || '').trim();
-        f.fotoUrl = (f.celdas[9] || '').trim();
+        var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
+        f.nombre = (f.celdas[idx.nombre != null ? idx.nombre : 1] || '').trim();
+        f.stock = parseInt(f.celdas[idx.stock != null ? idx.stock : 2], 10) || 0;
+        f.ref = parseInt(f.celdas[idx.imagen != null ? idx.imagen : 0], 10) || 0;
+        f.marca = (f.celdas[idx.marca != null ? idx.marca : 6] || '').trim();
+        f.fotoUrl = (f.celdas[colFotoInventario()] || '').trim();
         if (ObebeAdminData.normalizarMarca) f.marca = ObebeAdminData.normalizarMarca(f.marca);
     }
 
@@ -337,6 +408,18 @@
             refreshUi(container, onReload);
             return;
         }
+        ObebeAdminDialog.confirmPassword({
+            title: '¿Eliminar del inventario?',
+            message: 'Se borrarán ' + keys.length + ' fila(s) de la base de datos. No se puede deshacer.',
+            confirmText: 'Eliminar',
+            cancelText: 'Cancelar'
+        }).then(function (ok) {
+            if (!ok) return;
+            ejecutarEliminarSeleccion(keys, onReload, container);
+        });
+    }
+
+    function ejecutarEliminarSeleccion(keys, onReload, container) {
         var filasSheet = [];
         keys.forEach(function (k) {
             var f = findFila(k);
@@ -350,6 +433,7 @@
             return keys.indexOf(keyFila(f)) < 0;
         });
         keys.forEach(function (k) { delete state.seleccion[k]; });
+        state.modoEliminar = false;
 
         if (!filasSheet.length) {
             state.msg = 'Filas quitadas.';
@@ -359,7 +443,7 @@
         }
         apiInventario('deleteRows', { filas: filasSheet }).then(function (res) {
             if (res && res.ok === false) throw new Error(res.error || 'Error');
-            state.msg = 'Filas eliminadas del Sheet.';
+            state.msg = 'Artículos eliminados del inventario.';
             state.msgOk = true;
             if (onReload) return onReload();
         }).catch(function (err) {
@@ -372,16 +456,21 @@
 
     function mount(container, filas, onReload, encabezadosFila2) {
         state.filas = clonarFilas(filas);
-        state.encabezadosFila2 = (encabezadosFila2 || []).slice();
+        state.encabezadosFila2 = ObebeAdminData.combinarEncabezadosInventario
+            ? ObebeAdminData.combinarEncabezadosInventario(encabezadosFila2 || [])
+            : (encabezadosFila2 || []).slice();
         state.nuevasFilas = [];
         state.seleccion = {};
         state.modoEdicion = false;
+        state.modoEliminar = false;
         state.snapshot = null;
         state.msg = '';
         container.innerHTML =
             '<div class="admin-panel admin-panel-inventario">' +
             '<div class="admin-panel-head"><h3>Inventario (A–Y)</h3></div>' +
-            '<div class="admin-inv-wrap">' + renderToolbar() + renderGrid() + '</div></div>' +
+            '<div class="admin-inv-wrap">' +
+            '<div id="adminInvToolbarMount">' + renderToolbar() + '</div>' +
+            '<div id="adminInvGridMount">' + renderGrid() + '</div></div></div>' +
             (ObebeAdminData.usarSupabase && ObebeAdminData.usarSupabase()
                 ? '<div class="admin-banner info">Guardar cambios → <strong>Supabase</strong>. Si la tabla está vacía, importa desde Configuración.</div>'
                 : '<div class="admin-banner info">Para <strong>guardar</strong>: Web App Apps Script o modo Supabase en <code>admin-config.js</code>.</div>');

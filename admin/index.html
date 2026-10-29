@@ -7,7 +7,16 @@
     <title>Obebe Admin</title>
     <link rel="preconnect" href="https://docs.google.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="admin.css?v=20261051">
+    <link rel="stylesheet" href="admin.css?v=20261104">
+    <script>
+    (function () {
+        try {
+            if (localStorage.getItem('obebe_admin_theme') === 'light') {
+                document.documentElement.setAttribute('data-admin-theme', 'light');
+            }
+        } catch (e) { /* ignore */ }
+    })();
+    </script>
 </head>
 <body>
     <div id="adminLoginView" class="admin-login-wrap">
@@ -26,6 +35,7 @@
                 </div>
                 <button type="submit" class="admin-btn admin-btn-primary">Iniciar sesión</button>
             </form>
+            <button type="button" id="adminThemeToggleLogin" class="admin-btn admin-btn-ghost admin-theme-toggle admin-theme-toggle-login" aria-label="Cambiar tema">Modo claro</button>
         </div>
     </div>
 
@@ -43,8 +53,8 @@
                 <button type="button" id="adminMenuToggle" class="admin-menu-toggle" aria-label="Abrir menú">☰</button>
                 <h2 id="adminPageTitle">Dashboard</h2>
                 <div class="admin-topbar-actions">
-                    <span id="adminSyncStatus" class="admin-user-chip"></span>
                     <span id="adminUserChip" class="admin-user-chip"></span>
+                    <button type="button" id="adminThemeToggle" class="admin-btn admin-btn-ghost admin-theme-toggle" aria-label="Cambiar tema">Modo claro</button>
                     <button type="button" id="adminRefreshBtn" class="admin-btn admin-btn-ghost">Actualizar</button>
                     <button type="button" id="adminLogoutBtn" class="admin-btn admin-btn-ghost">Salir</button>
                 </div>
@@ -53,23 +63,29 @@
         </div>
     </div>
 
+    <script src="../inventario-columnas.js?v=20261070"></script>
     <script src="admin-config.js?v=20261055"></script>
     <script src="admin-backend.js?v=20261056"></script>
-    <script src="admin-auth.js?v=20261051"></script>
-    <script src="admin-data.js?v=20261058"></script>
-    <script src="admin-dialog.js?v=20261051"></script>
-    <script src="admin-inventario.js?v=20261051"></script>
-    <script src="admin-ventas-retail.js?v=20261054"></script>
-    <script src="admin-historico.js?v=20261053"></script>
+    <script src="admin-auth.js?v=20261082"></script>
+    <script src="admin-data.js?v=20261104"></script>
+    <script src="admin-dialog.js?v=20261082"></script>
+    <script src="admin-inventario.js?v=20261082"></script>
+    <script src="admin-entregas-store.js?v=20261103"></script>
+    <script src="admin-entregas.js?v=20261104"></script>
+    <script src="admin-ventas-retail.js?v=20261103"></script>
+    <script src="admin-ventas-registro.js?v=20261081"></script>
+    <script src="admin-gastos.js?v=20261081"></script>
+    <script src="admin-historico.js?v=20261075"></script>
+    <script src="admin-inventario-historico.js?v=20261075"></script>
     <script src="admin-pedidos.js?v=20261051"></script>
-    <script src="admin-clientes.js?v=20261051"></script>
-    <script src="admin-mayoreo-store.js?v=20261051"></script>
-    <script src="admin-mayoreo.js?v=20261051"></script>
+    <script src="admin-clientes.js?v=20261088"></script>
+    <script src="admin-mayoreo-store.js?v=20261090"></script>
+    <script src="admin-mayoreo.js?v=20261101"></script>
     <script src="admin-mayoreo-ventas.js?v=20261051"></script>
     <script src="admin-mayoreo-clientes.js?v=20261051"></script>
-    <script src="admin-mayoreo-pedidos-store.js?v=20261051"></script>
+    <script src="admin-mayoreo-pedidos-store.js?v=20261101"></script>
     <script src="admin-mayoreo-calendario.js?v=20261051"></script>
-    <script src="admin-mayoreo-pedidos.js?v=20261051"></script>
-    <script src="admin-app.js?v=20261058"></script>
+    <script src="admin-mayoreo-pedidos.js?v=20261101"></script>
+    <script src="admin-app.js?v=20261102"></script>
 </body>
 </html>

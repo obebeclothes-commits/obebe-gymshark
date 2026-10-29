@@ -203,6 +203,7 @@
         var generoCatalogo = 'todos';
         var editingPedidoId = null;
         var expandedPedidos = {};
+        var modoCombinarPedidos = false;
 
         function unidadesCarrito() {
             var t = 0;
@@ -391,9 +392,26 @@
                         (filtroCliente === (c.id || '') ? ' selected' : '') + '>' + esc(c.nombre) + '</option>';
                 }).join('');
             var list = ObebeMayoreoPedidosStore.listarTodos(filtroCliente || null);
+            var combinable = list.filter(function (p) {
+                return ObebeMayoreoPedidosStore.pedidoEsCombinable(p);
+            });
+            var barCombinar = '';
+            if (filtroCliente && combinable.length >= 2) {
+                if (modoCombinarPedidos) {
+                    barCombinar = '<div class="admin-ped-combinar-bar admin-ped-combinar-bar--activo">' +
+                        '<p class="admin-muted-text">Marca los pedidos a unir (mínimo 2). Los originales desaparecen y queda uno solo con precios recalculados.</p>' +
+                        '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminPedCombinarBtn">Combinar seleccionados</button>' +
+                        '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminPedCombinarCancelBtn">Cancelar</button></div>';
+                } else {
+                    barCombinar = '<div class="admin-ped-combinar-bar">' +
+                        '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminPedCombinarEntrarBtn">Combinar pedidos</button></div>';
+                }
+            } else if (!filtroCliente) {
+                barCombinar = '<p class="admin-muted-text admin-ped-combinar-hint">Elige un cliente arriba para combinar pedidos pendientes.</p>';
+            }
             return '<div class="admin-panel"><div class="admin-panel-head"><h3>Pedidos mayoreo</h3>' +
                 '<select id="adminPedFiltroCliente" class="admin-venta-pago-select">' + optsCli + '</select></div>' +
-                detalleListaPedidos(list, true) + '</div>';
+                barCombinar + detalleListaPedidos(list, true) + '</div>';
         }
 
         function panelHistorialPedidos(lista, obebe) {
@@ -508,12 +526,32 @@
             } else if (it.comentarioObebe) {
                 comBlock = '<p class="admin-ped-com-read"><strong>Comentario:</strong> ' + esc(it.comentarioObebe) + '</p>';
             }
+            var accionesItem = '';
+            if (obebe && p.estado === 'revisado' && it.disponibilidad === 'no') {
+                if (it.clienteConfirmoNoHay) {
+                    accionesItem = '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm admin-ped-quitar-item-obebe" data-pedido-id="' +
+                        esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Quitar del pedido</button>';
+                } else {
+                    accionesItem = '<span class="admin-muted-text admin-ped-espera-conf">Esperando confirmación del cliente</span>';
+                }
+            } else if (!obebe && p.estado === 'revisado' && it.disponibilidad === 'no') {
+                accionesItem = '<div class="admin-ped-item-acciones-cliente">' +
+                    (it.clienteConfirmoNoHay
+                        ? '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm admin-ped-quitar-item-cliente" data-pedido-id="' +
+                        esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Quitar artículo</button>'
+                        : '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm admin-ped-conf-no-cliente" data-pedido-id="' +
+                        esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Confirmo ausencia</button>' +
+                        '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm admin-ped-quitar-item-cliente" data-pedido-id="' +
+                        esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Quitar artículo</button>') +
+                    '</div>';
+            }
+            var notaTier = it.notaPrecio ? '<span class="admin-muted-text">' + esc(it.notaPrecio) + '</span>' : '';
             return '<div class="admin-ped-rev-item">' +
                 thumbHtml(url, it.nombre, 'admin-ped-rev-thumb') +
-                '<div class="admin-ped-rev-info"><strong>' + esc(it.nombre) + '</strong>' +
+                '<div class="admin-ped-rev-info"><strong class="admin-ped-rev-nombre">' + esc(it.nombre) + '</strong>' +
                 '<span class="admin-muted-text">' + esc(it.talla) + ' · ' + esc(it.color) + ' · ×' + it.cantidad + '</span>' +
                 '<span>' + fmt(it.precioCliente) + ' c/u · tienda ' + fmt(it.precioRetail) + '</span>' +
-                revBlock + comBlock + '</div></div>';
+                notaTier + revBlock + comBlock + accionesItem + '</div></div>';
         }
 
         function detalleListaPedidos(lista, obebe) {
@@ -535,8 +573,20 @@
                         (listo ? '' : ' disabled') + '>Enviar respuesta al cliente</button>' +
                         '<span class="admin-muted-text">Marca cada prenda antes de enviar.</span></div>';
                 } else if (obebe && p.estado === 'revisado') {
-                    confirmObebe = '<div class="admin-ped-confirm-row">' +
-                        '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-ped-reabrir-revision" data-pedido-id="' + esc(p.id) + '">Modificar respuesta</button></div>';
+                    var ventaPedBtn = '';
+                    if (p.ventaRetailRegistradaEn) {
+                        ventaPedBtn = '<span class="admin-tag admin-tag-ok">Venta registrada · ' +
+                            esc(fmtFechaPedido(p.ventaRetailRegistradaEn)) + '</span>';
+                    } else {
+                        var haySi = (p.items || []).some(function (it) { return it.disponibilidad === 'si'; });
+                        ventaPedBtn = '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact admin-ped-venta-confirmada" data-pedido-id="' + esc(p.id) + '"' +
+                            (haySi ? '' : ' disabled') + '>Venta confirmada</button>';
+                    }
+                    confirmObebe = '<div class="admin-ped-confirm-row admin-ped-confirm-row--venta">' +
+                        ventaPedBtn +
+                        '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-ped-reabrir-revision" data-pedido-id="' + esc(p.id) + '"' +
+                        (p.ventaRetailRegistradaEn ? ' disabled title="Ya hay venta registrada"' : '') +
+                        '>Modificar respuesta</button></div>';
                 }
                 if (!obebe) {
                     var abierto = !!expandedPedidos[p.id];
@@ -551,6 +601,11 @@
                     } else if (p.estado === 'en_revision') {
                         msgNaty = '<p class="admin-muted-text">En revisión…</p>';
                     }
+                    if (p.pedidoCombinado && p.avisoClienteTexto) {
+                        var tagNuevo = !p.clienteVioAvisoEn ? ' <span class="admin-tag admin-tag-warn">Nuevo</span>' : '';
+                        msgNaty = (msgNaty || '') + '<p class="admin-banner info admin-ped-aviso-combinado">' +
+                            esc(p.avisoClienteTexto) + tagNuevo + '</p>';
+                    }
                     var editandoEste = editingPedidoId === p.id;
                     var editRow = '<div class="admin-ped-edit-row">' +
                         (p.estado !== 'cancelado'
@@ -562,7 +617,8 @@
                         '</div>';
                     return '<div class="admin-ped-card admin-ped-card--collapsible" data-pedido-id="' + esc(p.id) + '">' +
                         '<button type="button" class="admin-ped-card-toggle" data-pedido-id="' + esc(p.id) + '" aria-expanded="' + (abierto ? 'true' : 'false') + '">' +
-                        '<span class="admin-ped-card-line1">' + esc(textoEstadoPedido(p.estado)) + ' · ' + esc(fmtFechaPedido(p.creadoEn)) + '</span>' +
+                        '<span class="admin-ped-card-line1">' + esc(textoEstadoPedido(p.estado)) + ' · ' + esc(fmtFechaPedido(p.creadoEn)) +
+                        (p.pedidoCombinado ? ' · Combinado' : '') + '</span>' +
                         '<span class="admin-ped-card-line2">' + p.unidades + ' pzas. · Total ' + fmt(p.totalCliente) + '</span>' +
                         '<span class="admin-ped-card-chevron" aria-hidden="true">' + (abierto ? '▾' : '▸') + '</span></button>' +
                         '<div class="admin-ped-card-body' + (abierto ? '' : ' admin-hidden') + '">' +
@@ -572,13 +628,31 @@
                         '</div></div>';
                 }
                 var abiertoOb = !!expandedPedidos[p.id];
-                return '<div class="admin-ped-card admin-ped-card--collapsible" data-pedido-id="' + esc(p.id) + '">' +
+                var chkComb = '';
+                var cardCombCls = '';
+                if (modoCombinarPedidos && ObebeMayoreoPedidosStore.pedidoEsCombinable(p)) {
+                    cardCombCls = ' admin-ped-card--pick-combinar';
+                    chkComb = '<label class="admin-ped-combinar-pick" title="Incluir al combinar">' +
+                        '<input type="checkbox" class="admin-ped-combinar-cb" data-pedido-id="' + esc(p.id) + '"></label>';
+                }
+                var bannerCombOb = '';
+                if (p.pedidoCombinado && p.avisoClienteTexto) {
+                    bannerCombOb = '<p class="admin-banner info admin-ped-aviso-combinado">' + esc(p.avisoClienteTexto) +
+                        (p.clienteNotificadoEn ? ' · Cliente notificado ' + esc(fmtFechaPedido(p.clienteNotificadoEn)) : '') +
+                        '</p>';
+                }
+                var tierInfo = p.unidades ? '<span class="admin-muted-text">' +
+                    esc(ObebeAdminData.etiquetaTierPedido(p.unidades)) + '</span>' : '';
+                return '<div class="admin-ped-card admin-ped-card--collapsible' + cardCombCls + '" data-pedido-id="' + esc(p.id) + '">' +
                     '<button type="button" class="admin-ped-card-toggle" data-pedido-id="' + esc(p.id) + '" aria-expanded="' + (abiertoOb ? 'true' : 'false') + '">' +
-                    '<span class="admin-ped-card-line1">' + head + etiquetaEstadoPedido(p.estado) + ' · ' + esc(fmtFechaPedido(p.creadoEn)) + '</span>' +
+                    '<span class="admin-ped-card-line1">' + head + etiquetaEstadoPedido(p.estado) + ' · ' + esc(fmtFechaPedido(p.creadoEn)) +
+                    (p.pedidoCombinado ? ' · Combinado' : '') + '</span>' +
                     '<span class="admin-ped-card-line2">' + p.unidades + ' pzas. · Total ' + fmt(p.totalCliente) + '</span>' +
+                    chkComb +
                     '<span class="admin-ped-card-chevron" aria-hidden="true">' + (abiertoOb ? '▾' : '▸') + '</span></button>' +
                     '<div class="admin-ped-card-body' + (abiertoOb ? '' : ' admin-hidden') + '">' +
-                    '<div class="admin-ped-rev-list">' + items + '</div>' +
+                    bannerCombOb + tierInfo +
+                    '<div class="admin-ped-rev-list admin-ped-rev-list--obebe">' + items + '</div>' +
                     confirmObebe +
                     '<div class="admin-ped-edit-row">' +
                     '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-ped-eliminar" data-pedido-id="' + esc(p.id) + '">Eliminar pedido</button></div>' +
@@ -758,10 +832,56 @@
                     if (window.matchMedia('(max-width: 900px)').matches) cerrarDrawerFiltros();
                     return;
                 }
+                if (ev.target.closest('.admin-ped-combinar-pick') || ev.target.classList.contains('admin-ped-combinar-cb')) {
+                    ev.stopPropagation();
+                    return;
+                }
+                var confNoCli = ev.target.closest('.admin-ped-conf-no-cliente');
+                if (confNoCli) {
+                    var rConf = ObebeMayoreoPedidosStore.confirmarNoHayItemCliente(
+                        confNoCli.getAttribute('data-pedido-id'),
+                        confNoCli.getAttribute('data-item-id'),
+                        clienteKey
+                    );
+                    if (!rConf.ok) {
+                        ObebeAdminDialog.alert({ title: 'No se pudo', message: rConf.error });
+                        return;
+                    }
+                    pintarHistorial();
+                    return;
+                }
+                var quitarCli = ev.target.closest('.admin-ped-quitar-item-cliente');
+                if (quitarCli) {
+                    ObebeAdminDialog.confirm({
+                        title: '¿Quitar artículo?',
+                        message: 'Se eliminará del pedido (marcado como No hay).',
+                        confirmText: 'Quitar',
+                        cancelText: 'Cancelar',
+                        variant: 'warn'
+                    }).then(function (ok) {
+                        if (!ok) return;
+                        var rQ = ObebeMayoreoPedidosStore.eliminarItemPedido(
+                            quitarCli.getAttribute('data-pedido-id'),
+                            quitarCli.getAttribute('data-item-id'),
+                            'cliente',
+                            clienteKey,
+                            filasInv
+                        );
+                        if (!rQ.ok) {
+                            ObebeAdminDialog.alert({ title: 'No se pudo', message: rQ.error });
+                            return;
+                        }
+                        pintarHistorial();
+                    });
+                    return;
+                }
                 var togglePed = ev.target.closest('.admin-ped-card-toggle');
                 if (togglePed) {
                     var pid = togglePed.getAttribute('data-pedido-id');
                     expandedPedidos[pid] = !expandedPedidos[pid];
+                    if (expandedPedidos[pid]) {
+                        ObebeMayoreoPedidosStore.marcarClienteVioAvisoPedido(pid, clienteKey);
+                    }
                     pintarHistorial();
                     return;
                 }
@@ -781,14 +901,16 @@
                         variant: 'danger'
                     }).then(function (ok) {
                         if (!ok) return;
-                        var res = ObebeMayoreoPedidosStore.eliminarPedido(delId, clienteKey);
-                        if (!res.ok) {
-                            ObebeAdminDialog.alert({ title: 'Error', message: res.error });
-                            return;
-                        }
-                        if (editingPedidoId === delId) cancelarEdicionPedido();
-                        delete expandedPedidos[delId];
-                        pintarHistorial();
+                        Promise.resolve(ObebeMayoreoPedidosStore.eliminarPedido(delId, clienteKey)).then(function (res) {
+                            if (!res.ok) {
+                                ObebeAdminDialog.alert({ title: 'Error', message: res.error });
+                                return;
+                            }
+                            if (editingPedidoId === delId) cancelarEdicionPedido();
+                            delete expandedPedidos[delId];
+                            pintarHistorial();
+                            if (opts.onInventarioActualizado) opts.onInventarioActualizado();
+                        });
                     });
                     return;
                 }
@@ -810,49 +932,65 @@
                 if (ev.target.id === 'adminPedEnviar' || ev.target.closest('#adminPedEnviar')) {
                     var err = document.getElementById('adminPedError');
                     if (err) err.textContent = '';
-                    var u = unidadesCarrito();
-                    var items = carrito.map(function (c) {
-                        var pr = ObebeAdminData.precioPedidoMayoreo(c.fila, u);
-                        return {
-                            inventarioId: c.id,
-                            ref: c.fila.ref,
-                            nombre: c.fila.nombre,
-                            talla: c.fila.talla,
-                            color: c.fila.color,
-                            marca: c.fila.marca,
-                            tipo: c.fila.tipo,
-                            cantidad: c.cantidad,
-                            precioRetail: pr.retail,
-                            precioCliente: pr.precioCliente,
-                            notaPrecio: pr.nota,
-                            imagenUrl: c.imagenUrl || imagenFila(c.fila, filasInv),
-                            disponibilidad: null
-                        };
-                    });
-                    var r;
-                    if (editingPedidoId) {
-                        r = ObebeMayoreoPedidosStore.actualizarPedidoCliente(editingPedidoId, clienteKey, items);
-                    } else {
-                        r = ObebeMayoreoPedidosStore.registrarPedido({
-                            clienteKey: clienteKey,
-                            clienteNombre: clienteNombre,
-                            items: items
-                        });
-                    }
-                    if (!r.ok) {
-                        if (err) err.textContent = r.error;
+                    if (!carrito.length) {
+                        if (err) err.textContent = 'Agrega al menos un artículo al carrito.';
                         return;
                     }
-                    var fueEdicion = !!editingPedidoId;
-                    var pidAbierto = editingPedidoId;
-                    if (pidAbierto) expandedPedidos[pidAbierto] = true;
-                    editingPedidoId = null;
-                    carrito = [];
-                    ObebeAdminDialog.alert({
-                        title: fueEdicion ? 'Pedido actualizado' : 'Pedido enviado',
-                        message: 'Obebe Clothes revisará cada artículo y te avisará qué hay en stock.',
-                        confirmText: 'Perfecto'
-                    }).then(function () { pintar(); });
+                    var esEdicion = !!editingPedidoId;
+                    ObebeAdminDialog.confirm({
+                        title: esEdicion ? '¿Guardar y reenviar pedido?' : '¿Enviar pedido?',
+                        message: esEdicion
+                            ? 'Se actualizará el pedido y Obebe Clothes lo revisará de nuevo.'
+                            : 'Se enviará el pedido a Obebe Clothes para revisión de disponibilidad.',
+                        confirmText: esEdicion ? 'Sí, guardar' : 'Sí, enviar',
+                        cancelText: 'Cancelar',
+                        variant: 'warn'
+                    }).then(function (ok) {
+                        if (!ok) return;
+                        var u = unidadesCarrito();
+                        var items = carrito.map(function (c) {
+                            var pr = ObebeAdminData.precioPedidoMayoreo(c.fila, u);
+                            return {
+                                inventarioId: c.id,
+                                ref: c.fila.ref,
+                                nombre: c.fila.nombre,
+                                talla: c.fila.talla,
+                                color: c.fila.color,
+                                marca: c.fila.marca,
+                                tipo: c.fila.tipo,
+                                cantidad: c.cantidad,
+                                precioRetail: pr.retail,
+                                precioCliente: pr.precioCliente,
+                                notaPrecio: pr.nota,
+                                imagenUrl: c.imagenUrl || imagenFila(c.fila, filasInv),
+                                disponibilidad: null
+                            };
+                        });
+                        var r;
+                        if (editingPedidoId) {
+                            r = ObebeMayoreoPedidosStore.actualizarPedidoCliente(editingPedidoId, clienteKey, items);
+                        } else {
+                            r = ObebeMayoreoPedidosStore.registrarPedido({
+                                clienteKey: clienteKey,
+                                clienteNombre: clienteNombre,
+                                items: items
+                            });
+                        }
+                        if (!r.ok) {
+                            if (err) err.textContent = r.error;
+                            return;
+                        }
+                        var fueEdicion = esEdicion;
+                        var pidAbierto = editingPedidoId;
+                        if (pidAbierto) expandedPedidos[pidAbierto] = true;
+                        editingPedidoId = null;
+                        carrito = [];
+                        ObebeAdminDialog.alert({
+                            title: fueEdicion ? 'Pedido actualizado' : 'Pedido enviado',
+                            message: 'Obebe Clothes revisará cada artículo y te avisará qué hay en stock.',
+                            confirmText: 'Perfecto'
+                        }).then(function () { pintar(); });
+                    });
                 }
             };
 
@@ -879,10 +1017,96 @@
             if (sel) {
                 sel.onchange = function () {
                     filtroCliente = sel.value;
+                    modoCombinarPedidos = false;
                     pintar();
                 };
             }
             container.onclick = function (ev) {
+                if (ev.target.closest('.admin-ped-combinar-pick') || ev.target.classList.contains('admin-ped-combinar-cb')) {
+                    ev.stopPropagation();
+                    return;
+                }
+                if (ev.target.id === 'adminPedCombinarEntrarBtn' || ev.target.closest('#adminPedCombinarEntrarBtn')) {
+                    modoCombinarPedidos = true;
+                    pintar();
+                    return;
+                }
+                if (ev.target.id === 'adminPedCombinarCancelBtn' || ev.target.closest('#adminPedCombinarCancelBtn')) {
+                    modoCombinarPedidos = false;
+                    pintar();
+                    return;
+                }
+                if (ev.target.id === 'adminPedCombinarBtn' || ev.target.closest('#adminPedCombinarBtn')) {
+                    var idsComb = [];
+                    container.querySelectorAll('.admin-ped-combinar-cb:checked').forEach(function (cb) {
+                        idsComb.push(cb.getAttribute('data-pedido-id'));
+                    });
+                    if (idsComb.length < 2) {
+                        ObebeAdminDialog.alert({
+                            title: 'Combinar pedidos',
+                            message: 'Marca al menos 2 pedidos de la lista.'
+                        });
+                        return;
+                    }
+                    var prev = ObebeMayoreoPedidosStore.previewCombinarPedidos(idsComb);
+                    if (!prev.ok) {
+                        ObebeAdminDialog.alert({ title: 'Combinar pedidos', message: prev.error });
+                        return;
+                    }
+                    var msgConfirm = 'Se unirán ' + prev.pedidos + ' pedidos de ' + (prev.clienteNombre || 'este cliente') +
+                        ' en uno solo (' + prev.unidades + ' piezas en total).\n\n' + prev.tier +
+                        '\n\nLos pedidos anteriores dejarán de mostrarse; en Mayoreo verás un solo pedido con los precios recalculados. El cliente recibirá aviso en su panel.';
+                    ObebeAdminDialog.confirm({
+                        title: '¿Combinar pedidos?',
+                        message: msgConfirm,
+                        confirmText: 'Sí, combinar',
+                        cancelText: 'Cancelar',
+                        variant: 'warn'
+                    }).then(function (ok) {
+                        if (!ok) return;
+                        filasInv = (ObebeAdminData.getEstado().filas || filasInv);
+                        var rComb = ObebeMayoreoPedidosStore.combinarPedidos(idsComb, filasInv);
+                        if (!rComb.ok) {
+                            ObebeAdminDialog.alert({ title: 'No se pudo', message: rComb.error });
+                            return;
+                        }
+                        modoCombinarPedidos = false;
+                        if (rComb.pedido && rComb.pedido.id) expandedPedidos[rComb.pedido.id] = true;
+                        ObebeAdminDialog.alert({
+                            title: 'Pedidos combinados',
+                            message: 'Quedó un solo pedido con ' + (rComb.pedido.unidades || prev.unidades) +
+                                ' piezas y tarifas mayoreo aplicadas. Revisa también Mayoreo → cliente.',
+                            confirmText: 'Listo'
+                        }).then(function () { pintar(); });
+                    });
+                    return;
+                }
+                var quitarOb = ev.target.closest('.admin-ped-quitar-item-obebe');
+                if (quitarOb) {
+                    ObebeAdminDialog.confirm({
+                        title: '¿Quitar artículo?',
+                        message: 'El cliente ya confirmó que no hay stock.',
+                        confirmText: 'Quitar',
+                        cancelText: 'Cancelar',
+                        variant: 'danger'
+                    }).then(function (ok) {
+                        if (!ok) return;
+                        filasInv = (ObebeAdminData.getEstado().filas || filasInv);
+                        var rOb = ObebeMayoreoPedidosStore.eliminarItemPedido(
+                            quitarOb.getAttribute('data-pedido-id'),
+                            quitarOb.getAttribute('data-item-id'),
+                            'obebe',
+                            null,
+                            filasInv
+                        );
+                        if (!rOb.ok) {
+                            ObebeAdminDialog.alert({ title: 'No se pudo', message: rOb.error });
+                            return;
+                        }
+                        pintar();
+                    });
+                    return;
+                }
                 var togglePed = ev.target.closest('.admin-ped-card-toggle');
                 if (togglePed) {
                     var pidT = togglePed.getAttribute('data-pedido-id');
@@ -921,13 +1145,50 @@
                         variant: 'warn'
                     }).then(function (ok) {
                         if (!ok) return;
-                        var rRe = ObebeMayoreoPedidosStore.reabrirRevisionPedido(pidRe);
-                        if (!rRe.ok) {
-                            ObebeAdminDialog.alert({ title: 'No se pudo', message: rRe.error });
-                            return;
-                        }
-                        expandedPedidos[pidRe] = true;
-                        pintar();
+                        ObebeMayoreoPedidosStore.reabrirRevisionPedido(pidRe).then(function (rRe) {
+                            if (!rRe.ok) {
+                                ObebeAdminDialog.alert({ title: 'No se pudo', message: rRe.error });
+                                return;
+                            }
+                            filasInv = (ObebeAdminData.getEstado().filas || filasInv);
+                            if (opts.onInventarioActualizado) opts.onInventarioActualizado();
+                            expandedPedidos[pidRe] = true;
+                            pintar();
+                        });
+                    });
+                    return;
+                }
+                var ventaConf = ev.target.closest('.admin-ped-venta-confirmada');
+                if (ventaConf) {
+                    var pidVenta = ventaConf.getAttribute('data-pedido-id');
+                    ObebeAdminDialog.confirm({
+                        title: '¿Confirmar compra?',
+                        message: 'Se registrará la venta en Ventas con la fecha de hoy, solo los artículos marcados Sí hay. El stock ya se descontó al enviar la respuesta.',
+                        confirmText: 'Confirmar compra',
+                        cancelText: 'Cancelar',
+                        variant: 'warn'
+                    }).then(function (ok) {
+                        if (!ok) return;
+                        ObebeMayoreoPedidosStore.confirmarVentaRetailPedido(pidVenta).then(function (rV) {
+                            if (!rV.ok) {
+                                ObebeAdminDialog.alert({ title: 'No se pudo', message: rV.error });
+                                return;
+                            }
+                            var promVentas = opts.onVentasActualizada
+                                ? opts.onVentasActualizada()
+                                : Promise.resolve();
+                            promVentas.then(function () {
+                                var n = rV.lineas || 0;
+                                ObebeAdminDialog.alert({
+                                    title: 'Venta registrada',
+                                    message: (rV.soloLocal
+                                        ? 'Guardado en este navegador (' + n + ' línea(s)).'
+                                        : n + ' línea(s) en Ventas con fecha de hoy.') +
+                                        ' Revisa el módulo Ventas.',
+                                    confirmText: 'Listo'
+                                }).then(function () { pintar(); });
+                            });
+                        });
                     });
                     return;
                 }
@@ -942,16 +1203,22 @@
                         variant: 'warn'
                     }).then(function (ok) {
                         if (!ok) return;
-                        var res = ObebeMayoreoPedidosStore.confirmarRevisionPedido(pidConf);
-                        if (!res.ok) {
-                            ObebeAdminDialog.alert({ title: 'Falta revisar', message: res.error });
-                            return;
-                        }
-                        ObebeAdminDialog.alert({
-                            title: 'Respuesta enviada',
-                            message: 'NATY verá qué artículos sí hay y cuáles no.',
-                            confirmText: 'Listo'
-                        }).then(function () { pintar(); });
+                        ObebeMayoreoPedidosStore.confirmarRevisionPedido(pidConf).then(function (res) {
+                            if (!res.ok) {
+                                ObebeAdminDialog.alert({ title: 'Falta revisar', message: res.error });
+                                return;
+                            }
+                            filasInv = (ObebeAdminData.getEstado().filas || filasInv);
+                            if (opts.onInventarioActualizado) opts.onInventarioActualizado();
+                            var msgStock = (res.stockObebe && res.stockObebe.count > 0)
+                                ? ' Se descontó stock del inventario Obebe en los artículos confirmados.'
+                                : '';
+                            ObebeAdminDialog.alert({
+                                title: 'Respuesta enviada',
+                                message: 'NATY verá qué artículos sí hay y cuáles no.' + msgStock,
+                                confirmText: 'Listo'
+                            }).then(function () { pintar(); });
+                        });
                     });
                     return;
                 }
@@ -966,12 +1233,14 @@
                         variant: 'danger'
                     }).then(function (ok) {
                         if (!ok) return;
-                        var resOb = ObebeMayoreoPedidosStore.eliminarPedido(delIdOb);
-                        if (!resOb.ok) {
-                            ObebeAdminDialog.alert({ title: 'Error', message: resOb.error });
-                            return;
-                        }
-                        pintar();
+                        Promise.resolve(ObebeMayoreoPedidosStore.eliminarPedido(delIdOb)).then(function (resOb) {
+                            if (!resOb.ok) {
+                                ObebeAdminDialog.alert({ title: 'Error', message: resOb.error });
+                                return;
+                            }
+                            if (opts.onInventarioActualizado) opts.onInventarioActualizado();
+                            pintar();
+                        });
                     });
                 }
             };
@@ -987,6 +1256,17 @@
             };
         }
 
+        function syncStockPedidosPendientes() {
+            if (!modoObebe || !ObebeAdminData.aplicarStockPendientePedidosMayoreo) return;
+            ObebeAdminData.aplicarStockPendientePedidosMayoreo().then(function (r) {
+                if (!r || !r.aplicados) return;
+                filasInv = ObebeAdminData.getEstado().filas || filasInv;
+                if (opts.onInventarioActualizado) opts.onInventarioActualizado();
+                pintar();
+            });
+        }
+
+        syncStockPedidosPendientes();
         pintar();
     }
 

@@ -15,6 +15,12 @@
 
         function agotadas(q) {
             var list = filas.filter(function (r) { return (r.stock || 0) === 0; });
+            list.sort(function (a, b) {
+                var ta = ObebeAdminData.timestampAgotadoFila(b.filaSheet);
+                var tb = ObebeAdminData.timestampAgotadoFila(a.filaSheet);
+                if (ta !== tb) return ta - tb;
+                return (b.filaSheet || 0) - (a.filaSheet || 0);
+            });
             return ObebeAdminData.filtrarFilas(list, q, {});
         }
 
@@ -37,28 +43,26 @@
                     r.filaSheet + '">Regresar a inventario</button></td></tr>';
             }).join('');
 
-            document.getElementById('adminHistoricoTable').innerHTML =
+            document.getElementById('adminAgotadosTable').innerHTML =
                 '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>' +
                 '<th></th><th>Ref</th><th>Nombre</th><th>Talla</th><th>Color</th><th>Marca</th>' +
                 '<th>Stock actual</th><th>Nuevo stock</th><th></th></tr></thead><tbody>' +
                 (tbody || '<tr><td colspan="9">No hay artículos agotados.</td></tr>') +
                 '</tbody></table></div>';
-            var cnt = document.getElementById('adminHistoricoCount');
+            var cnt = document.getElementById('adminAgotadosCount');
             if (cnt) cnt.textContent = list.length + ' artículo(s) agotado(s)';
         }
 
         container.innerHTML =
-            '<div class="admin-banner info">Artículos con <strong>stock 0</strong> no aparecen en Inventario. ' +
-            'Pon stock ≥ 1 (sugerido: <strong>1</strong>) para que vuelvan al inventario activo.</div>' +
-            '<div class="admin-panel"><div class="admin-panel-head"><h3>Histórico (agotados)</h3>' +
-            '<input type="search" class="admin-search" id="adminHistoricoSearch" placeholder="Buscar…"></div>' +
-            '<p id="adminHistoricoCount" class="admin-muted-text" style="padding:0 1rem 0.5rem;margin:0"></p>' +
-            '<div id="adminHistoricoTable"></div></div>' +
-            '<p id="adminHistoricoError" class="admin-login-error" role="alert"></p>';
+            '<div class="admin-panel"><div class="admin-panel-head"><h3>Agotados</h3>' +
+            '<input type="search" class="admin-search" id="adminAgotadosSearch" placeholder="Buscar…"></div>' +
+            '<p id="adminAgotadosCount" class="admin-muted-text" style="padding:0 1rem 0.5rem;margin:0"></p>' +
+            '<div id="adminAgotadosTable"></div></div>' +
+            '<p id="adminAgotadosError" class="admin-login-error" role="alert"></p>';
 
         pintar();
 
-        document.getElementById('adminHistoricoSearch').addEventListener('input', function (e) {
+        document.getElementById('adminAgotadosSearch').addEventListener('input', function (e) {
             filtro = e.target.value;
             pintar();
         });
@@ -70,16 +74,29 @@
             var input = container.querySelector('.admin-hist-stock-input[data-row="' + row + '"]');
             var stock = input ? parseInt(input.value, 10) : 1;
             if (isNaN(stock) || stock < 1) {
-                var err = document.getElementById('adminHistoricoError');
+                var err = document.getElementById('adminAgotadosError');
                 if (err) err.textContent = 'El stock debe ser al menos 1.';
                 return;
             }
-            var errEl = document.getElementById('adminHistoricoError');
-            if (errEl) errEl.textContent = '';
-            btn.disabled = true;
-            ObebeAdminData.actualizarStockFila(row, stock).then(function (res) {
+            var hit = filas.find(function (f) { return f.filaSheet === row; });
+            var nom = hit ? hit.nombre : 'este artículo';
+            ObebeAdminDialog.confirm({
+                title: '¿Regresar a inventario?',
+                message: '¿Seguro que quieres devolver «' + nom + '» al inventario con stock ' + stock + '?',
+                confirmText: 'Sí, regresar',
+                cancelText: 'Cancelar',
+                variant: 'warn'
+            }).then(function (ok) {
+                if (!ok) return;
+                var errEl = document.getElementById('adminAgotadosError');
+                if (errEl) errEl.textContent = '';
+                btn.disabled = true;
+                return ObebeAdminData.actualizarStockFila(row, stock);
+            }).then(function (res) {
+                if (!res) return;
                 if (!res.ok) {
-                    if (errEl) errEl.textContent = res.error || 'Error';
+                    var errEl2 = document.getElementById('adminAgotadosError');
+                    if (errEl2) errEl2.textContent = res.error || 'Error';
                     btn.disabled = false;
                     return;
                 }
@@ -91,11 +108,13 @@
                 if (opts.onStockRestaurado) opts.onStockRestaurado(row, stock);
                 pintar();
             }).catch(function (e) {
-                if (errEl) errEl.textContent = e.message || String(e);
+                var errEl3 = document.getElementById('adminAgotadosError');
+                if (errEl3) errEl3.textContent = e.message || String(e);
                 btn.disabled = false;
             });
         };
     }
 
-    global.ObebeAdminHistorico = { mount: mount };
+    global.ObebeAdminAgotados = { mount: mount };
+    global.ObebeAdminHistorico = global.ObebeAdminAgotados;
 })(window);

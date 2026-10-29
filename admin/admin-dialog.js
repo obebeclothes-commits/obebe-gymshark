@@ -100,8 +100,70 @@
         return openDialog(opts, 'alert');
     }
 
+    function confirmPassword(opts) {
+        opts = opts || {};
+        var root = ensureRoot();
+        var msgEl = document.getElementById('adminDialogMessage');
+        var titleEl = document.getElementById('adminDialogTitle');
+        var btnCancel = document.getElementById('adminDialogCancel');
+        var btnConfirm = document.getElementById('adminDialogConfirm');
+        var iconEl = document.getElementById('adminDialogIcon');
+
+        iconEl.className = 'admin-dialog-icon admin-dialog-icon--danger';
+        iconEl.textContent = '🔒';
+        titleEl.textContent = opts.title || 'Confirmar con contraseña OBEBE';
+        msgEl.innerHTML = '<span class="admin-dialog-message-plain">' +
+            String(opts.message || 'Para eliminar artículos del inventario.') + '</span>' +
+            '<div class="admin-field admin-dialog-pw-field">' +
+            '<label for="adminDialogPasswordInput">Contraseña</label>' +
+            '<input type="password" id="adminDialogPasswordInput" autocomplete="current-password" class="admin-dialog-pw-input">' +
+            '</div><p id="adminDialogPasswordError" class="admin-login-error" role="alert"></p>';
+
+        btnCancel.classList.remove('admin-hidden');
+        btnCancel.textContent = opts.cancelText || 'Cancelar';
+        btnConfirm.textContent = opts.confirmText || 'Eliminar';
+        btnConfirm.className = 'admin-btn admin-btn-danger';
+
+        function finishDialog() {
+            root.classList.add('admin-hidden');
+            root.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('admin-dialog-open');
+            msgEl.textContent = '';
+            pendingResolve = null;
+        }
+
+        return new Promise(function (resolve) {
+            function onCancel() {
+                finishDialog();
+                resolve(null);
+            }
+            function onConfirm() {
+                var errEl = document.getElementById('adminDialogPasswordError');
+                var input = document.getElementById('adminDialogPasswordInput');
+                var pw = input ? input.value : '';
+                if (!global.ObebeAdminAuth || !ObebeAdminAuth.verificarPasswordObebe(pw)) {
+                    if (errEl) errEl.textContent = 'Contraseña incorrecta.';
+                    if (input) input.focus();
+                    return;
+                }
+                finishDialog();
+                resolve(true);
+            }
+            pendingResolve = function (confirmed) {
+                if (confirmed) onConfirm();
+                else onCancel();
+            };
+            root.classList.remove('admin-hidden');
+            root.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('admin-dialog-open');
+            var inputFocus = document.getElementById('adminDialogPasswordInput');
+            if (inputFocus) inputFocus.focus();
+        });
+    }
+
     global.ObebeAdminDialog = {
         confirm: confirm,
-        alert: alert
+        alert: alert,
+        confirmPassword: confirmPassword
     };
 })(window);

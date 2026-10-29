@@ -20,6 +20,40 @@
     var IDX_FECHA_STOCK = 10; // columna K
     var IDX_UBICACION = 27; // columna AB
 
+    function indicesInventarioDesdeFilas(filas) {
+        var enc = filas && filas.length > 1 ? filas[1] : [];
+        if (typeof window !== 'undefined' && window.ObebeInventarioColumnas) {
+            return window.ObebeInventarioColumnas.resolver(enc);
+        }
+        return {
+            imagen: IDX_IMAGEN,
+            nombre: 1,
+            stock: 2,
+            talla: 3,
+            color: 4,
+            tipo: 5,
+            marca: 6,
+            precio: 7,
+            precioMayoreo: IDX_PRECIO_MAYOREO,
+            pctMayoreo20: IDX_DESCUENTO_MAYOREO,
+            mayoreo: IDX_MAYOREO,
+            precioMayoreo50: IDX_PRECIO_MAYOREO_50,
+            pctMayoreo50: IDX_DESCUENTO_MAYOREO_50,
+            carrusel: IDX_CARRUSEL,
+            coleccion: IDX_COLECCION,
+            ofertaSemanal: IDX_OFERTA_SEMANAL,
+            fechaStock: IDX_FECHA_STOCK,
+            segmento: IDX_SEGMENTO,
+            ubicacion: IDX_UBICACION
+        };
+    }
+
+    function celdaInv(f, IX, key) {
+        var i = IX[key];
+        if (i == null || !f || i >= f.length) return '';
+        return f[i];
+    }
+
     var MESES_FECHA_STOCK = {
         ene: 0, enero: 0, feb: 1, febrero: 1, mar: 2, marzo: 2, abr: 3, abril: 3,
         may: 4, mayo: 4, jun: 5, junio: 5, jul: 6, julio: 6, ago: 7, agosto: 7,
@@ -294,13 +328,14 @@
 
     function extraerFechaStockMasReciente(csvTexto) {
         var filas = parseCSV(csvTexto);
+        var IX = indicesInventarioDesdeFilas(filas);
         var maxTime = 0;
         var maxFecha = '';
         for (var i = FILA_INICIO; i < filas.length; i++) {
             var f = filas[i];
-            var nombre = (f[1] || '').trim();
-            if (!nombre || nombre.toUpperCase() === 'NOMBRE') continue;
-            var fecha = parsearFechaStock(f[IDX_FECHA_STOCK]);
+            var nombre = String(celdaInv(f, IX, 'nombre') || '').trim();
+            if (!nombre || nombre.toUpperCase() === 'NOMBRE' || nombre.toUpperCase() === 'ARTICULO') continue;
+            var fecha = parsearFechaStock(celdaInv(f, IX, 'fechaStock'));
             if (!fecha) continue;
             var time = new Date(fecha + 'T00:00:00').getTime();
             if (!isNaN(time) && time >= maxTime) {
@@ -391,18 +426,20 @@
         return 'Hombre';
     }
 
-    function hojaUsaColumnaSegmento(filas) {
+    function hojaUsaColumnaSegmento(filas, IX) {
+        IX = IX || indicesInventarioDesdeFilas(filas);
         for (var i = FILA_INICIO; i < filas.length; i++) {
             var f = filas[i];
-            var nombre = (f[1] || '').trim();
+            var nombre = String(celdaInv(f, IX, 'nombre') || '').trim();
             if (!nombre) continue;
-            if ((f[IDX_SEGMENTO] || '').trim()) return true;
+            if (String(celdaInv(f, IX, 'segmento') || '').trim()) return true;
         }
         return false;
     }
 
-    function inferirCategoriaDesdeUbicacion(fila) {
-        var u = (fila[IDX_UBICACION] || '').trim().toLowerCase();
+    function inferirCategoriaDesdeUbicacion(fila, IX) {
+        IX = IX || indicesInventarioDesdeFilas([]);
+        var u = String(celdaInv(fila, IX, 'ubicacion') || '').trim().toLowerCase();
         if (u.indexOf('mujer') >= 0) return 'Mujer';
         if (u.indexOf('hombre') >= 0) return 'Hombre';
         return '';
@@ -416,10 +453,11 @@
     }
 
     /** Misma lógica que scripts/importar-stock.py cuando la columna T está vacía. */
-    function inferirCategoriaSinSegmento(fila) {
-        var inferida = inferirCategoriaDesdeUbicacion(fila);
+    function inferirCategoriaSinSegmento(fila, IX) {
+        IX = IX || indicesInventarioDesdeFilas([]);
+        var inferida = inferirCategoriaDesdeUbicacion(fila, IX);
         if (inferida) return inferida;
-        var ref = parsearNumeroImagen(fila[IDX_IMAGEN]);
+        var ref = parsearNumeroImagen(celdaInv(fila, IX, 'imagen'));
         if (ref > 0) {
             var hombre = typeof productosHombre !== 'undefined' ? productosHombre : [];
             var mujer = typeof productosMujer !== 'undefined' ? productosMujer : [];
@@ -431,11 +469,12 @@
         return 'Hombre';
     }
 
-    function filaPerteneceCategoria(fila, categoria, usarSegmento) {
-        var seg = (fila[IDX_SEGMENTO] || '').trim();
+    function filaPerteneceCategoria(fila, categoria, usarSegmento, IX) {
+        IX = IX || indicesInventarioDesdeFilas([]);
+        var seg = String(celdaInv(fila, IX, 'segmento') || '').trim();
         if (seg) return normalizarSegmento(seg) === categoria;
         if (!usarSegmento) return true;
-        return inferirCategoriaSinSegmento(fila) === categoria;
+        return inferirCategoriaSinSegmento(fila, IX) === categoria;
     }
 
     function setsToSortedArrays(opciones) {
@@ -454,7 +493,8 @@
 
     function leerFilasSheet(csvTexto, categoria) {
         var filas = parseCSV(csvTexto);
-        var usarSegmento = hojaUsaColumnaSegmento(filas);
+        var IX = indicesInventarioDesdeFilas(filas);
+        var usarSegmento = hojaUsaColumnaSegmento(filas, IX);
         var mapa = new Map();
         var mapaPorRef = new Map();
         var opciones = {
@@ -465,25 +505,25 @@
         };
         for (var i = FILA_INICIO; i < filas.length; i++) {
             var f = filas[i];
-            var nombre = (f[1] || '').trim();
-            if (!nombre || nombre.toUpperCase() === 'NOMBRE') continue;
-            if (!filaPerteneceCategoria(f, categoria, usarSegmento)) continue;
-            var stock = parsearStock(f[2]);
-            var talla = normalizarTalla(f[3]);
-            var color = normalizarColor(f[4]);
-            var tipo = normalizarTipo(f[5]);
-            var marca = normalizarMarca(f[6]);
-            var precio = parsearPrecio(f[7]);
-            var precioMayoreo = parsearPrecio(f[IDX_PRECIO_MAYOREO]);
-            var precioMayoreo50 = parsearPrecio(f[IDX_PRECIO_MAYOREO_50]);
-            var descuentoMayoreo = parsearPorcentaje(f[IDX_DESCUENTO_MAYOREO]);
-            var descuentoMayoreo50 = parsearPorcentaje(f[IDX_DESCUENTO_MAYOREO_50]);
-            var mayoreo = parsearMayoreo(f[IDX_MAYOREO]);
-            var posicionCarrusel = parsearPosicionCarrusel(f[IDX_CARRUSEL]);
-            var fechaStock = parsearFechaStock(f[IDX_FECHA_STOCK]);
-            var refImagen = parsearNumeroImagen(f[IDX_IMAGEN]);
-            var coleccion = normalizarColeccion(f[IDX_COLECCION] || '');
-            var precioOfertaSemanal = parsearPrecioOfertaSemanal(f[IDX_OFERTA_SEMANAL]);
+            var nombre = String(celdaInv(f, IX, 'nombre') || '').trim();
+            if (!nombre || nombre.toUpperCase() === 'NOMBRE' || nombre.toUpperCase() === 'ARTICULO') continue;
+            if (!filaPerteneceCategoria(f, categoria, usarSegmento, IX)) continue;
+            var stock = parsearStock(celdaInv(f, IX, 'stock'));
+            var talla = normalizarTalla(celdaInv(f, IX, 'talla'));
+            var color = normalizarColor(celdaInv(f, IX, 'color'));
+            var tipo = normalizarTipo(celdaInv(f, IX, 'tipo'));
+            var marca = normalizarMarca(celdaInv(f, IX, 'marca'));
+            var precio = parsearPrecio(celdaInv(f, IX, 'precio'));
+            var precioMayoreo = parsearPrecio(celdaInv(f, IX, 'precioMayoreo'));
+            var precioMayoreo50 = parsearPrecio(celdaInv(f, IX, 'precioMayoreo50'));
+            var descuentoMayoreo = parsearPorcentaje(celdaInv(f, IX, 'pctMayoreo20'));
+            var descuentoMayoreo50 = parsearPorcentaje(celdaInv(f, IX, 'pctMayoreo50'));
+            var mayoreo = parsearMayoreo(celdaInv(f, IX, 'mayoreo'));
+            var posicionCarrusel = parsearPosicionCarrusel(celdaInv(f, IX, 'carrusel'));
+            var fechaStock = parsearFechaStock(celdaInv(f, IX, 'fechaStock'));
+            var refImagen = parsearNumeroImagen(celdaInv(f, IX, 'imagen'));
+            var coleccion = normalizarColeccion(celdaInv(f, IX, 'coleccion') || '');
+            var precioOfertaSemanal = parsearPrecioOfertaSemanal(celdaInv(f, IX, 'ofertaSemanal'));
             // Los agotados siguen apareciendo en la tienda con su etiqueta, asi que
             // sus opciones tambien deben quedar disponibles en los filtros.
             if (talla) opciones.tallas.add(talla);
@@ -849,7 +889,13 @@
             if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
             return s;
         }
-        var lines = ['', ''];
+        var titulos = (typeof window !== 'undefined' && window.ObebeInventarioColumnas)
+            ? window.ObebeInventarioColumnas.titulosDefault()
+            : [];
+        var lineaTitulos = titulos.length
+            ? titulos.map(escCell).join(',')
+            : '';
+        var lines = ['', lineaTitulos];
         (rows || []).forEach(function(r) {
             var c = r.celdas || [];
             var line = [];

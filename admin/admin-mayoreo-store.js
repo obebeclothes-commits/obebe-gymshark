@@ -402,6 +402,55 @@
         return y + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
     }
 
+    function normalizarFechaStockIso(fecha) {
+        var s = String(fecha || '').trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (m) {
+            return m[3] + '-' + (m[2].length < 2 ? '0' : '') + m[2] +
+                '-' + (m[1].length < 2 ? '0' : '') + m[1];
+        }
+        return s;
+    }
+
+    /** Quita líneas de inventario mayoreo con esa fecha de stock (p. ej. pedido revertido). */
+    function eliminarLineasPorFechaStock(clienteKey, fechaIso) {
+        var k = claveCliente(clienteKey);
+        fechaIso = normalizarFechaStockIso(fechaIso);
+        if (!fechaIso) return { ok: false, error: 'Fecha inválida.' };
+        var lineas = getLineas();
+        var removed = 0;
+        var skipped = 0;
+        var kept = lineas.filter(function (l) {
+            if (l.clienteKey !== k || l.fechaStockIso !== fechaIso) return true;
+            recalcDisponible(l);
+            if ((l.cantidadVendida || 0) > 0) {
+                skipped += 1;
+                return true;
+            }
+            removed += 1;
+            return false;
+        });
+        setLineas(kept);
+        registrarMetaImportStock(kept.filter(function (l) { return l.clienteKey === k; }));
+        return { ok: true, removed: removed, skipped: skipped, fechaIso: fechaIso, clienteKey: k };
+    }
+
+    var KEY_LIMPIEZA_NATY_INV_2910 = 'obebe_naty_quitar_inv_20261029_v1';
+
+    function ejecutarLimpiezaProgramadaMayoreo() {
+        try {
+            if (localStorage.getItem(KEY_LIMPIEZA_NATY_INV_2910)) {
+                return { ok: true, omitido: true };
+            }
+        } catch (e) { /* ignore */ }
+        var res = eliminarLineasPorFechaStock('naty', '2026-10-29');
+        try {
+            localStorage.setItem(KEY_LIMPIEZA_NATY_INV_2910, String(Date.now()));
+        } catch (e) { /* ignore */ }
+        return res;
+    }
+
     function registrarVenta(payload) {
         payload = payload || {};
         var clienteKey = claveCliente(payload.clienteKey || 'naty');
@@ -660,6 +709,8 @@
         metaCliente: metaCliente,
         ingresarInventarioDesdePedido: ingresarInventarioDesdePedido,
         revertirInventarioDesdePedido: revertirInventarioDesdePedido,
+        eliminarLineasPorFechaStock: eliminarLineasPorFechaStock,
+        ejecutarLimpiezaProgramadaMayoreo: ejecutarLimpiezaProgramadaMayoreo,
         resumenGananciaCliente: resumenGananciaCliente,
         FECHA_STOCK_LEGACY: FECHA_STOCK_LEGACY
     };

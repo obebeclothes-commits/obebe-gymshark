@@ -96,10 +96,7 @@
                 '<td>' + ObebeAdminData.formatoMoney(c.totalCobrado) + '</td>' +
                 '<td>' + ObebeAdminData.formatoMoney(c.utilidad) + '</td></tr>';
         }).join('');
-        var hint = clickable
-            ? '<p class="admin-muted-text" style="padding:0 1rem 0.75rem;margin:0;font-size:0.8rem">Pulsa un <strong>cliente</strong> para ver desglose, precios y ventas registradas.</p>'
-            : '';
-        return hint + '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>' +
+        return '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>' +
             '<th>#</th><th>Cliente</th><th>Unidades</th>' +
             '<th>Total cobrado</th><th>Utilidad</th>' +
             '</tr></thead><tbody>' + rows + '</tbody></table></div>';
@@ -136,24 +133,147 @@
             foot + '</tbody></table></div>';
     }
 
-    function panelDesgloseCliente(clienteKey, nombre, filasInv) {
-        var act = ObebeMayoreoStore.resumenActividadVenta(clienteKey);
+    function fmtFechaPedidoMs(ms) {
+        if (!ms) return '—';
+        var d = new Date(ms);
+        if (isNaN(d.getTime())) return '—';
+        return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear();
+    }
+
+    function etiquetaEstadoPedidoSimple(estado) {
+        var m = {
+            pendiente: 'Pendiente',
+            en_revision: 'En revisión',
+            revisado: 'Revisado',
+            cancelado: 'Cancelado'
+        };
+        return m[estado] || String(estado || '');
+    }
+
+    function mapLineasPorId(lineas) {
+        var map = {};
+        (lineas || []).forEach(function (l) { map[l.id] = l; });
+        return map;
+    }
+
+    function filaDesdeItemPedido(it, mapLineas) {
+        var ln = it.inventarioId ? mapLineas[it.inventarioId] : null;
+        return {
+            nombre: it.nombre || (ln && ln.nombre) || '',
+            cantidad: it.cantidad || 1,
+            talla: it.talla || (ln && ln.talla) || '',
+            color: it.color || (ln && ln.color) || '',
+            tipo: it.tipo || (ln && ln.tipo) || '',
+            marca: it.marca || (ln && ln.marca) || '',
+            precioMayoreo: it.precioCliente != null ? it.precioCliente : (ln && ln.precioMayoreo) || 0,
+            precioRetail: it.precioRetail != null ? it.precioRetail : (ln && ln.precioRetail) || 0,
+            precioVentaPlaneado: ln ? (ln.precioVentaPlaneado || 0) : (it.precioRetail || 0),
+            imagenUrl: it.imagenUrl || (ln && ln.imagenUrl) || '',
+            cantidadDisponible: ln && ln.cantidadDisponible != null ? ln.cantidadDisponible : (it.cantidad || 1)
+        };
+    }
+
+    function bloquePedidoDesglose(p, mapLineas, expanded) {
+        var filas = (p.items || []).map(function (it) {
+            return filaDesdeItemPedido(it, mapLineas);
+        });
+        if (!filas.length) return '';
+        var fecha = fmtFechaPedidoMs(p.creadoEn || p.revisadoEn);
+        var tituloFecha = p.tituloFecha || fecha;
+        var meta = (p.pedidoCombinado ? 'Combinado · ' : '') +
+            etiquetaEstadoPedidoSimple(p.estado) + ' · ' +
+            (p.unidades || filas.length) + ' pzas. · ' +
+            ObebeAdminData.formatoMoney(p.totalCliente || 0);
+        return '<div class="admin-mayoreo-ped-block" data-pedido-id="' + esc(p.id) + '">' +
+            '<button type="button" class="admin-mayoreo-ped-toggle" data-pedido-id="' + esc(p.id) + '">' +
+            '<span class="admin-mayoreo-ped-toggle-fecha">' + esc(tituloFecha) + '</span>' +
+            '<span class="admin-mayoreo-ped-toggle-meta">' + esc(meta) + '</span>' +
+            '<span class="admin-ped-card-chevron" aria-hidden="true">' + (expanded ? '▾' : '▸') + '</span></button>' +
+            '<div class="admin-mayoreo-ped-body' + (expanded ? '' : ' admin-hidden') + '">' +
+            tablaDesgloseCliente(filas) + '</div></div>';
+    }
+
+    function panelDesgloseCliente(clienteKey, nombre, filasInv, expandedPedidos) {
+        expandedPedidos = expandedPedidos || {};
         var lineas = lineasStoreEnriquecidas(clienteKey, filasInv);
-        var unidades = 0;
-        lineas.forEach(function (r) { unidades += r.cantidad || 0; });
-        return '<div class="admin-panel admin-panel-desglose">' +
-            '<div class="admin-panel-head">' +
-            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-mayoreo-cerrar-desglose">← Clientes</button>' +
-            '<h3>Desglose · ' + esc(nombre) + '</h3></div>' +
-            '<div class="admin-kpi-grid" style="padding:0 1rem 0.5rem">' +
-            kpi('Unidades compradas', unidades, 'Inventario mayoreo') +
-            kpi('Artículos vendidos', act.articulosVendidos, act.numVentas + ' venta(s) registradas') +
-            kpi('Dinero vendido', ObebeAdminData.formatoMoney(act.totalVendido), 'Suma de ventas en su panel') +
-            '</div>' +
-            '<p class="admin-muted-text" style="padding:0 1rem 0.5rem;margin:0;font-size:0.8rem">' +
-            'Vista tipo <strong>Inventario</strong> del cliente: precios que ellos ven y el precio de venta que marcan.</p>' +
-            tablaDesgloseCliente(lineas) +
-            '</div>';
+        var mapLineas = mapLineasPorId(lineas);
+        var pedidos = global.ObebeMayoreoPedidosStore
+            ? ObebeMayoreoPedidosStore.pedidosForCliente(clienteKey)
+            : [];
+        pedidos = pedidos.slice().sort(function (a, b) {
+            return (b.creadoEn || 0) - (a.creadoEn || 0);
+        });
+
+        var idsEnPedidos = {};
+        pedidos.forEach(function (p) {
+            (p.items || []).forEach(function (it) {
+                if (it.inventarioId) idsEnPedidos[it.inventarioId] = true;
+            });
+        });
+
+        var bloques = pedidos.map(function (p) {
+            return bloquePedidoDesglose(p, mapLineas, !!expandedPedidos[p.id]);
+        }).filter(Boolean).join('');
+
+        var sueltas = lineas.filter(function (l) { return !idsEnPedidos[l.id]; });
+        if (sueltas.length) {
+            bloques += bloquePedidoDesglose({
+                id: '__inventario_extra__',
+                tituloFecha: 'Inventario · otras entradas',
+                estado: 'revisado',
+                creadoEn: 0,
+                unidades: sueltas.reduce(function (s, l) { return s + (l.cantidad || 0); }, 0),
+                totalCliente: sueltas.reduce(function (s, l) {
+                    return s + (l.precioMayoreo || 0) * (l.cantidad || 1);
+                }, 0),
+                items: sueltas.map(function (l) {
+                    return {
+                        inventarioId: l.id,
+                        nombre: l.nombre,
+                        cantidad: l.cantidad,
+                        talla: l.talla,
+                        color: l.color,
+                        tipo: l.tipo,
+                        marca: l.marca,
+                        precioCliente: l.precioMayoreo,
+                        precioRetail: l.precioRetail,
+                        imagenUrl: l.imagenUrl
+                    };
+                })
+            }, mapLineas, !!expandedPedidos.__inventario_extra__);
+        }
+
+        if (!bloques) {
+            bloques = bloquePedidoDesglose({
+                id: '__inventario_todo__',
+                tituloFecha: 'Inventario',
+                estado: 'revisado',
+                creadoEn: Date.now(),
+                unidades: lineas.reduce(function (s, l) { return s + (l.cantidad || 0); }, 0),
+                totalCliente: 0,
+                items: lineas.map(function (l) {
+                    return {
+                        inventarioId: l.id,
+                        nombre: l.nombre,
+                        cantidad: l.cantidad,
+                        talla: l.talla,
+                        color: l.color,
+                        tipo: l.tipo,
+                        marca: l.marca,
+                        precioCliente: l.precioMayoreo,
+                        precioRetail: l.precioRetail,
+                        imagenUrl: l.imagenUrl
+                    };
+                })
+            }, mapLineas, true);
+        }
+
+        return '<div class="admin-panel admin-panel-desglose" data-cliente-key="' + esc(clienteKey) + '" data-cliente-nombre="' + esc(nombre) + '">' +
+            '<div class="admin-panel-head admin-panel-head--mayoreo-desglose">' +
+            '<div class="admin-mayoreo-desglose-title">' +
+            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-mayoreo-cerrar-desglose admin-mayoreo-volver-clientes">← Clientes</button>' +
+            '<h3>' + esc(nombre) + '</h3></div></div>' +
+            '<div class="admin-mayoreo-ped-list">' + bloques + '</div></div>';
     }
 
     function tablaDetalle(lineas, limite, opts) {
@@ -243,10 +363,6 @@
         var vistaCliente = !!datos.vistaCliente;
         var aviso = datos.errorMayoreo
             ? '<div class="admin-banner" style="border-color:var(--admin-warn)">' + esc(datos.errorMayoreo) + '</div>' : '';
-        var bannerLocal = (!vistaCliente && datos.usarStoreLocal)
-            ? '<div class="admin-banner info">Mayoreo en base local (navegador). <strong>Actualizar</strong> importa cambios desde Google Sheet sin borrar ediciones de NATY.</div>'
-            : '';
-
         var kpis;
         if (vistaCliente) {
             var ck = datos.clienteKey || 'naty';
@@ -274,7 +390,9 @@
 
         var tituloDetalle = vistaCliente ? 'Inventario' : 'Detalle de pedidos';
 
-        container.innerHTML = aviso + bannerLocal + kpis + panelClientes +
+        container.innerHTML = aviso +
+            '<div id="adminMayoreoKpis">' + kpis + '</div>' +
+            panelClientes +
             '<div class="admin-panel" id="adminMayoreoPanelDetalle"><div class="admin-panel-head"><h3>' + esc(tituloDetalle) + '</h3>' +
             '<input type="search" class="admin-search" id="adminSearchMayoreo" placeholder="Buscar artículo, talla, marca…"></div>' +
             '<div id="adminMayoreoDetalle"></div></div>';
@@ -294,21 +412,46 @@
         if (input) input.addEventListener('input', function () { pintar(input.value); });
 
         if (!vistaCliente) {
+            var desgloseExpanded = {};
+            var desgloseClienteActivo = { key: '', nombre: '' };
+
+            function pintarDesgloseCliente() {
+                var box = document.getElementById('adminMayoreoDesglose');
+                if (!box || !desgloseClienteActivo.key) return;
+                box.innerHTML = panelDesgloseCliente(
+                    desgloseClienteActivo.key,
+                    desgloseClienteActivo.nombre,
+                    filasInv,
+                    desgloseExpanded
+                );
+            }
+
             container.addEventListener('click', function (ev) {
+                var togglePed = ev.target.closest('.admin-mayoreo-ped-toggle');
+                if (togglePed) {
+                    var pid = togglePed.getAttribute('data-pedido-id');
+                    desgloseExpanded[pid] = !desgloseExpanded[pid];
+                    pintarDesgloseCliente();
+                    return;
+                }
                 var link = ev.target.closest('.admin-mayoreo-cliente-link');
                 if (link) {
                     var key = link.getAttribute('data-cliente-key');
                     var nombre = link.getAttribute('data-cliente-nombre') || link.textContent;
+                    desgloseClienteActivo = { key: key, nombre: nombre };
+                    desgloseExpanded = {};
                     var box = document.getElementById('adminMayoreoDesglose');
                     var panelCli = document.getElementById('adminMayoreoPanelClientes');
                     var panelDet = document.getElementById('adminMayoreoPanelDetalle');
+                    var kpisEl = document.getElementById('adminMayoreoKpis');
                     if (box) {
-                        box.innerHTML = panelDesgloseCliente(key, nombre, filasInv);
+                        pintarDesgloseCliente();
                         box.classList.remove('admin-hidden');
                     }
                     if (panelCli) panelCli.classList.add('admin-hidden');
                     if (panelDet) panelDet.classList.add('admin-hidden');
-                    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    if (kpisEl) kpisEl.classList.add('admin-hidden');
+                    if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     return;
                 }
                 if (ev.target.closest('.admin-mayoreo-cerrar-desglose')) {
@@ -317,8 +460,12 @@
                         box2.classList.add('admin-hidden');
                         box2.innerHTML = '';
                     }
+                    desgloseClienteActivo = { key: '', nombre: '' };
+                    desgloseExpanded = {};
                     document.getElementById('adminMayoreoPanelClientes').classList.remove('admin-hidden');
                     document.getElementById('adminMayoreoPanelDetalle').classList.remove('admin-hidden');
+                    var kpisEl2 = document.getElementById('adminMayoreoKpis');
+                    if (kpisEl2) kpisEl2.classList.remove('admin-hidden');
                 }
             });
         }

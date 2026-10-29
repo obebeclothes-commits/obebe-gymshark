@@ -9,6 +9,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const NUM_COLUMNAS = 29;
 const COL_STOCK = 3;
+const IDX_INV_NOMBRE = 1;
+const IDX_INV_STOCK = 2;
+const IDX_INV_TALLA = 3;
+const IDX_INV_COLOR = 4;
+
+function norm(s: unknown) {
+  return String(s ?? "").trim().toLowerCase();
+}
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -75,6 +83,107 @@ async function getVentas() {
   return { ok: true, ventas };
 }
 
+function gastoFieldsToRow(p: Record<string, unknown>) {
+  const fechaRaw = String(p.fechaRaw ?? "");
+  const cantidad = Math.abs(parseNum(p.cantidad));
+  return {
+    fecha_raw: fechaRaw,
+    fecha_iso: parseFechaIso(fechaRaw),
+    concepto: String(p.concepto ?? "").trim(),
+    cantidad,
+    pagado_por: String(p.pagado_por ?? p.pagadoPor ?? "").trim(),
+  };
+}
+
+function gastoDbToApi(v: Record<string, unknown>) {
+  return {
+    fechaIso: (v.fecha_iso as string) || "",
+    fechaRaw: (v.fecha_raw as string) || "",
+    concepto: (v.concepto as string) || "",
+    cantidad: Number(v.cantidad) || 0,
+    pagadoPor: (v.pagado_por as string) || "",
+    id: v.id,
+  };
+}
+
+async function getGastos() {
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("gastos_operativos")
+    .select("*")
+    .order("fecha_iso", { ascending: false, nullsFirst: false })
+    .order("id", { ascending: false })
+    .limit(5000);
+  if (error) throw error;
+  return { ok: true, gastos: (data || []).map((g) => gastoDbToApi(g)) };
+}
+
+async function createGasto(body: Record<string, unknown>) {
+  const gasto = (body.gasto || {}) as Record<string, unknown>;
+  const sb = adminClient();
+  const row = gastoFieldsToRow(gasto);
+  if (!row.concepto) return { ok: false, error: "Indica un concepto." };
+  if (row.cantidad <= 0) return { ok: false, error: "La cantidad debe ser mayor a 0." };
+  const { data, error } = await sb.from("gastos_operativos").insert(row).select("*").single();
+  if (error) throw error;
+  return { ok: true, gasto: gastoDbToApi(data) };
+}
+
+async function updateGasto(body: Record<string, unknown>) {
+  const gastoId = parseInt(String(body.gastoId), 10);
+  const gasto = (body.gasto || {}) as Record<string, unknown>;
+  if (!gastoId) return { ok: false, error: "gastoId inválido." };
+  const sb = adminClient();
+  const row = gastoFieldsToRow(gasto);
+  if (!row.concepto) return { ok: false, error: "Indica un concepto." };
+  if (row.cantidad <= 0) return { ok: false, error: "La cantidad debe ser mayor a 0." };
+  const { data, error } = await sb
+    .from("gastos_operativos")
+    .update(row)
+    .eq("id", gastoId)
+    .select("*")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return { ok: false, error: "Gasto no encontrado." };
+  return { ok: true, gasto: gastoDbToApi(data) };
+}
+
+async function deleteGasto(body: Record<string, unknown>) {
+  const gastoId = parseInt(String(body.gastoId), 10);
+  if (!gastoId) return { ok: false, error: "gastoId inválido." };
+  const sb = adminClient();
+  const { error } = await sb.from("gastos_operativos").delete().eq("id", gastoId);
+  if (error) throw error;
+  return { ok: true, deleted: 1 };
+}
+
+/** Quita de ventas_lineas las filas con precio negativo (gastos mal registrados) y las copia a gastos_operativos. */
+async function limpiarVentasNegativasMigrarGastos() {
+  const sb = adminClient();
+  const { data: neg, error } = await sb.from("ventas_lineas").select("*").lt("precio", 0);
+  if (error) throw error;
+  const rows = neg || [];
+  if (!rows.length) return { ok: true, migrados: 0, eliminados: 0 };
+  for (const v of rows) {
+    const concepto = String(v.nombre || v.tipo || "Gasto operativo").trim() || "Gasto operativo";
+    const cantidad = Math.abs(Number(v.precio) || 0);
+    const pagado = String(v.cuenta || v.vendedor || v.cliente || "").trim();
+    const ins = {
+      fecha_raw: v.fecha_raw,
+      fecha_iso: v.fecha_iso,
+      concepto,
+      cantidad,
+      pagado_por: pagado || "—",
+    };
+    const { error: eG } = await sb.from("gastos_operativos").insert(ins);
+    if (eG) throw eG;
+  }
+  const ids = rows.map((v) => v.id);
+  const { error: eD } = await sb.from("ventas_lineas").delete().in("id", ids);
+  if (eD) throw eD;
+  return { ok: true, migrados: rows.length, eliminados: rows.length };
+}
+
 function parseNum(val: unknown): number {
   let t = String(val ?? "").trim();
   if (!t) return 0;
@@ -93,21 +202,60 @@ function parseNum(val: unknown): number {
 
 function ventaLineToRow(v: unknown[]) {
   const a = v as string[];
-  return {
-    fecha_raw: a[0] ?? "",
-    fecha_iso: parseFechaIso(a[0] ?? ""),
+  return ventaFieldsToRow({
+    fechaRaw: a[0] ?? "",
     nombre: a[1] ?? "",
     tipo: a[2] ?? "",
-    precio: parseNum(a[3]),
+    precio: a[3],
     talla: a[4] ?? "",
     color: a[5] ?? "",
     segmento: a[6] ?? "",
     cliente: a[7] ?? "",
     vendedor: a[8] ?? "",
     cuenta: a[9] ?? "",
-    red_social: a[10] ?? "",
+    redSocial: a[10] ?? "",
     link: a[11] ?? "",
     telefono: a[12] ?? "",
+  });
+}
+
+function ventaFieldsToRow(p: Record<string, unknown>) {
+  const fechaRaw = String(p.fechaRaw ?? "");
+  return {
+    fecha_raw: fechaRaw,
+    fecha_iso: parseFechaIso(fechaRaw),
+    nombre: String(p.nombre ?? ""),
+    tipo: String(p.tipo ?? ""),
+    precio: parseNum(p.precio),
+    talla: String(p.talla ?? ""),
+    color: String(p.color ?? ""),
+    segmento: String(p.segmento ?? ""),
+    cliente: String(p.cliente ?? ""),
+    vendedor: String(p.vendedor ?? ""),
+    cuenta: String(p.cuenta ?? ""),
+    red_social: String(p.redSocial ?? ""),
+    link: String(p.link ?? ""),
+    telefono: String(p.telefono ?? ""),
+  };
+}
+
+function ventaDbToApi(v: Record<string, unknown>) {
+  return {
+    fechaIso: (v.fecha_iso as string) || "",
+    fechaRaw: (v.fecha_raw as string) || "",
+    nombre: (v.nombre as string) || "",
+    tipo: (v.tipo as string) || "",
+    precio: Number(v.precio) || 0,
+    talla: (v.talla as string) || "",
+    color: (v.color as string) || "",
+    segmento: (v.segmento as string) || "",
+    cliente: (v.cliente as string) || "",
+    vendedor: (v.vendedor as string) || "",
+    cuenta: (v.cuenta as string) || "",
+    redSocial: (v.red_social as string) || "",
+    link: (v.link as string) || "",
+    telefono: (v.telefono as string) || "",
+    filaSheet: v.id,
   };
 }
 
@@ -121,6 +269,115 @@ function parseFechaIso(raw: string): string | null {
   const d = parseInt(m[1], 10);
   if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
   return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+async function buscarInventarioPorVenta(
+  sb: ReturnType<typeof createClient>,
+  nombre: string,
+  talla: string,
+  color: string,
+) {
+  const nn = norm(nombre);
+  if (!nn) return null;
+  const { data, error } = await sb.from("inventario_filas").select("id, celdas").limit(5000);
+  if (error) throw error;
+  const nt = norm(talla);
+  const nc = norm(color);
+  for (const row of data || []) {
+    const c = padCeldas((row.celdas as unknown[]) || []);
+    if (norm(c[IDX_INV_NOMBRE]) !== nn) continue;
+    if (nt && norm(c[IDX_INV_TALLA]) !== nt) continue;
+    if (nc && norm(c[IDX_INV_COLOR]) !== nc) continue;
+    return { id: row.id as number, celdas: c };
+  }
+  return null;
+}
+
+async function aplicarDeltaStockInventario(
+  sb: ReturnType<typeof createClient>,
+  invId: number,
+  celdas: string[],
+  delta: number,
+) {
+  let stock = parseInt(celdas[IDX_INV_STOCK], 10);
+  if (isNaN(stock)) stock = 0;
+  if (delta < 0 && stock <= 0) return { ok: false, stock: 0 };
+  stock = Math.max(0, stock + delta);
+  celdas[IDX_INV_STOCK] = String(stock);
+  const { error } = await sb
+    .from("inventario_filas")
+    .update({ celdas, updated_at: new Date().toISOString() })
+    .eq("id", invId);
+  if (error) throw error;
+  return { ok: true, stock, row: invId };
+}
+
+async function ajustarStockPorLineaVenta(
+  sb: ReturnType<typeof createClient>,
+  linea: { nombre?: string; talla?: string; color?: string },
+  delta: number,
+) {
+  const hit = await buscarInventarioPorVenta(
+    sb,
+    linea.nombre || "",
+    linea.talla || "",
+    linea.color || "",
+  );
+  if (!hit) return { ok: false, matched: false };
+  const r = await aplicarDeltaStockInventario(sb, hit.id, hit.celdas, delta);
+  return { ok: r.ok, matched: true, stock: r.stock, row: hit.id };
+}
+
+async function updateVentaLine(body: Record<string, unknown>) {
+  const ventaId = parseInt(String(body.ventaId), 10);
+  const venta = (body.venta || {}) as Record<string, unknown>;
+  if (!ventaId) return { ok: false, error: "ventaId inválido." };
+  const sb = adminClient();
+  const row = ventaFieldsToRow(venta);
+  const { data, error } = await sb
+    .from("ventas_lineas")
+    .update(row)
+    .eq("id", ventaId)
+    .select("*")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return { ok: false, error: "Venta no encontrada." };
+  return { ok: true, venta: ventaDbToApi(data) };
+}
+
+async function deleteVentaLine(body: Record<string, unknown>) {
+  const ventaId = parseInt(String(body.ventaId), 10);
+  if (!ventaId) return { ok: false, error: "ventaId inválido." };
+  const ajustarStock = body.ajustarStock !== false;
+  const sb = adminClient();
+  const { data: prev, error: e0 } = await sb
+    .from("ventas_lineas")
+    .select("*")
+    .eq("id", ventaId)
+    .maybeSingle();
+  if (e0) throw e0;
+  if (!prev) return { ok: false, error: "Venta no encontrada." };
+  const { error: e1 } = await sb.from("ventas_lineas").delete().eq("id", ventaId);
+  if (e1) throw e1;
+  let stockInfo: Record<string, unknown> | null = null;
+  if (ajustarStock) {
+    stockInfo = await ajustarStockPorLineaVenta(sb, prev, 1);
+  }
+  return { ok: true, deleted: 1, stock: stockInfo };
+}
+
+async function createVentaLine(body: Record<string, unknown>) {
+  const venta = (body.venta || {}) as Record<string, unknown>;
+  const ajustarStock = body.ajustarStock !== false;
+  const sb = adminClient();
+  const row = ventaFieldsToRow(venta);
+  const { data, error } = await sb.from("ventas_lineas").insert(row).select("*").single();
+  if (error) throw error;
+  let stockInfo: Record<string, unknown> | null = null;
+  if (ajustarStock) {
+    stockInfo = await ajustarStockPorLineaVenta(sb, row, -1);
+  }
+  return { ok: true, venta: ventaDbToApi(data), stock: stockInfo };
 }
 
 async function registrarVentaRetail(body: Record<string, unknown>) {
@@ -502,9 +759,18 @@ Deno.serve(async (req) => {
     if (auth) return json(auth, 401);
 
     const action = body.action as string;
-    if (action === "ping") return json({ ok: true, message: "admin-api Supabase OK" });
+    if (action === "ping") {
+      return json({ ok: true, message: "admin-api Supabase OK", apiVersion: 3 });
+    }
 
     if (action === "getVentas") return json(await getVentas());
+    if (action === "getGastos") return json(await getGastos());
+    if (action === "createGasto") return json(await createGasto(body));
+    if (action === "updateGasto") return json(await updateGasto(body));
+    if (action === "deleteGasto") return json(await deleteGasto(body));
+    if (action === "limpiarVentasNegativasMigrarGastos") {
+      return json(await limpiarVentasNegativasMigrarGastos());
+    }
     if (action === "getDbStats") return json(await getDbStats());
     if (action === "importFromGoogleRetail") {
       return json(await importFromGoogleRetail());
@@ -515,6 +781,15 @@ Deno.serve(async (req) => {
 
     if (action === "registrarVentaRetail") {
       return json(await registrarVentaRetail(body));
+    }
+    if (action === "updateVentaLine") {
+      return json(await updateVentaLine(body));
+    }
+    if (action === "deleteVentaLine") {
+      return json(await deleteVentaLine(body));
+    }
+    if (action === "createVentaLine") {
+      return json(await createVentaLine(body));
     }
     if (action === "actualizarStock") {
       return json(await actualizarStock(body.filaSheet, body.stock));

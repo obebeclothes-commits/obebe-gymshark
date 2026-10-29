@@ -240,7 +240,7 @@ function renderizarCarruselHombre(categoria = 'Hombre', mostrarTodos = false) {
         const card = document.createElement('a');
         card.className = 'product-card' + (agotado ? ' product-card-agotado' : '');
         if (!agotado) {
-            card.href = 'producto.html?id=' + producto.id;
+        card.href = 'producto.html?id=' + producto.id;
         } else {
             card.href = '#';
             card.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); });
@@ -261,7 +261,7 @@ function renderizarCarruselHombre(categoria = 'Hombre', mostrarTodos = false) {
             imageContainer.dataset.type = 'img';
             imageContainer.dataset.img1 = imagen1;
             if (imagen2) imageContainer.dataset.img2 = imagen2;
-            renderizarImagenProducto(imageContainer, imagen1);
+        renderizarImagenProducto(imageContainer, imagen1);
         } else {
             mostrarPlaceholderImagenProducto(imageContainer, producto.nombre);
         }
@@ -967,7 +967,7 @@ function scrollCarousel(direction) {
 function inicializarScrollMouse() {
     const carousel = document.getElementById('productsCarousel');
     const wrapper = carousel ? carousel.parentElement : null;
-
+    
     if (!wrapper || !carousel) return;
 
     wrapper.addEventListener('mousedown', (e) => {
@@ -1131,7 +1131,7 @@ function inicializarNavegacion() {
             const href = (logoLink.getAttribute('href') || '').trim();
             // Solo interceptar si el enlace es # (estamos en index): scroll suave al inicio
             if (href === '#' || href === '') {
-                e.preventDefault();
+            e.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
             // Si href es index.html u otra ruta, dejar que navegue con normalidad
@@ -1193,8 +1193,8 @@ function inicializarNavegacion() {
     const btnMujerMobile = document.getElementById('btnMujerMobile');
     if (btnMujerMobile && mobileMenuBtn && mobileNav) {
         btnMujerMobile.addEventListener('click', () => {
-            mobileMenuBtn.classList.remove('active');
-            mobileNav.classList.remove('active');
+                mobileMenuBtn.classList.remove('active');
+                mobileNav.classList.remove('active');
             document.body.classList.remove('mobile-menu-open');
         });
     }
@@ -1558,32 +1558,32 @@ function arrancarIndexPagina() {
     renderizarCarruselHombre('Hombre', false);
     if (typeof productosMujer !== 'undefined') renderizarProductosMujer();
     renderizarCarruselOfertas();
-    inicializarCarousel();
+        inicializarCarousel();
     inicializarCarouselColecciones();
     inicializarCarouselMarcas();
-    inicializarNavegacion();
-    inicializarPromoBar();
+        inicializarNavegacion();
+        inicializarPromoBar();
     actualizarHeroOfertasSemanales();
     inicializarHeroCarrusel();
-    const cartIconBtn = document.getElementById('cartIconBtn');
-    const cartModal = document.getElementById('cartModal');
-    const closeCartBtn = document.getElementById('closeCartBtn');
-    const clearCartBtn = document.getElementById('clearCartBtn');
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    if (cartIconBtn && cartModal && typeof renderizarCarrito === 'function') {
-        cartIconBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            renderizarCarrito();
-            cartModal.classList.add('active');
-        });
-    }
-    if (cartModal && closeCartBtn) {
-        closeCartBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            cartModal.classList.remove('active');
-        });
+        const cartIconBtn = document.getElementById('cartIconBtn');
+        const cartModal = document.getElementById('cartModal');
+        const closeCartBtn = document.getElementById('closeCartBtn');
+        const clearCartBtn = document.getElementById('clearCartBtn');
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        if (cartIconBtn && cartModal && typeof renderizarCarrito === 'function') {
+            cartIconBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                renderizarCarrito();
+                cartModal.classList.add('active');
+            });
+        }
+        if (cartModal && closeCartBtn) {
+            closeCartBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                cartModal.classList.remove('active');
+            });
         function handleCartModalClick(e) {
             const removeBtn = e.target.closest('[data-cart-remove]');
             if (removeBtn && typeof eliminarDelCarrito === 'function') {
@@ -1595,28 +1595,28 @@ function arrancarIndexPagina() {
                 eliminarDelCarrito(id, talla, color);
                 return;
             }
-            if (e.target === cartModal) cartModal.classList.remove('active');
+                if (e.target === cartModal) cartModal.classList.remove('active');
         }
         cartModal.addEventListener('click', handleCartModalClick);
         cartModal.addEventListener('touchend', handleCartModalClick, { passive: false });
-    }
-    if (clearCartBtn && typeof vaciarCarrito === 'function') {
-        clearCartBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            vaciarCarrito();
-        });
-    }
-    if (checkoutBtn && typeof enviarMensajeWhatsApp === 'function') {
-        checkoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            enviarMensajeWhatsApp();
-        });
-    }
-    if (typeof actualizarBadgeCarrito === 'function') {
-        actualizarBadgeCarrito();
-    }
+        }
+        if (clearCartBtn && typeof vaciarCarrito === 'function') {
+            clearCartBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                vaciarCarrito();
+            });
+        }
+        if (checkoutBtn && typeof enviarMensajeWhatsApp === 'function') {
+            checkoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                enviarMensajeWhatsApp();
+            });
+        }
+        if (typeof actualizarBadgeCarrito === 'function') {
+            actualizarBadgeCarrito();
+        }
 
     if (typeof inicializarCarouselMujer === 'function') inicializarCarouselMujer();
     if (typeof inicializarCarouselOfertas === 'function') inicializarCarouselOfertas();

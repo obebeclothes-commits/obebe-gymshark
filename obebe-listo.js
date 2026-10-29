@@ -1,5 +1,5 @@
 (function(w, d) {
-    var VERSION = '20261055';
+    var VERSION = '20261070';
 
     function cargarExtra(src, alTerminar) {
         if (d.querySelector('script[data-obebe-extra="' + src + '"]')) {
@@ -30,7 +30,9 @@
     }
 
     cargarExtra('obebe-data-config.js', function() {
-        cargarExtra('stock-sheet.js', syncStockEnBackground);
+        cargarExtra('inventario-columnas.js', function() {
+            cargarExtra('stock-sheet.js', syncStockEnBackground);
+        });
     });
     cargarExtra('mercadolibre-web.js', function() {
         d.dispatchEvent(new Event('obebe-scripts-extra'));

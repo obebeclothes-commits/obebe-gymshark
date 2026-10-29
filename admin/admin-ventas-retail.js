@@ -110,6 +110,86 @@
         var tipoCliente = 'existente';
         var generoCatalogo = 'todos';
         var clienteSeleccionadoId = '';
+        var descuentoManual = false;
+        var descuentoManualPct = '';
+
+        function piezasCarrito() {
+            return carrito.reduce(function (s, c) { return s + (c.cantidad || 1); }, 0);
+        }
+
+        function pctDescuentoAuto(piezas) {
+            if (piezas >= 10) return 8;
+            if (piezas >= 5) return 5;
+            return 0;
+        }
+
+        function pctDescuentoEfectivo() {
+            if (descuentoManual) {
+                var p = parseFloat(String(descuentoManualPct).replace(',', '.'));
+                if (isNaN(p) || p <= 0) return 0;
+                return Math.min(100, p);
+            }
+            return pctDescuentoAuto(piezasCarrito());
+        }
+
+        function leerEstadoDescuentoUi() {
+            var chk = document.getElementById('adminVentaRetailDescManual');
+            var inp = document.getElementById('adminVentaRetailDescPct');
+            if (chk) descuentoManual = !!chk.checked;
+            if (inp) descuentoManualPct = inp.value;
+        }
+
+        function subtotalCarrito() {
+            return carrito.reduce(function (s, c) {
+                return s + (c.precioUnitario || 0) * (c.cantidad || 1);
+            }, 0);
+        }
+
+        function carritoParaVenta() {
+            var pct = pctDescuentoEfectivo();
+            if (pct <= 0) return carrito;
+            var factor = 1 - pct / 100;
+            return carrito.map(function (c) {
+                var base = c.precioUnitario != null ? c.precioUnitario : 0;
+                return {
+                    fila: c.fila,
+                    cantidad: c.cantidad,
+                    precioUnitario: Math.round(base * factor * 100) / 100,
+                    imagenUrl: c.imagenUrl
+                };
+            });
+        }
+
+        function htmlBloqueDescuento(subtotal) {
+            var pct = pctDescuentoEfectivo();
+            var descMonto = Math.round(subtotal * pct) / 100;
+            var total = subtotal - descMonto;
+            var piezas = piezasCarrito();
+            var autoPct = pctDescuentoAuto(piezas);
+            var hint;
+            if (descuentoManual) {
+                hint = 'Indica el % y se aplicará aunque tengas pocas piezas.';
+            } else if (autoPct > 0) {
+                hint = piezas + ' piezas → ' + autoPct + '% automático (5 pzs = 5% · 10 pzs = 8%).';
+            } else {
+                hint = 'Automático: 5 piezas = 5% · 10 piezas = 8%. Activa manual para otro %.';
+            }
+            return '<div class="admin-venta-descuento">' +
+                '<div class="admin-venta-desc-grid">' +
+                '<div class="admin-venta-desc-col admin-venta-desc-col--ctrl">' +
+                '<span class="admin-venta-desc-title">Descuento</span>' +
+                '<label class="admin-venta-desc-manual">' +
+                '<input type="checkbox" id="adminVentaRetailDescManual"' + (descuentoManual ? ' checked' : '') + '> Manual</label>' +
+                '<div class="admin-venta-desc-row">' +
+                '<input type="number" min="0" max="100" step="0.5" id="adminVentaRetailDescPct" class="admin-venta-desc-input"' +
+                (descuentoManual ? '' : ' disabled') + ' placeholder="%" value="' + esc(descuentoManualPct) + '">' +
+                '<span class="admin-muted-text">%</span></div></div>' +
+                '<div class="admin-venta-desc-col admin-venta-desc-col--resumen">' +
+                '<span class="admin-muted-text admin-venta-desc-hint">' + esc(hint) + '</span>' +
+                (pct > 0 ? '<span class="admin-venta-desc-line">Descuento (' + pct + '%): <strong>−' + fmt(descMonto) + '</strong></span>' : '') +
+                '<span class="admin-venta-desc-total">Subtotal ' + fmt(subtotal) +
+                ' · Total <strong>' + fmt(pct > 0 ? total : subtotal) + '</strong></span></div></div></div>';
+        }
 
         function getFilasInv() {
             return catalogoConStock(opts.getFilas ? opts.getFilas() : filasInv);
@@ -264,7 +344,12 @@
         function pintarCarrito() {
             var box = document.getElementById('adminVentaRetailCarrito');
             if (!box) return;
+            if (box.querySelector('#adminVentaRetailDescManual')) {
+                leerEstadoDescuentoUi();
+            }
             if (!carrito.length) {
+                descuentoManual = false;
+                descuentoManualPct = '';
                 box.innerHTML = '<p class="admin-muted-text" style="padding:0 1rem">Carrito vacío.</p>';
                 pintarCatalogo();
                 return;
@@ -285,7 +370,7 @@
             box.innerHTML = '<div class="admin-table-wrap"><table class="admin-table admin-table-compact"><thead><tr>' +
                 '<th>Artículo</th><th>Cant.</th><th>Precio u.</th><th>Subtotal</th><th></th></tr></thead><tbody>' +
                 rows + '</tbody></table></div>' +
-                '<p class="admin-ped-totales">Total: <strong>' + fmt(total) + '</strong></p>';
+                htmlBloqueDescuento(total);
             pintarCatalogo();
         }
 
@@ -356,25 +441,25 @@
                 '<button type="button" class="admin-ped-genero-btn admin-vr-tipo-btn" data-tipo="nuevo">Cliente nuevo</button>' +
                 '</div>' +
                 '<div id="adminVentaRetailPanelExistente" class="admin-venta-retail-panel">' +
-                '<div class="admin-field"><label>I · Cliente</label>' +
+                '<div class="admin-field"><label>Cliente</label>' +
                 '<select id="adminVentaRetailClienteSelect" class="admin-venta-pago-select">' + opcionesClientesExistentes() + '</select></div>' +
                 '<div id="adminVentaRetailClienteResumen"></div>' +
-                '<div class="admin-field-row">' + selectEquipo('adminVentaRetailCuentaEx', 'K · Cuenta (quien tiene el dinero)') +
-                selectEquipo('adminVentaRetailVendedorEx', 'J · Vendedor') + '</div></div>' +
+                '<div class="admin-field-row">' + selectEquipo('adminVentaRetailCuentaEx', 'Quien tiene el dinero') +
+                selectEquipo('adminVentaRetailVendedorEx', 'Vendedor') + '</div></div>' +
                 '<div id="adminVentaRetailPanelNuevo" class="admin-venta-retail-panel admin-hidden">' +
-                '<div class="admin-field"><label>I · Nombre cliente</label><input type="text" id="adminVentaRetailNombreNuevo" placeholder="Nombre completo"></div>' +
+                '<div class="admin-field"><label>Nombre cliente</label><input type="text" id="adminVentaRetailNombreNuevo" placeholder="Nombre completo"></div>' +
                 '<div class="admin-field-row">' +
-                '<div class="admin-field"><label>N · Teléfono</label><input type="text" id="adminVentaRetailTelNuevo"></div>' +
-                '<div class="admin-field"><label>L · Red social</label><input type="text" id="adminVentaRetailRedNuevo" placeholder="Instagram…"></div></div>' +
-                '<div class="admin-field"><label>M · Link</label><input type="text" id="adminVentaRetailLinkNuevo" placeholder="https://…"></div>' +
-                '<div class="admin-field-row">' + selectEquipo('adminVentaRetailCuentaNuevo', 'K · Cuenta (quien tiene el dinero)') +
-                selectEquipo('adminVentaRetailVendedorNuevo', 'J · Vendedor') + '</div></div></div></div>' +
+                '<div class="admin-field"><label>Teléfono</label><input type="text" id="adminVentaRetailTelNuevo"></div>' +
+                '<div class="admin-field"><label>Red social</label><input type="text" id="adminVentaRetailRedNuevo" placeholder="Instagram…"></div></div>' +
+                '<div class="admin-field"><label>Link</label><input type="text" id="adminVentaRetailLinkNuevo" placeholder="https://…"></div>' +
+                '<div class="admin-field-row">' + selectEquipo('adminVentaRetailCuentaNuevo', 'Quien tiene el dinero') +
+                selectEquipo('adminVentaRetailVendedorNuevo', 'Vendedor') + '</div></div></div></div>' +
                 '<div class="admin-ped-filtros-backdrop admin-hidden" id="adminVentaRetailFiltrosBackdrop"></div>' +
                 '<div class="admin-panel"><div class="admin-ped-layout">' + panelFiltrosHtml() +
                 '<div class="admin-ped-main">' +
                 '<div class="admin-panel-head admin-ped-head">' +
-                '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminVentaRetailFiltrosToggle">Filtros</button>' +
-                '<h3 style="font-size:0.95rem">Inventario (con stock)</h3>' +
+                '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-ped-filtros-toggle" id="adminVentaRetailFiltrosToggle">Filtros</button>' +
+                '<h3 style="font-size:0.95rem">Inventario</h3>' +
                 '<input type="search" class="admin-search" id="adminVentaRetailBuscar" placeholder="Buscar nombre, marca…"></div>' +
                 '<p id="adminVentaRetailContador" class="admin-muted-text admin-ped-contador"></p>' +
                 '<div id="adminVentaRetailCatalogo" class="admin-ped-catalogo"></div></div></div>' +
@@ -438,7 +523,7 @@
             }
             if (tipoCliente === 'nuevo') {
                 if (!meta.telefono.trim()) {
-                    if (errEl) errEl.textContent = 'Teléfono (N) obligatorio para cliente nuevo.';
+                    if (errEl) errEl.textContent = 'Teléfono obligatorio para cliente nuevo.';
                     return false;
                 }
             }
@@ -530,20 +615,36 @@
                     if (err) err.textContent = 'Agrega artículos al carrito.';
                     return;
                 }
+                var pctDesc = pctDescuentoEfectivo();
+                var msgVenta = 'Se registrará en VENTAS y se bajará el stock en INVENTARIO.';
+                if (pctDesc > 0) {
+                    msgVenta += ' Descuento aplicado: ' + pctDesc + '%.';
+                }
                 ObebeAdminDialog.confirm({
                     title: '¿Confirmar venta?',
-                    message: 'Se registrará en VENTAS (B–N) y se bajará el stock en INVENTARIO.',
+                    message: msgVenta,
                     confirmText: 'Vender',
                     cancelText: 'Cancelar',
                     variant: 'warn'
                 }).then(function (ok) {
                     if (!ok) return;
-                    ObebeAdminData.registrarVentaRetail(carrito, meta).then(function (res) {
+                    var metaVenta = leerMetaVenta();
+                    var carritoVendido = carritoParaVenta().map(function (c) {
+                        return {
+                            fila: c.fila,
+                            cantidad: c.cantidad,
+                            precioUnitario: c.precioUnitario,
+                            imagenUrl: c.imagenUrl || imagenFila(c.fila)
+                        };
+                    });
+                    ObebeAdminData.registrarVentaRetail(carritoVendido, metaVenta).then(function (res) {
                         if (!res.ok) {
                             if (err) err.textContent = res.error || 'Error';
                             return;
                         }
                         carrito = [];
+                        descuentoManual = false;
+                        descuentoManualPct = '';
                         filasInv = getFilasInv();
                         pintarCarrito();
                         rebuildFiltrosPanel();
@@ -554,6 +655,28 @@
                             title: 'Venta registrada',
                             message: msgOk,
                             confirmText: 'Listo'
+                        }).then(function () {
+                            if (!global.ObebeAdminEntregas || !ObebeAdminEntregas.abrirModalPostVenta) return;
+                            return ObebeAdminDialog.confirm({
+                                title: '¿Programar entrega?',
+                                message: 'Puedes agendar fecha, hora y lugar. El cliente y los artículos ya vienen de esta venta.',
+                                confirmText: 'Sí, programar',
+                                cancelText: 'No por ahora',
+                                variant: 'warn'
+                            }).then(function (siEntrega) {
+                                if (!siEntrega) return;
+                                return ObebeAdminEntregas.abrirModalPostVenta({
+                                    meta: metaVenta,
+                                    carrito: carritoVendido,
+                                    onGuardada: function () {
+                                        ObebeAdminDialog.alert({
+                                            title: 'Entrega programada',
+                                            message: 'La verás en el módulo Entregas.',
+                                            confirmText: 'Listo'
+                                        });
+                                    }
+                                });
+                            });
                         });
                         if (opts.onVentaRegistrada) opts.onVentaRegistrada(res);
                     }).catch(function (e) {
@@ -564,6 +687,16 @@
         };
 
         container.onchange = function (ev) {
+            if (ev.target.id === 'adminVentaRetailDescManual') {
+                descuentoManual = !!ev.target.checked;
+                pintarCarrito();
+                return;
+            }
+            if (ev.target.id === 'adminVentaRetailDescPct') {
+                descuentoManualPct = ev.target.value;
+                pintarCarrito();
+                return;
+            }
             if (ev.target.classList.contains('admin-ped-filter-cb')) {
                 pintarCatalogo();
                 return;
@@ -579,6 +712,7 @@
             carrito[idx].cantidad = n;
             pintarCarrito();
         };
+
     }
 
     global.ObebeAdminVentasRetail = { mount: mount };

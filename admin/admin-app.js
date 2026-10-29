@@ -1,20 +1,40 @@
 (function () {
     'use strict';
 
-    var MODULOS_ADMIN = [
-        { id: 'dashboard', label: 'Dashboard', live: true },
-        { id: 'inventario', label: 'Inventario', live: true },
-        { id: 'historico', label: 'Histórico', live: true },
-        { id: 'ventas', label: 'Ventas', live: true },
-        { id: 'pedidos', label: 'Pedidos', live: true },
-        { id: 'clientes', label: 'Clientes', live: true },
-        { id: 'mayoreo', label: 'Mayoreo', live: true },
-        { id: 'pedidos_mayoreo', label: 'Pedidos mayoreo', live: true },
-        { id: 'compras', label: 'Compras', live: false },
-        { id: 'reportes', label: 'Reportes', live: 'partial' },
-        { id: 'usuarios', label: 'Usuarios', live: false },
-        { id: 'auditoria', label: 'Auditoría', live: false },
-        { id: 'config', label: 'Configuración', live: true }
+    var NAV_ADMIN = [
+        { type: 'link', id: 'dashboard', label: 'Dashboard', live: true },
+        { type: 'link', id: 'registrar_venta', label: 'Registrar venta', live: true },
+        { type: 'link', id: 'entregas', label: 'Entregas', live: true },
+        {
+            type: 'group',
+            id: 'nav_grp_ventas',
+            label: 'Ventas',
+            children: [
+                { id: 'ventas', label: 'Ventas', live: true },
+                { id: 'clientes', label: 'Clientes', live: true },
+                { id: 'gastos', label: 'Gastos', live: true }
+            ]
+        },
+        {
+            type: 'group',
+            id: 'nav_grp_inventario',
+            label: 'Inventario',
+            children: [
+                { id: 'inventario', label: 'Inventario', live: true },
+                { id: 'pedidos', label: 'Pedidos', live: true },
+                { id: 'compras', label: 'Compras', live: false },
+                { id: 'historico', label: 'Histórico', live: true }
+            ]
+        },
+        {
+            type: 'group',
+            id: 'nav_grp_mayoreo',
+            label: 'Mayoreo',
+            children: [
+                { id: 'mayoreo', label: 'Mayoreo', live: true },
+                { id: 'pedidos_mayoreo', label: 'Pedidos mayoreo', live: true }
+            ]
+        }
     ];
 
     var MODULOS_MAYOREO_CLIENTE = [
@@ -25,14 +45,69 @@
         { id: 'clientes_mayoreo', label: 'Clientes', live: true }
     ];
 
-    function modulosVisibles(user) {
-        if (user && ObebeAdminAuth.esMayoreoCliente(user)) return MODULOS_MAYOREO_CLIENTE;
-        return MODULOS_ADMIN;
+    var navGruposAbiertos = {
+        nav_grp_ventas: false,
+        nav_grp_inventario: false,
+        nav_grp_mayoreo: false
+    };
+
+    function navEstructura(user) {
+        if (user && ObebeAdminAuth.esMayoreoCliente(user)) {
+            return MODULOS_MAYOREO_CLIENTE.map(function (m) {
+                return { type: 'link', id: m.id, label: m.label, live: m.live };
+            });
+        }
+        return NAV_ADMIN;
+    }
+
+    function navModulosFlat(user) {
+        var out = [];
+        navEstructura(user).forEach(function (entry) {
+            if (entry.type === 'link') out.push(entry);
+            else if (entry.children) {
+                entry.children.forEach(function (c) { out.push(c); });
+            }
+        });
+        return out;
     }
 
     function moduloPermitido(id) {
-        var lista = modulosVisibles(userActual);
-        return lista.some(function (m) { return m.id === id; });
+        return navModulosFlat(userActual).some(function (m) { return m.id === id; });
+    }
+
+    function navBadgeHtml(live) {
+        if (live === false) return ' <span class="badge-soon">Próximo</span>';
+        if (live === 'partial') return ' <span class="badge-soon">Parcial</span>';
+        return '';
+    }
+
+    function navGrupoContieneModulo(grupo, modId) {
+        return (grupo.children || []).some(function (c) { return c.id === modId; });
+    }
+
+    function idsGruposNav(user) {
+        var ids = [];
+        navEstructura(user).forEach(function (entry) {
+            if (entry.type === 'group') ids.push(entry.id);
+        });
+        return ids;
+    }
+
+    /** Solo un grupo abierto; exceptoId = null cierra todos. */
+    function sincronizarGruposNavAbiertos(exceptoId) {
+        idsGruposNav(userActual).forEach(function (gid) {
+            navGruposAbiertos[gid] = exceptoId != null && gid === exceptoId;
+        });
+    }
+
+    function asegurarGrupoAbiertoParaVista() {
+        var abierto = null;
+        navEstructura(userActual).forEach(function (entry) {
+            if (entry.type === 'group' && navGrupoContieneModulo(entry, vistaActual)) {
+                abierto = entry.id;
+            }
+        });
+        sincronizarGruposNavAbiertos(abierto);
     }
 
     function errorMayoreoVisible(msg) {
@@ -115,7 +190,6 @@
     var elSidebar = document.getElementById('adminSidebar');
     var elBackdrop = document.getElementById('adminSidebarBackdrop');
     var elUserChip = document.getElementById('adminUserChip');
-    var elSyncStatus = document.getElementById('adminSyncStatus');
 
     function esc(s) {
         return String(s || '')
@@ -131,13 +205,39 @@
     }
 
     function renderNav() {
-        elNav.innerHTML = modulosVisibles(userActual).map(function (m) {
-            var badge = '';
-            if (m.live === false) badge = '<span class="badge-soon">Próximo</span>';
-            else if (m.live === 'partial') badge = '<span class="badge-soon">Parcial</span>';
-            return '<button type="button" data-module="' + m.id + '" class="' + (m.id === vistaActual ? 'active' : '') + '">' +
-                esc(m.label) + badge + '</button>';
+        var html = navEstructura(userActual).map(function (entry) {
+            if (entry.type === 'link') {
+                return '<button type="button" data-module="' + esc(entry.id) + '" class="' +
+                    (entry.id === vistaActual ? 'active' : '') + '">' +
+                    esc(entry.label) + navBadgeHtml(entry.live) + '</button>';
+            }
+            var abierto = !!navGruposAbiertos[entry.id];
+            var hijoActivo = navGrupoContieneModulo(entry, vistaActual);
+            var items = (entry.children || []).map(function (c) {
+                return '<button type="button" data-module="' + esc(c.id) + '" class="admin-nav-sub' +
+                    (c.id === vistaActual ? ' active' : '') + '">' +
+                    esc(c.label) + navBadgeHtml(c.live) + '</button>';
+            }).join('');
+            return '<div class="admin-nav-group' + (abierto ? ' is-open' : '') + '" data-nav-group="' + esc(entry.id) + '">' +
+                '<button type="button" class="admin-nav-group-toggle' + (hijoActivo ? ' has-active' : '') +
+                '" data-nav-toggle="' + esc(entry.id) + '" aria-expanded="' + (abierto ? 'true' : 'false') + '">' +
+                '<span class="admin-nav-group-label">' + esc(entry.label) + '</span>' +
+                '<span class="admin-nav-chevron" aria-hidden="true">' + (abierto ? '▾' : '▸') + '</span></button>' +
+                '<div class="admin-nav-group-items">' + items + '</div></div>';
         }).join('');
+        elNav.innerHTML = html;
+
+        elNav.querySelectorAll('[data-nav-toggle]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var gid = btn.getAttribute('data-nav-toggle');
+                if (navGruposAbiertos[gid]) {
+                    sincronizarGruposNavAbiertos(null);
+                } else {
+                    sincronizarGruposNavAbiertos(gid);
+                }
+                renderNav();
+            });
+        });
         elNav.querySelectorAll('[data-module]').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 irModulo(btn.getAttribute('data-module'));
@@ -147,12 +247,14 @@
     }
 
     function irModulo(id) {
+        var flat = navModulosFlat(userActual);
         if (userActual && !moduloPermitido(id)) {
-            id = modulosVisibles(userActual)[0].id;
+            id = flat.length ? flat[0].id : 'dashboard';
         }
         vistaActual = id;
-        var mod = modulosVisibles(userActual).find(function (m) { return m.id === id; });
+        var mod = flat.find(function (m) { return m.id === id; });
         elTitle.textContent = mod ? mod.label : 'Admin';
+        asegurarGrupoAbiertoParaVista();
         renderNav();
         renderModulo(id);
     }
@@ -165,12 +267,6 @@
     function abrirSidebarMovil() {
         elSidebar.classList.add('open');
         elBackdrop.classList.remove('admin-hidden');
-    }
-
-    function setSyncStatus(ok, msg) {
-        if (!elSyncStatus) return;
-        var dot = ok ? 'ok' : (msg ? 'warn' : 'off');
-        elSyncStatus.innerHTML = '<span class="admin-status-dot ' + dot + '"></span>' + esc(msg || '');
     }
 
     function resumenInventarioVacio() {
@@ -305,13 +401,9 @@
             var rapido = ObebeAdminData.snapshotInventarioCacheLocal();
             if (rapido && rapido.filas && rapido.filas.length) {
                 datosCache = armarDatosParcialesDesdeInventario(rapido);
-                setSyncStatus(true, 'Inventario local · sincronizando…');
                 renderModulo(vistaActual);
                 pintadoRapido = true;
             }
-        }
-        if (!pintadoRapido) {
-            setSyncStatus(false, 'Sincronizando…');
         }
         if (!soloMayoreo && !pintadoRapido) {
             elContent.innerHTML = '<div class="admin-loading">Cargando INVENTARIO…</div>';
@@ -329,27 +421,11 @@
         }
         return prom.then(function (d) {
             datosCache = d;
-            var msg;
             if (!soloMayoreo && pintadoRapido) {
                 renderModulo(vistaActual);
             }
             if (soloMayoreo) {
-                var dm = { lineasMayoreo: [], resumenMayoreo: { articulos: 0 } };
-                try {
-                    dm = datosMayoreoParaVista();
-                } catch (e) {
-                    console.warn('[admin] datosMayoreoParaVista', e);
-                }
-                msg = (dm.lineasMayoreo.length || 0) + ' en local · ' + (dm.resumenMayoreo.articulos || 0) + ' uds.';
-                if (d.errorMayoreo && errorMayoreoVisible(d.errorMayoreo)) msg += ' (aviso importación)';
-                setSyncStatus(true, msg);
                 enriquecerInventarioNatyEnFondo();
-            } else {
-                msg = 'Inv. ' + d.resumen.articulosUnicos + ' · ' + d.ventas.length + ' ventas · ' +
-                    (d.clientes ? d.clientes.length : 0) + ' cli. · ' +
-                    (d.resumenMayoreo ? d.resumenMayoreo.clientes : 0) + ' mayoreo';
-                if (d.errorVentas) msg += ' (VENTAS: aviso)';
-                setSyncStatus(!d.errorVentas, msg);
             }
             if (!soloMayoreo && (d.lineasMayoreo || []).length) {
                 importarMayoreoSheetAlStore(null);
@@ -358,11 +434,9 @@
         }).catch(function (err) {
             if (soloMayoreo) {
                 datosCache = datosCache || baseDatosMayoreoCliente({ filas: [] });
-                setSyncStatus(true, 'Datos locales');
                 enriquecerInventarioNatyEnFondo();
                 return datosCache;
             }
-            setSyncStatus(false, 'Error al leer Sheet');
             throw err;
         });
     }
@@ -372,69 +446,103 @@
             'Ventas, pedidos y escritura al Sheet llegarán con Apps Script. Sin Supabase todavía.</div>';
     }
 
-    function panelVentasDashboard(sv) {
-        if (!sv) sv = { hoy: {}, semana: {}, mes: {}, porVendedorMes: {}, masVendidosMes: {} };
-        var vendRows = ObebeAdminData.topEntries(sv.porVendedorMes, 5).map(function (x) {
-            return '<tr><td>' + esc(x.key) + '</td><td>' + ObebeAdminData.formatoMoney(x.val) + '</td></tr>';
+    function graficoBarrasVentas(buckets, titulo, meta, ariaLabel) {
+        buckets = buckets || [];
+        var max = 0;
+        buckets.forEach(function (b) {
+            if (b.monto > max) max = b.monto;
+        });
+        var cols = buckets.map(function (b) {
+            var pct = max > 0 ? Math.round((b.monto / max) * 100) : 0;
+            if (b.monto > 0 && pct < 4) pct = 4;
+            var val = b.monto > 0 ? ObebeAdminData.formatoMoney(b.monto) : '—';
+            var cnt = b.count || 0;
+            var inBar = cnt > 0
+                ? '<span class="admin-bar-infill">' + cnt + '</span>'
+                : '';
+            var tip = b.label + ': ' + val + (cnt ? ' · ' + cnt + ' artículos' : '');
+            return '<div class="admin-bar-col" title="' + esc(tip) + '">' +
+                '<span class="admin-bar-val">' + (b.monto > 0 ? esc(val) : '') + '</span>' +
+                '<div class="admin-bar-track"><div class="admin-bar-fill" style="height:' + pct + '%">' +
+                inBar + '</div></div>' +
+                '<span class="admin-bar-lbl">' + esc(b.label) + '</span></div>';
         }).join('');
-        var topRows = ObebeAdminData.topEntries(sv.masVendidosMes, 5, true).map(function (x) {
-            return '<tr><td>' + esc(x.key) + '</td><td>' + x.val + '</td></tr>';
-        }).join('');
-        var aviso = datosCache.errorVentas
-            ? '<p style="margin:0 0 0.5rem;color:var(--admin-warn)">' + esc(datosCache.errorVentas) + '</p>' : '';
-        return '<div class="admin-panel admin-panel-ventas"><div class="admin-panel-head"><h3>Ventas</h3></div>' +
+        return '<div class="admin-panel admin-panel-chart">' +
+            '<div class="admin-panel-head"><h3>' + esc(titulo) + '</h3>' +
+            '<span class="admin-panel-head-meta">' + esc(meta) + '</span></div>' +
+            '<div class="admin-bar-chart" role="img" aria-label="' + esc(ariaLabel) + '">' +
+            (cols || '<p class="admin-muted-text">Sin datos de ventas</p>') +
+            '</div></div>';
+    }
+
+    function graficoBarrasVentasPorMes(ventas) {
+        return graficoBarrasVentas(
+            ObebeAdminData.ventasPorMes(ventas, 12),
+            'Ventas por mes',
+            'Últimos 12 meses',
+            'Gráfico de ventas por mes'
+        );
+    }
+
+    function graficoBarrasVentasPorSemana(ventas) {
+        return graficoBarrasVentas(
+            ObebeAdminData.ventasPorSemana(ventas, 12),
+            'Ventas por semana',
+            'Últimas 12 semanas',
+            'Gráfico de ventas por semana'
+        );
+    }
+
+    function panelVentasDashboard(sv, ventas) {
+        if (!sv) sv = { hoy: {}, semana: {}, mes: {} };
+        var errV = ObebeAdminData.errorVentasParaUi
+            ? ObebeAdminData.errorVentasParaUi(datosCache.errorVentas)
+            : datosCache.errorVentas;
+        var aviso = errV
+            ? '<p class="admin-ventas-aviso">' + esc(errV) + '</p>' : '';
+        return '<div class="admin-panel admin-panel-ventas admin-panel-ventas--focus">' +
+            '<div class="admin-panel-head"><h3>Ventas</h3></div>' +
             '<div class="admin-panel-ventas-body">' + aviso +
-            '<div class="admin-kpi-grid admin-kpi-grid--ventas">' +
-            kpi('Hoy', ObebeAdminData.formatoMoney(sv.hoy.monto || 0),
+            '<div class="admin-kpi-grid admin-kpi-grid--ventas-focus">' +
+            kpiDestacado('Hoy', ObebeAdminData.formatoMoney(sv.hoy.monto || 0),
                 (sv.hoy.count || 0) + ' artículos · ' + ObebeAdminData.etiquetaDia()) +
-            kpi('Semana (lun–dom)', ObebeAdminData.formatoMoney(sv.semana.monto || 0),
+            kpiDestacado('Semana', ObebeAdminData.formatoMoney(sv.semana.monto || 0),
                 (sv.semana.count || 0) + ' artículos · ' + ObebeAdminData.etiquetaRangoSemana()) +
-            kpi('Mes actual', ObebeAdminData.formatoMoney(sv.mes.monto || 0),
+            kpiDestacado('Mes actual', ObebeAdminData.formatoMoney(sv.mes.monto || 0),
                 (sv.mes.count || 0) + ' artículos · ' + ObebeAdminData.etiquetaMesActual()) +
-            '</div>' +
-            '<div class="admin-two-col admin-ventas-tablas">' +
-            '<div><p class="admin-ventas-sub">Por vendedor (mes)</p>' +
-            '<table class="admin-table admin-table-compact"><thead><tr><th>Vendedor</th><th>Total</th></tr></thead><tbody>' +
-            (vendRows || '<tr><td colspan="2">Sin datos</td></tr>') + '</tbody></table></div>' +
-            '<div><p class="admin-ventas-sub">Más vendidos (mes)</p>' +
-            '<table class="admin-table admin-table-compact"><thead><tr><th>Artículo</th><th>#</th></tr></thead><tbody>' +
-            (topRows || '<tr><td colspan="2">Sin datos</td></tr>') + '</tbody></table></div>' +
-            '</div></div></div>';
+            '</div></div></div>' +
+            graficoBarrasVentasPorMes(ventas || []);
+    }
+
+    function kpiDestacado(label, value, hint) {
+        return '<div class="admin-kpi admin-kpi--destacado">' +
+            '<div class="label">' + esc(label) + '</div>' +
+            '<div class="value">' + esc(String(value)) + '</div>' +
+            (hint ? '<div class="hint">' + esc(hint) + '</div>' : '') + '</div>';
     }
 
     function renderDashboard() {
         var r = datosCache.resumen;
         var sv = datosCache.resumenVentas || {};
-        var marcasHtml = Object.keys(r.porMarca).sort().slice(0, 8).map(function (k) {
-            return '<tr><td>' + esc(k) + '</td><td>' + r.porMarca[k] + '</td></tr>';
+        var marcasOrden = Object.keys(r.porMarca).map(function (k) {
+            return { key: k, val: r.porMarca[k] };
+        }).sort(function (a, b) { return b.val - a.val; });
+        var marcasHtml = marcasOrden.map(function (x) {
+            return '<tr><td>' + esc(x.key) + '</td><td>' + x.val + '</td></tr>';
         }).join('');
 
         elContent.innerHTML =
             '<div class="admin-dashboard-top">' +
-            '<div class="admin-panel admin-panel-marcas"><div class="admin-panel-head"><h3>Líneas por marca</h3></div>' +
-            '<div class="admin-table-wrap"><table class="admin-table admin-table-compact"><thead><tr><th>Marca</th><th>#</th></tr></thead><tbody>' +
+            '<div class="admin-panel admin-panel-marcas admin-panel-marcas--focus"><div class="admin-panel-head"><h3>Stock por marca</h3></div>' +
+            '<div class="admin-panel-marcas-table"><table class="admin-table admin-table-compact admin-table-marcas"><thead><tr><th>Marca</th><th>Stock</th></tr></thead><tbody>' +
             (marcasHtml || '<tr><td colspan="2">Sin datos</td></tr>') +
             '</tbody></table></div></div>' +
-            '<div class="admin-kpi-grid admin-kpi-grid--dashboard">' +
-            kpi('Unidades', r.unidades, '') +
-            kpi('Artículos únicos', r.articulosUnicos, '') +
-            kpi('Hombre / Mujer', r.porSegmento.Hombre + ' / ' + r.porSegmento.Mujer, '') +
-            kpi('Agotados', r.agotados, 'Stock = 0') +
-            kpi('Valor inventario', ObebeAdminData.formatoMoney(r.valorEstimado), '') +
+            '<div class="admin-kpi-grid admin-kpi-grid--dashboard admin-kpi-grid--dashboard-focus">' +
+            kpiDestacado('Stock total', r.unidades, '') +
+            kpiDestacado('Stock Hombre / Mujer', r.porSegmento.Hombre + ' / ' + r.porSegmento.Mujer, '') +
+            kpiDestacado('Valor stock', ObebeAdminData.formatoMoney(r.valorEstimado), '') +
             '</div></div>' +
-            panelVentasDashboard(sv) +
-            renderUltimasVentas(datosCache.ventas, 10);
-    }
-
-    function renderUltimasVentas(ventas, limite) {
-        var rows = (ventas || []).slice(0, limite).map(function (v) {
-            return '<tr><td>' + esc(ObebeAdminData.formatoFecha(v.fechaIso, v.fechaRaw)) + '</td>' +
-                '<td>' + esc(v.nombre) + '</td><td>' + ObebeAdminData.formatoMoney(v.precio) + '</td>' +
-                '<td>' + esc(v.vendedor) + '</td></tr>';
-        }).join('');
-        return '<div class="admin-panel" style="margin-top:1rem"><div class="admin-panel-head"><h3>Últimas ventas</h3></div>' +
-            '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Fecha</th><th>Artículo</th><th>Precio</th><th>Vendedor</th></tr></thead><tbody>' +
-            (rows || '<tr><td colspan="4">Sin registros</td></tr>') + '</tbody></table></div></div>';
+            panelVentasDashboard(sv, datosCache.ventas);
     }
 
     function kpi(label, value, hint) {
@@ -505,7 +613,15 @@
                 if (vistaActual === 'inventario') pintarInv();
             });
         }
-        pintarInv();
+        ObebeAdminData.aplicarBajaStockMayoreoCollegiateHoodie().then(function (r) {
+            if (r && r.aplicados > 0) {
+                return cargarDatos(true).then(function (d) {
+                    datosCache = d;
+                });
+            }
+        }).catch(function () { /* ignore */ }).then(function () {
+            pintarInv();
+        });
     }
 
     function linkCortoVentas(url) {
@@ -516,26 +632,70 @@
         return '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + esc(txt) + '</a>';
     }
 
-    function tablaVentas(ventas, limite) {
-        limite = limite || 500;
-        var slice = ventas.slice(0, limite);
-        var rows = slice.map(function (v) {
-            return '<tr><td>' + esc(ObebeAdminData.formatoFecha(v.fechaIso, v.fechaRaw)) + '</td>' +
-                '<td>' + esc(v.nombre) + '</td><td>' + esc(v.tipo) + '</td>' +
-                '<td>' + ObebeAdminData.formatoMoney(v.precio) + '</td>' +
-                '<td>' + esc(v.talla) + '</td><td>' + esc(v.color) + '</td>' +
-                '<td>' + esc(v.segmento) + '</td><td>' + esc(v.cliente) + '</td>' +
-                '<td>' + esc(v.vendedor) + '</td><td>' + esc(v.cuenta) + '</td>' +
-                '<td>' + esc(v.redSocial) + '</td><td>' + linkCortoVentas(v.link) + '</td>' +
-                '<td>' + esc(v.telefono) + '</td></tr>';
-        }).join('');
-        var extra = ventas.length > limite
-            ? '<p style="padding:0.5rem 1rem;font-size:0.75rem;color:var(--admin-muted)">Mostrando ' + limite + ' de ' + ventas.length + '.</p>' : '';
-        return extra + '<div class="admin-table-wrap"><table class="admin-table admin-table-ventas"><thead><tr>' +
-            '<th>B · Fecha</th><th>C · Artículo</th><th>D · Tipo</th><th>E · Precio</th><th>F · Talla</th><th>G · Color</th>' +
-            '<th>H · Cat.</th><th>I · Cliente</th><th>J · Vendedor</th><th>K · Cuenta</th>' +
-            '<th>L · Red</th><th>M · Link</th><th>N · Tel.</th></tr></thead><tbody>' +
-            (rows || '<tr><td colspan="13">Sin ventas</td></tr>') + '</tbody></table></div>';
+    function ventasOrdenRecientes(list) {
+        var retail = ObebeAdminData.filtrarVentas(list || [], '');
+        return retail.slice().sort(function (a, b) {
+            var ia = String(a.fechaIso || '');
+            var ib = String(b.fechaIso || '');
+            if (ia !== ib) return ia > ib ? -1 : 1;
+            return (parseInt(b.filaSheet, 10) || 0) - (parseInt(a.filaSheet, 10) || 0);
+        });
+    }
+
+    function bannerVentasSync() {
+        if (ObebeAdminData.usarSupabase && ObebeAdminData.usarSupabase()) {
+            return '<div class="admin-banner info">Ventas y stock en <strong>Supabase</strong>. La tienda debe usar <code>obebe-data-config.js</code> con el mismo origen.</div>';
+        }
+        if (ObebeAdminData.escrituraLocalHabilitada && ObebeAdminData.escrituraLocalHabilitada()) {
+            return '<div class="admin-banner warn">Modo <strong>solo admin (local)</strong>: no escribe en Google Sheets. Configura Supabase o <code>appsScriptUrl</code>.</div>';
+        }
+        return '<div class="admin-banner info">Las ventas se escriben en <strong>VENTAS (B–N)</strong> y bajan stock vía Apps Script.</div>';
+    }
+
+    function onVentaRegistradaDesdeRetail(res) {
+        var st = ObebeAdminData.getEstado();
+        datosCache.filas = st.filas || datosCache.filas;
+        datosCache.ventas = st.ventas || datosCache.ventas;
+        datosCache.resumenVentas = ObebeAdminData.calcularResumenVentas(datosCache.ventas);
+        datosCache.clientes = res.clientes || ObebeAdminData.calcularPerfilesClientes(datosCache.ventas);
+        datosCache.resumen = ObebeAdminData.calcularResumen(datosCache.filas);
+        if (vistaActual === 'registrar_venta') pintarTablaVentasUltimas();
+        if (vistaActual === 'ventas') pintarTablaVentasRegistro();
+    }
+
+    function opcionesMountRetail() {
+        return {
+            filas: datosCache.filas || [],
+            clientes: datosCache.clientes || [],
+            vendedor: (userActual && userActual.nombre) ? userActual.nombre : 'OBEBE',
+            getFilas: function () { return datosCache.filas || []; },
+            onVentaRegistrada: onVentaRegistradaDesdeRetail
+        };
+    }
+
+    function refrescarDatosTrasEditarVenta() {
+        var st = ObebeAdminData.getEstado();
+        datosCache.ventas = st.ventas || datosCache.ventas;
+        datosCache.resumenVentas = ObebeAdminData.calcularResumenVentas(datosCache.ventas);
+        datosCache.clientes = ObebeAdminData.calcularPerfilesClientes(datosCache.ventas);
+        function repintarTablasVentas() {
+            if (vistaActual === 'registrar_venta') pintarTablaVentasUltimas();
+            if (vistaActual === 'ventas') pintarTablaVentasRegistro();
+        }
+        if (ObebeAdminData.usarSupabase && ObebeAdminData.usarSupabase()) {
+            return ObebeAdminData.cargarVentas(true).then(function (p) {
+                datosCache.ventas = p.ventas;
+                datosCache.resumenVentas = p.resumenVentas;
+                datosCache.clientes = p.clientes || datosCache.clientes;
+                return ObebeAdminData.cargarInventario(true).then(function (inv) {
+                    datosCache.filas = inv.filas;
+                    datosCache.resumen = ObebeAdminData.calcularResumen(inv.filas);
+                    repintarTablasVentas();
+                });
+            });
+        }
+        repintarTablasVentas();
+        return Promise.resolve();
     }
 
     function pintarTablaVentasRegistro() {
@@ -543,58 +703,100 @@
         if (!el) return;
         var q = (document.getElementById('adminSearchVentas') || {}).value || '';
         var f = ObebeAdminData.filtrarVentas(datosCache.ventas || [], q);
-        el.innerHTML = tablaVentas(f);
+        ObebeAdminVentasRegistro.renderInto(el, f, {
+            editable: ObebeAdminData.edicionVentasHabilitada(),
+            limite: 500,
+            getVentas: function () { return f; },
+            onChanged: refrescarDatosTrasEditarVenta
+        });
     }
 
-    function renderVentas() {
-        var sv = datosCache.resumenVentas || {};
-        var cuentasHtml = ObebeAdminData.topEntries(sv.porCuentaMes, 8).map(function (x) {
-            return '<tr><td>' + esc(x.key) + '</td><td>' + ObebeAdminData.formatoMoney(x.val) + '</td></tr>';
-        }).join('');
-        elContent.innerHTML =
-            '<div id="adminVentaRetailMount"></div>' +
-            panelVentasDashboard(sv) +
-            '<div class="admin-panel"><div class="admin-panel-head"><h3>Dinero por cuenta (mes)</h3></div>' +
-            '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Cuenta</th><th>Total</th></tr></thead><tbody>' +
-            (cuentasHtml || '<tr><td colspan="2">Sin datos</td></tr>') + '</tbody></table></div></div>' +
-            '<div class="admin-panel">' +
-            '<div class="admin-panel-head"><h3>Registro de ventas</h3>' +
-            '<input type="search" class="admin-search" id="adminSearchVentas" placeholder="Buscar artículo, cliente, vendedor…"></div>' +
-            '<div id="adminVentasTable"></div></div>' +
-            (ObebeAdminData.usarSupabase && ObebeAdminData.usarSupabase()
-                ? '<div class="admin-banner info">Ventas y stock en <strong>Supabase</strong>. La tienda debe usar <code>obebe-data-config.js</code> con el mismo origen.</div>'
-                : (ObebeAdminData.escrituraLocalHabilitada && ObebeAdminData.escrituraLocalHabilitada()
-                    ? '<div class="admin-banner warn">Modo <strong>solo admin (local)</strong>: no escribe en Google Sheets. Configura Supabase o <code>appsScriptUrl</code>.</div>'
-                    : '<div class="admin-banner info">Las ventas se escriben en <strong>VENTAS (B–N)</strong> y bajan stock vía Apps Script.</div>'));
+    function pintarTablaVentasUltimas() {
+        var el = document.getElementById('adminVentasUltimasTable');
+        if (!el) return;
+        var recientes = ventasOrdenRecientes(datosCache.ventas || []).slice(0, 5);
+        ObebeAdminVentasRegistro.renderInto(el, recientes, {
+            editable: ObebeAdminData.edicionVentasHabilitada(),
+            limite: 5,
+            getVentas: function () { return recientes; },
+            onChanged: refrescarDatosTrasEditarVenta
+        });
+    }
 
-        ObebeAdminVentasRetail.mount(document.getElementById('adminVentaRetailMount'), {
+    function renderEntregas() {
+        elContent.innerHTML = '<div id="adminEntregasMount"></div>';
+        ObebeAdminEntregas.mount(document.getElementById('adminEntregasMount'), {
             filas: datosCache.filas || [],
             clientes: datosCache.clientes || [],
             vendedor: (userActual && userActual.nombre) ? userActual.nombre : 'OBEBE',
             getFilas: function () { return datosCache.filas || []; },
-            onVentaRegistrada: function (res) {
+            onInventarioActualizado: function () {
                 var st = ObebeAdminData.getEstado();
                 datosCache.filas = st.filas || datosCache.filas;
-                datosCache.ventas = st.ventas || datosCache.ventas;
-                datosCache.resumenVentas = ObebeAdminData.calcularResumenVentas(datosCache.ventas);
-                datosCache.clientes = res.clientes || ObebeAdminData.calcularPerfilesClientes(datosCache.ventas);
                 datosCache.resumen = ObebeAdminData.calcularResumen(datosCache.filas);
-                pintarTablaVentasRegistro();
+            },
+            onVentasActualizada: function () {
+                return ObebeAdminData.cargarVentas(true).then(function (p) {
+                    datosCache.ventas = p.ventas || datosCache.ventas;
+                    datosCache.resumenVentas = p.resumenVentas || datosCache.resumenVentas;
+                    datosCache.clientes = p.clientes || datosCache.clientes;
+                });
             }
         });
+    }
+
+    function renderRegistrarVenta() {
+        elContent.innerHTML =
+            '<div id="adminVentaRetailMount"></div>' +
+            '<div class="admin-panel admin-panel-ventas-ultimas">' +
+            '<div class="admin-panel-head admin-panel-head--ventas-reg">' +
+            '<h3>Últimas 5 ventas</h3>' +
+            '<div class="admin-panel-head-actions">' +
+            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-module="ventas">Ver registro completo</button>' +
+            '</div></div>' +
+            '<div id="adminVentasUltimasTable"></div></div>';
+
+        ObebeAdminVentasRetail.mount(document.getElementById('adminVentaRetailMount'), opcionesMountRetail());
+        pintarTablaVentasUltimas();
+        var irVentas = elContent.querySelector('[data-module="ventas"]');
+        if (irVentas) {
+            irVentas.addEventListener('click', function () { irModulo('ventas'); });
+        }
+    }
+
+    function renderVentas() {
+        var sv = datosCache.resumenVentas || {};
+        var cuentasSemHtml = ObebeAdminData.topEntries(sv.porCuentaSemana, 8).map(function (x) {
+            return '<tr><td>' + esc(x.key) + '</td><td>' + ObebeAdminData.formatoMoney(x.val) + '</td></tr>';
+        }).join('');
+        var cuentasMesHtml = ObebeAdminData.topEntries(sv.porCuentaMes, 8).map(function (x) {
+            return '<tr><td>' + esc(x.key) + '</td><td>' + ObebeAdminData.formatoMoney(x.val) + '</td></tr>';
+        }).join('');
+        elContent.innerHTML =
+            panelVentasDashboard(sv, datosCache.ventas) +
+            '<div class="admin-ventas-cuentas-grid">' +
+            '<div class="admin-panel"><div class="admin-panel-head"><h3>Dinero por cuenta (semana)</h3></div>' +
+            '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Cuenta</th><th>Total</th></tr></thead><tbody>' +
+            (cuentasSemHtml || '<tr><td colspan="2">Sin datos</td></tr>') + '</tbody></table></div></div>' +
+            '<div class="admin-panel"><div class="admin-panel-head"><h3>Dinero por cuenta (mes)</h3></div>' +
+            '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Cuenta</th><th>Total</th></tr></thead><tbody>' +
+            (cuentasMesHtml || '<tr><td colspan="2">Sin datos</td></tr>') + '</tbody></table></div></div></div>' +
+            graficoBarrasVentasPorSemana(datosCache.ventas || []) +
+            '<div class="admin-panel">' +
+            '<div class="admin-panel-head admin-panel-head--ventas-reg">' +
+            '<h3>Registro de ventas</h3>' +
+            '<div class="admin-panel-head-actions">' +
+            '<input type="search" class="admin-search" id="adminSearchVentas" placeholder="Buscar artículo, cliente, vendedor…">' +
+            '</div></div>' +
+            '<div id="adminVentasTable"></div></div>';
 
         pintarTablaVentasRegistro();
         bindSearch('adminSearchVentas', pintarTablaVentasRegistro);
     }
 
-    function renderHistorico() {
-        ObebeAdminHistorico.mount(elContent, {
-            filas: datosCache.filas || [],
-            onStockRestaurado: function (row, stock) {
-                var st = ObebeAdminData.getEstado();
-                datosCache.filas = st.filas || datosCache.filas;
-                datosCache.resumen = ObebeAdminData.calcularResumen(datosCache.filas);
-            }
+    function renderHistoricoInventario() {
+        ObebeAdminInventarioHistorico.mount(elContent, {
+            filas: datosCache.filas || []
         });
     }
 
@@ -609,148 +811,8 @@
             '</div>';
     }
 
-    function renderReportes() {
-        var r = datosCache.resumen;
-        var sv = datosCache.resumenVentas || {};
-        elContent.innerHTML = bannerFase() +
-            '<div class="admin-kpi-grid">' +
-            kpi('Ventas mes', ObebeAdminData.formatoMoney(sv.mes.monto || 0), (sv.mes.count || 0) + ' registros') +
-            kpi('Ventas 7 días', ObebeAdminData.formatoMoney(sv.semana.monto || 0), '') +
-            kpi('Valor inventario', ObebeAdminData.formatoMoney(r.valorEstimado), 'Precio de venta × stock') +
-            kpi('Unidades en stock', r.unidades, '') +
-            '</div>' +
-            '<div class="admin-banner">Utilidad bruta y CMV requieren costo de adquisición por artículo (aún no conectado).</div>';
-    }
-
-    function renderUsuarios() {
-        renderPlaceholder('Usuarios y permisos', 'Tres cuentas individuales con roles (Admin, Ventas, Operaciones) se configurarán con autenticación en servidor.', [
-            'Hoy: una cuenta MVP compartida (solo panel oculto)',
-            'Próximo: Google Sign-In o Supabase Auth + RLS',
-            'Permisos no solo ocultando botones — validación en API'
-        ]);
-    }
-
-    function renderAuditoria() {
-        renderPlaceholder('Auditoría', 'Log append-only de movimientos, ventas y cambios sensibles.', [
-            'Hoja AUDITORIA o tabla audit_log en Supabase',
-            'Usuario, fecha, operación, registro afectado, motivo',
-            'Los usuarios comunes no podrán borrar el historial'
-        ]);
-    }
-
-    function renderConfig() {
-        var st = ObebeAdminData.getEstado();
-        var cfg = window.OBEBE_ADMIN_CONFIG || {};
-        var modo = (cfg.dataSource || 'sheets').toLowerCase();
-        var supabaseOk = ObebeAdminData.supabaseListo && ObebeAdminData.supabaseListo();
-        elContent.innerHTML = bannerFase() +
-            '<div class="admin-panel"><div class="admin-panel-head"><h3>Fuente de verdad</h3></div>' +
-            '<div style="padding:1rem;font-size:0.85rem;line-height:1.6">' +
-            '<p><strong>Modo:</strong> ' + esc(modo) +
-            (modo === 'supabase' ? (supabaseOk ? ' · conectado' : ' · falta configurar URLs') : '') + '</p>' +
-            (modo !== 'supabase'
-                ? '<p><strong>Google Sheet</strong> (lectura)<br><a href="' + esc(st.sheetUrl) + '" target="_blank" rel="noopener">Abrir libro</a></p>'
-                : '<p><strong>Supabase</strong> · INVENTARIO + VENTAS retail. Mayoreo sigue en Sheet hasta migrar.</p>') +
-            '<p><strong>INVENTARIO:</strong> ' + (st.cargadoEn ? new Date(st.cargadoEn).toLocaleString('es-MX') : '—') +
-            ' · <strong>VENTAS:</strong> ' + (st.ventasCargadoEn ? new Date(st.ventasCargadoEn).toLocaleString('es-MX') : '—') +
-            ' · <strong>MAYOREO:</strong> ' + (st.mayoreoCargadoEn ? new Date(st.mayoreoCargadoEn).toLocaleString('es-MX') : '—') + '</p>' +
-            '<p><strong>Registros:</strong> inventario ' + (st.filas ? st.filas.length : 0) +
-            ' · ventas ' + (st.ventas ? st.ventas.length : 0) +
-            ' · mayoreo ' + (st.lineasMayoreo ? st.lineasMayoreo.length : 0) + '</p>' +
-            '<p><strong>Sesión:</strong> ' + esc(userActual.usuario || userActual.nombre) + ' · ' + esc(userActual.rol) + '</p>' +
-            '</div></div>' +
-            '<div class="admin-panel"><div class="admin-panel-head"><h3>Migrar a Supabase</h3></div>' +
-            '<div style="padding:1rem;font-size:0.85rem;line-height:1.6">' +
-            '<ol style="margin:0 0 1rem 1.1rem;line-height:1.55">' +
-            '<li>Crea proyecto en <a href="https://supabase.com" target="_blank" rel="noopener">supabase.com</a></li>' +
-            '<li>Ejecuta <code>scripts/supabase/schema.sql</code> en SQL Editor</li>' +
-            '<li>Despliega Edge Function <code>admin-api</code> (carpeta en repo) con secret <code>ADMIN_SECRET</code></li>' +
-            '<li>En <code>admin-config.js</code>: <code>dataSource: \'supabase\'</code> + URL + anon key + adminApiUrl</li>' +
-            '<li>Copia URL y anon key a <code>obebe-data-config.js</code> en la raíz (tienda)</li>' +
-            '<li>Pulsa importar (copia INVENTARIO + VENTAS del Sheet una última vez)</li>' +
-            '</ol>' +
-            '<p id="adminMigracionMsg" class="admin-login-error" role="alert"></p>' +
-            '<button type="button" class="admin-btn admin-btn-ghost" id="adminProbarSupabaseBtn"' +
-            (supabaseOk ? '' : ' disabled') + '>Probar conexión Supabase</button> ' +
-            '<button type="button" class="admin-btn admin-btn-primary" id="adminMigrarSheetsBtn"' +
-            (supabaseOk ? '' : ' disabled') + '>Importar INVENTARIO + VENTAS desde Google</button> ' +
-            '<button type="button" class="admin-btn admin-btn-ghost" id="adminImportVentasBtn"' +
-            (supabaseOk ? '' : ' disabled') + '>Solo VENTAS (inventario ya está)</button>' +
-            '<p class="admin-muted-text" style="margin-top:0.75rem">La importación la hace la Edge Function (admin-api) descargando el Sheet. ' +
-            'Si inventario_filas sigue en 0, vuelve a desplegar admin-api con el código nuevo del repo.</p>' +
-            '</div></div>';
-
-        var btnProbar = document.getElementById('adminProbarSupabaseBtn');
-        if (btnProbar) {
-            btnProbar.onclick = function () {
-                var msg = document.getElementById('adminMigracionMsg');
-                if (msg) msg.textContent = 'Probando…';
-                ObebeAdminData.probarConexionSupabase().then(function (r) {
-                    if (!r.ok) {
-                        if (msg) msg.textContent = r.error || 'Error';
-                        return;
-                    }
-                    var n = (r.stats && r.stats.inventarioFilas) || r.inventarioLeido || 0;
-                    var v = (r.stats && r.stats.ventasLineas) || 0;
-                    if (msg) {
-                        msg.textContent = 'OK · inventario_filas: ' + n + ' · ventas_lineas: ' + v +
-                            (n === 0 ? ' → pulsa Importar' : '');
-                    }
-                });
-            };
-        }
-
-        var btnVentas = document.getElementById('adminImportVentasBtn');
-        if (btnVentas) {
-            btnVentas.onclick = function () {
-                var msg = document.getElementById('adminMigracionMsg');
-                if (msg) msg.textContent = 'Importando ventas…';
-                ObebeAdminData.importarSoloVentasDesdeGoogle().then(function (res) {
-                    if (msg) {
-                        msg.textContent = 'Ventas importadas: ' + (res.ventas || '—') + '. Pulsa Actualizar.';
-                    }
-                    return cargarDatos(true);
-                }).then(function (d) {
-                    datosCache = d;
-                    renderConfig();
-                }).catch(function (e) {
-                    if (msg) msg.textContent = e.message || String(e);
-                });
-            };
-        }
-
-        var btn = document.getElementById('adminMigrarSheetsBtn');
-        if (btn) {
-            btn.onclick = function () {
-                var msg = document.getElementById('adminMigracionMsg');
-                if (msg) msg.textContent = 'Importando… puede tardar un minuto.';
-                ObebeAdminDialog.confirm({
-                    title: '¿Importar desde Google Sheets?',
-                    message: 'Se borrarán inventario_filas y ventas_lineas en Supabase y se copiarán desde el libro actual.',
-                    confirmText: 'Importar',
-                    cancelText: 'Cancelar',
-                    variant: 'warn'
-                }).then(function (ok) {
-                    if (!ok) {
-                        if (msg) msg.textContent = '';
-                        return;
-                    }
-                    ObebeAdminData.migrarDesdeGoogleSheets().then(function () {
-                        if (msg) msg.textContent = 'Listo. Recarga datos con Actualizar.';
-                        return cargarDatos(true);
-                    }).then(function (d) {
-                        datosCache = d;
-                        renderConfig();
-                    }).catch(function (e) {
-                        if (msg) msg.textContent = e.message || String(e);
-                    });
-                });
-            };
-        }
-    }
-
     function renderModulo(id) {
-        if (!datosCache && id !== 'config' && id !== 'ventas_mayoreo' && id !== 'mayoreo' &&
+        if (!datosCache && id !== 'ventas_mayoreo' && id !== 'mayoreo' &&
             id !== 'clientes_mayoreo' && id !== 'calendario_mayoreo' && id !== 'pedidos_mayoreo') {
             elContent.innerHTML = '<div class="admin-loading">Cargando…</div>';
             cargarDatos(false).then(function () { renderModulo(id); }).catch(function (err) {
@@ -765,13 +827,33 @@
         switch (id) {
             case 'dashboard': renderDashboard(); break;
             case 'inventario': renderInventario(); break;
-            case 'historico': renderHistorico(); break;
+            case 'historico': renderHistoricoInventario(); break;
+            case 'registrar_venta': renderRegistrarVenta(); break;
+            case 'entregas': renderEntregas(); break;
             case 'ventas': renderVentas(); break;
+            case 'gastos':
+                ObebeAdminGastos.mount(elContent, {
+                    onVentasActualizada: function () {
+                        return ObebeAdminData.cargarVentas(true).then(function (p) {
+                            if (!datosCache) return;
+                            datosCache.ventas = p.ventas || datosCache.ventas;
+                            datosCache.resumenVentas = p.resumenVentas || datosCache.resumenVentas;
+                            datosCache.clientes = p.clientes || datosCache.clientes;
+                        });
+                    }
+                });
+                break;
             case 'pedidos':
                 ObebeAdminPedidos.mount(elContent);
                 break;
             case 'clientes':
-                ObebeAdminClientes.mount(elContent, ObebeAdminData.calcularPerfilesClientes(datosCache.ventas || []));
+                ObebeAdminClientes.mount(elContent, datosCache.clientes || [], {
+                    onChanged: function () {
+                        var st = ObebeAdminData.getEstado();
+                        datosCache.ventas = st.ventas || datosCache.ventas;
+                        datosCache.clientes = ObebeAdminData.calcularPerfilesClientes(datosCache.ventas);
+                    }
+                });
                 break;
             case 'mayoreo':
                 ObebeAdminMayoreo.mount(elContent, datosMayoreoParaVista());
@@ -820,7 +902,19 @@
                     ObebeAdminMayoreoPedidos.mount(elContent, {
                         modoObebe: true,
                         filasInv: datosCache.filas || [],
-                        clientesMayoreo: dmPed.clientesMayoreo || []
+                        clientesMayoreo: dmPed.clientesMayoreo || [],
+                        onInventarioActualizado: function () {
+                            var st = ObebeAdminData.getEstado();
+                            datosCache.filas = st.filas || datosCache.filas;
+                            datosCache.resumen = ObebeAdminData.calcularResumen(datosCache.filas);
+                        },
+                        onVentasActualizada: function () {
+                            return ObebeAdminData.cargarVentas(true).then(function (p) {
+                                datosCache.ventas = p.ventas || datosCache.ventas;
+                                datosCache.resumenVentas = p.resumenVentas || datosCache.resumenVentas;
+                                datosCache.clientes = p.clientes || datosCache.clientes;
+                            });
+                        }
                     });
                 }
                 break;
@@ -830,10 +924,6 @@
                     'Productos pendientes de recepción'
                 ]);
                 break;
-            case 'reportes': renderReportes(); break;
-            case 'usuarios': renderUsuarios(); break;
-            case 'auditoria': renderAuditoria(); break;
-            case 'config': renderConfig(); break;
             default: elContent.innerHTML = '<p>Módulo no encontrado</p>';
         }
     }
@@ -853,7 +943,21 @@
         }
     }
 
+    function mantenimientoMayoreoLocal() {
+        try {
+            if (window.ObebeMayoreoStore && ObebeMayoreoStore.ejecutarLimpiezaProgramadaMayoreo) {
+                ObebeMayoreoStore.ejecutarLimpiezaProgramadaMayoreo();
+            }
+            if (window.ObebeMayoreoPedidosStore && ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017) {
+                ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017();
+            }
+        } catch (e) {
+            console.warn('[admin-app] mantenimiento mayoreo', e);
+        }
+    }
+
     function mostrarApp(user) {
+        mantenimientoMayoreoLocal();
         userActual = user;
         elLogin.classList.add('admin-hidden');
         elApp.classList.remove('admin-hidden');
@@ -873,8 +977,12 @@
         }
         cargarDatos(false).then(function () {
             irModulo(inicio);
-        }).catch(function () {
-            irModulo('config');
+        }).catch(function (err) {
+            datosCache = armarDatosParcialesDesdeInventario({ filas: [] });
+            irModulo('dashboard');
+            elContent.insertAdjacentHTML('afterbegin',
+                '<div class="admin-banner">' + esc((err && err.message) || 'No se pudieron cargar los datos.') +
+                ' · Verifica conexión o pulsa Actualizar.</div>');
         });
     }
 
@@ -896,14 +1004,28 @@
                 err.textContent = res.error;
                 return;
             }
-            mostrarApp(res.user);
+            try {
+                mostrarApp(res.user);
+            } catch (ex) {
+                err.textContent = 'Error al abrir el panel. Recarga la página (Ctrl+F5).';
+                console.error('[admin-app] mostrarApp', ex);
+            }
         });
     }
 
     function initApp() {
         document.getElementById('adminLogoutBtn').addEventListener('click', function () {
-            ObebeAdminAuth.cerrarSesion();
-            mostrarLogin();
+            ObebeAdminDialog.confirm({
+                title: '¿Cerrar sesión?',
+                message: '¿Estás seguro de que quieres salir del panel administrativo?',
+                confirmText: 'Salir',
+                cancelText: 'Cancelar',
+                variant: 'warn'
+            }).then(function (ok) {
+                if (!ok) return;
+                ObebeAdminAuth.cerrarSesion();
+                mostrarLogin();
+            });
         });
         document.getElementById('adminRefreshBtn').addEventListener('click', function () {
             cargarDatos(true).then(function () {
@@ -914,7 +1036,56 @@
         elBackdrop.addEventListener('click', cerrarSidebarMovil);
     }
 
+    var ADMIN_THEME_KEY = 'obebe_admin_theme';
+
+    function temaAdminActual() {
+        return document.documentElement.getAttribute('data-admin-theme') === 'light' ? 'light' : 'dark';
+    }
+
+    function etiquetaBotonTema(tema) {
+        return tema === 'light' ? 'Modo oscuro' : 'Modo claro';
+    }
+
+    function aplicarTemaAdmin(tema) {
+        var t = tema === 'light' ? 'light' : 'dark';
+        if (t === 'light') {
+            document.documentElement.setAttribute('data-admin-theme', 'light');
+        } else {
+            document.documentElement.removeAttribute('data-admin-theme');
+        }
+        try {
+            localStorage.setItem(ADMIN_THEME_KEY, t);
+        } catch (e) { /* ignore */ }
+        var label = etiquetaBotonTema(t);
+        ['adminThemeToggle', 'adminThemeToggleLogin'].forEach(function (id) {
+            var btn = document.getElementById(id);
+            if (!btn) return;
+            btn.textContent = label;
+            btn.setAttribute('aria-label', label);
+        });
+    }
+
+    function alternarTemaAdmin() {
+        aplicarTemaAdmin(temaAdminActual() === 'light' ? 'dark' : 'light');
+    }
+
+    function initTemaAdmin() {
+        var guardado = 'dark';
+        try {
+            guardado = localStorage.getItem(ADMIN_THEME_KEY) || 'dark';
+        } catch (e) { /* ignore */ }
+        aplicarTemaAdmin(guardado);
+        ['adminThemeToggle', 'adminThemeToggleLogin'].forEach(function (id) {
+            var btn = document.getElementById(id);
+            if (btn && !btn._themeBound) {
+                btn._themeBound = true;
+                btn.addEventListener('click', alternarTemaAdmin);
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        initTemaAdmin();
         initLogin();
         initApp();
         if (ObebeAdminAuth.requiereAuth(mostrarApp)) {

@@ -111,12 +111,17 @@
         return !!(user && user.acceso === 'mayoreo_cliente');
     }
 
+    function verificarPasswordObebe(password) {
+        return !!buscarCuenta('OBEBE', password);
+    }
+
     global.ObebeAdminAuth = {
         iniciarSesion: iniciarSesion,
         cerrarSesion: cerrarSesion,
         leerSesion: leerSesion,
         requiereAuth: requiereAuth,
         esMayoreoCliente: esMayoreoCliente,
+        verificarPasswordObebe: verificarPasswordObebe,
         usuarioEsperado: CUENTAS[0].usuario
     };
 })(window);

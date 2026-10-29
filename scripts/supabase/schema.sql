@@ -52,3 +52,19 @@ drop policy if exists "ventas_no_anon" on public.ventas_lineas;
 
 comment on table public.inventario_filas is '29 columnas en celdas (array JSON, índices como Google Sheet A–AC)';
 comment on table public.ventas_lineas is 'Ventas retail (ex hoja VENTAS B–N)';
+
+create table if not exists public.gastos_operativos (
+  id bigint generated always as identity primary key,
+  fecha_raw text,
+  fecha_iso date,
+  concepto text not null default '',
+  cantidad numeric not null default 0 check (cantidad >= 0),
+  pagado_por text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create index if not exists gastos_operativos_fecha_idx on public.gastos_operativos (fecha_iso desc nulls last, id desc);
+
+alter table public.gastos_operativos enable row level security;
+
+comment on table public.gastos_operativos is 'Gastos operativos (no van en ventas_lineas)';
