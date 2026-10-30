@@ -255,6 +255,18 @@
         });
     }
 
+    function esVistaTelefonoAdmin() {
+        return window.matchMedia('(max-width: 899px)').matches;
+    }
+
+    function textoTituloPagina(label) {
+        return label || 'Admin';
+    }
+
+    function actualizarTituloPagina(label) {
+        if (elTitle) elTitle.textContent = textoTituloPagina(label);
+    }
+
     function irModulo(id) {
         var flat = navModulosFlat(userActual);
         if (userActual && !moduloPermitido(id)) {
@@ -262,7 +274,7 @@
         }
         vistaActual = id;
         var mod = flat.find(function (m) { return m.id === id; });
-        elTitle.textContent = mod ? mod.label : 'Admin';
+        actualizarTituloPagina(mod ? mod.label : 'Admin');
         asegurarGrupoAbiertoParaVista();
         renderNav();
         renderModulo(id);
@@ -455,7 +467,9 @@
             'Ventas, pedidos y escritura al Sheet llegarán con Apps Script. Sin Supabase todavía.</div>';
     }
 
-    function graficoBarrasVentas(buckets, titulo, meta, ariaLabel) {
+    function graficoBarrasVentas(buckets, titulo, meta, ariaLabel, optsChart) {
+        optsChart = optsChart || {};
+        var scrollMovil = !!optsChart.scrollMovil;
         buckets = buckets || [];
         var max = 0;
         buckets.forEach(function (b) {
@@ -464,32 +478,45 @@
         var cols = buckets.map(function (b) {
             var pct = max > 0 ? Math.round((b.monto / max) * 100) : 0;
             if (b.monto > 0 && pct < 4) pct = 4;
-            var val = b.monto > 0 ? ObebeAdminData.formatoMoney(b.monto) : '—';
+            var valFull = b.monto > 0 ? ObebeAdminData.formatoMoney(b.monto) : '—';
+            var val = valFull;
             var cnt = b.count || 0;
             var inBar = cnt > 0
                 ? '<span class="admin-bar-infill">' + cnt + '</span>'
                 : '';
-            var tip = b.label + ': ' + val + (cnt ? ' · ' + cnt + ' artículos' : '');
+            var tip = b.label + ': ' + valFull + (cnt ? ' · ' + cnt + ' artículos' : '');
             return '<div class="admin-bar-col" title="' + esc(tip) + '">' +
                 '<span class="admin-bar-val">' + (b.monto > 0 ? esc(val) : '') + '</span>' +
                 '<div class="admin-bar-track"><div class="admin-bar-fill" style="height:' + pct + '%">' +
                 inBar + '</div></div>' +
                 '<span class="admin-bar-lbl">' + esc(b.label) + '</span></div>';
         }).join('');
+        var chartInner;
+        if (!cols) {
+            chartInner = '<p class="admin-muted-text">Sin datos de ventas</p>';
+        } else if (scrollMovil) {
+            chartInner = '<div class="admin-bar-chart-scroll"><div class="admin-bar-chart admin-bar-chart--mobile-scroll" style="--bar-cols:' +
+                buckets.length + '" role="img" aria-label="' + esc(ariaLabel) + '">' + cols + '</div></div>';
+        } else {
+            chartInner = '<div class="admin-bar-chart" role="img" aria-label="' + esc(ariaLabel) + '">' + cols + '</div>';
+        }
         return '<div class="admin-panel admin-panel-chart">' +
             '<div class="admin-panel-head"><h3>' + esc(titulo) + '</h3>' +
             '<span class="admin-panel-head-meta">' + esc(meta) + '</span></div>' +
-            '<div class="admin-bar-chart" role="img" aria-label="' + esc(ariaLabel) + '">' +
-            (cols || '<p class="admin-muted-text">Sin datos de ventas</p>') +
-            '</div></div>';
+            chartInner + '</div>';
+    }
+
+    function optsChartVentasMovil() {
+        return { scrollMovil: esVistaTelefonoAdmin() };
     }
 
     function graficoBarrasVentasPorMes(ventas) {
         return graficoBarrasVentas(
             ObebeAdminData.ventasPorMes(ventas, 12),
             'Ventas por mes',
-            'Últimos 12 meses',
-            'Gráfico de ventas por mes'
+            esVistaTelefonoAdmin() ? 'Últimos 12 meses · desliza →' : 'Últimos 12 meses',
+            'Gráfico de ventas por mes',
+            optsChartVentasMovil()
         );
     }
 
@@ -497,8 +524,9 @@
         return graficoBarrasVentas(
             ObebeAdminData.ventasPorSemana(ventas, 12),
             'Ventas por semana',
-            'Últimas 12 semanas',
-            'Gráfico de ventas por semana'
+            esVistaTelefonoAdmin() ? 'Últimas 12 semanas · desliza →' : 'Últimas 12 semanas',
+            'Gráfico de ventas por semana',
+            optsChartVentasMovil()
         );
     }
 
@@ -1005,7 +1033,10 @@
         userActual = user;
         elLogin.classList.add('admin-hidden');
         elApp.classList.remove('admin-hidden');
-        elUserChip.textContent = user.nombre || user.usuario;
+        var nombreUser = user.nombre || user.usuario;
+        elUserChip.textContent = nombreUser;
+        var chipSide = document.getElementById('adminUserChipSidebar');
+        if (chipSide) chipSide.textContent = nombreUser;
         actualizarMarcaPanel(user);
         renderNav();
         var inicio = ObebeAdminAuth.esMayoreoCliente(user) ? 'mayoreo' : 'dashboard';
@@ -1026,7 +1057,7 @@
             irModulo('dashboard');
             elContent.insertAdjacentHTML('afterbegin',
                 '<div class="admin-banner">' + esc((err && err.message) || 'No se pudieron cargar los datos.') +
-                ' · Verifica conexión o pulsa Actualizar.</div>');
+                ' · Verifica conexión y recarga la página.</div>');
         });
     }
 
@@ -1057,27 +1088,34 @@
         });
     }
 
-    function initApp() {
-        document.getElementById('adminLogoutBtn').addEventListener('click', function () {
-            ObebeAdminDialog.confirm({
-                title: '¿Cerrar sesión?',
-                message: '¿Estás seguro de que quieres salir del panel administrativo?',
-                confirmText: 'Salir',
-                cancelText: 'Cancelar',
-                variant: 'warn'
-            }).then(function (ok) {
-                if (!ok) return;
-                ObebeAdminAuth.cerrarSesion();
-                mostrarLogin();
-            });
+    function confirmarCerrarSesion() {
+        ObebeAdminDialog.confirm({
+            title: '¿Cerrar sesión?',
+            message: '¿Estás seguro de que quieres salir del panel administrativo?',
+            confirmText: 'Salir',
+            cancelText: 'Cancelar',
+            variant: 'warn'
+        }).then(function (ok) {
+            if (!ok) return;
+            ObebeAdminAuth.cerrarSesion();
+            mostrarLogin();
         });
-        document.getElementById('adminRefreshBtn').addEventListener('click', function () {
-            cargarDatos(true).then(function () {
-                renderModulo(vistaActual);
-            });
+    }
+
+    function initApp() {
+        ['adminLogoutBtn', 'adminLogoutBtnSidebar'].forEach(function (id) {
+            var btn = document.getElementById(id);
+            if (btn) btn.addEventListener('click', confirmarCerrarSesion);
         });
         document.getElementById('adminMenuToggle').addEventListener('click', abrirSidebarMovil);
         elBackdrop.addEventListener('click', cerrarSidebarMovil);
+        window.addEventListener('resize', function () {
+            var flat = navModulosFlat(userActual);
+            var mod = flat.find(function (m) { return m.id === vistaActual; });
+            actualizarTituloPagina(mod ? mod.label : 'Admin');
+            if (vistaActual === 'dashboard') renderDashboard();
+            else if (vistaActual === 'ventas') renderVentas();
+        });
     }
 
     var ADMIN_THEME_KEY = 'obebe_admin_theme';
@@ -1088,6 +1126,10 @@
 
     function etiquetaBotonTema(tema) {
         return tema === 'light' ? 'Modo oscuro' : 'Modo claro';
+    }
+
+    function iconoBotonTema(tema) {
+        return tema === 'light' ? '☾' : '☀';
     }
 
     function aplicarTemaAdmin(tema) {
@@ -1107,6 +1149,12 @@
             btn.textContent = label;
             btn.setAttribute('aria-label', label);
         });
+        var btnBrand = document.getElementById('adminThemeToggleSidebar');
+        if (btnBrand) {
+            btnBrand.textContent = iconoBotonTema(t);
+            btnBrand.setAttribute('aria-label', label);
+            btnBrand.setAttribute('title', label);
+        }
     }
 
     function alternarTemaAdmin() {
@@ -1119,7 +1167,7 @@
             guardado = localStorage.getItem(ADMIN_THEME_KEY) || 'dark';
         } catch (e) { /* ignore */ }
         aplicarTemaAdmin(guardado);
-        ['adminThemeToggle', 'adminThemeToggleLogin'].forEach(function (id) {
+        ['adminThemeToggle', 'adminThemeToggleLogin', 'adminThemeToggleSidebar'].forEach(function (id) {
             var btn = document.getElementById(id);
             if (btn && !btn._themeBound) {
                 btn._themeBound = true;

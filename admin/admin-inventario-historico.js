@@ -84,7 +84,7 @@
 
             document.getElementById('adminHistBdTable').innerHTML =
                 '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>' +
-                '<th></th><th>Ref</th><th>Nombre</th><th>Talla</th><th>Color</th><th>Marca</th>' +
+                '<th>Foto</th><th>Ref</th><th>Nombre</th><th>Talla</th><th>Color</th><th>Marca</th>' +
                 '<th>Tipo</th><th>Cant.</th><th>Precio</th><th>Estado</th></tr></thead><tbody>' +
                 (tbody || '<tr><td colspan="10">Sin registros todavía.</td></tr>') +
                 '</tbody></table></div>';

@@ -332,10 +332,37 @@ body.admin-dialog-open {
     border-bottom: 1px solid var(--admin-border);
 }
 
+.admin-brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
 .admin-brand strong {
     display: block;
     font-size: 0.95rem;
     letter-spacing: 0.06em;
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-theme-toggle-brand {
+    display: none;
+    flex-shrink: 0;
+    padding: 0.2rem 0.45rem;
+    min-height: 0;
+    font-size: 0.95rem;
+    line-height: 1;
+    border-radius: 6px;
+}
+
+@media (max-width: 899px) {
+    .admin-theme-toggle-brand {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
 
 .admin-brand span {
@@ -484,6 +511,53 @@ body.admin-dialog-open {
     gap: 0.5rem;
     align-items: center;
     flex-wrap: wrap;
+}
+
+@media (max-width: 899px) {
+    .admin-topbar {
+        position: relative;
+    }
+
+    .admin-topbar-actions {
+        display: none;
+    }
+
+    .admin-topbar h2 {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        flex: none;
+        width: auto;
+        max-width: calc(100% - 5.5rem);
+        font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+        margin: 0;
+        pointer-events: none;
+    }
+}
+
+.admin-sidebar-footer {
+    display: none;
+    margin-top: auto;
+    padding: 0.85rem 1rem 1rem;
+    border-top: 1px solid var(--admin-border);
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--admin-surface);
+}
+
+.admin-sidebar-user {
+    display: block;
+    margin-bottom: 0.15rem;
+}
+
+@media (max-width: 899px) {
+    .admin-sidebar-footer {
+        display: flex;
+    }
 }
 
 .admin-user-chip {
@@ -734,6 +808,28 @@ html[data-admin-theme="light"] .admin-banner.info {
     color: var(--admin-accent);
 }
 
+@media (max-width: 899px) {
+    .admin-table-marcas td:first-child,
+    .admin-table-marcas th:first-child {
+        width: auto;
+        max-width: none;
+    }
+
+    .admin-table-marcas td:last-child,
+    .admin-table-marcas th:last-child {
+        width: 2.75rem;
+        min-width: 2.75rem;
+        text-align: left;
+        padding-left: 0.25rem;
+        padding-right: 0;
+    }
+
+    .admin-table-marcas thead tr,
+    .admin-table-marcas tbody tr {
+        table-layout: auto;
+    }
+}
+
 .admin-table-compact {
     font-size: 0.72rem;
 }
@@ -815,6 +911,124 @@ html[data-admin-theme="light"] .admin-banner.info {
 @media (max-width: 720px) {
     .admin-kpi-grid--ventas-focus {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 899px) {
+    .admin-panel-ventas--focus .admin-panel-ventas-body {
+        padding-bottom: 0.35rem;
+    }
+
+    .admin-panel-ventas--focus .admin-kpi-grid--ventas-focus {
+        margin-bottom: 0.85rem;
+    }
+
+    .admin-panel-ventas--focus + .admin-panel-chart {
+        margin-top: 0.5rem;
+    }
+
+    .admin-bar-chart-scroll {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding: 0.75rem 0.35rem 0.5rem;
+        margin: 0 -0.35rem;
+    }
+
+    .admin-bar-chart--mobile-scroll {
+        justify-content: flex-start;
+        width: max(100%, calc(var(--bar-cols, 12) * ((100vw - 2.75rem) / 6)));
+        min-height: 220px;
+        padding: 0;
+    }
+
+    .admin-bar-chart--mobile-scroll .admin-bar-col {
+        flex: 0 0 calc((100vw - 2.75rem) / 6);
+        min-width: calc((100vw - 2.75rem) / 6);
+        max-width: none;
+    }
+
+    .admin-bar-chart--mobile-scroll .admin-bar-val {
+        font-size: 0.55rem;
+        line-height: 1.2;
+        word-break: normal;
+        hyphens: none;
+    }
+
+    .admin-apartado-details {
+        overflow: visible;
+    }
+
+    .admin-apartado-details-body {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+
+    .admin-apartado-card-body {
+        grid-template-columns: 1fr;
+        min-width: 0;
+    }
+
+    .admin-apartado-summary-main {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .admin-apartado-montos {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
+    }
+
+    .admin-apartado-prendas-wrap,
+    .admin-apartado-details-body .admin-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+
+    .admin-table-wrap--sticky-cliente {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-table-clientes th:nth-child(1),
+    .admin-table-clientes td:nth-child(1) {
+        position: sticky;
+        left: 0;
+        z-index: 3;
+        background: var(--admin-surface);
+        box-shadow: 2px 0 0 var(--admin-border);
+        min-width: 2.1rem;
+        max-width: 2.1rem;
+    }
+
+    .admin-table-clientes th:nth-child(2),
+    .admin-table-clientes td:nth-child(2) {
+        position: sticky;
+        left: 2.1rem;
+        z-index: 2;
+        background: var(--admin-surface);
+        box-shadow: 4px 0 6px rgba(0, 0, 0, 0.12);
+        min-width: 6.75rem;
+        max-width: 9rem;
+    }
+
+    .admin-table-wrap--sticky-may-cli {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-table-mayoreo-cli th:first-child,
+    .admin-table-mayoreo-cli td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background: var(--admin-surface);
+        box-shadow: 4px 0 6px rgba(0, 0, 0, 0.12);
+        min-width: 6.5rem;
+        max-width: 8.5rem;
     }
 }
 

@@ -45,7 +45,7 @@
 
             document.getElementById('adminAgotadosTable').innerHTML =
                 '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>' +
-                '<th></th><th>Ref</th><th>Nombre</th><th>Talla</th><th>Color</th><th>Marca</th>' +
+                '<th>Foto</th><th>Ref</th><th>Nombre</th><th>Talla</th><th>Color</th><th>Marca</th>' +
                 '<th>Stock actual</th><th>Nuevo stock</th><th></th></tr></thead><tbody>' +
                 (tbody || '<tr><td colspan="9">No hay artículos agotados.</td></tr>') +
                 '</tbody></table></div>';

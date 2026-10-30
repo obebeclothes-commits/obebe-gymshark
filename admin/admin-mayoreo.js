@@ -334,7 +334,13 @@
                 '<th>Retail</th><th>Mayoreo</th><th>Utilidad</th>';
             emptyColspan = 10;
         }
-        return extra + '<div class="admin-table-wrap"><table class="admin-table admin-table-compact"><thead><tr>' +
+        var wrapCls = soloCliente
+            ? 'admin-table-wrap'
+            : 'admin-table-wrap admin-table-wrap--sticky-may-cli';
+        var tblCls = soloCliente
+            ? 'admin-table admin-table-compact'
+            : 'admin-table admin-table-compact admin-table-mayoreo-cli';
+        return extra + '<div class="' + wrapCls + '"><table class="' + tblCls + '"><thead><tr>' +
             head + '</tr></thead><tbody>' +
             (rows || '<tr><td colspan="' + emptyColspan + '">Sin líneas</td></tr>') + '</tbody></table></div>';
     }

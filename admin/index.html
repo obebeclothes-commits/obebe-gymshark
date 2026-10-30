@@ -7,7 +7,7 @@
     <title>Obebe Admin</title>
     <link rel="preconnect" href="https://docs.google.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="admin.css?v=20261123">
+    <link rel="stylesheet" href="admin.css?v=20261125">
     <script>
     (function () {
         try {
@@ -43,10 +43,17 @@
         <div id="adminSidebarBackdrop" class="admin-sidebar-backdrop admin-hidden" aria-hidden="true"></div>
         <aside id="adminSidebar" class="admin-sidebar" aria-label="Menú administrativo">
             <div class="admin-brand" id="adminBrand">
-                <strong id="adminBrandTitle">OBEBE ADMIN</strong>
+                <div class="admin-brand-row">
+                    <strong id="adminBrandTitle">OBEBE ADMIN</strong>
+                    <button type="button" id="adminThemeToggleSidebar" class="admin-btn admin-btn-ghost admin-theme-toggle admin-theme-toggle-brand" aria-label="Cambiar tema" title="Cambiar tema">☀</button>
+                </div>
                 <span id="adminBrandSub">ERP · Fase MVP</span>
             </div>
             <nav id="adminNav" class="admin-nav"></nav>
+            <div class="admin-sidebar-footer" id="adminSidebarFooter">
+                <span id="adminUserChipSidebar" class="admin-user-chip admin-sidebar-user"></span>
+                <button type="button" id="adminLogoutBtnSidebar" class="admin-btn admin-btn-ghost">Salir</button>
+            </div>
         </aside>
         <div class="admin-main">
             <header class="admin-topbar">
@@ -55,7 +62,6 @@
                 <div class="admin-topbar-actions">
                     <span id="adminUserChip" class="admin-user-chip"></span>
                     <button type="button" id="adminThemeToggle" class="admin-btn admin-btn-ghost admin-theme-toggle" aria-label="Cambiar tema">Modo claro</button>
-                    <button type="button" id="adminRefreshBtn" class="admin-btn admin-btn-ghost">Actualizar</button>
                     <button type="button" id="adminLogoutBtn" class="admin-btn admin-btn-ghost">Salir</button>
                 </div>
             </header>
@@ -78,17 +84,17 @@
     <script src="admin-ventas-retail.js?v=20261122"></script>
     <script src="admin-ventas-registro.js?v=20261081"></script>
     <script src="admin-gastos.js?v=20261081"></script>
-    <script src="admin-historico.js?v=20261075"></script>
-    <script src="admin-inventario-historico.js?v=20261123"></script>
+    <script src="admin-historico.js?v=20261125"></script>
+    <script src="admin-inventario-historico.js?v=20261125"></script>
     <script src="admin-pedidos.js?v=20261051"></script>
-    <script src="admin-clientes.js?v=20261123"></script>
+    <script src="admin-clientes.js?v=20261125"></script>
     <script src="admin-mayoreo-store.js?v=20261090"></script>
-    <script src="admin-mayoreo.js?v=20261111"></script>
+    <script src="admin-mayoreo.js?v=20261125"></script>
     <script src="admin-mayoreo-ventas.js?v=20261051"></script>
     <script src="admin-mayoreo-clientes.js?v=20261051"></script>
     <script src="admin-mayoreo-pedidos-store.js?v=20261101"></script>
     <script src="admin-mayoreo-calendario.js?v=20261051"></script>
     <script src="admin-mayoreo-pedidos.js?v=20261105"></script>
-    <script src="admin-app.js?v=20261123"></script>
+    <script src="admin-app.js?v=20261125"></script>
 </body>
 </html>

@@ -52,7 +52,7 @@
                 '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm admin-cli-edit" data-cliente-id="' +
                 esc(c.id) + '">Editar</button></td></tr>';
         }).join('');
-        return '<div class="admin-table-wrap"><table class="admin-table admin-table-clientes"><thead><tr>' +
+        return '<div class="admin-table-wrap admin-table-wrap--sticky-cliente"><table class="admin-table admin-table-clientes"><thead><tr>' +
             '<th>#</th><th>Cliente</th><th>Teléfono</th><th>Link</th><th>Red</th>' +
             '<th>Artículos</th><th>Total</th><th>Tipo favorito</th><th>Última compra</th><th></th>' +
             '</tr></thead><tbody>' + rows + '</tbody></table></div>';
