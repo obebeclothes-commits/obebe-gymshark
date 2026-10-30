@@ -50,12 +50,62 @@
     }
 
     function filasVisibles() {
-        var base = state.filas.concat(state.nuevasFilas);
-        return ObebeAdminData.filtrarFilas(base, state.filtro, { soloStock: true });
+        var activas = ObebeAdminData.filtrarFilas(state.filas, state.filtro, { soloStock: true });
+        var nuevas = ObebeAdminData.filtrarFilas(state.nuevasFilas, state.filtro, {});
+        return activas.concat(nuevas);
+    }
+
+    function mountSeccionAgotados(rootContainer, onReload) {
+        var el = rootContainer.querySelector('#adminInvAgotadosMount');
+        if (!el || !global.ObebeAdminAgotados) return;
+        global.ObebeAdminAgotados.mount(el, {
+            filas: state.filas,
+            onStockRestaurado: function () {
+                refreshGrid(rootContainer, onReload);
+                mountSeccionAgotados(rootContainer, onReload);
+                if (onReload) onReload();
+            }
+        });
     }
 
     function keyFila(f) {
         return f._localId || ('sheet-' + f.filaSheet);
+    }
+
+    function hayCambiosPendientes() {
+        if (state.nuevasFilas.length > 0) return true;
+        var i;
+        for (i = 0; i < state.filas.length; i++) {
+            var f = state.filas[i];
+            if (f._dirty && Object.keys(f._dirty).length) return true;
+        }
+        return false;
+    }
+
+    function cancelarEdicionInv(container, onReload) {
+        state.filas = clonarFilas(state.snapshot || state.filas);
+        state.nuevasFilas = [];
+        state.seleccion = {};
+        state.modoEdicion = false;
+        state.modoEliminar = false;
+        state.snapshot = null;
+        state.msg = '';
+        refreshUi(container, onReload);
+    }
+
+    function irAFilaInventario(container, rowKey) {
+        requestAnimationFrame(function () {
+            var sc = container.querySelector('.admin-inv-scroll');
+            var row = rowKey
+                ? container.querySelector('tr[data-inv-key="' + rowKey + '"]')
+                : null;
+            if (sc) sc.scrollTop = sc.scrollHeight;
+            if (row) {
+                row.scrollIntoView({ block: 'end', behavior: 'smooth' });
+                row.classList.add('admin-inv-row-highlight');
+                setTimeout(function () { row.classList.remove('admin-inv-row-highlight'); }, 2200);
+            }
+        });
     }
 
     function recolectarCambios() {
@@ -79,43 +129,33 @@
     }
 
     function renderToolbar() {
-        var c = cfg();
-        var apiOk = 'Guardar requiere backend';
-        if (ObebeAdminData.usarSupabase && ObebeAdminData.usarSupabase()) {
-            apiOk = ObebeAdminData.supabaseListo && ObebeAdminData.supabaseListo()
-                ? 'Guardar → Supabase'
-                : 'Completa Supabase en admin-config.js';
-        } else if (c.appsScriptUrl) {
-            apiOk = 'Guardar → Apps Script';
-        } else if (ObebeAdminData.escrituraLocalHabilitada && ObebeAdminData.escrituraLocalHabilitada()) {
-            apiOk = 'Sin URL: solo caché local al guardar (no implementado aquí)';
-        }
         var modo = state.modoEdicion
             ? '<span class="admin-inv-modo admin-inv-modo-edit">Editando</span>'
             : '<span class="admin-inv-modo">Solo vista</span>';
 
-        var acciones = '<button type="button" class="admin-btn admin-btn-ghost" id="adminInvReload">Recargar</button>';
+        var acciones = '';
         if (state.modoEdicion) {
-            acciones += '<button type="button" class="admin-btn admin-btn-ghost" id="adminInvCancel">Cancelar</button>' +
-                '<button type="button" class="admin-btn admin-btn-primary" id="adminInvSave">Guardar cambios</button>' +
-                '<button type="button" class="admin-btn admin-btn-ghost" id="adminInvAddRow">+ Fila</button>' +
-                '<button type="button" class="admin-btn admin-btn-danger" id="adminInvDelRows">Eliminar marcados</button>';
+            acciones =
+                '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminInvAddRow">+ Fila</button>' +
+                '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact" id="adminInvDelRows">Eliminar</button>' +
+                '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminInvCancel">Cancelar</button>' +
+                '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminInvSave">Guardar</button>';
         } else {
-            acciones += '<button type="button" class="admin-btn admin-btn-primary" id="adminInvEdit">Editar</button>';
-            if (state.modoEliminar) {
-                acciones += '<button type="button" class="admin-btn admin-btn-ghost" id="adminInvCancelPick">Cancelar</button>' +
-                    '<button type="button" class="admin-btn admin-btn-danger" id="adminInvDelRows">Eliminar marcados</button>';
-            } else {
-                acciones += '<button type="button" class="admin-btn admin-btn-ghost" id="adminInvPickDel">Eliminar artículos</button>';
-            }
+            acciones =
+                '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminInvEdit">Editar</button>';
         }
 
         return '<div class="admin-inv-toolbar">' +
             modo +
             '<input type="search" class="admin-search" id="adminInvSearch" placeholder="Buscar…" value="' + esc(state.filtro) + '">' +
-            acciones +
-            '<span class="admin-inv-api">' + esc(apiOk) + '</span></div>' +
+            '<div class="admin-inv-toolbar-actions">' + acciones + '</div></div>' +
+            '<p id="adminInvStockCount" class="admin-muted-text admin-inv-stock-count">' + esc(textoExistencia()) + '</p>' +
             (state.msg ? '<div class="admin-banner ' + (state.msgOk ? 'info' : '') + '">' + esc(state.msg) + '</div>' : '');
+    }
+
+    function actualizarConteoExistencia(container) {
+        var el = container.querySelector('#adminInvStockCount');
+        if (el) el.textContent = textoExistencia();
     }
 
     function colFotoInventario() {
@@ -123,20 +163,74 @@
         return idx.foto != null ? idx.foto : 9;
     }
 
+    function esVacioONa(val) {
+        var s = String(val == null ? '' : val).trim();
+        if (!s) return true;
+        var u = s.toUpperCase().replace(/\s/g, '');
+        return u === 'NA' || u === 'N/A' || u === '—' || s === '-';
+    }
+
+    function precioRetailFila(f) {
+        if (f && f.precio > 0) return f.precio;
+        var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : { precio: 7 };
+        var col = idx.precio != null ? idx.precio : 7;
+        var raw = f && f.celdas ? f.celdas[col] : '';
+        var t = String(raw || '').trim().replace(/\$/g, '').replace(/\s/g, '');
+        if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, '').replace(',', '.');
+        else if (/^\d+,\d{1,2}$/.test(t)) t = t.replace(',', '.');
+        var n = parseFloat(t);
+        return isNaN(n) ? 0 : n;
+    }
+
+    function valorCeldaMostrar(f, colIdx, val) {
+        var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
+        var colCosto = idx.costoNeto != null ? idx.costoNeto : 12;
+        var colMargen = idx.margen != null ? idx.margen : 14;
+        if (!esVacioONa(val)) return val;
+        if (colIdx === colMargen) return '30%';
+        if (colIdx === colCosto) {
+            var retail = precioRetailFila(f);
+            if (!retail) return val;
+            var neto = Math.round(retail * 0.7);
+            return ObebeAdminData.formatoMoney ? ObebeAdminData.formatoMoney(neto) : String(neto);
+        }
+        return val;
+    }
+
+    function textoExistencia() {
+        var n = ObebeAdminData.filtrarFilas(state.filas, state.filtro, { soloStock: true }).length;
+        var nuevas = ObebeAdminData.filtrarFilas(state.nuevasFilas, state.filtro, {}).length;
+        return (n + nuevas) + ' artículo(s) en existencia';
+    }
+
+    function renderCeldaThumb(f) {
+        var url = ObebeAdminData.urlImagenFilaInventario(f);
+        if (url) {
+            var base = url.split('?')[0];
+            var q = url.indexOf('?') >= 0 ? '?' + url.split('?').slice(1).join('?') : '';
+            var fb1 = base.replace(/\.avif$/i, '.webp') + q;
+            if (fb1 === url) fb1 = base.replace(/\.webp$/i, '.jpeg') + q;
+            var cands = [url, base.replace(/\.(avif|webp)$/i, '.avif') + q, fb1, base.replace(/\.(avif|webp)$/i, '.jpg') + q]
+                .filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+            return '<img src="' + esc(cands[0]) + '" alt="" class="admin-inv-thumb" loading="lazy" ' +
+                'data-candidate-step="0" data-candidates="' + esc(cands.join('|')) + '" ' +
+                'data-fb1="' + esc(fb1) + '" data-fb2="' + esc(base.replace(/\.(avif|webp)$/i, '.jpg') + q) + '" ' +
+                'onerror="typeof adminMayoreoImgFallback===\'function\'&&adminMayoreoImgFallback(this)">';
+        }
+        return '<span class="admin-mayoreo-thumb-empty admin-inv-thumb"></span>';
+    }
+
     function renderCeldaInventario(f, colIdx, edit) {
         var val = (f.celdas[colIdx] == null ? '' : String(f.celdas[colIdx]));
-        if (colIdx === colFotoInventario() && !edit) {
-            var url = ObebeAdminData.urlImagenFilaInventario(f);
-            if (url) {
-                return '<td class="admin-inv-thumb-cell"><img src="' + esc(url) + '" alt="" class="admin-inv-thumb" loading="lazy" ' +
-                    'onerror="typeof adminMayoreoImgFallback===\'function\'&&adminMayoreoImgFallback(this)"></td>';
-            }
-            return '<td class="admin-inv-thumb-cell"><span class="admin-mayoreo-thumb-empty admin-inv-thumb"></span></td>';
+        var mostrar = valorCeldaMostrar(f, colIdx, val);
+        if (colIdx === colFotoInventario()) {
+            return '<td class="admin-inv-thumb-cell">' + renderCeldaThumb(f) + '</td>';
         }
         if (edit) {
-            return '<td><input type="text" class="admin-inv-cell" data-key="' + esc(keyFila(f)) + '" data-col="' + colIdx + '" value="' + esc(val) + '"></td>';
+            var inputVal = esVacioONa(val) ? mostrar : val;
+            return '<td><input type="text" class="admin-inv-cell" data-key="' + esc(keyFila(f)) + '" data-col="' + colIdx + '" value="' + esc(inputVal) + '"></td>';
         }
-        return '<td><span class="admin-inv-readonly">' + esc(val) + '</span></td>';
+        return '<td><span class="admin-inv-readonly">' + esc(mostrar) + '</span></td>';
     }
 
     function renderGrid() {
@@ -151,7 +245,7 @@
         }
         var vis = filasVisibles();
         var edit = state.modoEdicion;
-        var pick = edit || state.modoEliminar;
+        var pick = edit;
 
         var thLetters = '';
         var thSheet = '';
@@ -180,21 +274,14 @@
             var sel = pick
                 ? '<td class="admin-inv-sel"><input type="checkbox" class="admin-inv-pick" data-key="' + esc(k) + '"' + checked + '></td>'
                 : '';
-            return '<tr>' + sel +
+            return '<tr data-inv-key="' + esc(k) + '">' + sel +
                 '<td class="admin-inv-row">' + rowNum + '</td>' + cells + '</tr>';
         }).join('');
-
-        var foot = edit
-            ? 'Modo edición · A–Y (sin FALTANTE) · encabezados por título'
-            : (state.modoEliminar
-                ? 'Marca artículos y pulsa Eliminar marcados (pide contraseña OBEBE)'
-                : 'Solo artículos con stock &gt; 0 · agotados en Histórico · carrusel/ofertas por nombre de columna');
 
         var colSpan = colsVista.length + 1 + (pick ? 1 : 0);
         return '<div class="admin-inv-scroll' + (edit ? ' admin-inv-scroll--edit' : '') + '">' +
             '<table class="admin-table admin-inv-grid' + (edit ? ' admin-inv-grid--edit' : '') + '"><thead>' + headLetters + headSheet +
-            '</thead><tbody>' + (tbody || '<tr><td colspan="' + colSpan + '">Sin filas</td></tr>') + '</tbody></table></div>' +
-            '<p class="admin-inv-foot">' + vis.length + ' filas · ' + foot + '</p>';
+            '</thead><tbody>' + (tbody || '<tr><td colspan="' + colSpan + '">Sin filas</td></tr>') + '</tbody></table></div>';
     }
 
     function refreshGrid(container, onReload) {
@@ -202,6 +289,7 @@
         if (!mount) return;
         mount.innerHTML = renderGrid();
         bindGridEvents(container, onReload);
+        actualizarConteoExistencia(container);
     }
 
     function refreshUi(container, onReload) {
@@ -212,6 +300,7 @@
             '<div id="adminInvToolbarMount">' + renderToolbar() + '</div>' +
             '<div id="adminInvGridMount">' + renderGrid() + '</div>';
         bindEvents(container, onReload);
+        mountSeccionAgotados(container, onReload);
     }
 
     function bindGridEvents(container, onReload) {
@@ -229,7 +318,7 @@
                 });
             });
         }
-        if (state.modoEdicion || state.modoEliminar) {
+        if (state.modoEdicion) {
             container.querySelectorAll('.admin-inv-pick').forEach(function (cb) {
                 cb.addEventListener('change', function () {
                     state.seleccion[cb.getAttribute('data-key')] = cb.checked;
@@ -246,14 +335,6 @@
                 refreshGrid(container, onReload);
             });
         }
-        container.querySelector('#adminInvReload').addEventListener('click', function () {
-            state.modoEdicion = false;
-            state.modoEliminar = false;
-            state.seleccion = {};
-            state.snapshot = null;
-            if (onReload) onReload();
-        });
-
         var btnEdit = container.querySelector('#adminInvEdit');
         if (btnEdit) {
             btnEdit.addEventListener('click', function () {
@@ -265,39 +346,22 @@
             });
         }
 
-        var btnPickDel = container.querySelector('#adminInvPickDel');
-        if (btnPickDel) {
-            btnPickDel.addEventListener('click', function () {
-                state.modoEliminar = true;
-                state.seleccion = {};
-                state.msg = 'Marca los artículos a borrar del inventario.';
-                state.msgOk = true;
-                refreshUi(container, onReload);
-            });
-        }
-
-        var btnCancelPick = container.querySelector('#adminInvCancelPick');
-        if (btnCancelPick) {
-            btnCancelPick.addEventListener('click', function () {
-                state.modoEliminar = false;
-                state.seleccion = {};
-                state.msg = '';
-                refreshUi(container, onReload);
-            });
-        }
-
         var btnCancel = container.querySelector('#adminInvCancel');
         if (btnCancel) {
             btnCancel.addEventListener('click', function () {
-                state.filas = clonarFilas(state.snapshot || state.filas);
-                state.nuevasFilas = [];
-                state.seleccion = {};
-                state.modoEdicion = false;
-                state.modoEliminar = false;
-                state.snapshot = null;
-                state.msg = 'Edición cancelada.';
-                state.msgOk = true;
-                refreshUi(container, onReload);
+                if (!hayCambiosPendientes()) {
+                    cancelarEdicionInv(container, onReload);
+                    return;
+                }
+                ObebeAdminDialog.confirm({
+                    title: '¿Salir sin guardar?',
+                    message: 'Hay cambios sin guardar en el inventario. Si sales, se perderán.',
+                    confirmText: 'Sí, salir',
+                    cancelText: 'Seguir editando',
+                    variant: 'warn'
+                }).then(function (ok) {
+                    if (ok) cancelarEdicionInv(container, onReload);
+                });
             });
         }
 
@@ -308,19 +372,25 @@
             if (addBtn) {
                 addBtn.addEventListener('click', function () {
                     var vacia = [];
-                    for (var i = 0; i < ObebeAdminData.INVENTARIO_NUM_COLS; i++) vacia.push('');
+                    var numCols = ObebeAdminData.INVENTARIO_NUM_COLS || 25;
+                    var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
+                    var colStock = idx.stock != null ? idx.stock : 2;
+                    var i;
+                    for (i = 0; i < numCols; i++) vacia.push('');
+                    vacia[colStock] = '1';
                     var localId = 'new-' + Date.now();
                     state.nuevasFilas.push({
                         _localId: localId,
                         celdas: vacia,
                         nombre: '',
-                        stock: 0,
+                        stock: 1,
                         ref: 0,
                         filaSheet: 0,
                         _isNew: true,
                         _dirty: {}
                     });
-                    refreshUi(container, onReload);
+                    refreshGrid(container, onReload);
+                    irAFilaInventario(container, localId);
                 });
             }
             var saveBtn = container.querySelector('#adminInvSave');
@@ -467,14 +537,13 @@
         state.msg = '';
         container.innerHTML =
             '<div class="admin-panel admin-panel-inventario">' +
-            '<div class="admin-panel-head"><h3>Inventario (A–Y)</h3></div>' +
+            '<div class="admin-panel-head"><h3>Inventario</h3></div>' +
             '<div class="admin-inv-wrap">' +
             '<div id="adminInvToolbarMount">' + renderToolbar() + '</div>' +
             '<div id="adminInvGridMount">' + renderGrid() + '</div></div></div>' +
-            (ObebeAdminData.usarSupabase && ObebeAdminData.usarSupabase()
-                ? '<div class="admin-banner info">Guardar cambios → <strong>Supabase</strong>. Si la tabla está vacía, importa desde Configuración.</div>'
-                : '<div class="admin-banner info">Para <strong>guardar</strong>: Web App Apps Script o modo Supabase en <code>admin-config.js</code>.</div>');
+            '<div id="adminInvAgotadosMount" class="admin-inv-agotados-wrap"></div>';
         bindEvents(container, onReload);
+        mountSeccionAgotados(container, onReload);
     }
 
     global.ObebeAdminInventario = { mount: mount };

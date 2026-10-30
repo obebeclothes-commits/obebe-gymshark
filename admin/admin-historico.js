@@ -103,7 +103,11 @@
                 var idx = filas.findIndex(function (f) { return f.filaSheet === row; });
                 if (idx >= 0) {
                     filas[idx].stock = stock;
-                    if (filas[idx].celdas) filas[idx].celdas[2] = String(stock);
+                    if (filas[idx].celdas) {
+                        var idxInv = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
+                        var colStock = idxInv.stock != null ? idxInv.stock : 2;
+                        filas[idx].celdas[colStock] = String(stock);
+                    }
                 }
                 if (opts.onStockRestaurado) opts.onStockRestaurado(row, stock);
                 pintar();

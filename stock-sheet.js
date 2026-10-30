@@ -524,12 +524,12 @@
             var refImagen = parsearNumeroImagen(celdaInv(f, IX, 'imagen'));
             var coleccion = normalizarColeccion(celdaInv(f, IX, 'coleccion') || '');
             var precioOfertaSemanal = parsearPrecioOfertaSemanal(celdaInv(f, IX, 'ofertaSemanal'));
-            // Los agotados siguen apareciendo en la tienda con su etiqueta, asi que
-            // sus opciones tambien deben quedar disponibles en los filtros.
-            if (talla) opciones.tallas.add(talla);
-            if (color) opciones.colores.add(color);
-            if (tipo) opciones.tipos.add(tipo);
-            if (marca) opciones.marcas.add(marca);
+            if (stock > 0) {
+                if (talla) opciones.tallas.add(talla);
+                if (color) opciones.colores.add(color);
+                if (tipo) opciones.tipos.add(tipo);
+                if (marca) opciones.marcas.add(marca);
+            }
             var clave = claveProducto(nombre, talla, color, marca, refImagen);
             var datosFila = {
                 nombre: nombre,

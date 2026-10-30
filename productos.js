@@ -8,6 +8,11 @@
 })();
 
 // Script para la página de productos completa
+function productoVisibleEnTienda(p) {
+    return Number(p && p.stock) > 0;
+}
+window.productoVisibleEnTienda = productoVisibleEnTienda;
+
 function esRutaImagen(valor) {
     return /\.(png|jpe?g|webp|avif|gif|svg)(\?|$)/i.test(valor || '');
 }
@@ -490,7 +495,7 @@ function ordenarListaOfertasSemanalesIntercalado(productos) {
     var intercalado = intercalarOfertasHombreMujer(hombre, mujer);
     intercalado.forEach(function(p) { idsUsados.add(String(p.id)); });
     productos.forEach(function(p) {
-        if (!idsUsados.has(String(p.id))) intercalado.push(p);
+        if (!idsUsados.has(String(p.id)) && productoVisibleEnTienda(p)) intercalado.push(p);
     });
     return intercalado;
 }
@@ -699,15 +704,15 @@ function obtenerProductosPorCategoria() {
             todosColeccion = todosColeccion.concat(productosMujer);
         }
         return todosColeccion.filter(function(p) {
+            if (!productoVisibleEnTienda(p)) return false;
             return productoEnColeccion(p, coleccion);
         });
     }
 
     function filtrarLista(lista, cat) {
-        var soloConStock = modoNuevoStock || modoMayoreo || modoMayoreo50;
         return lista.filter(function(p) {
             if (!(p.categoria === cat || p.categoria === 'Unisex')) return false;
-            if (soloConStock && Number(p.stock) <= 0) return false;
+            if (!productoVisibleEnTienda(p)) return false;
             if (modoNuevoStock) return esProductoNuevoStock(p);
             if (modoMayoreo50) return esProductoMayoreo50(p);
             if (modoMayoreo) return !!p.mayoreo;
@@ -728,7 +733,7 @@ function obtenerProductosPorCategoria() {
             todos = todos.concat(productosMujer);
         }
         return todos.filter(function(p) {
-            if (Number(p.stock) <= 0) return false;
+            if (!productoVisibleEnTienda(p)) return false;
             if (modoNuevoStock) return esProductoNuevoStock(p);
             if (modoMayoreo50) return esProductoMayoreo50(p);
             if (modoMayoreo) return !!p.mayoreo;
@@ -758,14 +763,14 @@ function resolverCategoriaOpcionesFiltro(productos) {
 }
 
 function obtenerCatalogoCompletoPorCategoria(categoria) {
+    var lista = [];
     if (categoria === 'Mujer') {
-        return typeof productosMujer !== 'undefined' && Array.isArray(productosMujer) ? productosMujer : [];
+        lista = typeof productosMujer !== 'undefined' && Array.isArray(productosMujer) ? productosMujer : [];
+    } else if (categoria === 'Hombre') {
+        if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) lista = productosHombre;
+        else lista = typeof productos !== 'undefined' && Array.isArray(productos) ? productos : [];
     }
-    if (categoria === 'Hombre') {
-        if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) return productosHombre;
-        return typeof productos !== 'undefined' && Array.isArray(productos) ? productos : [];
-    }
-    return [];
+    return lista.filter(productoVisibleEnTienda);
 }
 
 function filtrarProductosPorGeneroEnURL(productos) {

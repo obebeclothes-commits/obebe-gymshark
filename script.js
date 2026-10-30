@@ -110,6 +110,7 @@ function obtenerProductosParaCarrusel(catalogo, categoria) {
     if (!Array.isArray(catalogo)) return [];
     catalogo.forEach(function(p) {
         if (p.categoria !== categoria && p.categoria !== 'Unisex') return;
+        if (Number(p.stock) <= 0) return;
         var pos = parseInt(p.posicionCarrusel, 10);
         if (pos >= 1 && pos <= 6) slots[pos - 1] = p;
     });

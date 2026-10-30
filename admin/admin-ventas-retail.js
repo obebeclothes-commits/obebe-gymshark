@@ -447,11 +447,11 @@
                 '<div class="admin-field-row">' + selectEquipo('adminVentaRetailCuentaEx', 'Quien tiene el dinero') +
                 selectEquipo('adminVentaRetailVendedorEx', 'Vendedor') + '</div></div>' +
                 '<div id="adminVentaRetailPanelNuevo" class="admin-venta-retail-panel admin-hidden">' +
-                '<div class="admin-field"><label>Nombre cliente</label><input type="text" id="adminVentaRetailNombreNuevo" placeholder="Nombre completo"></div>' +
+                '<div class="admin-field"><label>Nombre cliente</label><input type="text" id="adminVentaRetailNombreNuevo" placeholder="Nombre completo" required></div>' +
                 '<div class="admin-field-row">' +
-                '<div class="admin-field"><label>Teléfono</label><input type="text" id="adminVentaRetailTelNuevo"></div>' +
-                '<div class="admin-field"><label>Red social</label><input type="text" id="adminVentaRetailRedNuevo" placeholder="Instagram…"></div></div>' +
-                '<div class="admin-field"><label>Link</label><input type="text" id="adminVentaRetailLinkNuevo" placeholder="https://…"></div>' +
+                '<div class="admin-field"><label>Teléfono <span class="admin-label-opt">(opcional)</span></label><input type="text" id="adminVentaRetailTelNuevo"></div>' +
+                '<div class="admin-field"><label>Red social <span class="admin-label-opt">(opcional)</span></label><input type="text" id="adminVentaRetailRedNuevo" placeholder="Instagram…"></div></div>' +
+                '<div class="admin-field"><label>Link <span class="admin-label-opt">(opcional)</span></label><input type="text" id="adminVentaRetailLinkNuevo" placeholder="https://…"></div>' +
                 '<div class="admin-field-row">' + selectEquipo('adminVentaRetailCuentaNuevo', 'Quien tiene el dinero') +
                 selectEquipo('adminVentaRetailVendedorNuevo', 'Vendedor') + '</div></div></div></div>' +
                 '<div class="admin-ped-filtros-backdrop admin-hidden" id="adminVentaRetailFiltrosBackdrop"></div>' +
@@ -520,12 +520,6 @@
             if (EQUIPO.indexOf(meta.vendedor) < 0) {
                 if (errEl) errEl.textContent = 'Elige vendedor (Ugo, Daniel o Fer).';
                 return false;
-            }
-            if (tipoCliente === 'nuevo') {
-                if (!meta.telefono.trim()) {
-                    if (errEl) errEl.textContent = 'Teléfono obligatorio para cliente nuevo.';
-                    return false;
-                }
             }
             return true;
         }

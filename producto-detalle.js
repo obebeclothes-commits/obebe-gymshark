@@ -28,6 +28,11 @@ window.iniciarDetalleProducto = function() {
         container.innerHTML = '<div class="product-detail-error"><p>Producto no encontrado.</p><p><a href="productos.html?categoria=Hombre">Ver todos los productos</a></p></div>';
         return;
     }
+    if (Number(producto.stock) <= 0) {
+        var catVolver = producto.categoria === 'Mujer' ? 'Mujer' : 'Hombre';
+        container.innerHTML = '<div class="product-detail-error"><p>Este artículo no está disponible.</p><p><a href="productos.html?categoria=' + catVolver + '">Ver catálogo</a></p></div>';
+        return;
+    }
 
     const imagen1 = typeof obtenerRutaImagenProducto === 'function'
         ? obtenerRutaImagenProducto(producto, 1)

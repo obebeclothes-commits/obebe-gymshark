@@ -205,6 +205,31 @@
         var expandedPedidos = {};
         var modoCombinarPedidos = false;
 
+        function setOverlayEnvio(visible) {
+            var id = 'adminMayoreoEnvioOverlay';
+            var el = document.getElementById(id);
+            if (visible) {
+                if (!el) {
+                    el = document.createElement('div');
+                    el.id = id;
+                    el.className = 'admin-mayoreo-envio-overlay';
+                    el.setAttribute('role', 'status');
+                    el.setAttribute('aria-live', 'polite');
+                    el.innerHTML =
+                        '<div class="admin-mayoreo-envio-box">' +
+                        '<div class="admin-mayoreo-envio-spinner" aria-hidden="true"></div>' +
+                        '<p class="admin-mayoreo-envio-text">Enviando respuesta…</p>' +
+                        '</div>';
+                    document.body.appendChild(el);
+                }
+                el.classList.remove('admin-hidden');
+                document.body.classList.add('admin-mayoreo-envio-lock');
+            } else {
+                if (el) el.classList.add('admin-hidden');
+                document.body.classList.remove('admin-mayoreo-envio-lock');
+            }
+        }
+
         function unidadesCarrito() {
             var t = 0;
             carrito.forEach(function (c) { t += c.cantidad || 0; });
@@ -1197,27 +1222,36 @@
                     var pidConf = conf.getAttribute('data-pedido-id');
                     ObebeAdminDialog.confirm({
                         title: '¿Enviar respuesta al cliente?',
-                        message: 'NATY verá stock y comentarios por artículo. Si aún no terminas, cancela y sigue revisando.',
+                        message: clienteNombre + ' verá disponibilidad y comentarios por artículo.',
                         confirmText: 'Enviar respuesta',
                         cancelText: 'Volver',
                         variant: 'warn'
                     }).then(function (ok) {
                         if (!ok) return;
+                        setOverlayEnvio(true);
                         ObebeMayoreoPedidosStore.confirmarRevisionPedido(pidConf).then(function (res) {
+                            setOverlayEnvio(false);
                             if (!res.ok) {
                                 ObebeAdminDialog.alert({ title: 'Falta revisar', message: res.error });
                                 return;
                             }
                             filasInv = (ObebeAdminData.getEstado().filas || filasInv);
                             if (opts.onInventarioActualizado) opts.onInventarioActualizado();
-                            var msgStock = (res.stockObebe && res.stockObebe.count > 0)
-                                ? ' Se descontó stock del inventario Obebe en los artículos confirmados.'
-                                : '';
+                            var msgOk = clienteNombre + ' verá qué hay y qué no.';
+                            if (res.stockObebe && res.stockObebe.count > 0) {
+                                msgOk += ' Stock Obebe descontado.';
+                            }
                             ObebeAdminDialog.alert({
                                 title: 'Respuesta enviada',
-                                message: 'NATY verá qué artículos sí hay y cuáles no.' + msgStock,
+                                message: msgOk,
                                 confirmText: 'Listo'
                             }).then(function () { pintar(); });
+                        }).catch(function (err) {
+                            setOverlayEnvio(false);
+                            ObebeAdminDialog.alert({
+                                title: 'No se pudo enviar',
+                                message: String((err && err.message) || err || 'Intenta de nuevo.')
+                            });
                         });
                     });
                     return;

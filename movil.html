@@ -7871,12 +7871,13 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
     contenedor.textContent = fuente;
 }
 
-/** Productos con columna U del Sheet = posiciones 1..8 en el carrusel (sin filtro de stock). */
+/** Productos con columna U del Sheet = posiciones 1..8 en el carrusel (solo con stock). */
 function obtenerProductosParaCarrusel(catalogo, categoria) {
     var slots = new Array(8);
     if (!Array.isArray(catalogo)) return [];
     catalogo.forEach(function(p) {
         if (p.categoria !== categoria && p.categoria !== 'Unisex') return;
+        if (typeof productoVisibleEnTienda === 'function' ? !productoVisibleEnTienda(p) : Number(p.stock) <= 0) return;
         var pos = parseInt(p.posicionCarrusel, 10);
         if (pos >= 1 && pos <= 8) slots[pos - 1] = p;
     });
@@ -9028,10 +9029,9 @@ function obtenerProductosPorCategoria() {
     var categoria = params.get('categoria') || 'Hombre';
 
     function filtrarLista(lista, cat) {
-        var soloConStock = modoNuevoStock || modoMayoreo || modoMayoreo50;
         return lista.filter(function(p) {
             if (!(p.categoria === cat || p.categoria === 'Unisex')) return false;
-            if (soloConStock && Number(p.stock) <= 0) return false;
+            if (typeof productoVisibleEnTienda === 'function' ? !productoVisibleEnTienda(p) : Number(p.stock) <= 0) return false;
             if (modoNuevoStock) return esProductoNuevoStock(p);
             if (modoMayoreo50) return esProductoMayoreo50(p);
             if (modoMayoreo) return !!p.mayoreo;
@@ -10512,7 +10512,7 @@ function arrancarProductosPagina() {
 </script>
     <script>
 (function(w, d) {
-    var VERSION = '20261070';
+    var VERSION = '20261114';
 
     function cargarExtra(src, alTerminar) {
         if (d.querySelector('script[data-obebe-extra="' + src + '"]')) {

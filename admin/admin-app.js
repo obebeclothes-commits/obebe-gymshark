@@ -598,8 +598,7 @@
 
     function renderInventario() {
         function pintarInv() {
-            elContent.innerHTML = bannerAvisoSupabase() +
-                '<div id="adminInvMount"></div>';
+            elContent.innerHTML = '<div id="adminInvMount"></div>';
             ObebeAdminInventario.mount(
                 document.getElementById('adminInvMount'),
                 datosCache.filas,

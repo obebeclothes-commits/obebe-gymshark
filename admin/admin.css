@@ -95,6 +95,11 @@ a { color: var(--admin-accent); }
     margin-bottom: 0.35rem;
 }
 
+.admin-label-opt {
+    font-weight: 400;
+    opacity: 0.75;
+}
+
 .admin-field input {
     width: 100%;
     padding: 0.65rem 0.75rem;
@@ -947,11 +952,47 @@ html[data-admin-theme="light"] .admin-banner.info {
 
 .admin-inv-toolbar {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.5rem;
     align-items: center;
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--admin-border);
+    overflow-x: auto;
+}
+
+.admin-inv-toolbar .admin-search {
+    flex: 1 1 6rem;
+    min-width: 5rem;
+    max-width: 12rem;
+}
+
+.admin-inv-toolbar-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.admin-inv-stock-count {
+    padding: 0 1rem 0.5rem;
+    margin: 0;
+    font-size: 0.8rem;
+}
+
+.admin-inv-row-highlight {
+    animation: admin-inv-row-flash 2s ease;
+}
+
+@keyframes admin-inv-row-flash {
+    0%, 100% { background: transparent; }
+    15%, 45% { background: rgba(61, 214, 198, 0.12); }
+}
+
+.admin-btn-compact {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.78rem;
+    min-height: 2rem;
 }
 
 .admin-inv-modo {
@@ -2479,6 +2520,20 @@ body.admin-ped-filtros-open {
     display: block;
 }
 
+.admin-inv-thumb-cell--edit {
+    min-width: 5.5rem;
+}
+
+.admin-inv-thumb-cell--edit .admin-inv-thumb-preview {
+    margin-bottom: 0.35rem;
+}
+
+.admin-inv-cell--foto {
+    width: 100%;
+    min-width: 4.5rem;
+    font-size: 0.7rem;
+}
+
 .admin-field-row {
     display: flex;
     flex-wrap: wrap;
@@ -3094,4 +3149,50 @@ body.admin-entrega-modal-open {
     .admin-kpi-grid--compact {
         grid-template-columns: 1fr;
     }
+}
+
+body.admin-mayoreo-envio-lock {
+    overflow: hidden;
+}
+
+.admin-mayoreo-envio-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(12, 14, 18, 0.78);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+.admin-mayoreo-envio-box {
+    text-align: center;
+    color: #fff;
+    padding: 1rem;
+}
+
+.admin-mayoreo-envio-spinner {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 0.75rem;
+    border: 3px solid rgba(255, 255, 255, 0.28);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: admin-mayoreo-envio-spin 0.75s linear infinite;
+}
+
+@keyframes admin-mayoreo-envio-spin {
+    to { transform: rotate(360deg); }
+}
+
+.admin-mayoreo-envio-text {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.admin-inv-agotados-wrap {
+    margin-top: 1.25rem;
 }

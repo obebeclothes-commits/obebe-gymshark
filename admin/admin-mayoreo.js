@@ -16,21 +16,38 @@
 
     global.adminMayoreoImgFallback = function (img) {
         if (!img || !img.dataset) return;
+        var src = img.src || '';
         var fb1 = img.dataset.fb1;
         var fb2 = img.dataset.fb2;
-        if (img.src.indexOf('.webp') >= 0 && !img.dataset.fbAvif) {
-            img.dataset.fbAvif = '1';
-            img.src = img.src.replace(/\.webp(\?|$)/i, '.avif$1');
+        if (/\.avif(\?|$)/i.test(src) && !img.dataset.fbWebp) {
+            img.dataset.fbWebp = '1';
+            img.src = src.replace(/\.avif(\?.*)?$/i, '.webp$1');
             return;
         }
-        if (fb1 && img.src.indexOf(fb1) < 0) {
+        if (/\.webp(\?|$)/i.test(src) && !img.dataset.fbAvif) {
+            img.dataset.fbAvif = '1';
+            img.src = src.replace(/\.webp(\?.*)?$/i, '.avif$1');
+            return;
+        }
+        if (fb1 && src.indexOf(fb1) < 0) {
             img.src = fb1;
             img.dataset.fb1 = '';
             return;
         }
-        if (fb2 && img.src.indexOf(fb2) < 0) {
+        if (fb2 && src.indexOf(fb2) < 0) {
             img.src = fb2;
             img.dataset.fb2 = '';
+            return;
+        }
+        var base = src.split('?')[0];
+        if (!img.dataset.fbJpeg) {
+            img.dataset.fbJpeg = '1';
+            img.src = base.replace(/\.(avif|webp)$/i, '.jpeg') + (src.indexOf('?') >= 0 ? '?' + src.split('?')[1] : '');
+            return;
+        }
+        if (!img.dataset.fbJpg) {
+            img.dataset.fbJpg = '1';
+            img.src = base.replace(/\.(avif|webp|jpeg)$/i, '.jpg') + (src.indexOf('?') >= 0 ? '?' + src.split('?')[1] : '');
             return;
         }
         img.style.visibility = 'hidden';

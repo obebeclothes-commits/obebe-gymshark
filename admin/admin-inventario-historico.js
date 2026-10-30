@@ -53,8 +53,6 @@
         }
 
         container.innerHTML =
-            '<div class="admin-banner info">Base de datos local: guarda artículos del inventario. ' +
-            'Las ventas no reducen la cantidad aquí; los agotados se muestran con cantidad 1.</div>' +
             '<div class="admin-panel"><div class="admin-panel-head"><h3>Histórico de inventario</h3>' +
             '<input type="search" class="admin-search" id="adminHistBdSearch" placeholder="Buscar…"></div>' +
             '<p id="adminHistBdCount" class="admin-muted-text" style="padding:0 1rem 0.5rem;margin:0"></p>' +

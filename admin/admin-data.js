@@ -822,8 +822,23 @@
         return map;
     }
 
+    function refArchivoImagenDesdeFila(fila) {
+        var celdas = (fila && fila.celdas) || [];
+        var idxInv = idxInventario();
+        var iImg = idxInv.imagen != null ? idxInv.imagen : IDX.imagen;
+        var raw = String(celdas[iImg] != null ? celdas[iImg] : '').trim();
+        if (/^\d+(\.\d+)?$/.test(raw)) return raw;
+        if (fila && fila.ref > 0) return String(fila.ref);
+        return '';
+    }
+
+    function esMarcaUniqlo(marca, nombre) {
+        if (norm(normalizarMarca(marca)) === 'uniqlo') return true;
+        return norm(nombre || '').indexOf('uniqlo') >= 0;
+    }
+
     function extensionImagenRef(hit) {
-        if (norm(normalizarMarca(hit.marca)) === 'uniqlo') return 'avif';
+        if (esMarcaUniqlo(hit.marca, hit.nombre)) return 'avif';
         return 'webp';
     }
 
@@ -831,28 +846,85 @@
         var celdas = (fila && fila.celdas) || [];
         var iFoto = idxInventario().foto != null ? idxInventario().foto : 9;
         var url = normalizarRutaImagenAdmin(celdas[iFoto] || fila.fotoUrl || '');
-        if (url) return url;
-        var ref = fila.ref || parseRef(celdas[0]);
-        if (!ref) return '';
-        var seg = fila.segmento;
-        if (!seg && celdas[IDX.segmento]) seg = normSegmento(celdas[IDX.segmento]);
-        if (!seg && fila.ubicacion) {
-            var u = String(fila.ubicacion).toLowerCase();
-            if (u.indexOf('mujer') >= 0) seg = 'Mujer';
-            else seg = 'Hombre';
+        var refFile = refArchivoImagenDesdeFila(fila);
+        var refUrl = '';
+        if (refFile) {
+            var seg = fila.segmento;
+            if (!seg && celdas[IDX.segmento]) seg = normSegmento(celdas[IDX.segmento]);
+            if (!seg && fila.ubicacion) {
+                var u = String(fila.ubicacion).toLowerCase();
+                if (u.indexOf('mujer') >= 0) seg = 'Mujer';
+                else seg = 'Hombre';
+            }
+            var marca = fila.marca || celdas[IDX.marca] || '';
+            var nombre = fila.nombre || celdas[IDX.nombre] || '';
+            var hit = {
+                ref: fila.ref || parseRef(refFile),
+                refFile: refFile,
+                segmento: seg || 'Hombre',
+                marca: marca,
+                nombre: nombre,
+                fotoUrl: ''
+            };
+            refUrl = urlImagenDesdeHit(hit);
         }
-        var marca = fila.marca || celdas[IDX.marca] || '';
-        var hit = { ref: ref, segmento: seg || 'Hombre', marca: marca, fotoUrl: '' };
-        return urlImagenDesdeHit(hit);
+        if (refUrl && (esMarcaUniqlo(fila.marca || celdas[IDX.marca], fila.nombre) || !url || /^https?:\/\//i.test(url))) {
+            return refUrl;
+        }
+        if (url) return url;
+        return refUrl;
     }
 
     function urlImagenDesdeHit(hit) {
         if (!hit) return '';
         if (hit.fotoUrl) return hit.fotoUrl;
-        if (!hit.ref) return '';
+        var refName = hit.refFile || (hit.ref ? String(hit.ref) : '');
+        if (!refName) return '';
         var carpeta = hit.segmento === 'Mujer' ? 'mujer' : 'hombre';
         var ext = extensionImagenRef(hit);
-        return '../' + carpeta + '/' + hit.ref + '.' + ext + '?v=' + VERSION_IMAGENES_ADMIN;
+        return '../' + carpeta + '/' + refName + '.' + ext + '?v=' + VERSION_IMAGENES_ADMIN;
+    }
+
+    function candidatosUrlImagenAdmin(url) {
+        if (!url) return [];
+        var q = '';
+        var path = url;
+        var qi = url.indexOf('?');
+        if (qi >= 0) {
+            q = url.slice(qi);
+            path = url.slice(0, qi);
+        }
+        var base = path.replace(/\.(png|jpe?g|webp|avif|gif)$/i, '');
+        return [path + q, base + '.avif' + q, base + '.webp' + q, base + '.jpeg' + q, base + '.jpg' + q]
+            .filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+    }
+
+    if (typeof global.adminMayoreoImgFallback !== 'function') {
+        global.adminMayoreoImgFallback = function (img) {
+            if (!img) return;
+            var src = img.src || '';
+            var list = img.dataset.candidates ? img.dataset.candidates.split('|') : [];
+            if (!list.length && src) list = candidatosUrlImagenAdmin(src);
+            var step = parseInt(img.dataset.candidateStep || '0', 10) + 1;
+            if (step < list.length) {
+                img.dataset.candidateStep = String(step);
+                img.src = list[step];
+                return;
+            }
+            var fb1 = img.dataset.fb1;
+            var fb2 = img.dataset.fb2;
+            if (fb1 && src.indexOf(fb1) < 0) {
+                img.src = fb1;
+                img.dataset.fb1 = '';
+                return;
+            }
+            if (fb2 && src.indexOf(fb2) < 0) {
+                img.src = fb2;
+                img.dataset.fb2 = '';
+                return;
+            }
+            img.style.opacity = '0.35';
+        };
     }
 
     function puntuarMatchMayoreoInventario(linea, f) {
