@@ -514,7 +514,7 @@
         return graficoBarrasVentas(
             ObebeAdminData.ventasPorMes(ventas, 12),
             'Ventas por mes',
-            esVistaTelefonoAdmin() ? 'Últimos 12 meses · desliza →' : 'Últimos 12 meses',
+            'Últimos 12 meses',
             'Gráfico de ventas por mes',
             optsChartVentasMovil()
         );
@@ -524,7 +524,7 @@
         return graficoBarrasVentas(
             ObebeAdminData.ventasPorSemana(ventas, 12),
             'Ventas por semana',
-            esVistaTelefonoAdmin() ? 'Últimas 12 semanas · desliza →' : 'Últimas 12 semanas',
+            'Últimas 12 semanas',
             'Gráfico de ventas por semana',
             optsChartVentasMovil()
         );
@@ -1069,6 +1069,17 @@
     function initLogin() {
         var form = document.getElementById('adminLoginForm');
         var err = document.getElementById('adminLoginError');
+        var passInp = document.getElementById('adminPassword');
+        var passToggle = document.getElementById('adminPasswordToggle');
+        if (passToggle && passInp) {
+            passToggle.addEventListener('click', function () {
+                var mostrar = passInp.type === 'password';
+                passInp.type = mostrar ? 'text' : 'password';
+                passToggle.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                passToggle.setAttribute('title', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                passToggle.textContent = mostrar ? '🙈' : '👁';
+            });
+        }
         form.addEventListener('submit', function (e) {
             e.preventDefault();
             err.textContent = '';
@@ -1143,7 +1154,7 @@
             localStorage.setItem(ADMIN_THEME_KEY, t);
         } catch (e) { /* ignore */ }
         var label = etiquetaBotonTema(t);
-        ['adminThemeToggle', 'adminThemeToggleLogin'].forEach(function (id) {
+        ['adminThemeToggle'].forEach(function (id) {
             var btn = document.getElementById(id);
             if (!btn) return;
             btn.textContent = label;
@@ -1167,7 +1178,7 @@
             guardado = localStorage.getItem(ADMIN_THEME_KEY) || 'dark';
         } catch (e) { /* ignore */ }
         aplicarTemaAdmin(guardado);
-        ['adminThemeToggle', 'adminThemeToggleLogin', 'adminThemeToggleSidebar'].forEach(function (id) {
+        ['adminThemeToggle', 'adminThemeToggleSidebar'].forEach(function (id) {
             var btn = document.getElementById(id);
             if (btn && !btn._themeBound) {
                 btn._themeBound = true;

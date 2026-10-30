@@ -247,6 +247,28 @@
             '<td class="admin-muted-text">' + esc(fechaCierre) + '</td></tr>';
     }
 
+    function tarjetaHistoricoEntrega(e) {
+        var piezas = (e.items || []).reduce(function (s, it) { return s + (it.cantidad || 1); }, 0);
+        var estado = e.estado === 'completada' ? 'Completada' : 'Quitada';
+        var tagCls = e.estado === 'completada' ? 'admin-tag-ok' : 'admin-tag-warn';
+        var cuando = e.completadaEn || e.canceladaEn || e.creadoEn;
+        var fechaCierre = cuando
+            ? ObebeAdminData.formatoFechaLarga(cuando)
+            : ObebeAdminData.formatoFecha(e.fechaIso, e.fechaRaw);
+        return '<article class="admin-entrega-hist-card">' +
+            '<div class="admin-entrega-hist-card-head">' +
+            '<span class="admin-tag ' + tagCls + '">' + estado + '</span>' +
+            '<strong>' + esc(e.cliente) + '</strong></div>' +
+            '<p class="admin-muted-text">' + esc(ObebeAdminData.formatoFecha(e.fechaIso, e.fechaRaw)) +
+            (e.hora ? ' · ' + esc(e.hora) : '') + ' · ' + piezas + ' pza(s)</p>' +
+            '<p><span class="admin-muted-text">Lugar:</span> ' + esc(e.lugar) + '</p>' +
+            '<p class="admin-muted-text admin-entrega-hist-card-cierre">' + esc(fechaCierre) + '</p></article>';
+    }
+
+    function esVistaTelefonoEntregas() {
+        return window.matchMedia('(max-width: 899px)').matches;
+    }
+
     function mount(container, opts) {
         opts = opts || {};
         var vendedor = opts.vendedor || 'OBEBE';
@@ -259,7 +281,12 @@
                 box.innerHTML = '<p class="admin-muted-text" style="padding:0 1rem 1rem">Sin entregas cerradas todavía.</p>';
                 return;
             }
-            box.innerHTML = '<div class="admin-table-wrap"><table class="admin-table admin-table-compact admin-entrega-hist-table"><thead><tr>' +
+            if (esVistaTelefonoEntregas()) {
+                box.innerHTML = '<div class="admin-entrega-hist-cards">' +
+                    list.map(tarjetaHistoricoEntrega).join('') + '</div>';
+                return;
+            }
+            box.innerHTML = '<div class="admin-table-wrap admin-entrega-hist-scroll"><table class="admin-table admin-table-compact admin-entrega-hist-table"><thead><tr>' +
                 '<th>Estado</th><th>Programada</th><th>Cliente</th><th>Lugar</th><th>Pzas.</th><th>Cierre</th>' +
                 '</tr></thead><tbody>' + list.map(filaHistorico).join('') + '</tbody></table></div>';
         }

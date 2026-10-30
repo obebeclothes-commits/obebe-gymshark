@@ -7,7 +7,7 @@
     <title>Obebe Admin</title>
     <link rel="preconnect" href="https://docs.google.com" crossorigin>
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="admin.css?v=20261125">
+    <link rel="stylesheet" href="admin.css?v=20261126">
     <script>
     (function () {
         try {
@@ -31,11 +31,13 @@
                 </div>
                 <div class="admin-field">
                     <label for="adminPassword">Contraseña</label>
-                    <input id="adminPassword" name="password" type="password" required autocomplete="current-password">
+                    <div class="admin-password-field">
+                        <input id="adminPassword" name="password" type="password" required autocomplete="current-password">
+                        <button type="button" id="adminPasswordToggle" class="admin-password-toggle" aria-label="Mostrar contraseña" title="Mostrar contraseña">👁</button>
+                    </div>
                 </div>
                 <button type="submit" class="admin-btn admin-btn-primary">Iniciar sesión</button>
             </form>
-            <button type="button" id="adminThemeToggleLogin" class="admin-btn admin-btn-ghost admin-theme-toggle admin-theme-toggle-login" aria-label="Cambiar tema">Modo claro</button>
         </div>
     </div>
 
@@ -78,11 +80,11 @@
     <script src="admin-campos-ui.js?v=20261122"></script>
     <script src="admin-inventario.js?v=20261113"></script>
     <script src="admin-entregas-store.js?v=20261103"></script>
-    <script src="admin-entregas.js?v=20261104"></script>
-    <script src="admin-apartados-store.js?v=20261122"></script>
-    <script src="admin-apartados.js?v=20261123"></script>
+    <script src="admin-entregas.js?v=20261126"></script>
+    <script src="admin-apartados-store.js?v=20261126"></script>
+    <script src="admin-apartados.js?v=20261126"></script>
     <script src="admin-ventas-retail.js?v=20261122"></script>
-    <script src="admin-ventas-registro.js?v=20261081"></script>
+    <script src="admin-ventas-registro.js?v=20261126"></script>
     <script src="admin-gastos.js?v=20261081"></script>
     <script src="admin-historico.js?v=20261125"></script>
     <script src="admin-inventario-historico.js?v=20261125"></script>
@@ -95,6 +97,6 @@
     <script src="admin-mayoreo-pedidos-store.js?v=20261101"></script>
     <script src="admin-mayoreo-calendario.js?v=20261051"></script>
     <script src="admin-mayoreo-pedidos.js?v=20261105"></script>
-    <script src="admin-app.js?v=20261125"></script>
+    <script src="admin-app.js?v=20261126"></script>
 </body>
 </html>

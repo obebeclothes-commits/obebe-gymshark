@@ -264,7 +264,7 @@
                 acc = '<td>—</td>';
             }
             return '<tr data-venta-id="' + id + '"><td>' + esc(ObebeAdminData.formatoFecha(v.fechaIso, v.fechaRaw)) + '</td>' +
-                '<td>' + esc(v.nombre) + '</td><td>' + esc(v.tipo) + '</td>' +
+                '<td class="admin-venta-col-articulo">' + esc(v.nombre) + '</td><td>' + esc(v.tipo) + '</td>' +
                 '<td>' + ObebeAdminData.formatoMoney(v.precio) + '</td>' +
                 '<td>' + esc(v.talla) + '</td><td>' + esc(v.color) + '</td>' +
                 '<td>' + esc(v.segmento) + '</td><td>' + esc(v.cliente) + '</td>' +

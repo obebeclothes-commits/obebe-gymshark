@@ -746,7 +746,18 @@
         };
 
         container.innerHTML =
-            '<div class="admin-panel">' +
+            '<div class="admin-apartados-layout">' +
+            '<div class="admin-panel admin-apartados-panel-lista">' +
+            '<div class="admin-panel-head admin-panel-head--ventas-reg">' +
+            '<h3>Apartados</h3>' +
+            '<div class="admin-panel-head-actions admin-apartado-filtros">' +
+            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm active" data-ap-filtro="activo">Activos</button>' +
+            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="completado">Liquidados</button>' +
+            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="cancelado">Cancelados</button>' +
+            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="todos">Todos</button></div></div>' +
+            '<p class="admin-muted-text admin-apartados-hint">Los apartados se guardan en este navegador (local).</p>' +
+            '<div id="adminApartadosLista" class="admin-apartados-lista"></div></div>' +
+            '<div class="admin-panel admin-apartados-panel-nuevo">' +
             '<div class="admin-panel-head"><h3>Nuevo apartado</h3></div>' +
             '<form id="adminApartadoNuevoForm" class="admin-apartados-form">' +
             '<div class="admin-venta-retail-cliente">' +
@@ -780,16 +791,7 @@
             '<div class="admin-field"><label for="adminApartadoNotas">Notas <span class="admin-label-opt">(opc.)</span></label>' +
             '<input id="adminApartadoNotas" type="text" placeholder="Entrega estimada, ubicación de piezas…"></div>' +
             '<p id="adminApartadoFormError" class="admin-login-error" role="alert"></p>' +
-            '<button type="submit" class="admin-btn admin-btn-primary">Guardar apartado</button></form></div>' +
-            '<div class="admin-panel">' +
-            '<div class="admin-panel-head admin-panel-head--ventas-reg">' +
-            '<h3>Apartados</h3>' +
-            '<div class="admin-panel-head-actions admin-apartado-filtros">' +
-            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm active" data-ap-filtro="activo">Activos</button>' +
-            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="completado">Liquidados</button>' +
-            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="cancelado">Cancelados</button>' +
-            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="todos">Todos</button></div></div>' +
-            '<div id="adminApartadosLista" class="admin-apartados-lista"></div></div>';
+            '<button type="submit" class="admin-btn admin-btn-primary">Guardar apartado</button></form></div></div>';
 
         pintarLista();
         pintarFiltros();
@@ -813,17 +815,6 @@
                 pintarResumenClienteApartado();
             });
         }
-
-        document.body.addEventListener('click', function (ev) {
-            var pick = ev.target.closest('.admin-ap-inv-pick');
-            if (!pick || !inventarioPickRowEl) return;
-            if (!ev.target.closest('#adminApartadoInvModal')) return;
-            inventarioPickSelected = {
-                invId: pick.getAttribute('data-inv-id'),
-                filaSheet: pick.getAttribute('data-fila')
-            };
-            pintarListaInventarioPicker();
-        });
 
         document.getElementById('adminApartadoAddPrenda').addEventListener('click', function () {
             var box = document.getElementById('adminApartadoPrendasRows');
@@ -992,6 +983,20 @@
                     pintarLista();
                 });
             }
+        });
+    }
+
+    if (!global.__obebeApartadoInvBodyBound) {
+        global.__obebeApartadoInvBodyBound = true;
+        document.body.addEventListener('click', function (ev) {
+            var pick = ev.target.closest('.admin-ap-inv-pick');
+            if (!pick || !inventarioPickRowEl) return;
+            if (!ev.target.closest('#adminApartadoInvModal')) return;
+            inventarioPickSelected = {
+                invId: pick.getAttribute('data-inv-id'),
+                filaSheet: pick.getAttribute('data-fila')
+            };
+            pintarListaInventarioPicker();
         });
     }
 
