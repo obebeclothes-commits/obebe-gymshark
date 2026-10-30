@@ -80,6 +80,7 @@
             btnCancel.textContent = opts.cancelText || 'Cancelar';
             btnConfirm.textContent = opts.confirmText || 'Confirmar';
             btnConfirm.className = 'admin-btn ' + (variant === 'danger' ? 'admin-btn-danger' : 'admin-btn-primary');
+            btnCancel.className = 'admin-btn ' + (opts.cancelDanger ? 'admin-btn-danger' : 'admin-btn-ghost');
         }
 
         return new Promise(function (resolve) {

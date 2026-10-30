@@ -323,6 +323,86 @@
         });
     }
 
+    function costoNetoDesdeCeldas(celdas) {
+        var idx = idxInventario();
+        var i = idx.costoNeto != null ? idx.costoNeto : 12;
+        return parseNum((celdas || [])[i]);
+    }
+
+    function costoNetoHistoricoEntry(entry, filasLive) {
+        var e = entry || {};
+        var live = (filasLive || []).find(function (f) {
+            if (e.filaSheet && f.filaSheet === e.filaSheet) return true;
+            return claveHistoricoFila(f) === e.clave;
+        });
+        if (live && live.celdas) {
+            var c = costoNetoDesdeCeldas(live.celdas);
+            if (c > 0) return c;
+        }
+        return costoNetoDesdeCeldas(e.celdas);
+    }
+
+    function totalVentasRetailHistorico(ventas) {
+        var t = 0;
+        (ventas || []).forEach(function (v) {
+            if (esLineaVentaRetail(v)) t += Number(v.precio) || 0;
+        });
+        return Math.round(t * 100) / 100;
+    }
+
+    function calcularDashboardHistoricoInventario(filasLive, ventas) {
+        var list = listarHistoricoInventario(filasLive);
+        var hist = {
+            valorRetail: 0,
+            prendas: 0,
+            invertido: 0,
+            costoPiezasVendidasEst: 0
+        };
+        list.forEach(function (row) {
+            var e = row.entry || {};
+            var qty = Math.max(1, parseInt(e.cantidadRegistro, 10) || 1);
+            var precio = Number(e.precio) || 0;
+            var costo = costoNetoHistoricoEntry(e, filasLive);
+            hist.valorRetail += precio * qty;
+            hist.prendas += qty;
+            hist.invertido += costo * qty;
+            var vendidasEst = Math.max(0, qty - (row.stockLive || 0));
+            hist.costoPiezasVendidasEst += costo * vendidasEst;
+        });
+        hist.valorRetail = Math.round(hist.valorRetail * 100) / 100;
+        hist.invertido = Math.round(hist.invertido * 100) / 100;
+        hist.costoPiezasVendidasEst = Math.round(hist.costoPiezasVendidasEst * 100) / 100;
+
+        var totalVendido = totalVentasRetailHistorico(ventas);
+        var gananciaHistorica = Math.round((totalVendido - hist.costoPiezasVendidasEst) * 100) / 100;
+
+        var actual = {
+            valorRetail: 0,
+            prendas: 0,
+            invertido: 0,
+            gananciaPotencial: 0
+        };
+        (filasLive || []).forEach(function (f) {
+            var s = f.stock || 0;
+            if (s <= 0) return;
+            var precio = Number(f.precio) || 0;
+            var costo = costoNetoDesdeCeldas(f.celdas);
+            actual.valorRetail += precio * s;
+            actual.prendas += s;
+            actual.invertido += costo * s;
+        });
+        actual.valorRetail = Math.round(actual.valorRetail * 100) / 100;
+        actual.invertido = Math.round(actual.invertido * 100) / 100;
+        actual.gananciaPotencial = Math.round((actual.valorRetail - actual.invertido) * 100) / 100;
+
+        return {
+            historico: hist,
+            totalVendidoRetail: totalVendido,
+            gananciaHistorica: gananciaHistorica,
+            actual: actual
+        };
+    }
+
     /** Datos listos sin red (para pintar UI de inmediato). */
     function snapshotInventarioCacheLocal() {
         if (estado.filas.length && estado.cargadoEn) {
@@ -2396,6 +2476,82 @@
         return null;
     }
 
+    function buscarFilaInventarioApartado(prenda) {
+        prenda = prenda || {};
+        if (prenda.inventarioId) {
+            var porId = estado.filas.find(function (f) {
+                return idFilaInventario(f) === prenda.inventarioId;
+            });
+            if (porId) return porId;
+        }
+        if (prenda.filaSheet) {
+            var porFila = estado.filas.find(function (f) { return f.filaSheet === prenda.filaSheet; });
+            if (porFila) return porFila;
+        }
+        var nn = norm(prenda.nombre);
+        if (!nn) return null;
+        var nt = norm(prenda.talla);
+        var nc = norm(prenda.color);
+        var nm = prenda.marca ? norm(normalizarMarca(prenda.marca)) : '';
+        var candidatos = estado.filas.filter(function (f) {
+            if (norm(f.nombre) !== nn) return false;
+            if (nt && norm(f.talla) !== nt) return false;
+            if (nc && norm(f.color) !== nc) return false;
+            if (nm && norm(normalizarMarca(f.marca)) !== nm) return false;
+            return true;
+        });
+        if (candidatos.length === 1) return candidatos[0];
+        if (candidatos.length > 1) return candidatos[0];
+        return buscarFilaInventarioPorVenta(prenda.nombre, prenda.talla, prenda.color);
+    }
+
+    function recibirPrendaApartadoEnInventario(prenda) {
+        prenda = prenda || {};
+        var qty = parseInt(prenda.cantidad, 10) > 0 ? parseInt(prenda.cantidad, 10) : 1;
+        var f = buscarFilaInventarioApartado(prenda);
+        if (!f || !f.filaSheet) {
+            return Promise.resolve({
+                ok: false,
+                error: 'No hay fila en inventario. Vincula el artículo (botón Inventario) o créalo en Inventario.'
+            });
+        }
+        var nuevo = (f.stock || 0) + qty;
+        return actualizarStockFila(f.filaSheet, nuevo).then(function (res) {
+            if (!res || res.ok === false) {
+                return { ok: false, error: (res && res.error) || 'No se pudo subir stock.' };
+            }
+            return {
+                ok: true,
+                fila: f,
+                inventarioId: idFilaInventario(f),
+                filaSheet: f.filaSheet,
+                stock: nuevo
+            };
+        });
+    }
+
+    function entregarPrendaApartadoInventario(prenda) {
+        prenda = prenda || {};
+        var qty = parseInt(prenda.cantidad, 10) > 0 ? parseInt(prenda.cantidad, 10) : 1;
+        var f = buscarFilaInventarioApartado(prenda);
+        if (!f || !f.filaSheet) {
+            return Promise.resolve({ ok: false, error: 'No se encontró la fila en inventario.' });
+        }
+        if ((f.stock || 0) < qty) {
+            return Promise.resolve({
+                ok: false,
+                error: 'Stock insuficiente (' + (f.stock || 0) + '). Revisa inventario o vincula la prenda correcta.'
+            });
+        }
+        var nuevo = Math.max(0, (f.stock || 0) - qty);
+        return actualizarStockFila(f.filaSheet, nuevo).then(function (res) {
+            if (!res || res.ok === false) {
+                return { ok: false, error: (res && res.error) || 'No se pudo bajar stock.' };
+            }
+            return { ok: true, fila: f, stock: nuevo };
+        });
+    }
+
     var KEY_PEDIDOS_MAYOREO = 'obebe_mayoreo_pedidos_v1';
 
     function leerPedidosMayoreoLocal() {
@@ -3560,6 +3716,69 @@
             .slice(0, limite);
     }
 
+    function resumenApartadoParaVenta(apartado) {
+        apartado = apartado || {};
+        var prendas = apartado.prendas || [];
+        var nombres = prendas.map(function (p) { return String(p.nombre || '').trim(); }).filter(Boolean);
+        var nombre = nombres.join(', ');
+        if (nombre.length > 120) nombre = nombre.slice(0, 117) + '…';
+        if (!nombre) nombre = 'Apartado';
+        var marcas = {};
+        prendas.forEach(function (p) {
+            var m = String(p.marca || '').trim();
+            if (m) marcas[norm(m)] = m;
+        });
+        var marcasList = Object.keys(marcas).map(function (k) { return marcas[k]; });
+        var segmento = marcasList.length === 1 ? marcasList[0] : (marcasList.length ? 'Varias marcas' : '');
+        var talla = prendas.length === 1 ? (prendas[0].talla || '') : (prendas.length ? 'Varios' : '');
+        var color = prendas.length === 1 ? (prendas[0].color || '') : (prendas.length ? 'Varios' : '');
+        return {
+            nombre: nombre,
+            tipo: 'Apartado',
+            talla: talla,
+            color: color,
+            segmento: segmento
+        };
+    }
+
+    function registrarAbonoApartado(apartado, pago) {
+        pago = pago || {};
+        var monto = parseNum(pago.monto);
+        if (!monto || monto <= 0) {
+            return Promise.resolve({ ok: false, error: 'Indica un monto válido.' });
+        }
+        if (!apartado || !String(apartado.cliente || '').trim()) {
+            return Promise.resolve({ ok: false, error: 'Apartado sin cliente.' });
+        }
+        var resumen = resumenApartadoParaVenta(apartado);
+        var campos = {
+            fechaRaw: String(pago.fechaRaw || '').trim() || fechaTextoHoyVentas(),
+            nombre: resumen.nombre,
+            tipo: resumen.tipo,
+            precio: monto,
+            talla: resumen.talla,
+            color: resumen.color,
+            segmento: resumen.segmento,
+            cliente: apartado.cliente,
+            vendedor: String(pago.vendedor || '').trim(),
+            cuenta: String(pago.cuenta || '').trim(),
+            redSocial: apartado.redSocial || '',
+            link: apartado.link || '',
+            telefono: apartado.telefono || ''
+        };
+        return crearVentaLineaManual(campos, { ajustarStock: false }).then(function (res) {
+            if (!res || res.ok === false) {
+                return { ok: false, error: (res && res.error) || 'No se pudo registrar en ventas.' };
+            }
+            return {
+                ok: true,
+                venta: res.venta,
+                ventaId: res.venta && res.venta.filaSheet,
+                soloLocal: !!res.soloLocal
+            };
+        });
+    }
+
     function filtrarVentas(ventas, query) {
         var base = (ventas || []).filter(esLineaVentaRetail);
         query = norm(query);
@@ -3612,6 +3831,7 @@
         filtrarVentas: filtrarVentas,
         listarHistoricoInventario: listarHistoricoInventario,
         filtrarHistoricoBd: filtrarHistoricoBd,
+        calcularDashboardHistoricoInventario: calcularDashboardHistoricoInventario,
         timestampAgotadoFila: timestampAgotadoFila,
         sincronizarHistoricoInventario: sincronizarHistoricoInventario,
         descontarStockPedidoMayoreo: descontarStockPedidoMayoreo,
@@ -3672,6 +3892,11 @@
         actualizarVentaLinea: actualizarVentaLinea,
         eliminarVentaLinea: eliminarVentaLinea,
         crearVentaLineaManual: crearVentaLineaManual,
+        registrarAbonoApartado: registrarAbonoApartado,
+        resumenApartadoParaVenta: resumenApartadoParaVenta,
+        buscarFilaInventarioApartado: buscarFilaInventarioApartado,
+        recibirPrendaApartadoEnInventario: recibirPrendaApartadoEnInventario,
+        entregarPrendaApartadoInventario: entregarPrendaApartadoInventario,
         ventaCamposDesdeObj: ventaCamposDesdeObj,
         edicionVentasHabilitada: edicionVentasHabilitada,
         actualizarStockFila: actualizarStockFila,

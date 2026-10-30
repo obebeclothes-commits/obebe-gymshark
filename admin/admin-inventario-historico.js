@@ -8,12 +8,52 @@
             .replace(/"/g, '&quot;');
     }
 
+    function fmt(n) {
+        return ObebeAdminData.formatoMoney(n || 0);
+    }
+
+    function kpi(label, value, hint) {
+        return '<div class="admin-kpi"><div class="label">' + esc(label) + '</div>' +
+            '<div class="value">' + value + '</div>' +
+            (hint ? '<div class="hint">' + esc(hint) + '</div>' : '') + '</div>';
+    }
+
+    function htmlDashboard(d) {
+        d = d || {};
+        var h = d.historico || {};
+        var a = d.actual || {};
+        return '<div class="admin-panel admin-panel--flat"><div class="admin-panel-head"><h3>Resumen histórico</h3></div>' +
+            '<div class="admin-kpi-grid admin-hist-dash-grid">' +
+            kpi('Valor inventario histórico', fmt(h.valorRetail), 'Precio retail × piezas registradas') +
+            kpi('Prendas históricas', String(h.prendas || 0), 'Máximo de stock visto por modelo') +
+            kpi('Invertido histórico', fmt(h.invertido), 'Costo neto × piezas registradas') +
+            kpi('Total vendido (Ventas)', fmt(d.totalVendidoRetail), 'Suma de líneas retail en Ventas') +
+            kpi('Ganancia histórica (est.)', fmt(d.gananciaHistorica), 'Vendido − costo neto × piezas vendidas (est.)') +
+            '</div></div>' +
+            '<div class="admin-panel admin-panel--flat"><div class="admin-panel-head"><h3>Inventario actual</h3></div>' +
+            '<div class="admin-kpi-grid admin-hist-dash-grid">' +
+            kpi('Valor a precio retail', fmt(a.valorRetail), 'Precio × stock actual') +
+            kpi('Piezas en stock', String(a.prendas || 0), 'Solo artículos con stock &gt; 0') +
+            kpi('Costo neto en stock', fmt(a.invertido), 'Costo neto × stock') +
+            kpi('Ganancia potencial', fmt(a.gananciaPotencial), 'Si vendieras todo al precio retail') +
+            '</div></div>';
+    }
+
     function mount(container, opts) {
         opts = opts || {};
         var filasLive = opts.filas || [];
+        var ventas = opts.ventas || [];
         var filtro = '';
 
+        function pintarDashboard() {
+            var el = document.getElementById('adminHistBdDash');
+            if (!el) return;
+            var dash = ObebeAdminData.calcularDashboardHistoricoInventario(filasLive, ventas);
+            el.innerHTML = htmlDashboard(dash);
+        }
+
         function pintar() {
+            pintarDashboard();
             var list = ObebeAdminData.filtrarHistoricoBd(
                 ObebeAdminData.listarHistoricoInventario(filasLive),
                 filtro
@@ -53,6 +93,7 @@
         }
 
         container.innerHTML =
+            '<div id="adminHistBdDash"></div>' +
             '<div class="admin-panel"><div class="admin-panel-head"><h3>Histórico de inventario</h3>' +
             '<input type="search" class="admin-search" id="adminHistBdSearch" placeholder="Buscar…"></div>' +
             '<p id="adminHistBdCount" class="admin-muted-text" style="padding:0 1rem 0.5rem;margin:0"></p>' +

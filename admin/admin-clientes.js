@@ -27,6 +27,12 @@
         return t;
     }
 
+    function totalArticulosVendidos(lista) {
+        var t = 0;
+        (lista || []).forEach(function (c) { t += c.articulos || 0; });
+        return t;
+    }
+
     function tablaClientes(lista) {
         if (!lista.length) {
             return '<p class="admin-muted-text" style="padding:1rem">No hay clientes con compras registradas.</p>';
@@ -162,13 +168,16 @@
         if (!el) return;
         var top = lista[0];
         var total = totalVendido(lista);
+        var piezas = totalArticulosVendidos(lista);
         el.innerHTML =
             '<div class="admin-kpi"><div class="label">Cliente top</div><div class="value">' +
             (top ? esc(top.nombre) : '—') + '</div>' +
             '<div class="hint">' + (top ? ObebeAdminData.formatoMoney(top.gasto) : '') + '</div></div>' +
             '<div class="admin-kpi"><div class="label">Total vendido</div><div class="value">' +
             ObebeAdminData.formatoMoney(total) + '</div>' +
-            '<div class="hint">' + lista.length + ' clientes</div></div>';
+            '<div class="hint">' + lista.length + ' clientes</div></div>' +
+            '<div class="admin-kpi"><div class="label">Artículos</div><div class="value">' +
+            piezas + '</div></div>';
     }
 
     function pintarTabla(q) {

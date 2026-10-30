@@ -2,17 +2,25 @@
     'use strict';
 
     var NAV_ADMIN = [
-        { type: 'link', id: 'dashboard', label: 'Dashboard', live: true },
-        { type: 'link', id: 'registrar_venta', label: 'Registrar venta', live: true },
-        { type: 'link', id: 'entregas', label: 'Entregas', live: true },
+        {
+            type: 'group',
+            id: 'nav_grp_principal',
+            label: 'Principal',
+            children: [
+                { id: 'dashboard', label: 'Dashboard', live: true },
+                { id: 'registrar_venta', label: 'Registrar venta', live: true },
+                { id: 'entregas', label: 'Entregas', live: true }
+            ]
+        },
         {
             type: 'group',
             id: 'nav_grp_ventas',
             label: 'Ventas',
             children: [
                 { id: 'ventas', label: 'Ventas', live: true },
+                { id: 'apartados', label: 'Apartados', live: true },
                 { id: 'clientes', label: 'Clientes', live: true },
-                { id: 'gastos', label: 'Gastos', live: true }
+                { id: 'gastos', label: 'Gastos', live: false }
             ]
         },
         {
@@ -21,7 +29,7 @@
             label: 'Inventario',
             children: [
                 { id: 'inventario', label: 'Inventario', live: true },
-                { id: 'pedidos', label: 'Pedidos', live: true },
+                { id: 'pedidos', label: 'Pedidos', live: false },
                 { id: 'compras', label: 'Compras', live: false },
                 { id: 'historico', label: 'Histórico', live: true }
             ]
@@ -46,6 +54,7 @@
     ];
 
     var navGruposAbiertos = {
+        nav_grp_principal: true,
         nav_grp_ventas: false,
         nav_grp_inventario: false,
         nav_grp_mayoreo: false
@@ -795,7 +804,8 @@
 
     function renderHistoricoInventario() {
         ObebeAdminInventarioHistorico.mount(elContent, {
-            filas: datosCache.filas || []
+            filas: datosCache.filas || [],
+            ventas: datosCache.ventas || []
         });
     }
 
@@ -830,6 +840,41 @@
             case 'registrar_venta': renderRegistrarVenta(); break;
             case 'entregas': renderEntregas(); break;
             case 'ventas': renderVentas(); break;
+            case 'apartados':
+                elContent.innerHTML = '<div id="adminApartadosMount"></div>';
+                ObebeAdminApartados.mount(document.getElementById('adminApartadosMount'), {
+                    vendedor: (userActual && userActual.nombre) ? userActual.nombre : 'OBEBE',
+                    clientes: datosCache.clientes || [],
+                    filas: datosCache.filas || [],
+                    getFilas: function () { return datosCache.filas || []; },
+                    onInventarioActualizado: function () {
+                        return ObebeAdminData.cargarInventario(true).then(function (inv) {
+                            datosCache.filas = inv.filas || datosCache.filas;
+                            datosCache.resumen = ObebeAdminData.calcularResumen(datosCache.filas);
+                        }).catch(function () {
+                            var st = ObebeAdminData.getEstado();
+                            datosCache.filas = st.filas || datosCache.filas;
+                            datosCache.resumen = ObebeAdminData.calcularResumen(datosCache.filas);
+                        });
+                    },
+                    onVentasActualizada: function () {
+                        function aplicarVentas() {
+                            var st = ObebeAdminData.getEstado();
+                            datosCache.ventas = st.ventas || datosCache.ventas;
+                            datosCache.resumenVentas = ObebeAdminData.calcularResumenVentas(datosCache.ventas);
+                            datosCache.clientes = ObebeAdminData.calcularPerfilesClientes(datosCache.ventas);
+                            if (vistaActual === 'ventas') renderVentas();
+                            if (vistaActual === 'dashboard') renderDashboard();
+                        }
+                        return ObebeAdminData.cargarVentas(true).then(function (p) {
+                            if (p && p.ventas) datosCache.ventas = p.ventas;
+                            if (p && p.resumenVentas) datosCache.resumenVentas = p.resumenVentas;
+                            if (p && p.clientes) datosCache.clientes = p.clientes;
+                            aplicarVentas();
+                        }).catch(function () { aplicarVentas(); });
+                    }
+                });
+                break;
             case 'gastos':
                 ObebeAdminGastos.mount(elContent, {
                     onVentasActualizada: function () {

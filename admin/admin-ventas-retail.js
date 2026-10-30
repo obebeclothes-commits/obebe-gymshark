@@ -4,6 +4,8 @@
     var MAX_CATALOGO = 400;
     var ORDEN_TALLAS = ['S', 'M', 'L', 'XL', 'UNI'];
     var EQUIPO = ['Ugo', 'Daniel', 'Fer'];
+    var CUENTAS_RETAIL = ['Ugo', 'Daniel', 'Fer', 'Tarjeta crédito'];
+    var COMISION_TARJETA = 0.0406;
 
     function esc(s) {
         return String(s || '')
@@ -93,6 +95,17 @@
         return (filas || []).filter(function (r) { return (r.stock || 0) > 0; });
     }
 
+    function esCuentaTarjeta(cuenta) {
+        return norm(cuenta).indexOf('tarjeta') >= 0;
+    }
+
+    function selectCuentaRetail(id, label) {
+        var opts = '<option value="">— Elegir —</option>' +
+            CUENTAS_RETAIL.map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join('');
+        return '<div class="admin-field"><label>' + esc(label) + '</label>' +
+            '<select id="' + id + '" class="admin-venta-pago-select admin-vr-cuenta-select">' + opts + '</select></div>';
+    }
+
     function selectEquipo(id, label) {
         var opts = '<option value="">— Elegir —</option>' +
             EQUIPO.map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join('');
@@ -112,6 +125,7 @@
         var clienteSeleccionadoId = '';
         var descuentoManual = false;
         var descuentoManualPct = '';
+        var tarjetaClientePagaComision = false;
 
         function piezasCarrito() {
             return carrito.reduce(function (s, c) { return s + (c.cantidad || 1); }, 0);
@@ -145,18 +159,51 @@
             }, 0);
         }
 
+        function cuentaActivaRetail() {
+            var id = tipoCliente === 'nuevo' ? 'adminVentaRetailCuentaNuevo' : 'adminVentaRetailCuentaEx';
+            return ((document.getElementById(id) || {}).value || '').trim();
+        }
+
         function carritoParaVenta() {
             var pct = pctDescuentoEfectivo();
-            if (pct <= 0) return carrito;
-            var factor = 1 - pct / 100;
+            var factorDesc = pct > 0 ? (1 - pct / 100) : 1;
+            var cuenta = cuentaActivaRetail();
+            var factorTarjeta = (esCuentaTarjeta(cuenta) && !tarjetaClientePagaComision)
+                ? (1 - COMISION_TARJETA) : 1;
             return carrito.map(function (c) {
                 var base = c.precioUnitario != null ? c.precioUnitario : 0;
+                var precio = Math.round(base * factorDesc * factorTarjeta * 100) / 100;
                 return {
                     fila: c.fila,
                     cantidad: c.cantidad,
-                    precioUnitario: Math.round(base * factor * 100) / 100,
+                    precioUnitario: precio,
                     imagenUrl: c.imagenUrl
                 };
+            });
+        }
+
+        function htmlBloqueTarjetaComision() {
+            var cuenta = cuentaActivaRetail();
+            if (!esCuentaTarjeta(cuenta)) return '';
+            var btnCli = tarjetaClientePagaComision ? ' active' : '';
+            var btnNeg = tarjetaClientePagaComision ? '' : ' active';
+            return '<div class="admin-vr-tarjeta-comision" id="adminVrTarjetaComision">' +
+                '<p class="admin-ped-filtros-sub">Comisión terminal (4.06%)</p>' +
+                '<div class="admin-ped-genero-btns">' +
+                '<button type="button" class="admin-ped-genero-btn admin-vr-comision-btn' + btnCli + '" data-comision="cliente">' +
+                'Cliente paga (+4.06% al total)</button>' +
+                '<button type="button" class="admin-ped-genero-btn admin-vr-comision-btn' + btnNeg + '" data-comision="negocio">' +
+                'Negocio absorbe (−4.06% en ventas)</button></div></div>';
+        }
+
+        function actualizarPanelTarjetaComision() {
+            var exist = document.getElementById('adminVentaRetailPanelExistente');
+            var nuevo = document.getElementById('adminVentaRetailPanelNuevo');
+            var html = htmlBloqueTarjetaComision();
+            ['adminVrTarjetaSlotEx', 'adminVrTarjetaSlotNuevo'].forEach(function (sid) {
+                var slot = document.getElementById(sid);
+                if (slot) slot.innerHTML = (sid === 'adminVrTarjetaSlotEx' && tipoCliente === 'existente') ||
+                    (sid === 'adminVrTarjetaSlotNuevo' && tipoCliente === 'nuevo') ? html : '';
             });
         }
 
@@ -164,6 +211,16 @@
             var pct = pctDescuentoEfectivo();
             var descMonto = Math.round(subtotal * pct) / 100;
             var total = subtotal - descMonto;
+            var cuenta = cuentaActivaRetail();
+            var comisionLine = '';
+            if (esCuentaTarjeta(cuenta) && tarjetaClientePagaComision) {
+                var extra = Math.round(total * COMISION_TARJETA * 100) / 100;
+                comisionLine = '<span class="admin-venta-desc-line">Comisión tarjeta (+4.06%): <strong>+' +
+                    fmt(extra) + '</strong></span>';
+                total = Math.round((total + extra) * 100) / 100;
+            } else if (esCuentaTarjeta(cuenta) && !tarjetaClientePagaComision) {
+                comisionLine = '<span class="admin-muted-text admin-venta-desc-hint">En Ventas cada artículo se registra con 4.06% menos.</span>';
+            }
             var piezas = piezasCarrito();
             var autoPct = pctDescuentoAuto(piezas);
             var hint;
@@ -187,8 +244,9 @@
                 '<div class="admin-venta-desc-col admin-venta-desc-col--resumen">' +
                 '<span class="admin-muted-text admin-venta-desc-hint">' + esc(hint) + '</span>' +
                 (pct > 0 ? '<span class="admin-venta-desc-line">Descuento (' + pct + '%): <strong>−' + fmt(descMonto) + '</strong></span>' : '') +
+                comisionLine +
                 '<span class="admin-venta-desc-total">Subtotal ' + fmt(subtotal) +
-                ' · Total <strong>' + fmt(pct > 0 ? total : subtotal) + '</strong></span></div></div></div>';
+                ' · Total <strong>' + fmt(total) + '</strong></span></div></div></div>';
         }
 
         function getFilasInv() {
@@ -444,16 +502,22 @@
                 '<div class="admin-field"><label>Cliente</label>' +
                 '<select id="adminVentaRetailClienteSelect" class="admin-venta-pago-select">' + opcionesClientesExistentes() + '</select></div>' +
                 '<div id="adminVentaRetailClienteResumen"></div>' +
-                '<div class="admin-field-row">' + selectEquipo('adminVentaRetailCuentaEx', 'Quien tiene el dinero') +
-                selectEquipo('adminVentaRetailVendedorEx', 'Vendedor') + '</div></div>' +
+                '<div class="admin-field-row">' + selectCuentaRetail('adminVentaRetailCuentaEx', 'Quien tiene el dinero') +
+                selectEquipo('adminVentaRetailVendedorEx', 'Vendedor') + '</div>' +
+                '<div id="adminVrTarjetaSlotEx"></div></div>' +
                 '<div id="adminVentaRetailPanelNuevo" class="admin-venta-retail-panel admin-hidden">' +
                 '<div class="admin-field"><label>Nombre cliente</label><input type="text" id="adminVentaRetailNombreNuevo" placeholder="Nombre completo" required></div>' +
                 '<div class="admin-field-row">' +
                 '<div class="admin-field"><label>Teléfono <span class="admin-label-opt">(opcional)</span></label><input type="text" id="adminVentaRetailTelNuevo"></div>' +
-                '<div class="admin-field"><label>Red social <span class="admin-label-opt">(opcional)</span></label><input type="text" id="adminVentaRetailRedNuevo" placeholder="Instagram…"></div></div>' +
+                '<div class="admin-field admin-field-select-otro"><label>Red social <span class="admin-label-opt">(opcional)</span></label>' +
+                (global.ObebeAdminCamposUi ? global.ObebeAdminCamposUi.htmlRedSocialField(
+                    'adminVentaRetailRedNuevoSelect', 'adminVentaRetailRedNuevoOtro', ''
+                ) : '<input type="text" id="adminVentaRetailRedNuevo" placeholder="Instagram…">') +
+                '</div></div>' +
                 '<div class="admin-field"><label>Link <span class="admin-label-opt">(opcional)</span></label><input type="text" id="adminVentaRetailLinkNuevo" placeholder="https://…"></div>' +
-                '<div class="admin-field-row">' + selectEquipo('adminVentaRetailCuentaNuevo', 'Quien tiene el dinero') +
-                selectEquipo('adminVentaRetailVendedorNuevo', 'Vendedor') + '</div></div></div></div>' +
+                '<div class="admin-field-row">' + selectCuentaRetail('adminVentaRetailCuentaNuevo', 'Quien tiene el dinero') +
+                selectEquipo('adminVentaRetailVendedorNuevo', 'Vendedor') + '</div>' +
+                '<div id="adminVrTarjetaSlotNuevo"></div></div></div></div>' +
                 '<div class="admin-ped-filtros-backdrop admin-hidden" id="adminVentaRetailFiltrosBackdrop"></div>' +
                 '<div class="admin-panel"><div class="admin-ped-layout">' + panelFiltrosHtml() +
                 '<div class="admin-ped-main">' +
@@ -491,7 +555,10 @@
                 return {
                     cliente: ((document.getElementById('adminVentaRetailNombreNuevo') || {}).value || '').trim(),
                     telefono: (document.getElementById('adminVentaRetailTelNuevo') || {}).value || '',
-                    redSocial: (document.getElementById('adminVentaRetailRedNuevo') || {}).value || '',
+                    redSocial: global.ObebeAdminCamposUi ? global.ObebeAdminCamposUi.leerRedSocial(
+                        document.getElementById('adminVentaRetailRedNuevoSelect'),
+                        document.getElementById('adminVentaRetailRedNuevoOtro')
+                    ) : ((document.getElementById('adminVentaRetailRedNuevo') || {}).value || ''),
                     link: (document.getElementById('adminVentaRetailLinkNuevo') || {}).value || '',
                     cuenta: (document.getElementById('adminVentaRetailCuentaNuevo') || {}).value || '',
                     vendedor: (document.getElementById('adminVentaRetailVendedorNuevo') || {}).value || ''
@@ -513,8 +580,8 @@
                 if (errEl) errEl.textContent = tipoCliente === 'nuevo' ? 'Escribe el nombre del cliente.' : 'Selecciona un cliente.';
                 return false;
             }
-            if (EQUIPO.indexOf(meta.cuenta) < 0) {
-                if (errEl) errEl.textContent = 'Elige quién tiene el dinero (Ugo, Daniel o Fer).';
+            if (CUENTAS_RETAIL.indexOf(meta.cuenta) < 0) {
+                if (errEl) errEl.textContent = 'Elige quién tiene el dinero (Ugo, Daniel, Fer o Tarjeta crédito).';
                 return false;
             }
             if (EQUIPO.indexOf(meta.vendedor) < 0) {
@@ -525,7 +592,9 @@
         }
 
         container.innerHTML = buildShell();
+        if (global.ObebeAdminCamposUi) global.ObebeAdminCamposUi.bindSelectOtros(container);
         actualizarPanelCliente();
+        actualizarPanelTarjetaComision();
         rebuildFiltrosPanel();
         pintarCatalogo();
         pintarCarrito();
@@ -548,6 +617,16 @@
             if (tipoBtn) {
                 tipoCliente = tipoBtn.getAttribute('data-tipo') || 'existente';
                 actualizarPanelCliente();
+                actualizarPanelTarjetaComision();
+                return;
+            }
+            var comBtn = ev.target.closest('.admin-vr-comision-btn');
+            if (comBtn) {
+                tarjetaClientePagaComision = comBtn.getAttribute('data-comision') === 'cliente';
+                container.querySelectorAll('.admin-vr-comision-btn').forEach(function (b) {
+                    b.classList.toggle('active', b === comBtn);
+                });
+                pintarCarrito();
                 return;
             }
             var genBtn = ev.target.closest('.admin-vr-gen');
@@ -614,6 +693,12 @@
                 if (pctDesc > 0) {
                     msgVenta += ' Descuento aplicado: ' + pctDesc + '%.';
                 }
+                var cuentaV = meta.cuenta || cuentaActivaRetail();
+                if (esCuentaTarjeta(cuentaV)) {
+                    msgVenta += tarjetaClientePagaComision
+                        ? ' Tarjeta: el cliente paga +4.06% sobre el total.'
+                        : ' Tarjeta: en Ventas cada artículo lleva −4.06% por comisión.';
+                }
                 ObebeAdminDialog.confirm({
                     title: '¿Confirmar venta?',
                     message: msgVenta,
@@ -639,6 +724,7 @@
                         carrito = [];
                         descuentoManual = false;
                         descuentoManualPct = '';
+                        tarjetaClientePagaComision = false;
                         filasInv = getFilasInv();
                         pintarCarrito();
                         rebuildFiltrosPanel();
@@ -681,6 +767,12 @@
         };
 
         container.onchange = function (ev) {
+            if (ev.target.classList.contains('admin-vr-cuenta-select')) {
+                if (!esCuentaTarjeta(ev.target.value)) tarjetaClientePagaComision = false;
+                actualizarPanelTarjetaComision();
+                pintarCarrito();
+                return;
+            }
             if (ev.target.id === 'adminVentaRetailDescManual') {
                 descuentoManual = !!ev.target.checked;
                 pintarCarrito();
