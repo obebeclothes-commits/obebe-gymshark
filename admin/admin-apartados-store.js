@@ -16,6 +16,9 @@
     function guardar(arr) {
         try {
             localStorage.setItem(KEY, JSON.stringify(arr || []));
+            if (global.ObebeAdminModulosCloud && ObebeAdminModulosCloud.notifyApartadosSaved) {
+                ObebeAdminModulosCloud.notifyApartadosSaved();
+            }
             return true;
         } catch (e) {
             return false;

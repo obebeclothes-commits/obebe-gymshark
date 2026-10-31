@@ -749,6 +749,50 @@ async function getDbStats() {
   };
 }
 
+const MODULO_BLOB_KEYS = new Set(["apartados", "entregas"]);
+
+async function getAdminModuloBlob(body: Record<string, unknown>) {
+  const moduleKey = String(body.moduleKey ?? "").trim();
+  if (!MODULO_BLOB_KEYS.has(moduleKey)) {
+    return { ok: false, error: "moduleKey no permitido." };
+  }
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("admin_modulos_blob")
+    .select("payload, updated_at")
+    .eq("module_key", moduleKey)
+    .maybeSingle();
+  if (error) throw error;
+  const payload = data?.payload;
+  return {
+    ok: true,
+    payload: Array.isArray(payload) ? payload : [],
+    updatedAt: data?.updated_at ?? null,
+  };
+}
+
+async function setAdminModuloBlob(body: Record<string, unknown>) {
+  const moduleKey = String(body.moduleKey ?? "").trim();
+  if (!MODULO_BLOB_KEYS.has(moduleKey)) {
+    return { ok: false, error: "moduleKey no permitido." };
+  }
+  const payload = body.payload;
+  if (!Array.isArray(payload)) {
+    return { ok: false, error: "payload debe ser un arreglo JSON." };
+  }
+  const sb = adminClient();
+  const { error } = await sb.from("admin_modulos_blob").upsert(
+    {
+      module_key: moduleKey,
+      payload,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "module_key" },
+  );
+  if (error) throw error;
+  return { ok: true };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: cors });
@@ -772,6 +816,12 @@ Deno.serve(async (req) => {
       return json(await limpiarVentasNegativasMigrarGastos());
     }
     if (action === "getDbStats") return json(await getDbStats());
+    if (action === "getAdminModuloBlob") {
+      return json(await getAdminModuloBlob(body));
+    }
+    if (action === "setAdminModuloBlob") {
+      return json(await setAdminModuloBlob(body));
+    }
     if (action === "importFromGoogleRetail") {
       return json(await importFromGoogleRetail());
     }

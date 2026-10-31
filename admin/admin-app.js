@@ -1036,7 +1036,10 @@
         var nombreUser = user.nombre || user.usuario;
         elUserChip.textContent = nombreUser;
         var chipSide = document.getElementById('adminUserChipSidebar');
-        if (chipSide) chipSide.textContent = nombreUser;
+        if (chipSide) {
+            chipSide.textContent = nombreUser;
+            chipSide.classList.toggle('admin-hidden', !nombreUser || nombreUser === 'OBEBE');
+        }
         actualizarMarcaPanel(user);
         renderNav();
         var inicio = ObebeAdminAuth.esMayoreoCliente(user) ? 'mayoreo' : 'dashboard';
@@ -1051,6 +1054,10 @@
             return;
         }
         cargarDatos(false).then(function () {
+            if (global.ObebeAdminModulosCloud) {
+                ObebeAdminModulosCloud.syncApartados().catch(function () { /* ignore */ });
+                ObebeAdminModulosCloud.syncEntregas().catch(function () { /* ignore */ });
+            }
             irModulo(inicio);
         }).catch(function (err) {
             datosCache = armarDatosParcialesDesdeInventario({ filas: [] });
@@ -1072,12 +1079,13 @@
         var passInp = document.getElementById('adminPassword');
         var passToggle = document.getElementById('adminPasswordToggle');
         if (passToggle && passInp) {
+            passToggle.innerHTML = svgIconoPassword(false);
             passToggle.addEventListener('click', function () {
                 var mostrar = passInp.type === 'password';
                 passInp.type = mostrar ? 'text' : 'password';
                 passToggle.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
                 passToggle.setAttribute('title', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
-                passToggle.textContent = mostrar ? '🙈' : '👁';
+                passToggle.innerHTML = svgIconoPassword(mostrar);
             });
         }
         form.addEventListener('submit', function (e) {
@@ -1139,8 +1147,26 @@
         return tema === 'light' ? 'Modo oscuro' : 'Modo claro';
     }
 
-    function iconoBotonTema(tema) {
-        return tema === 'light' ? '☾' : '☀';
+    function svgIconoTema(tema) {
+        if (tema === 'light') {
+            return '<svg class="admin-icon-svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
+                '<path fill="currentColor" d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>';
+        }
+        return '<svg class="admin-icon-svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
+            '<path fill="currentColor" d="M12 18a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0v-2a1 1 0 0 1 1-1zm0-14a1 1 0 0 1-1-1V1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1zm8 7h-2a1 1 0 1 1 0-2h2a1 1 0 1 1 0 2zM6 12H4a1 1 0 1 1 0-2h2a1 1 0 1 1 0 2zm12.95 6.36a1 1 0 0 1-1.41 1.41l-1.42-1.42a1 1 0 1 1 1.41-1.41l1.42 1.42zM7.88 7.88 6.46 6.46a1 1 0 0 1 1.41-1.41l1.42 1.42a1 1 0 1 1-1.41 1.41zm9.66-1.41a1 1 0 0 1 1.41 0l1.42 1.41a1 1 0 1 1-1.41 1.41l-1.42-1.42a1 1 0 0 1 0-1.41zM7.88 16.12a1 1 0 0 1 0 1.41l-1.42 1.42a1 1 0 1 1-1.41-1.41l1.42-1.42a1 1 0 0 1 1.41 0zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>';
+    }
+
+    function svgIconoPassword(mostrar) {
+        if (mostrar) {
+            return '<svg class="admin-icon-svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">' +
+                '<path fill="none" stroke="currentColor" stroke-width="2" d="M3 3l18 18"/>' +
+                '<path fill="none" stroke="currentColor" stroke-width="2" d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58"/>' +
+                '<path fill="none" stroke="currentColor" stroke-width="2" d="M9.88 5.09A10.94 10.94 0 0 1 12 5c7 0 10 7 10 7a18.45 18.45 0 0 1-2.16 3.19"/>' +
+                '<path fill="none" stroke="currentColor" stroke-width="2" d="M6.61 6.61A18.48 18.48 0 0 0 2 12s3 7 10 7a10.66 10.66 0 0 0 5.39-1.45"/></svg>';
+        }
+        return '<svg class="admin-icon-svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">' +
+            '<path fill="none" stroke="currentColor" stroke-width="2" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>' +
+            '<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
     }
 
     function aplicarTemaAdmin(tema) {
@@ -1162,7 +1188,7 @@
         });
         var btnBrand = document.getElementById('adminThemeToggleSidebar');
         if (btnBrand) {
-            btnBrand.textContent = iconoBotonTema(t);
+            btnBrand.innerHTML = svgIconoTema(t);
             btnBrand.setAttribute('aria-label', label);
             btnBrand.setAttribute('title', label);
         }

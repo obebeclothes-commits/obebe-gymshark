@@ -68,3 +68,13 @@ create index if not exists gastos_operativos_fecha_idx on public.gastos_operativ
 alter table public.gastos_operativos enable row level security;
 
 comment on table public.gastos_operativos is 'Gastos operativos (no van en ventas_lineas)';
+
+create table if not exists public.admin_modulos_blob (
+  module_key text primary key,
+  payload jsonb not null default '[]'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.admin_modulos_blob enable row level security;
+
+comment on table public.admin_modulos_blob is 'JSON por módulo admin (apartados, entregas) — solo Edge Function con service role';

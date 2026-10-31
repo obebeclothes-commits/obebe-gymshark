@@ -315,7 +315,10 @@
             'Completadas o quitadas de la lista (últimas 40).</p>' +
             '<div id="adminEntregasHistorico"></div></div>';
 
-        pintarLista();
+        var syncEntP = (global.ObebeAdminModulosCloud && ObebeAdminModulosCloud.syncEntregas)
+            ? ObebeAdminModulosCloud.syncEntregas()
+            : Promise.resolve();
+        syncEntP.finally(function () { pintarLista(); });
 
         container.onclick = function (ev) {
             var edit = ev.target.closest('.admin-entrega-editar');

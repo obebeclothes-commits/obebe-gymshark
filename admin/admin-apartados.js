@@ -747,16 +747,6 @@
 
         container.innerHTML =
             '<div class="admin-apartados-layout">' +
-            '<div class="admin-panel admin-apartados-panel-lista">' +
-            '<div class="admin-panel-head admin-panel-head--ventas-reg">' +
-            '<h3>Apartados</h3>' +
-            '<div class="admin-panel-head-actions admin-apartado-filtros">' +
-            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm active" data-ap-filtro="activo">Activos</button>' +
-            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="completado">Liquidados</button>' +
-            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="cancelado">Cancelados</button>' +
-            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="todos">Todos</button></div></div>' +
-            '<p class="admin-muted-text admin-apartados-hint">Los apartados se guardan en este navegador (local).</p>' +
-            '<div id="adminApartadosLista" class="admin-apartados-lista"></div></div>' +
             '<div class="admin-panel admin-apartados-panel-nuevo">' +
             '<div class="admin-panel-head"><h3>Nuevo apartado</h3></div>' +
             '<form id="adminApartadoNuevoForm" class="admin-apartados-form">' +
@@ -791,9 +781,22 @@
             '<div class="admin-field"><label for="adminApartadoNotas">Notas <span class="admin-label-opt">(opc.)</span></label>' +
             '<input id="adminApartadoNotas" type="text" placeholder="Entrega estimada, ubicación de piezas…"></div>' +
             '<p id="adminApartadoFormError" class="admin-login-error" role="alert"></p>' +
-            '<button type="submit" class="admin-btn admin-btn-primary">Guardar apartado</button></form></div></div>';
+            '<button type="submit" class="admin-btn admin-btn-primary">Guardar apartado</button></form></div>' +
+            '<div class="admin-panel admin-apartados-panel-lista">' +
+            '<div class="admin-panel-head admin-panel-head--ventas-reg">' +
+            '<h3>Apartados</h3>' +
+            '<div class="admin-panel-head-actions admin-apartado-filtros">' +
+            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm active" data-ap-filtro="activo">Activos</button>' +
+            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="completado">Liquidados</button>' +
+            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="cancelado">Cancelados</button>' +
+            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="todos">Todos</button></div></div>' +
+            '<p class="admin-muted-text admin-apartados-hint">Se sincronizan entre dispositivos cuando Supabase está activo.</p>' +
+            '<div id="adminApartadosLista" class="admin-apartados-lista"></div></div></div>';
 
-        pintarLista();
+        var syncApartadosP = (global.ObebeAdminModulosCloud && ObebeAdminModulosCloud.syncApartados)
+            ? ObebeAdminModulosCloud.syncApartados()
+            : Promise.resolve();
+        syncApartadosP.finally(function () { pintarLista(); });
         pintarFiltros();
         actualizarPanelClienteApartado(container);
         pintarResumenClienteApartado();
