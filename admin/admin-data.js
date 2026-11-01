@@ -415,7 +415,6 @@
     }
 
     function refrescarInventarioEnFondo() {
-        if (escrituraLocalHabilitada()) return;
         if (usarSupabase() && supabaseListo()) {
             if (estado.inventarioSyncEnCurso) return;
             estado.inventarioSyncEnCurso = true;
@@ -426,6 +425,7 @@
             });
             return;
         }
+        if (escrituraLocalHabilitada()) return;
         if (estado.inventarioSyncEnCurso) return;
         estado.inventarioSyncEnCurso = true;
         fetchTextoHoja(HOJA_INVENTARIO).then(function (texto) {
@@ -1582,7 +1582,8 @@
     function parsearFilasInventarioSupabase(rows) {
         var out = [];
         (rows || []).forEach(function (r) {
-            var row = filaInventarioDesdeCeldas(celdasDesdeRegistroSupabase(r.celdas), r.id);
+            var filaId = parseInt(r.legacy_sheet_row, 10) || parseInt(r.id, 10) || 0;
+            var row = filaInventarioDesdeCeldas(celdasDesdeRegistroSupabase(r.celdas), filaId);
             if (row) out.push(row);
         });
         return out;
@@ -2114,11 +2115,17 @@
             }
             estado.filas = parsearFilasInventarioSupabase(rows);
             aplicarOverridesStockEnFilas(estado.filas, leerPendienteSync().stockByRow);
-            if (!rows.length || !estado.filas.length) {
+            if (!rows.length) {
                 estado.avisoSupabase =
-                    'Supabase no tiene inventario todavía. Ve a Configuración → Importar desde Google. ' +
-                    'Mientras tanto se muestra el Sheet (solo lectura).';
+                    'Supabase no tiene inventario todavía. Importa desde Google (admin-api) una vez. ' +
+                    'Mientras tanto se intenta leer el Sheet (solo lectura).';
                 return cargarInventarioDesdeSheetsRed();
+            }
+            if (!estado.filas.length) {
+                var msgParse = 'Supabase devolvió ' + rows.length +
+                    ' filas pero no se pudieron leer. Recarga con Ctrl+F5 o revisa la consola.';
+                estado.avisoSupabase = msgParse;
+                return Promise.reject(new Error(msgParse));
             }
             estado.avisoSupabase = '';
             estado.cargadoEn = Date.now();

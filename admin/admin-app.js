@@ -1053,12 +1053,18 @@
             });
             return;
         }
-        cargarDatos(false).then(function () {
+        cargarDatos(true).then(function (d) {
             if (global.ObebeAdminModulosCloud) {
                 ObebeAdminModulosCloud.syncApartados().catch(function () { /* ignore */ });
                 ObebeAdminModulosCloud.syncEntregas().catch(function () { /* ignore */ });
             }
             irModulo(inicio);
+            if (!d || !(d.filas || []).length) {
+                elContent.insertAdjacentHTML('afterbegin',
+                    '<div class="admin-banner">' +
+                    'No se cargó inventario desde Supabase. Comprueba internet, que el proyecto Supabase no esté pausado ' +
+                    'y recarga (Ctrl+F5). Si sigue vacío, abre la consola del navegador (F12).</div>');
+            }
         }).catch(function (err) {
             datosCache = armarDatosParcialesDesdeInventario({ filas: [] });
             irModulo('dashboard');

@@ -74,7 +74,8 @@
         });
     }
 
-    function fetchInventarioRaw() {
+    function fetchInventarioRaw(intento) {
+        intento = intento || 0;
         if (!supabaseUrl() || !supabaseAnonKey()) {
             return Promise.reject(new Error('Faltan supabaseUrl o supabaseAnonKey.'));
         }
@@ -82,8 +83,22 @@
             '/rest/v1/inventario_filas?select=id,celdas,legacy_sheet_row&order=id.asc&limit=5000';
         return fetch(url, { cache: 'no-store', headers: headersAnon() })
             .then(function (res) {
-                if (!res.ok) throw new Error('Inventario Supabase HTTP ' + res.status);
+                if (!res.ok) {
+                    var err = new Error('Inventario Supabase HTTP ' + res.status);
+                    err.httpStatus = res.status;
+                    throw err;
+                }
                 return res.json();
+            })
+            .catch(function (err) {
+                if (intento < 2 && (!err.httpStatus || err.httpStatus >= 500)) {
+                    return new Promise(function (resolve) {
+                        setTimeout(resolve, 800 * (intento + 1));
+                    }).then(function () {
+                        return fetchInventarioRaw(intento + 1);
+                    });
+                }
+                throw err;
             });
     }
 
