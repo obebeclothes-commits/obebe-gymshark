@@ -1054,7 +1054,7 @@
             return;
         }
         cargarDatos(true).then(function (d) {
-            if (global.ObebeAdminModulosCloud) {
+            if (window.ObebeAdminModulosCloud) {
                 ObebeAdminModulosCloud.syncApartados().catch(function () { /* ignore */ });
                 ObebeAdminModulosCloud.syncEntregas().catch(function () { /* ignore */ });
             }
