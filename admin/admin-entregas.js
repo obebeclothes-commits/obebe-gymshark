@@ -308,7 +308,7 @@
         container.innerHTML =
             '<div class="admin-panel"><div class="admin-panel-head"><h3>Entregas por hacer</h3></div>' +
             '<p class="admin-muted-text" style="padding:0 1rem 0.75rem;margin:0;font-size:0.85rem">' +
-            'Se crean al vender. Puedes editar fecha, lugar y contacto antes de completar.</p>' +
+            'Se crean al vender. Sincronizan en Supabase (admin_modulos_blob); si faltan en el teléfono, abre Entregas en la PC tras desplegar admin-api.</p>' +
             '<div id="adminEntregasLista"></div></div>' +
             '<div class="admin-panel" style="margin-top:1rem"><div class="admin-panel-head"><h3>Registro de entregas</h3></div>' +
             '<p class="admin-muted-text" style="padding:0 1rem 0.5rem;margin:0;font-size:0.82rem">' +

@@ -276,7 +276,7 @@
             ? '<p class="admin-vr-hint">Mostrando ' + limite + ' de ' + ventas.length + '.</p>'
             : '';
         var colSpan = editable ? 14 : 13;
-        return extra + '<div class="admin-table-wrap"><table class="admin-table admin-table-ventas"><thead><tr>' +
+        return extra + '<div class="admin-table-wrap admin-table-wrap--ventas-reg"><table class="admin-table admin-table-ventas"><thead><tr>' +
             '<th>Fecha</th><th>Artículo</th><th>Tipo</th><th>Precio</th><th>Talla</th><th>Color</th>' +
             '<th>Cat.</th><th>Cliente</th><th>Vendedor</th><th>Quien tiene el dinero</th>' +
             '<th>Red</th><th>Link</th><th>Tel.</th>' + accHead +

@@ -790,7 +790,8 @@
             '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="completado">Liquidados</button>' +
             '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="cancelado">Cancelados</button>' +
             '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-filtro="todos">Todos</button></div></div>' +
-            '<p class="admin-muted-text admin-apartados-hint">Se sincronizan entre dispositivos cuando Supabase está activo.</p>' +
+            '<p class="admin-muted-text admin-apartados-hint">Se guardan en la nube (tabla admin_modulos_blob en Supabase). ' +
+            'Si no ves datos en el teléfono, abre Apartados una vez en la PC para subirlos y ejecuta el SQL del repo si aún no lo hiciste.</p>' +
             '<div id="adminApartadosLista" class="admin-apartados-lista"></div></div></div>';
 
         var syncApartadosP = (global.ObebeAdminModulosCloud && ObebeAdminModulosCloud.syncApartados)

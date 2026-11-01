@@ -530,7 +530,7 @@
         );
     }
 
-    function panelVentasDashboard(sv, ventas) {
+    function panelVentasDashboardKpis(sv) {
         if (!sv) sv = { hoy: {}, semana: {}, mes: {} };
         var errV = ObebeAdminData.errorVentasParaUi
             ? ObebeAdminData.errorVentasParaUi(datosCache.errorVentas)
@@ -547,8 +547,11 @@
                 (sv.semana.count || 0) + ' artículos · ' + ObebeAdminData.etiquetaRangoSemana()) +
             kpiDestacado('Mes actual', ObebeAdminData.formatoMoney(sv.mes.monto || 0),
                 (sv.mes.count || 0) + ' artículos · ' + ObebeAdminData.etiquetaMesActual()) +
-            '</div></div></div>' +
-            graficoBarrasVentasPorMes(ventas || []);
+            '</div></div></div>';
+    }
+
+    function panelVentasDashboard(sv, ventas) {
+        return panelVentasDashboardKpis(sv) + graficoBarrasVentasPorMes(ventas || []);
     }
 
     function kpiDestacado(label, value, hint) {
@@ -568,18 +571,26 @@
             return '<tr><td>' + esc(x.key) + '</td><td>' + x.val + '</td></tr>';
         }).join('');
 
-        elContent.innerHTML =
-            '<div class="admin-dashboard-top">' +
+        var marcasPanel =
             '<div class="admin-panel admin-panel-marcas admin-panel-marcas--focus"><div class="admin-panel-head"><h3>Stock por marca</h3></div>' +
             '<div class="admin-panel-marcas-table"><table class="admin-table admin-table-compact admin-table-marcas"><thead><tr><th>Marca</th><th>Stock</th></tr></thead><tbody>' +
             (marcasHtml || '<tr><td colspan="2">Sin datos</td></tr>') +
-            '</tbody></table></div></div>' +
+            '</tbody></table></div></div>';
+        var invKpiGrid =
             '<div class="admin-kpi-grid admin-kpi-grid--dashboard admin-kpi-grid--dashboard-focus">' +
             kpiDestacado('Stock total', r.unidades, '') +
             kpiDestacado('Stock Hombre / Mujer', r.porSegmento.Hombre + ' / ' + r.porSegmento.Mujer, '') +
             kpiDestacado('Valor stock', ObebeAdminData.formatoMoney(r.valorEstimado), '') +
-            '</div></div>' +
-            panelVentasDashboard(sv, datosCache.ventas);
+            '</div>';
+
+        elContent.innerHTML =
+            '<div class="admin-dashboard-layout">' +
+            '<div class="admin-dashboard-slot admin-dashboard-slot--ventas">' +
+            panelVentasDashboardKpis(sv) + '</div>' +
+            '<div class="admin-dashboard-slot admin-dashboard-slot--marcas">' + marcasPanel + '</div>' +
+            '<div class="admin-dashboard-slot admin-dashboard-slot--inv-kpi">' + invKpiGrid + '</div>' +
+            '<div class="admin-dashboard-slot admin-dashboard-slot--chart-mes">' +
+            graficoBarrasVentasPorMes(datosCache.ventas || []) + '</div></div>';
     }
 
     function kpi(label, value, hint) {
