@@ -22,6 +22,23 @@
         return ObebeAdminData.formatoMoney(n || 0);
     }
 
+    function precioVentaFila(r) {
+        return ObebeAdminData.precioVentaRetailFila
+            ? ObebeAdminData.precioVentaRetailFila(r)
+            : (r.precio || 0);
+    }
+
+    function htmlPrecioCatalogo(r) {
+        var retail = r.precio || 0;
+        var vigente = precioVentaFila(r);
+        if (ObebeAdminData.esOfertaSemanalFila && ObebeAdminData.esOfertaSemanalFila(r) && retail > vigente) {
+            return '<span class="admin-ped-precio-oferta">' +
+                '<strong>' + fmt(vigente) + '</strong>' +
+                '<span class="admin-muted-text admin-ped-precio-tachado">' + fmt(retail) + '</span></span>';
+        }
+        return '<span class="admin-ped-precios"><strong>' + fmt(vigente) + '</strong></span>';
+    }
+
     function tallaBase(talla) {
         if (!talla) return '';
         var u = String(talla).toUpperCase();
@@ -395,7 +412,7 @@
                     '<span class="admin-ped-item-info"><strong>' + esc(r.nombre) + '</strong>' +
                     '<span class="admin-ped-tags"><span class="admin-tag admin-tag-muted">' + esc(seg) + '</span></span>' +
                     '<span>' + esc(r.talla) + ' · ' + esc(r.color) + ' · ' + esc(r.tipo) + ' · Stock ' + r.stock + '</span>' +
-                    '<span class="admin-ped-precios"><strong>' + fmt(r.precio) + '</strong></span></span></button>';
+                    htmlPrecioCatalogo(r) + '</span></button>';
             }).join('');
         }
 
@@ -666,7 +683,7 @@
                     carrito.push({
                         fila: f,
                         cantidad: 1,
-                        precioUnitario: f.precio || 0,
+                        precioUnitario: precioVentaFila(f),
                         imagenUrl: imagenFila(f)
                     });
                 }

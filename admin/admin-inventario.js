@@ -170,24 +170,62 @@
         return u === 'NA' || u === 'N/A' || u === '—' || s === '-';
     }
 
+    function parseNumInventario(val) {
+        var t = String(val || '').trim();
+        if (!t) return 0;
+        t = t.replace(/\$/g, '').replace(/\s/g, '');
+        if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, '').replace(',', '.');
+        else if (/^\d+,\d{1,2}$/.test(t)) t = t.replace(',', '.');
+        else t = t.replace(/,/g, '');
+        t = t.replace(/[^\d.-]/g, '');
+        var n = parseFloat(t);
+        return isNaN(n) ? 0 : n;
+    }
+
     function precioRetailFila(f) {
         if (f && f.precio > 0) return f.precio;
         var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : { precio: 7 };
         var col = idx.precio != null ? idx.precio : 7;
         var raw = f && f.celdas ? f.celdas[col] : '';
-        var t = String(raw || '').trim().replace(/\$/g, '').replace(/\s/g, '');
-        if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, '').replace(',', '.');
-        else if (/^\d+,\d{1,2}$/.test(t)) t = t.replace(',', '.');
-        var n = parseFloat(t);
-        return isNaN(n) ? 0 : n;
+        return parseNumInventario(raw);
+    }
+
+    function costoNetoFila(f) {
+        var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
+        var colCosto = idx.costoNeto != null ? idx.costoNeto : 12;
+        var raw = f && f.celdas ? f.celdas[colCosto] : '';
+        return parseNumInventario(raw);
+    }
+
+    function esErrorCeldaMargen(val) {
+        var u = String(val || '').trim().toUpperCase();
+        return u.indexOf('#VALUE') >= 0 || u.indexOf('#REF') >= 0 || u.indexOf('#DIV') >= 0;
+    }
+
+    function margenPctRetailCosto(f) {
+        var retail = precioRetailFila(f);
+        if (retail <= 0) return '';
+        var costo = costoNetoFila(f);
+        if (costo <= 0) costo = Math.round(retail * 0.7);
+        var pct = Math.round(((retail - costo) / retail) * 100);
+        if (!isFinite(pct)) return '';
+        return pct + '%';
     }
 
     function valorCeldaMostrar(f, colIdx, val) {
         var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
         var colCosto = idx.costoNeto != null ? idx.costoNeto : 12;
         var colMargen = idx.margen != null ? idx.margen : 14;
+        if (colIdx === colMargen) {
+            if (esErrorCeldaMargen(val) || esVacioONa(val)) {
+                var calc = margenPctRetailCosto(f);
+                return calc || '30%';
+            }
+            var sMargen = String(val).trim();
+            if (/^\d+([.,]\d+)?$/.test(sMargen)) return Math.round(parseNumInventario(sMargen)) + '%';
+            return val;
+        }
         if (!esVacioONa(val)) return val;
-        if (colIdx === colMargen) return '30%';
         if (colIdx === colCosto) {
             var retail = precioRetailFila(f);
             if (!retail) return val;

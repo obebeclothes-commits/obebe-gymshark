@@ -497,6 +497,53 @@
         return t === 'si' || t === 'sí' || t === 'yes' || t === '1' || t === 'true' || t === 'x';
     }
 
+    var FACTOR_PRECIO_OFERTA_SEMANAL = 0.75;
+
+    function normTextoOfertaSemanal(s) {
+        return String(s || '').trim().toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/í/g, 'i');
+    }
+
+    function parsePrecioOfertaSemanalCelda(valor) {
+        var precio = parseNum(valor);
+        if (precio > 0) return precio;
+        return 0;
+    }
+
+    function celdaIndicaOfertaSemanal(valor) {
+        if (parsePrecioOfertaSemanalCelda(valor) > 0) return true;
+        var clave = normTextoOfertaSemanal(valor);
+        if (!clave) return false;
+        if (clave === 'oferta semanal' || clave.indexOf('oferta semanal') >= 0) return true;
+        return clave === 'si' || clave === 'yes' || clave === '1' || clave === 'true' || clave === 'x';
+    }
+
+    function precioOfertaSemanalFila(f) {
+        if (!f) return 0;
+        var sheet = f.precioOfertaSemanal != null ? parseNum(f.precioOfertaSemanal) : 0;
+        if (sheet > 0) return Math.round(sheet * 100) / 100;
+        var retail = f.precio || 0;
+        if (f.ofertaSemanal && retail > 0) {
+            return Math.round(retail * FACTOR_PRECIO_OFERTA_SEMANAL * 100) / 100;
+        }
+        return 0;
+    }
+
+    function esOfertaSemanalFila(f) {
+        var retail = f && f.precio ? f.precio : 0;
+        var oferta = precioOfertaSemanalFila(f);
+        return oferta > 0 && (retail <= 0 || retail > oferta);
+    }
+
+    function precioVentaRetailFila(f) {
+        if (!f) return 0;
+        var retail = f.precio || 0;
+        var oferta = precioOfertaSemanalFila(f);
+        if (oferta > 0 && (retail <= 0 || retail > oferta)) return oferta;
+        return retail;
+    }
+
     function idFilaInventario(r) {
         return [
             String(r.ref || 0),
@@ -1524,6 +1571,10 @@
         var ref = parseRef(celdas[iImg]);
         var stock = parseStock(celdas[idxInv.stock != null ? idxInv.stock : IDX.stock]);
         var precio = parseNum(celdas[idxInv.precio != null ? idxInv.precio : IDX.precio]);
+        var iOferta = idxInv.ofertaSemanal != null ? idxInv.ofertaSemanal : 24;
+        var rawOferta = celdas[iOferta];
+        var precioOfertaSemanal = parsePrecioOfertaSemanalCelda(rawOferta);
+        var ofertaSemanal = celdaIndicaOfertaSemanal(rawOferta);
         var iTotal = idxInv.total != null ? idxInv.total : 8;
         var valorLinea = parseNum(celdas[iTotal]);
         if (!valorLinea && precio > 0 && stock > 0) valorLinea = precio * stock;
@@ -1538,6 +1589,8 @@
             tipo: (celdas[idxInv.tipo != null ? idxInv.tipo : IDX.tipo] || '').trim(),
             marca: normalizarMarca(celdas[idxInv.marca != null ? idxInv.marca : IDX.marca]),
             precio: precio,
+            precioOfertaSemanal: precioOfertaSemanal,
+            ofertaSemanal: ofertaSemanal,
             precioMayoreo: parseNum(celdas[idxInv.precioMayoreo != null ? idxInv.precioMayoreo : IDX.precioMayoreo]),
             precioMayoreo50: parseNum(celdas[idxInv.precioMayoreo50 != null ? idxInv.precioMayoreo50 : IDX.precioMayoreo50]),
             mayoreo: parseMayoreoFlag(celdas[idxInv.mayoreo != null ? idxInv.mayoreo : IDX.mayoreo]),
@@ -2275,7 +2328,7 @@
             if (!f || !f.filaSheet) return;
             var qty = c.cantidad || 1;
             if (stockByRow[f.filaSheet] == null) stockByRow[f.filaSheet] = f.stock || 0;
-            var precioU = c.precioUnitario != null ? c.precioUnitario : f.precio || 0;
+            var precioU = c.precioUnitario != null ? c.precioUnitario : precioVentaRetailFila(f);
             var lineMeta = Object.assign({}, meta, { precio: precioU });
             for (var i = 0; i < qty; i++) {
                 ventas.push(lineaVentaDesdeFila(f, lineMeta));
@@ -2439,8 +2492,29 @@
         return /acci[oó]n desconocida|unknown action|desconocida/i.test(m);
     }
 
+    function mensajeErrorParaUi(msg) {
+        if (msg == null || msg === '') return null;
+        if (typeof msg === 'string') {
+            var ts = msg.trim();
+            if (!ts || ts === '[object Object]') return null;
+            return ts;
+        }
+        if (typeof msg === 'object') {
+            if (msg.message) return mensajeErrorParaUi(msg.message);
+            if (msg.error) return mensajeErrorParaUi(msg.error);
+            try {
+                var j = JSON.stringify(msg);
+                if (j && j !== '{}' && j !== 'null') return j;
+            } catch (e) { /* ignore */ }
+            return null;
+        }
+        var s = String(msg).trim();
+        if (!s || s === '[object Object]') return null;
+        return s;
+    }
+
     function errorVentasParaUi(msg) {
-        var t = String(msg || '').trim();
+        var t = mensajeErrorParaUi(msg);
         if (!t) return null;
         if (esErrorAccionVentaAntigua({ message: t })) return null;
         return t;
@@ -3533,9 +3607,6 @@
         if (!String(datos.cliente || '').trim()) {
             return Promise.resolve({ ok: false, error: 'Indica el cliente.' });
         }
-        if (!String(datos.lugar || '').trim()) {
-            return Promise.resolve({ ok: false, error: 'Indica el lugar de entrega.' });
-        }
         var fechaRaw = String(datos.fechaRaw || '').trim() || fechaTextoHoyVentas();
         var ent = {
             id: ObebeEntregasStore.uid(),
@@ -3576,9 +3647,6 @@
         if (!String(datos.cliente || ent.cliente || '').trim()) {
             return Promise.resolve({ ok: false, error: 'Indica el cliente.' });
         }
-        if (!String(datos.lugar || ent.lugar || '').trim()) {
-            return Promise.resolve({ ok: false, error: 'Indica el lugar de entrega.' });
-        }
         var fechaRaw = String(datos.fechaRaw || ent.fechaRaw || '').trim() || fechaTextoHoyVentas();
         ent.fechaRaw = fechaRaw;
         ent.fechaIso = parseFechaVenta(fechaRaw) || ent.fechaIso || fechaLocalIso(new Date());
@@ -3599,14 +3667,12 @@
         if (ent.estado !== 'pendiente') {
             return Promise.resolve({ ok: false, error: 'Solo se pueden cancelar entregas pendientes.' });
         }
-        function marcarCancelada() {
-            ent.estado = 'cancelada';
-            ent.canceladaEn = Date.now();
-            ObebeEntregasStore.saveEntrega(ent);
+        function eliminarDeLista() {
+            ObebeEntregasStore.removeEntrega(entregaId);
             return { ok: true };
         }
         if (ent.ventaYaRegistrada || !ent.stockReservado) {
-            return Promise.resolve(marcarCancelada());
+            return Promise.resolve(eliminarDeLista());
         }
         var carrito = (ent.items || []).map(function (it) {
             var f = estado.filas.find(function (x) { return x.filaSheet === it.filaSheet; }) || {
@@ -3624,7 +3690,7 @@
         var updates = stockUpdatesDesdeCarritoEntrega(carrito, 1);
         return aplicarUpdatesStockSecuencial(updates).then(function () {
             guardarCacheInventarioLocal();
-            return marcarCancelada();
+            return eliminarDeLista();
         });
     }
 
@@ -3713,11 +3779,11 @@
         limite = limite || 40;
         return ObebeEntregasStore.getAll()
             .filter(function (e) {
-                return e.estado === 'completada' || e.estado === 'cancelada';
+                return e.estado === 'completada';
             })
             .sort(function (a, b) {
-                var ta = a.completadaEn || a.canceladaEn || a.creadoEn || 0;
-                var tb = b.completadaEn || b.canceladaEn || b.creadoEn || 0;
+                var ta = a.completadaEn || a.creadoEn || 0;
+                var tb = b.completadaEn || b.creadoEn || 0;
                 return tb - ta;
             })
             .slice(0, limite);
@@ -3885,6 +3951,8 @@
             return '../producto.html?id=' + encodeURIComponent(r.ref) + '&categoria=' + encodeURIComponent(cat);
         },
         idFilaInventario: idFilaInventario,
+        precioVentaRetailFila: precioVentaRetailFila,
+        esOfertaSemanalFila: esOfertaSemanalFila,
         errorVentasParaUi: errorVentasParaUi,
         stockDisponibleConEntregas: stockDisponibleConEntregas,
         crearEntregaProgramada: crearEntregaProgramada,

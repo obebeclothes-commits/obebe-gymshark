@@ -532,9 +532,12 @@
 
     function panelVentasDashboardKpis(sv) {
         if (!sv) sv = { hoy: {}, semana: {}, mes: {} };
-        var errV = ObebeAdminData.errorVentasParaUi
-            ? ObebeAdminData.errorVentasParaUi(datosCache.errorVentas)
-            : datosCache.errorVentas;
+        var errV = null;
+        if (datosCache && datosCache.errorVentas != null && ObebeAdminData.errorVentasParaUi) {
+            errV = ObebeAdminData.errorVentasParaUi(datosCache.errorVentas);
+        } else if (datosCache && typeof datosCache.errorVentas === 'string') {
+            errV = datosCache.errorVentas.trim() || null;
+        }
         var aviso = errV
             ? '<p class="admin-ventas-aviso">' + esc(errV) + '</p>' : '';
         return '<div class="admin-panel admin-panel-ventas admin-panel-ventas--focus">' +

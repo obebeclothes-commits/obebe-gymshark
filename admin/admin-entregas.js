@@ -137,7 +137,7 @@
             '<div class="admin-field-row">' +
             '<div class="admin-field"><label>Fecha entrega</label><input type="date" id="adminEntregaModalFecha" value="' + esc(fechaIn) + '"></div>' +
             '<div class="admin-field"><label>Hora</label><input type="time" id="adminEntregaModalHora" value="' + esc(horaIn) + '"></div></div>' +
-            '<div class="admin-field"><label>Lugar</label><input type="text" id="adminEntregaModalLugar" value="' + esc(lugarIn) + '" placeholder="Dirección o punto de encuentro"></div>' +
+            '<div class="admin-field"><label>Lugar (opcional)</label><input type="text" id="adminEntregaModalLugar" value="' + esc(lugarIn) + '" placeholder="Dirección o punto de encuentro"></div>' +
             '<div class="admin-field"><label>Forma de pago</label>' +
             '<select id="adminEntregaModalPago" class="admin-venta-pago-select">' + selectPagoHtml(pagoIn) + '</select></div>' +
             '<div class="admin-field"><label>Notas (opcional)</label><input type="text" id="adminEntregaModalNotas" value="' + esc(notasIn) + '"></div>' +
@@ -164,10 +164,6 @@
                 if (err) err.textContent = '';
                 var datos = leerFormularioModal();
                 datos.vendedor = meta.vendedor || (ent && ent.vendedor) || '';
-                if (!datos.lugar) {
-                    if (err) err.textContent = 'Indica el lugar de entrega.';
-                    return;
-                }
                 if (!datos.cliente) {
                     if (err) err.textContent = 'Indica el cliente.';
                     return;
@@ -191,7 +187,7 @@
             root.classList.remove('admin-hidden');
             root.setAttribute('aria-hidden', 'false');
             document.body.classList.add('admin-entrega-modal-open');
-            var foco = document.getElementById('adminEntregaModalLugar');
+            var foco = document.getElementById('adminEntregaModalCliente');
             if (foco) foco.focus();
         });
     }
@@ -218,23 +214,23 @@
             '<div class="admin-entrega-card-fecha">' +
             esc(ObebeAdminData.formatoFecha(e.fechaIso, e.fechaRaw)) +
             (e.hora ? ' · ' + esc(e.hora) : '') + '</div></div>' +
-            '<p class="admin-entrega-card-lugar"><span class="admin-muted-text">Lugar:</span> ' + esc(e.lugar) + '</p>' +
+            (e.lugar ? '<p class="admin-entrega-card-lugar"><span class="admin-muted-text">Lugar:</span> ' + esc(e.lugar) + '</p>' : '') +
             '<p class="admin-entrega-card-pago">' + esc(ObebeAdminData.etiquetaMetodoPagoEntrega(e.metodoPago)) +
             ' · ' + fmt(total) + '</p>' +
             (e.notas ? '<p class="admin-muted-text admin-entrega-card-notas">' + esc(e.notas) + '</p>' : '') +
             '<div class="admin-entrega-card-thumbs">' + thumbs + '</div>' +
             '<div class="admin-entrega-card-actions">' +
-            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-entrega-editar" data-id="' + esc(e.id) + '">Editar</button>' +
-            '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact admin-entrega-completar" data-id="' + esc(e.id) + '">Entrega completada</button>' +
-            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-entrega-cancelar" data-id="' + esc(e.id) + '">Quitar de la lista</button>' +
+            '<button type="button" class="admin-btn admin-btn-ghost admin-entrega-editar" data-id="' + esc(e.id) + '">Editar</button>' +
+            '<button type="button" class="admin-btn admin-btn-primary admin-entrega-completar" data-id="' + esc(e.id) + '">Entrega completada</button>' +
+            '<button type="button" class="admin-btn admin-btn-danger admin-entrega-cancelar" data-id="' + esc(e.id) + '">Eliminar entrega</button>' +
             '</div></article>';
     }
 
     function filaHistorico(e) {
         var piezas = (e.items || []).reduce(function (s, it) { return s + (it.cantidad || 1); }, 0);
-        var estado = e.estado === 'completada' ? 'Completada' : 'Quitada';
-        var tagCls = e.estado === 'completada' ? 'admin-tag-ok' : 'admin-tag-warn';
-        var cuando = e.completadaEn || e.canceladaEn || e.creadoEn;
+        var estado = 'Completada';
+        var tagCls = 'admin-tag-ok';
+        var cuando = e.completadaEn || e.creadoEn;
         var fechaCierre = cuando
             ? ObebeAdminData.formatoFechaLarga(cuando)
             : ObebeAdminData.formatoFecha(e.fechaIso, e.fechaRaw);
@@ -249,9 +245,9 @@
 
     function tarjetaHistoricoEntrega(e) {
         var piezas = (e.items || []).reduce(function (s, it) { return s + (it.cantidad || 1); }, 0);
-        var estado = e.estado === 'completada' ? 'Completada' : 'Quitada';
-        var tagCls = e.estado === 'completada' ? 'admin-tag-ok' : 'admin-tag-warn';
-        var cuando = e.completadaEn || e.canceladaEn || e.creadoEn;
+        var estado = 'Completada';
+        var tagCls = 'admin-tag-ok';
+        var cuando = e.completadaEn || e.creadoEn;
         var fechaCierre = cuando
             ? ObebeAdminData.formatoFechaLarga(cuando)
             : ObebeAdminData.formatoFecha(e.fechaIso, e.fechaRaw);
@@ -307,12 +303,10 @@
 
         container.innerHTML =
             '<div class="admin-panel"><div class="admin-panel-head"><h3>Entregas por hacer</h3></div>' +
-            '<p class="admin-muted-text" style="padding:0 1rem 0.75rem;margin:0;font-size:0.85rem">' +
-            'Se crean al vender. Sincronizan en Supabase (admin_modulos_blob); si faltan en el teléfono, abre Entregas en la PC tras desplegar admin-api.</p>' +
             '<div id="adminEntregasLista"></div></div>' +
             '<div class="admin-panel" style="margin-top:1rem"><div class="admin-panel-head"><h3>Registro de entregas</h3></div>' +
             '<p class="admin-muted-text" style="padding:0 1rem 0.5rem;margin:0;font-size:0.82rem">' +
-            'Completadas o quitadas de la lista (últimas 40).</p>' +
+            'Entregas completadas (últimas 40).</p>' +
             '<div id="adminEntregasHistorico"></div></div>';
 
         var syncEntP = (global.ObebeAdminModulosCloud && ObebeAdminModulosCloud.syncEntregas)
@@ -359,8 +353,8 @@
                 var cid = cancel.getAttribute('data-id');
                 ObebeAdminDialog.confirm({
                     title: '¿Estás seguro?',
-                    message: 'Quitarás esta entrega de la lista de pendientes. La venta no se borra.',
-                    confirmText: 'Sí, quitar',
+                    message: 'Se eliminará esta entrega de la lista de pendientes. La venta registrada no se borra.',
+                    confirmText: 'Sí, eliminar',
                     cancelText: 'No',
                     variant: 'danger'
                 }).then(function (ok) {

@@ -2892,6 +2892,18 @@ body.admin-ped-filtros-open {
     color: var(--admin-accent);
 }
 
+.admin-ped-precio-oferta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem;
+}
+
+.admin-ped-precio-tachado {
+    text-decoration: line-through;
+    font-size: 0.72rem;
+}
+
 .admin-ped-totales {
     text-align: right;
     padding: 0.5rem 1rem 1rem;
@@ -3615,10 +3627,27 @@ body.admin-entrega-modal-open {
 }
 
 .admin-entrega-card-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 0.5rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+    margin-top: 0.65rem;
+    align-items: stretch;
+}
+
+.admin-entrega-card-actions .admin-btn {
+    width: 100%;
+    min-height: 2.35rem;
+    padding: 0.45rem 0.35rem;
+    font-size: 0.78rem;
+    line-height: 1.2;
+    justify-content: center;
+    text-align: center;
+}
+
+@media (max-width: 520px) {
+    .admin-entrega-card-actions {
+        grid-template-columns: 1fr;
+    }
 }
 
 .admin-entrega-hist-table {
