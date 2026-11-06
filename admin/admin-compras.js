@@ -82,15 +82,70 @@
         return unicos + ' artículos únicos · ' + total + ' en total';
     }
 
+    function celdaExcel(v) {
+        return String(v == null ? '' : v)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function exportarExcel() {
+        var cols = columnas();
+        var enc = encabezados();
+        var list = visibles();
+        if (!list.length) {
+            aviso = 'No hay filas para exportar.';
+            return false;
+        }
+        var th = cols.map(function (c) {
+            return '<th>' + celdaExcel(tituloCol(enc, c)) + '</th>';
+        }).join('');
+        var body = list.map(function (f) {
+            var tds = cols.map(function (c) {
+                var val = f.celdas && f.celdas[c] != null ? f.celdas[c] : '';
+                if (c === COL_FOTO) val = srcFoto(f) || val;
+                return '<td>' + celdaExcel(val) + '</td>';
+            }).join('');
+            return '<tr>' + tds + '</tr>';
+        }).join('');
+        var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+            'xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">' +
+            '<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook>' +
+            '<x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Compras</x:Name>' +
+            '<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>' +
+            '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->' +
+            '</head><body><table border="1"><thead><tr>' + th + '</tr></thead><tbody>' +
+            body + '</tbody></table></body></html>';
+        var blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        var d = new Date();
+        var stamp = d.getFullYear() +
+            String(d.getMonth() + 1).padStart(2, '0') +
+            String(d.getDate()).padStart(2, '0') + '-' +
+            String(d.getHours()).padStart(2, '0') +
+            String(d.getMinutes()).padStart(2, '0');
+        a.href = url;
+        a.download = 'compras-obebe-' + stamp + '.xls';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+        aviso = 'Excel exportado: ' + list.length + ' fila(s).';
+        return true;
+    }
+
     function renderToolbar() {
+        var exportar = '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminComprasExcel">Exportar Excel</button>';
         var subir = '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminComprasSubir"' +
             (subiendo ? ' disabled' : '') + '>Subir a inventario</button>';
         var acciones = editando
-            ? subir +
+            ? exportar + subir +
               '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact" id="adminComprasBorrar">Eliminar</button>' +
               '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminComprasCancelar">Cancelar</button>' +
               '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminComprasGuardar">Guardar</button>'
-            : subir +
+            : exportar + subir +
               '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminComprasEditar">Editar</button>';
         return '<div class="admin-inv-toolbar">' +
             '<span class="admin-inv-modo' + (editando ? ' admin-inv-modo-edit' : '') + '">' +
@@ -160,6 +215,21 @@
                 bindCeldas(root);
             });
         }
+        var excelBtn = root.querySelector('#adminComprasExcel');
+        if (excelBtn) excelBtn.addEventListener('click', function () {
+            var n = visibles().length;
+            if (!n || !global.ObebeAdminDialog) return;
+            ObebeAdminDialog.confirm({
+                title: '¿Exportar Excel?',
+                message: 'Se descargará un Excel con ' + n + ' fila(s) de Compras, tal como se ven ahora.',
+                confirmText: 'Sí, exportar',
+                cancelText: 'Cancelar'
+            }).then(function (ok) {
+                if (!ok) return;
+                exportarExcel();
+                pintar(root);
+            });
+        });
         var subirBtn = root.querySelector('#adminComprasSubir');
         if (subirBtn) subirBtn.addEventListener('click', function () { subirAInventario(root); });
         var editar = root.querySelector('#adminComprasEditar');
