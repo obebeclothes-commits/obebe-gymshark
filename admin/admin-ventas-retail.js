@@ -711,7 +711,7 @@
                     return;
                 }
                 var pctDesc = pctDescuentoEfectivo();
-                var msgVenta = 'Se registrará en VENTAS y se bajará el stock en INVENTARIO.';
+                var msgVenta = 'Puedes registrar la venta ahora o programar la entrega y registrarla cuando se confirme.';
                 if (pctDesc > 0) {
                     msgVenta += ' Descuento aplicado: ' + pctDesc + '%.';
                 }
@@ -726,7 +726,8 @@
                     message: msgVenta,
                     confirmText: 'Vender',
                     cancelText: 'Cancelar',
-                    variant: 'warn'
+                    variant: 'warn',
+                    cancelDanger: true
                 }).then(function (ok) {
                     if (!ok) return;
                     var metaVenta = leerMetaVenta();
@@ -739,11 +740,7 @@
                             imagenUrl: c.imagenUrl || imagenFila(c.fila)
                         };
                     });
-                    ObebeAdminData.registrarVentaRetail(carritoVendido, metaVenta).then(function (res) {
-                        if (!res.ok) {
-                            if (err) err.textContent = res.error || 'Error';
-                            return;
-                        }
+                    function limpiarCarrito() {
                         carrito = [];
                         descuentoManual = false;
                         descuentoManualPct = '';
@@ -751,37 +748,56 @@
                         filasInv = getFilasInv();
                         pintarCarrito();
                         rebuildFiltrosPanel();
-                        var msgOk = res.soloLocal
-                            ? 'Guardado en este navegador. Google Sheets y la tienda web no se actualizaron. Configura appsScriptUrl para sincronizar.'
-                            : 'Stock actualizado en INVENTARIO y filas en VENTAS.';
-                        ObebeAdminDialog.alert({
-                            title: 'Venta registrada',
-                            message: msgOk,
-                            confirmText: 'Listo'
-                        }).then(function () {
-                            if (!global.ObebeAdminEntregas || !ObebeAdminEntregas.abrirModalPostVenta) return;
-                            return ObebeAdminDialog.confirm({
-                                title: '¿Programar entrega?',
-                                message: 'Puedes agendar fecha, hora y lugar. El cliente y los artículos ya vienen de esta venta.',
-                                confirmText: 'Sí, programar',
-                                cancelText: 'No por ahora',
-                                variant: 'warn'
-                            }).then(function (siEntrega) {
-                                if (!siEntrega) return;
-                                return ObebeAdminEntregas.abrirModalPostVenta({
-                                    meta: metaVenta,
-                                    carrito: carritoVendido,
-                                    onGuardada: function () {
-                                        ObebeAdminDialog.alert({
-                                            title: 'Entrega programada',
-                                            message: 'La verás en el módulo Entregas.',
-                                            confirmText: 'Listo'
-                                        });
-                                    }
-                                });
+                    }
+                    function registrarAhora() {
+                        return ObebeAdminData.registrarVentaRetail(carritoVendido, metaVenta).then(function (res) {
+                            if (!res.ok) {
+                                if (err) err.textContent = res.error || 'Error';
+                                return;
+                            }
+                            limpiarCarrito();
+                            var msgOk = res.soloLocal
+                                ? 'Guardado en este navegador. Google Sheets y la tienda web no se actualizaron. Configura appsScriptUrl para sincronizar.'
+                                : 'Stock actualizado en INVENTARIO y filas en VENTAS.';
+                            ObebeAdminDialog.alert({
+                                title: 'Venta registrada',
+                                message: msgOk,
+                                confirmText: 'Listo'
                             });
+                            if (opts.onVentaRegistrada) opts.onVentaRegistrada(res);
                         });
-                        if (opts.onVentaRegistrada) opts.onVentaRegistrada(res);
+                    }
+                    if (!global.ObebeAdminEntregas || !ObebeAdminEntregas.abrirModalPostVenta) {
+                        return registrarAhora().catch(function (e) {
+                            if (err) err.textContent = e.message || String(e);
+                        });
+                    }
+                    return ObebeAdminDialog.confirm({
+                        title: '¿Programar entrega?',
+                        message: 'Si programas la entrega, la venta se registra hasta que la marques como completada. Si eliges no por ahora, la venta se registra en este momento.',
+                        confirmText: 'Sí, programar',
+                        cancelText: 'No por ahora',
+                        variant: 'warn',
+                        cancelDanger: true
+                    }).then(function (siEntrega) {
+                        if (siEntrega == null) return;
+                        if (siEntrega) {
+                            return ObebeAdminEntregas.abrirModalPostVenta({
+                                meta: metaVenta,
+                                carrito: carritoVendido,
+                                reservarSinVenta: true,
+                                onGuardada: function () {
+                                    limpiarCarrito();
+                                    ObebeAdminDialog.alert({
+                                        title: 'Entrega programada',
+                                        message: 'El stock quedó apartado. La venta se registra cuando confirmes la entrega.',
+                                        confirmText: 'Listo'
+                                    });
+                                    if (opts.onVentaRegistrada) opts.onVentaRegistrada({ ok: true, entregaPendiente: true });
+                                }
+                            });
+                        }
+                        return registrarAhora();
                     }).catch(function (e) {
                         if (err) err.textContent = e.message || String(e);
                     });

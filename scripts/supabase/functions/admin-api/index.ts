@@ -393,7 +393,17 @@ async function registrarVentaRetail(body: Record<string, unknown>) {
   for (const u of stockUpdates) {
     const stock = parseInt(String(u.stock), 10);
     if (isNaN(stock) || stock < 0) continue;
-    const fila = await inventarioFilaPorRef(parseInt(String(u.row), 10));
+    const dbHint = parseInt(String((u as { inventarioDbId?: number }).inventarioDbId ?? ""), 10);
+    let fila: { id: number; celdas: unknown } | null = null;
+    if (dbHint && !isNaN(dbHint)) {
+      const { data, error } = await sb
+        .from("inventario_filas")
+        .select("id, celdas")
+        .eq("id", dbHint)
+        .maybeSingle();
+      if (!error && data) fila = data as { id: number; celdas: unknown };
+    }
+    if (!fila) fila = await inventarioFilaPorRef(parseInt(String(u.row), 10));
     if (!fila) continue;
     const dbId = fila.id as number;
     const celdas = padCeldas((fila.celdas as unknown[]) || []);

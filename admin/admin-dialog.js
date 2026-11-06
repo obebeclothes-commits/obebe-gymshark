@@ -25,7 +25,7 @@
         document.body.appendChild(root);
 
         root.querySelector('[data-admin-dialog-dismiss]').addEventListener('click', function () {
-            close(false);
+            close(null);
         });
         document.getElementById('adminDialogCancel').addEventListener('click', function () {
             close(false);
@@ -37,7 +37,7 @@
         if (!boundKey) {
             boundKey = true;
             document.addEventListener('keydown', function (ev) {
-                if (ev.key === 'Escape' && pendingResolve) close(false);
+                if (ev.key === 'Escape' && pendingResolve) close(null);
             });
         }
         return root;

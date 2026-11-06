@@ -4,6 +4,8 @@
     var state = {
         filas: [],
         filtro: '',
+        filtroGenero: '',
+        filtroTipo: '',
         modoEdicion: false,
         snapshot: null,
         seleccion: {},
@@ -50,9 +52,16 @@
         });
     }
 
+    function optsFiltro(extra) {
+        var o = extra || {};
+        if (state.filtroGenero) o.segmento = state.filtroGenero;
+        if (state.filtroTipo) o.tipo = state.filtroTipo;
+        return o;
+    }
+
     function filasVisibles() {
-        var activas = ObebeAdminData.filtrarFilas(state.filas, state.filtro, { soloStock: true });
-        var nuevas = ObebeAdminData.filtrarFilas(state.nuevasFilas, state.filtro, {});
+        var activas = ObebeAdminData.filtrarFilas(state.filas, state.filtro, optsFiltro({ soloStock: true }));
+        var nuevas = ObebeAdminData.filtrarFilas(state.nuevasFilas, state.filtro, optsFiltro({}));
         return activas.concat(nuevas);
     }
 
@@ -60,7 +69,7 @@
         var el = rootContainer.querySelector('#adminInvAgotadosMount');
         if (!el || !global.ObebeAdminAgotados) return;
         global.ObebeAdminAgotados.mount(el, {
-            filas: state.filas,
+            filas: ObebeAdminData.filtrarFilas(state.filas, '', optsFiltro()),
             onStockRestaurado: function () {
                 refreshGrid(rootContainer, onReload);
                 mountSeccionAgotados(rootContainer, onReload);
@@ -129,6 +138,24 @@
         return ObebeAdminData.apiAdminScript(action, payload);
     }
 
+    function tiposDisponibles() {
+        var map = {};
+        function tomar(f) {
+            var t = String((f && f.tipo) || '').trim();
+            if (!t) return;
+            var k = t.toLowerCase();
+            if (!map[k]) map[k] = t;
+        }
+        (state.filas || []).forEach(tomar);
+        (state.nuevasFilas || []).forEach(tomar);
+        if (state.filtroTipo && !map[state.filtroTipo.toLowerCase()]) {
+            map[state.filtroTipo.toLowerCase()] = state.filtroTipo;
+        }
+        return Object.keys(map).map(function (k) { return map[k]; }).sort(function (a, b) {
+            return a.localeCompare(b, 'es');
+        });
+    }
+
     function renderToolbar() {
         var modo = state.modoEdicion
             ? '<span class="admin-inv-modo admin-inv-modo-edit">Editando</span>'
@@ -146,9 +173,29 @@
                 '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminInvEdit">Editar</button>';
         }
 
+        function btnGenero(valor, etiqueta) {
+            var activo = (state.filtroGenero || '') === valor;
+            return '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-inv-genero-btn' +
+                (activo ? ' is-active' : '') + '" data-inv-genero="' + valor + '" aria-pressed="' +
+                (activo ? 'true' : 'false') + '">' + etiqueta + '</button>';
+        }
+
+        var tipos = tiposDisponibles();
+        var optsTipo = '<option value="">Todos</option>' + tipos.map(function (t) {
+            var sel = state.filtroTipo && state.filtroTipo.toLowerCase() === t.toLowerCase() ? ' selected' : '';
+            return '<option value="' + esc(t) + '"' + sel + '>' + esc(t) + '</option>';
+        }).join('');
+
         return '<div class="admin-inv-toolbar">' +
             modo +
             '<input type="search" class="admin-search" id="adminInvSearch" placeholder="Buscar…" value="' + esc(state.filtro) + '">' +
+            '<div class="admin-inv-genero" role="group" aria-label="Filtrar por género">' +
+            btnGenero('', 'Todos') +
+            btnGenero('Hombre', 'Hombre') +
+            btnGenero('Mujer', 'Mujer') +
+            '</div>' +
+            '<label class="admin-inv-tipo">Tipo' +
+            '<select id="adminInvTipo" aria-label="Filtrar por tipo">' + optsTipo + '</select></label>' +
             '<div class="admin-inv-toolbar-actions">' + acciones + '</div></div>' +
             '<p id="adminInvStockCount" class="admin-muted-text admin-inv-stock-count">' + esc(textoExistencia()) + '</p>' +
             (state.msg ? '<div class="admin-banner ' + (state.msgOk ? 'info' : '') + '">' + esc(state.msg) + '</div>' : '');
@@ -237,9 +284,12 @@
     }
 
     function textoExistencia() {
-        var n = ObebeAdminData.filtrarFilas(state.filas, state.filtro, { soloStock: true }).length;
-        var nuevas = ObebeAdminData.filtrarFilas(state.nuevasFilas, state.filtro, {}).length;
-        return (n + nuevas) + ' artículo(s) en existencia';
+        var n = ObebeAdminData.filtrarFilas(state.filas, state.filtro, optsFiltro({ soloStock: true })).length;
+        var nuevas = ObebeAdminData.filtrarFilas(state.nuevasFilas, state.filtro, optsFiltro({})).length;
+        var etiqueta = '';
+        if (state.filtroGenero) etiqueta += ' · ' + state.filtroGenero;
+        if (state.filtroTipo) etiqueta += ' · ' + state.filtroTipo;
+        return (n + nuevas) + ' artículo(s) en existencia' + etiqueta;
     }
 
     function renderCeldaThumb(f) {
@@ -373,6 +423,19 @@
             searchEl.addEventListener('input', function (e) {
                 state.filtro = e.target.value;
                 refreshGrid(container, onReload);
+            });
+        }
+        container.querySelectorAll('[data-inv-genero]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                state.filtroGenero = btn.getAttribute('data-inv-genero') || '';
+                refreshUi(container, onReload);
+            });
+        });
+        var tipoEl = container.querySelector('#adminInvTipo');
+        if (tipoEl) {
+            tipoEl.addEventListener('change', function () {
+                state.filtroTipo = tipoEl.value || '';
+                refreshUi(container, onReload);
             });
         }
         var btnEdit = container.querySelector('#adminInvEdit');

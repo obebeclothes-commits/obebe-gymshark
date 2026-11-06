@@ -1466,6 +1466,44 @@ html[data-admin-theme="light"] .admin-banner.info {
     flex-shrink: 0;
 }
 
+.admin-inv-genero {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.25rem;
+}
+
+.admin-inv-genero .admin-inv-genero-btn.is-active {
+    background: var(--admin-accent, #3dd6c6);
+    color: #06211e;
+    border-color: transparent;
+}
+
+.admin-inv-tipo {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--admin-muted);
+}
+
+.admin-inv-tipo select {
+    min-height: 2rem;
+    max-width: 11rem;
+    padding: 0.25rem 0.45rem;
+    border-radius: 6px;
+    border: 1px solid var(--admin-border);
+    background: var(--admin-surface-2, #fff);
+    color: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
 .admin-inv-stock-count {
     padding: 0 1rem 0.5rem;
     margin: 0;
@@ -2942,8 +2980,26 @@ body.admin-ped-filtros-open {
     vertical-align: top;
 }
 
+.admin-suc-table.admin-table-compact th:last-child,
+.admin-suc-table.admin-table-compact td:last-child {
+    width: auto;
+    min-width: max-content;
+    text-align: right;
+    white-space: nowrap;
+    overflow: visible;
+}
+
 .admin-suc-actions {
     white-space: nowrap;
+}
+
+.admin-suc-actions .admin-btn {
+    width: auto;
+    min-height: 0;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.68rem;
+    line-height: 1.2;
+    border-radius: 6px;
 }
 
 .admin-suc-edit-qty {

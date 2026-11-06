@@ -776,7 +776,19 @@
                     pintar(root);
                     return;
                 }
-                aplicarCantidadLinea(lineG, nueva);
+                var msgGuardar = nueva <= 0
+                    ? 'Se quita «' + (lineG.nombre || '') + '» de ' + nombreSucursal(lineG.sucursalId) + '.'
+                    : 'Se guarda la cantidad de «' + (lineG.nombre || '') + '» en ' + nueva + ' piezas.';
+                ObebeAdminDialog.confirm({
+                    title: nueva <= 0 ? '¿Quitar artículo?' : '¿Guardar cambios?',
+                    message: msgGuardar,
+                    confirmText: nueva <= 0 ? 'Quitar' : 'Guardar',
+                    cancelText: 'Cancelar',
+                    variant: nueva <= 0 ? 'danger' : 'primary'
+                }).then(function (ok) {
+                    if (!ok) return;
+                    aplicarCantidadLinea(lineG, nueva);
+                });
                 return;
             }
             var quitar = ev.target.closest('.admin-suc-quitar');

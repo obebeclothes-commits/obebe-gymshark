@@ -2345,8 +2345,10 @@
         });
     }
 
-    function registrarVentaRetail(carrito, meta) {
+    function registrarVentaRetail(carrito, meta, opts) {
         meta = meta || {};
+        opts = opts || {};
+        var moverStock = opts.ajustarStock !== false;
         if (!carrito || !carrito.length) {
             return Promise.resolve({ ok: false, error: 'Agrega al menos un artículo.' });
         }
@@ -2369,9 +2371,15 @@
             }
             stockByRow[f.filaSheet] = Math.max(0, stockByRow[f.filaSheet] - qty);
         });
-        var stockUpdates = Object.keys(stockByRow).map(function (k) {
-            return { row: parseInt(k, 10), stock: stockByRow[k] };
-        });
+        var stockUpdates = moverStock ? Object.keys(stockByRow).map(function (k) {
+            var filaRef = parseInt(k, 10);
+            var filaHit = (estado.filas || []).find(function (x) { return x.filaSheet === filaRef; });
+            return {
+                row: filaRef,
+                stock: stockByRow[k],
+                inventarioDbId: filaHit && filaHit.inventarioDbId ? filaHit.inventarioDbId : 0
+            };
+        }) : [];
         if (escrituraLocalHabilitada()) {
             aplicarVentaRetailEnEstado(stockUpdates, ventasLocal);
             registrarPendienteTrasVentaLocal(stockUpdates, ventasLocal);
@@ -2509,12 +2517,15 @@
 
     function aplicarStockUpdateEnEstado(stockUpdates) {
         (stockUpdates || []).forEach(function (u) {
-            var hit = estado.filas.find(function (x) { return x.filaSheet === u.row; });
+            var hit = estado.filas.find(function (x) {
+                if (u.inventarioDbId && x.inventarioDbId === u.inventarioDbId) return true;
+                return x.filaSheet === u.row || (x.inventarioDbId && x.inventarioDbId === u.row);
+            });
             if (hit) {
                 hit.stock = u.stock;
                 if (hit.celdas) hit.celdas[IDX.stock] = String(u.stock);
             }
-            notificarCambioStockInventario(u.row, u.stock);
+            notificarCambioStockInventario(hit ? hit.filaSheet : u.row, u.stock);
         });
         sincronizarHistoricoInventario(estado.filas);
         guardarCacheInventarioLocal();
@@ -3194,27 +3205,37 @@
         });
     }
 
+    var ventasDeleteEnCurso = {};
+
     function eliminarVentaLinea(ventaId, opts) {
         opts = opts || {};
         var id = parseInt(ventaId, 10);
         if (!id) return Promise.resolve({ ok: false, error: 'Venta inválida.' });
+        if (ventasDeleteEnCurso[id]) return ventasDeleteEnCurso[id];
         if (escrituraLocalHabilitada()) {
             reemplazarVentaEnEstado(id, null);
             return Promise.resolve({ ok: true, soloLocal: true });
         }
-        return apiAdminScript('deleteVentaLine', {
+        var pedido = apiAdminScript('deleteVentaLine', {
             ventaId: id,
             ajustarStock: opts.ajustarStock !== false
         }).then(function (res) {
             reemplazarVentaEnEstado(id, null);
             if (res.stock && res.stock.matched && res.stock.row != null && res.stock.stock != null) {
-                aplicarStockUpdateEnEstado([{ row: res.stock.row, stock: res.stock.stock }]);
+                aplicarStockUpdateEnEstado([{
+                    row: res.stock.row,
+                    inventarioDbId: res.stock.row,
+                    stock: res.stock.stock
+                }]);
             }
             return res;
         }).catch(function (err) {
             if (!esErrorAccionVentaAntigua(err)) throw err;
             return eliminarVentaLineaLegacyApi(id, opts);
         });
+        ventasDeleteEnCurso[id] = pedido;
+        pedido.then(function () { delete ventasDeleteEnCurso[id]; }, function () { delete ventasDeleteEnCurso[id]; });
+        return pedido;
     }
 
     function crearVentaLineaManual(campos, opts) {
@@ -3505,7 +3526,8 @@
         return filas.filter(function (r) {
             if (filtros.soloStock && r.stock <= 0) return false;
             if (filtros.soloBajo && (r.stock === 0 || r.stock > 2)) return false;
-            if (filtros.segmento && r.segmento !== filtros.segmento) return false;
+            if (filtros.segmento && normSegmento(r.segmento) !== normSegmento(filtros.segmento)) return false;
+            if (filtros.tipo && norm(r.tipo) !== norm(filtros.tipo)) return false;
             if (filtros.marca && normalizarMarca(r.marca) !== normalizarMarca(filtros.marca)) return false;
             if (!query) return true;
             var blob = [
@@ -3853,6 +3875,7 @@
                 segmento: f.segmento || '',
                 cantidad: c.cantidad || 1,
                 precioUnitario: c.precioUnitario != null ? c.precioUnitario : (f.precio || 0),
+                precioOriginal: c.precioOriginal != null ? c.precioOriginal : (c.precioUnitario != null ? c.precioUnitario : (f.precio || 0)),
                 imagenUrl: img || ''
             };
         });
@@ -3870,26 +3893,50 @@
             return Promise.resolve({ ok: false, error: 'Indica el cliente.' });
         }
         var fechaRaw = String(datos.fechaRaw || '').trim() || fechaTextoHoyVentas();
-        var ent = {
-            id: ObebeEntregasStore.uid(),
-            estado: 'pendiente',
-            ventaYaRegistrada: true,
-            fechaIso: parseFechaVenta(fechaRaw) || fechaLocalIso(new Date()),
-            fechaRaw: fechaRaw,
-            hora: String(datos.hora || '').trim(),
-            lugar: String(datos.lugar || '').trim(),
-            cliente: String(datos.cliente || '').trim(),
-            telefono: String(datos.telefono || '').trim(),
-            metodoPago: norm(datos.metodoPago) || 'efectivo',
-            notas: String(datos.notas || '').trim(),
-            vendedor: String(datos.vendedor || '').trim(),
-            items: itemsDesdeCarritoEntrega(carrito),
-            creadoEn: Date.now(),
-            completadaEn: null,
-            stockReservado: false
-        };
-        ObebeEntregasStore.saveEntrega(ent);
-        return Promise.resolve({ ok: true, entrega: ent });
+        var reservarSinVenta = !!datos.registrarAlCompletar;
+        function armarEntrega(stockReservado) {
+            return {
+                id: ObebeEntregasStore.uid(),
+                estado: 'pendiente',
+                ventaYaRegistrada: !reservarSinVenta,
+                fechaIso: parseFechaVenta(fechaRaw) || fechaLocalIso(new Date()),
+                fechaRaw: fechaRaw,
+                hora: String(datos.hora || '').trim(),
+                lugar: String(datos.lugar || '').trim(),
+                cliente: String(datos.cliente || '').trim(),
+                telefono: String(datos.telefono || '').trim(),
+                metodoPago: norm(datos.metodoPago) || 'efectivo',
+                notas: String(datos.notas || '').trim(),
+                vendedor: String(datos.vendedor || '').trim(),
+                items: itemsDesdeCarritoEntrega(carrito),
+                ventaMeta: {
+                    fechaRaw: fechaRaw,
+                    cliente: String(datos.cliente || '').trim(),
+                    telefono: String(datos.telefono || '').trim(),
+                    vendedor: String(datos.vendedor || '').trim(),
+                    cuenta: String(datos.cuenta || '').trim(),
+                    redSocial: String(datos.redSocial || '').trim(),
+                    link: String(datos.link || '').trim()
+                },
+                creadoEn: Date.now(),
+                completadaEn: null,
+                stockReservado: !!stockReservado
+            };
+        }
+        if (!reservarSinVenta) {
+            var entYa = armarEntrega(false);
+            ObebeEntregasStore.saveEntrega(entYa);
+            return Promise.resolve({ ok: true, entrega: entYa });
+        }
+        var check = validarCarritoEntrega(carrito);
+        if (!check.ok) return Promise.resolve(check);
+        var updates = stockUpdatesDesdeCarritoEntrega(carrito, -1);
+        return aplicarUpdatesStockSecuencial(updates).then(function () {
+            guardarCacheInventarioLocal();
+            var ent = armarEntrega(true);
+            ObebeEntregasStore.saveEntrega(ent);
+            return { ok: true, entrega: ent };
+        });
     }
 
     function crearEntregaProgramada(datos, carrito) {
@@ -3968,66 +4015,48 @@
             ObebeEntregasStore.saveEntrega(ent);
             return Promise.resolve({ ok: true, lineas: 0, entrega: ent, soloCierre: true });
         }
+        var metaGuardada = ent.ventaMeta || {};
         var metaBase = {
-            fechaRaw: ent.fechaRaw || fechaTextoHoyVentas(),
-            cliente: ent.cliente || '',
-            cuenta: etiquetaMetodoPagoEntrega(ent.metodoPago),
-            vendedor: String(vendedor || 'OBEBE').trim() || 'OBEBE',
-            redSocial: 'Entrega · ' + (ent.lugar || ''),
-            link: '',
-            telefono: ent.telefono || ''
+            fechaRaw: metaGuardada.fechaRaw || ent.fechaRaw || fechaTextoHoyVentas(),
+            cliente: ent.cliente || metaGuardada.cliente || '',
+            cuenta: metaGuardada.cuenta || etiquetaMetodoPagoEntrega(ent.metodoPago),
+            vendedor: String(vendedor || metaGuardada.vendedor || 'OBEBE').trim() || 'OBEBE',
+            redSocial: metaGuardada.redSocial || ('Entrega · ' + (ent.lugar || '')),
+            link: metaGuardada.link || '',
+            telefono: ent.telefono || metaGuardada.telefono || ''
         };
-        var chain = Promise.resolve({ n: 0 });
-        (ent.items || []).forEach(function (it) {
-            var f = estado.filas.find(function (x) { return x.filaSheet === it.filaSheet; });
-            if (!f) {
-                f = {
-                    nombre: it.nombre,
-                    tipo: it.tipo,
-                    talla: it.talla,
-                    color: it.color,
-                    segmento: it.segmento || 'Hombre',
-                    precio: it.precioUnitario || 0
-                };
-            }
-            var qty = it.cantidad || 1;
-            var precioU = it.precioUnitario != null ? it.precioUnitario : (f.precio || 0);
-            var j;
-            for (j = 0; j < qty; j++) {
-                (function (filaCopy, precio) {
-                    chain = chain.then(function (acc) {
-                        return crearVentaLineaManual({
-                            fechaRaw: metaBase.fechaRaw,
-                            nombre: filaCopy.nombre,
-                            tipo: filaCopy.tipo,
-                            precio: precio,
-                            talla: filaCopy.talla,
-                            color: filaCopy.color,
-                            segmento: filaCopy.segmento,
-                            cliente: metaBase.cliente,
-                            vendedor: metaBase.vendedor,
-                            cuenta: metaBase.cuenta,
-                            redSocial: metaBase.redSocial,
-                            link: metaBase.link,
-                            telefono: metaBase.telefono
-                        }, { ajustarStock: false }).then(function (res) {
-                            if (!res || res.ok === false) {
-                                throw new Error((res && res.error) || 'No se pudo registrar venta.');
-                            }
-                            return { n: acc.n + 1 };
-                        });
-                    });
-                })(f, precioU);
-            }
+        var carrito = (ent.items || []).map(function (it) {
+            var f = estado.filas.find(function (x) {
+                return x.filaSheet === it.filaSheet || (it.inventarioId && x.inventarioDbId === it.inventarioId);
+            }) || {
+                filaSheet: it.filaSheet,
+                inventarioDbId: it.inventarioId || 0,
+                nombre: it.nombre,
+                tipo: it.tipo,
+                talla: it.talla,
+                color: it.color,
+                segmento: it.segmento || 'Hombre',
+                precio: it.precioUnitario || 0,
+                stock: 0
+            };
+            return {
+                fila: f,
+                cantidad: it.cantidad || 1,
+                precioUnitario: it.precioUnitario != null ? it.precioUnitario : (f.precio || 0),
+                precioOriginal: it.precioOriginal != null ? it.precioOriginal : (it.precioUnitario || 0)
+            };
         });
-        return chain.then(function (acc) {
-            return sincronizarVentasParaEdicion().then(function () {
-                ent.estado = 'completada';
-                ent.completadaEn = Date.now();
-                ent.lineasVentas = acc.n;
-                ObebeEntregasStore.saveEntrega(ent);
-                return { ok: true, lineas: acc.n, entrega: ent };
-            });
+        return registrarVentaRetail(carrito, metaBase, { ajustarStock: !ent.stockReservado }).then(function (res) {
+            if (!res || res.ok === false) {
+                return { ok: false, error: (res && res.error) || 'No se pudo registrar la venta.' };
+            }
+            ent.estado = 'completada';
+            ent.completadaEn = Date.now();
+            ent.ventaYaRegistrada = true;
+            ent.stockReservado = false;
+            ent.lineasVentas = res.ventas || 0;
+            ObebeEntregasStore.saveEntrega(ent);
+            return { ok: true, lineas: res.ventas || 0, entrega: ent };
         });
     }
 

@@ -112,7 +112,9 @@
         var titulo = modo === 'editar' ? 'Editar entrega' : 'Programar entrega';
         var subt = modo === 'editar'
             ? 'Actualiza fecha, lugar u otros datos. Los artículos vienen de la venta.'
-            : 'La venta ya está registrada. Completa cuándo y dónde entregar.';
+            : (opts.reservarSinVenta
+                ? 'La venta se registra cuando confirmes la entrega. El stock queda apartado.'
+                : 'La venta ya está registrada. Completa cuándo y dónde entregar.');
 
         var cliente = ent ? ent.cliente : (meta.cliente || '');
         var telefono = ent ? (ent.telefono || '') : (meta.telefono || '');
@@ -164,6 +166,10 @@
                 if (err) err.textContent = '';
                 var datos = leerFormularioModal();
                 datos.vendedor = meta.vendedor || (ent && ent.vendedor) || '';
+                datos.cuenta = meta.cuenta || (ent && ent.ventaMeta && ent.ventaMeta.cuenta) || '';
+                datos.redSocial = meta.redSocial || '';
+                datos.link = meta.link || '';
+                if (opts.reservarSinVenta) datos.registrarAlCompletar = true;
                 if (!datos.cliente) {
                     if (err) err.textContent = 'Indica el cliente.';
                     return;
@@ -194,10 +200,11 @@
 
     function abrirModalPostVenta(opts) {
         opts = opts || {};
-        return abrirModalFormEntrega({
+            return abrirModalFormEntrega({
             modo: 'crear',
             meta: opts.meta,
             carrito: opts.carrito,
+            reservarSinVenta: !!opts.reservarSinVenta,
             onGuardada: opts.onGuardada
         });
     }
@@ -330,9 +337,13 @@
             var comp = ev.target.closest('.admin-entrega-completar');
             if (comp) {
                 var eidC = comp.getAttribute('data-id');
+                var entC = global.ObebeEntregasStore.getById(eidC);
+                var msgC = entC && entC.ventaYaRegistrada
+                    ? 'Vas a marcar esta entrega como completada. La venta ya está registrada; esto solo cierra el pendiente.'
+                    : 'Vas a confirmar la entrega. En ese momento se registra la venta. El stock ya está apartado y no se descuenta otra vez.';
                 ObebeAdminDialog.confirm({
                     title: '¿Estás seguro?',
-                    message: 'Vas a marcar esta entrega como completada. La venta ya está registrada; esto solo cierra el pendiente.',
+                    message: msgC,
                     confirmText: 'Sí, completar',
                     cancelText: 'No',
                     variant: 'warn'
@@ -351,9 +362,13 @@
             var cancel = ev.target.closest('.admin-entrega-cancelar');
             if (cancel) {
                 var cid = cancel.getAttribute('data-id');
+                var entX = global.ObebeEntregasStore.getById(cid);
+                var msgX = entX && entX.ventaYaRegistrada
+                    ? 'Se elimina la entrega. La venta sigue en Ventas y el stock no cambia.'
+                    : 'Se elimina la entrega y las piezas vuelven al inventario. No hay venta registrada.';
                 ObebeAdminDialog.confirm({
                     title: '¿Estás seguro?',
-                    message: 'Se eliminará esta entrega de la lista de pendientes. La venta registrada no se borra.',
+                    message: msgX,
                     confirmText: 'Sí, eliminar',
                     cancelText: 'No',
                     variant: 'danger'

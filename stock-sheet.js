@@ -399,7 +399,7 @@
             var valor = fuentes[i];
             if (valor === undefined || valor === null || valor === '') continue;
             var texto = String(valor);
-            var match = texto.match(/(\d+)(?:\.\d+)?\.(?:webp|jpe?g|png|gif)$/i);
+            var match = texto.match(/(\d+)(?:\.\d+)?\.(?:webp|jpe?g|png|gif|avif)$/i);
             if (match) return parseInt(match[1], 10);
             if (/^\d+$/.test(texto.trim())) return parseInt(texto.trim(), 10);
         }
