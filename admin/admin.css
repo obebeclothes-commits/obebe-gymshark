@@ -198,6 +198,14 @@ a { color: var(--admin-accent); }
     border: none;
 }
 
+.admin-btn-success {
+    background: #1f8a4c;
+    color: #fff;
+    border: none;
+}
+
+.admin-btn-success:hover { background: #187a42; }
+
 .admin-btn-danger:hover {
     background: #f77;
 }
@@ -1464,6 +1472,10 @@ html[data-admin-theme="light"] .admin-banner.info {
     align-items: center;
     gap: 0.35rem;
     flex-shrink: 0;
+}
+
+.admin-inv-toolbar-actions .admin-btn {
+    width: auto;
 }
 
 .admin-inv-genero {

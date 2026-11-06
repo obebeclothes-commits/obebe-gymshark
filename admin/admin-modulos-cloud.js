@@ -4,10 +4,12 @@
     var KEYS = {
         apartados: 'obebe_apartados_v1',
         entregas: 'obebe_entregas_v1',
-        sucursales: 'obebe_sucursales_v1'
+        sucursales: 'obebe_sucursales_v1',
+        compras: 'obebe_compras_v1'
     };
 
     var SUCURSALES_BLOB_ID = 'obebe-sucursales-blob';
+    var COMPRAS_BLOB_ID = 'obebe-compras-blob';
 
     var pushTimers = {};
 
@@ -67,25 +69,50 @@
         return !!(item && item.id === SUCURSALES_BLOB_ID);
     }
 
+    function esBlobCompras(item) {
+        return !!(item && item.id === COMPRAS_BLOB_ID);
+    }
+
+    function esBlobMarcador(item) {
+        return esBlobSucursales(item) || esBlobCompras(item);
+    }
+
     function partirEntregas(arr) {
         var entregas = [];
         var lineas = [];
+        var compras = [];
+        var comprasActualizadoEn = 0;
         (arr || []).forEach(function (item) {
             if (esBlobSucursales(item)) {
                 if (Array.isArray(item.lineas)) lineas = lineas.concat(item.lineas);
+            } else if (esBlobCompras(item)) {
+                if (Array.isArray(item.lineas)) compras = compras.concat(item.lineas);
+                var ts = Number(item.actualizadoEn) || 0;
+                if (ts > comprasActualizadoEn) comprasActualizadoEn = ts;
             } else if (item && item.id) {
                 entregas.push(item);
             }
         });
-        return { entregas: entregas, lineas: lineas };
+        return {
+            entregas: entregas,
+            lineas: lineas,
+            compras: compras,
+            comprasActualizadoEn: comprasActualizadoEn
+        };
     }
 
-    function payloadEntregas(entregas, lineas) {
-        var out = (entregas || []).filter(function (item) { return item && !esBlobSucursales(item); });
+    function payloadEntregas(entregas, lineas, compras) {
+        var out = (entregas || []).filter(function (item) { return item && !esBlobMarcador(item); });
         out.push({
             id: SUCURSALES_BLOB_ID,
             _modulo: 'sucursales',
             lineas: lineas || [],
+            actualizadoEn: Date.now()
+        });
+        out.push({
+            id: COMPRAS_BLOB_ID,
+            _modulo: 'compras',
+            lineas: compras || [],
             actualizadoEn: Date.now()
         });
         return out;
@@ -99,10 +126,10 @@
             });
     }
 
-    function guardarEntregasCloud(entregas, lineas) {
+    function guardarEntregasCloud(entregas, lineas, compras) {
         return ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
             moduleKey: 'entregas',
-            payload: payloadEntregas(entregas, lineas)
+            payload: payloadEntregas(entregas, lineas, compras)
         }).then(asegurarOk);
     }
 
@@ -112,9 +139,11 @@
             var localEntregas = partirEntregas(leerLocal(KEYS.entregas)).entregas;
             var entregas = fusionarPorId(localEntregas, cloud.entregas);
             var lineas = fusionarPorId(leerLocal(KEYS.sucursales), cloud.lineas);
+            var compras = comprasMasRecientes(cloud);
             guardarLocal(KEYS.entregas, entregas);
             guardarLocal(KEYS.sucursales, lineas);
-            return guardarEntregasCloud(entregas, lineas);
+            guardarLocal(KEYS.compras, compras);
+            return guardarEntregasCloud(entregas, lineas, compras);
         }).then(function () { return true; }).catch(function (err) {
             console.warn('[admin-modulos-cloud] sync entregas/sucursales', err);
             return false;
@@ -164,7 +193,8 @@
             var entregas = partirEntregas(leerLocal(KEYS.entregas)).entregas;
             leerEntregasCloud().then(function (cloud) {
                 var lineas = fusionarPorId(leerLocal(KEYS.sucursales), cloud.lineas);
-                return guardarEntregasCloud(entregas, lineas);
+                var compras = fusionarPorId(leerLocal(KEYS.compras), cloud.compras);
+                return guardarEntregasCloud(entregas, lineas, compras);
             }).catch(function (err) {
                 console.warn('[admin-modulos-cloud] push entregas', err);
             });
@@ -182,9 +212,52 @@
                     partirEntregas(leerLocal(KEYS.entregas)).entregas,
                     cloud.entregas
                 );
-                return guardarEntregasCloud(entregas, lineas);
+                var compras = fusionarPorId(leerLocal(KEYS.compras), cloud.compras);
+                return guardarEntregasCloud(entregas, lineas, compras);
             }).catch(function (err) {
                 console.warn('[admin-modulos-cloud] push sucursales', err);
+            });
+        }, 700);
+    }
+
+    function tsComprasLocal() {
+        try {
+            var n = parseInt(localStorage.getItem('obebe_compras_ts_v1') || '0', 10);
+            return isNaN(n) ? 0 : n;
+        } catch (e) {
+            return 0;
+        }
+    }
+
+    function guardarTsCompras(n) {
+        try { localStorage.setItem('obebe_compras_ts_v1', String(n || 0)); } catch (e) { /* ignore */ }
+    }
+
+    function comprasMasRecientes(cloud) {
+        var localTs = tsComprasLocal();
+        var cloudTs = (cloud && cloud.comprasActualizadoEn) || 0;
+        if (cloudTs > localTs) {
+            guardarTsCompras(cloudTs);
+            return cloud.compras || [];
+        }
+        return leerLocal(KEYS.compras);
+    }
+
+    function programarPushCompras() {
+        if (!canSync()) return;
+        if (pushTimers.compras) clearTimeout(pushTimers.compras);
+        pushTimers.compras = setTimeout(function () {
+            pushTimers.compras = null;
+            var compras = leerLocal(KEYS.compras);
+            leerEntregasCloud().then(function (cloud) {
+                var entregas = fusionarPorId(
+                    partirEntregas(leerLocal(KEYS.entregas)).entregas,
+                    cloud.entregas
+                );
+                var lineas = fusionarPorId(leerLocal(KEYS.sucursales), cloud.lineas);
+                return guardarEntregasCloud(entregas, lineas, compras);
+            }).catch(function (err) {
+                console.warn('[admin-modulos-cloud] push compras', err);
             });
         }, 700);
     }
@@ -194,8 +267,10 @@
         syncApartados: function () { return syncModulo('apartados', KEYS.apartados); },
         syncEntregas: syncEntregasYSucursales,
         syncSucursales: syncEntregasYSucursales,
+        syncCompras: syncEntregasYSucursales,
         notifyApartadosSaved: function () { programarPush('apartados', KEYS.apartados); },
         notifyEntregasSaved: programarPushEntregas,
-        notifySucursalesSaved: programarPushSucursales
+        notifySucursalesSaved: programarPushSucursales,
+        notifyComprasSaved: programarPushCompras
     };
 })(window);

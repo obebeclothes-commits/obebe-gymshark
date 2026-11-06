@@ -30,8 +30,7 @@
             children: [
                 { id: 'inventario', label: 'Inventario', live: true },
                 { id: 'sucursales', label: 'Sucursales', live: true },
-                { id: 'pedidos', label: 'Pedidos', live: false },
-                { id: 'compras', label: 'Compras', live: false },
+                { id: 'compras', label: 'Compras', live: true },
                 { id: 'historico', label: 'Histórico', live: true }
             ]
         },
@@ -907,7 +906,8 @@
 
     function renderModulo(id) {
         if (!datosCache && id !== 'ventas_mayoreo' && id !== 'mayoreo' &&
-            id !== 'clientes_mayoreo' && id !== 'calendario_mayoreo' && id !== 'pedidos_mayoreo') {
+            id !== 'clientes_mayoreo' && id !== 'calendario_mayoreo' && id !== 'pedidos_mayoreo' &&
+            id !== 'compras') {
             elContent.innerHTML = '<div class="admin-loading">Cargando…</div>';
             cargarDatos(false).then(function () { renderModulo(id); }).catch(function (err) {
                 elContent.innerHTML = '<div class="admin-banner">' + esc(err.message) + '. Verifica que el Sheet sea público para lectura.</div>';
@@ -1049,10 +1049,10 @@
                 }
                 break;
             case 'compras':
-                renderPlaceholder('Compras a proveedores', 'Órdenes de compra, recepción parcial y comparación solicitado vs recibido.', [
-                    'Entrada de mercancía ligada a inventario',
-                    'Productos pendientes de recepción'
-                ]);
+                elContent.innerHTML = '<div id="adminComprasMount"></div>';
+                if (window.ObebeAdminCompras) {
+                    ObebeAdminCompras.mount(document.getElementById('adminComprasMount'));
+                }
                 break;
             default: elContent.innerHTML = '<p>Módulo no encontrado</p>';
         }
@@ -1276,6 +1276,16 @@
             }
         });
     }
+
+    document.addEventListener('obebe-compras-a-inventario', function () {
+        if (!window.ObebeAdminData || !ObebeAdminData.cargarInventario) return;
+        ObebeAdminData.cargarInventario(true).then(function (inv) {
+            if (!inv || !datosCache) return;
+            datosCache.filas = inv.filas || datosCache.filas;
+            if (inv.resumen) datosCache.resumen = inv.resumen;
+            if (inv.encabezadosFila2) datosCache.encabezadosFila2 = inv.encabezadosFila2;
+        }).catch(function () { /* el inventario se vuelve a leer al entrar */ });
+    });
 
     document.addEventListener('DOMContentLoaded', function () {
         initTemaAdmin();

@@ -247,7 +247,9 @@
             '<td>' + esc(e.cliente) + '</td>' +
             '<td>' + esc(e.lugar) + '</td>' +
             '<td>' + piezas + '</td>' +
-            '<td class="admin-muted-text">' + esc(fechaCierre) + '</td></tr>';
+            '<td class="admin-muted-text">' + esc(fechaCierre) + '</td>' +
+            '<td><button type="button" class="admin-btn admin-btn-danger admin-btn-compact admin-entrega-hist-borrar" data-id="' +
+            esc(e.id) + '">Borrar</button></td></tr>';
     }
 
     function tarjetaHistoricoEntrega(e) {
@@ -265,7 +267,9 @@
             '<p class="admin-muted-text">' + esc(ObebeAdminData.formatoFecha(e.fechaIso, e.fechaRaw)) +
             (e.hora ? ' · ' + esc(e.hora) : '') + ' · ' + piezas + ' pza(s)</p>' +
             '<p><span class="admin-muted-text">Lugar:</span> ' + esc(e.lugar) + '</p>' +
-            '<p class="admin-muted-text admin-entrega-hist-card-cierre">' + esc(fechaCierre) + '</p></article>';
+            '<p class="admin-muted-text admin-entrega-hist-card-cierre">' + esc(fechaCierre) + '</p>' +
+            '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact admin-entrega-hist-borrar" data-id="' +
+            esc(e.id) + '">Borrar</button></article>';
     }
 
     function esVistaTelefonoEntregas() {
@@ -290,7 +294,7 @@
                 return;
             }
             box.innerHTML = '<div class="admin-table-wrap admin-entrega-hist-scroll"><table class="admin-table admin-table-compact admin-entrega-hist-table"><thead><tr>' +
-                '<th>Estado</th><th>Programada</th><th>Cliente</th><th>Lugar</th><th>Pzas.</th><th>Cierre</th>' +
+                '<th>Estado</th><th>Programada</th><th>Cliente</th><th>Lugar</th><th>Pzas.</th><th>Cierre</th><th></th>' +
                 '</tr></thead><tbody>' + list.map(filaHistorico).join('') + '</tbody></table></div>';
         }
 
@@ -381,6 +385,26 @@
                         }
                         pintarLista();
                     });
+                });
+                return;
+            }
+            var histDel = ev.target.closest('.admin-entrega-hist-borrar');
+            if (histDel) {
+                var hid = histDel.getAttribute('data-id');
+                ObebeAdminDialog.confirm({
+                    title: '¿Borrar del registro?',
+                    message: 'Se quita esta entrega del registro. La venta y el stock no cambian.',
+                    confirmText: 'Borrar',
+                    cancelText: 'Cancelar',
+                    variant: 'danger'
+                }).then(function (ok) {
+                    if (!ok) return;
+                    var resH = ObebeAdminData.borrarEntregaDelRegistro(hid);
+                    if (!resH.ok) {
+                        ObebeAdminDialog.alert({ title: 'No se pudo', message: resH.error || 'Error' });
+                        return;
+                    }
+                    pintarLista();
                 });
             }
         };

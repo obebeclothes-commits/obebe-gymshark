@@ -4065,6 +4065,19 @@
         return ObebeEntregasStore.listar(estadoFiltro || null);
     }
 
+    function borrarEntregaDelRegistro(entregaId) {
+        if (!global.ObebeEntregasStore) {
+            return { ok: false, error: 'Módulo de entregas no cargado.' };
+        }
+        var ent = ObebeEntregasStore.getById(entregaId);
+        if (!ent) return { ok: false, error: 'Entrega no encontrada.' };
+        if (ent.estado !== 'completada') {
+            return { ok: false, error: 'Solo se borra una entrega ya cerrada del registro.' };
+        }
+        ObebeEntregasStore.removeEntrega(entregaId);
+        return { ok: true };
+    }
+
     function listarHistoricoEntregas(limite) {
         if (!global.ObebeEntregasStore) return [];
         limite = limite || 40;
@@ -4334,6 +4347,7 @@
         crearEntregaTrasVenta: crearEntregaTrasVenta,
         actualizarEntregaProgramada: actualizarEntregaProgramada,
         listarHistoricoEntregas: listarHistoricoEntregas,
+        borrarEntregaDelRegistro: borrarEntregaDelRegistro,
         completarEntregaProgramada: completarEntregaProgramada,
         cancelarEntregaProgramada: cancelarEntregaProgramada,
         listarEntregasAdmin: listarEntregasAdmin,

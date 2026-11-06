@@ -32,7 +32,9 @@
     function getAll() {
         var arr = leerJson([]);
         if (!Array.isArray(arr)) return [];
-        return arr.filter(function (e) { return e && e.id !== 'obebe-sucursales-blob'; });
+        return arr.filter(function (e) {
+            return e && e.id !== 'obebe-sucursales-blob' && e.id !== 'obebe-compras-blob';
+        });
     }
 
     function getById(id) {
