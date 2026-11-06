@@ -774,7 +774,7 @@ async function getDbStats() {
   };
 }
 
-const MODULO_BLOB_KEYS = new Set(["apartados", "entregas"]);
+const MODULO_BLOB_KEYS = new Set(["apartados", "entregas", "sucursales"]);
 
 async function getAdminModuloBlob(body: Record<string, unknown>) {
   const moduleKey = String(body.moduleKey ?? "").trim();
