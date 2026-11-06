@@ -3,7 +3,8 @@
 
     var KEYS = {
         apartados: 'obebe_apartados_v1',
-        entregas: 'obebe_entregas_v1'
+        entregas: 'obebe_entregas_v1',
+        sucursales: 'obebe_sucursales_v1'
     };
 
     var pushTimers = {};
@@ -92,7 +93,9 @@
         canSync: canSync,
         syncApartados: function () { return syncModulo('apartados', KEYS.apartados); },
         syncEntregas: function () { return syncModulo('entregas', KEYS.entregas); },
+        syncSucursales: function () { return syncModulo('sucursales', KEYS.sucursales); },
         notifyApartadosSaved: function () { programarPush('apartados', KEYS.apartados); },
-        notifyEntregasSaved: function () { programarPush('entregas', KEYS.entregas); }
+        notifyEntregasSaved: function () { programarPush('entregas', KEYS.entregas); },
+        notifySucursalesSaved: function () { programarPush('sucursales', KEYS.sucursales); }
     };
 })(window);

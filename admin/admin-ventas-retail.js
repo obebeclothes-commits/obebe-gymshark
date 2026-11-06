@@ -194,6 +194,7 @@
                     fila: c.fila,
                     cantidad: c.cantidad,
                     precioUnitario: precio,
+                    precioOriginal: c.precioCatalogo != null ? c.precioCatalogo : precio,
                     imagenUrl: c.imagenUrl
                 };
             });
@@ -352,7 +353,7 @@
                 if (colores.length && colores.indexOf((r.color || '').trim()) < 0) return false;
                 if (marcas.length && !marcas.some(function (m) { return marcaCoincide(m, r.marca); })) return false;
                 if (q) {
-                    var blob = [r.nombre, r.marca, r.tipo, r.color, r.talla, r.segmento].join(' ').toLowerCase();
+                    var blob = [r.nombre, r.marca, r.tipo, r.color, r.talla, r.segmento, String(r.ref || '')].join(' ').toLowerCase();
                     if (blob.indexOf(q) < 0) return false;
                 }
                 return true;
@@ -409,7 +410,8 @@
                     ? '<img src="' + esc(img) + '" alt="" class="admin-ped-thumb" loading="lazy" onerror="adminMayoreoImgFallback(this)">'
                     : '<span class="admin-mayoreo-thumb-empty admin-ped-thumb"></span>';
                 return '<button type="button" class="admin-ped-item admin-venta-retail-pick" data-id="' + esc(id) + '">' + imgHtml +
-                    '<span class="admin-ped-item-info"><strong>' + esc(r.nombre) + '</strong>' +
+                    '<span class="admin-ped-item-info">' + ObebeAdminData.htmlRef(r.ref) +
+                    '<strong>' + esc(r.nombre) + '</strong>' +
                     '<span class="admin-ped-tags"><span class="admin-tag admin-tag-muted">' + esc(seg) + '</span></span>' +
                     '<span>' + esc(r.talla) + ' · ' + esc(r.color) + ' · ' + esc(r.tipo) + ' · Stock ' + r.stock + '</span>' +
                     htmlPrecioCatalogo(r) + '</span></button>';
@@ -436,10 +438,12 @@
                 var img = c.imagenUrl || imagenFila(c.fila);
                 return '<tr><td class="admin-ped-cart-img-cell"><div class="admin-ped-cart-line">' +
                     thumbHtml(img, c.fila.nombre, 'admin-ped-cart-thumb') +
-                    '<div><span class="admin-ped-cart-name">' + esc(c.fila.nombre) + '</span>' +
+                    '<div>' + ObebeAdminData.htmlRef(c.fila.ref) +
+                    '<span class="admin-ped-cart-name">' + esc(c.fila.nombre) + '</span>' +
                     '<span class="admin-muted-text">' + esc(c.fila.talla) + ' · ' + esc(c.fila.color) + '</span></div></div></td>' +
                     '<td><input type="number" min="1" max="' + c.fila.stock + '" value="' + c.cantidad + '" class="admin-venta-num admin-venta-retail-qty" data-idx="' + idx + '"></td>' +
-                    '<td>' + fmt(c.precioUnitario) + '</td><td>' + fmt(sub) + '</td>' +
+                    '<td><input type="number" min="0" step="1" class="admin-venta-num admin-venta-retail-precio" data-idx="' + idx + '" value="' + (c.precioUnitario || 0) + '"></td>' +
+                    '<td>' + fmt(sub) + '</td>' +
                     '<td><button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-venta-retail-quitar" data-idx="' + idx + '">Quitar</button></td></tr>';
             }).join('');
             box.innerHTML = '<div class="admin-table-wrap"><table class="admin-table admin-table-compact"><thead><tr>' +
@@ -684,6 +688,7 @@
                         fila: f,
                         cantidad: 1,
                         precioUnitario: precioVentaFila(f),
+                        precioCatalogo: precioVentaFila(f),
                         imagenUrl: imagenFila(f)
                     });
                 }
@@ -730,6 +735,7 @@
                             fila: c.fila,
                             cantidad: c.cantidad,
                             precioUnitario: c.precioUnitario,
+                            precioOriginal: c.precioOriginal,
                             imagenUrl: c.imagenUrl || imagenFila(c.fila)
                         };
                     });
@@ -805,15 +811,26 @@
                 return;
             }
             var qty = ev.target.closest('.admin-venta-retail-qty');
-            if (!qty) return;
-            var idx = parseInt(qty.getAttribute('data-idx'), 10);
-            if (isNaN(idx) || !carrito[idx]) return;
-            var n = parseInt(qty.value, 10);
-            var max = carrito[idx].fila.stock || 1;
-            if (isNaN(n) || n < 1) n = 1;
-            if (n > max) n = max;
-            carrito[idx].cantidad = n;
-            pintarCarrito();
+            if (qty) {
+                var idx = parseInt(qty.getAttribute('data-idx'), 10);
+                if (isNaN(idx) || !carrito[idx]) return;
+                var n = parseInt(qty.value, 10);
+                var max = carrito[idx].fila.stock || 1;
+                if (isNaN(n) || n < 1) n = 1;
+                if (n > max) n = max;
+                carrito[idx].cantidad = n;
+                pintarCarrito();
+                return;
+            }
+            var precioIn = ev.target.closest('.admin-venta-retail-precio');
+            if (precioIn) {
+                var idxP = parseInt(precioIn.getAttribute('data-idx'), 10);
+                if (isNaN(idxP) || !carrito[idxP]) return;
+                var pv = parseFloat(String(precioIn.value).replace(',', '.'));
+                if (isNaN(pv) || pv < 0) pv = 0;
+                carrito[idxP].precioUnitario = pv;
+                pintarCarrito();
+            }
         };
 
     }

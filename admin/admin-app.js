@@ -29,6 +29,7 @@
             label: 'Inventario',
             children: [
                 { id: 'inventario', label: 'Inventario', live: true },
+                { id: 'sucursales', label: 'Sucursales', live: true },
                 { id: 'pedidos', label: 'Pedidos', live: false },
                 { id: 'compras', label: 'Compras', live: false },
                 { id: 'historico', label: 'Histórico', live: true }
@@ -674,6 +675,47 @@
         });
     }
 
+    function renderSucursales() {
+        elContent.innerHTML = '<div id="adminSucursalesMount" class="admin-sucursales-page"></div>';
+        var syncFilasP = ObebeAdminData.cargarInventario(true).then(function (inv) {
+            if (inv && inv.filas && inv.filas.length) {
+                datosCache.filas = inv.filas;
+                datosCache.resumen = inv.resumen || ObebeAdminData.calcularResumen(inv.filas);
+            }
+        }).catch(function () { /* usar cache */ });
+        syncFilasP.finally(function () {
+        ObebeAdminSucursales.mount(document.getElementById('adminSucursalesMount'), {
+            getFilas: function () {
+                var st = ObebeAdminData.getEstado();
+                return (st.filas && st.filas.length) ? st.filas : (datosCache.filas || []);
+            },
+            getClientes: function () { return datosCache.clientes || []; },
+            onInventarioChanged: function () {
+                function aplicarInv(inv) {
+                    datosCache.filas = (inv && inv.filas) || datosCache.filas || [];
+                    datosCache.resumen = (inv && inv.resumen) ||
+                        ObebeAdminData.calcularResumen(datosCache.filas);
+                }
+                function aplicarVentas(p) {
+                    if (!p) return;
+                    datosCache.ventas = p.ventas || datosCache.ventas;
+                    datosCache.resumenVentas = p.resumenVentas || datosCache.resumenVentas;
+                    datosCache.clientes = p.clientes || datosCache.clientes;
+                }
+                return ObebeAdminData.cargarInventario(true).then(function (inv) {
+                    aplicarInv(inv);
+                    return ObebeAdminData.cargarVentas(true).then(function (p) {
+                        aplicarVentas(p);
+                    });
+                }).catch(function () {
+                    var st = ObebeAdminData.getEstado();
+                    aplicarInv({ filas: st.filas });
+                });
+            }
+        });
+        });
+    }
+
     function linkCortoVentas(url) {
         var u = String(url || '').trim();
         if (!u) return '—';
@@ -755,6 +797,7 @@
         var f = ObebeAdminData.filtrarVentas(datosCache.ventas || [], q);
         ObebeAdminVentasRegistro.renderInto(el, f, {
             editable: ObebeAdminData.edicionVentasHabilitada(),
+            seleccionAlEditar: true,
             limite: 500,
             getVentas: function () { return f; },
             onChanged: refrescarDatosTrasEditarVenta
@@ -878,6 +921,7 @@
         switch (id) {
             case 'dashboard': renderDashboard(); break;
             case 'inventario': renderInventario(); break;
+            case 'sucursales': renderSucursales(); break;
             case 'historico': renderHistoricoInventario(); break;
             case 'registrar_venta': renderRegistrarVenta(); break;
             case 'entregas': renderEntregas(); break;

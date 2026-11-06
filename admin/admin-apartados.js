@@ -4,6 +4,7 @@
     var EQUIPO = ['Ugo', 'Daniel', 'Fer'];
     var filtroEstado = 'activo';
     var abonoApartadoId = null;
+    var abonoEditPagoId = null;
     var tipoCliente = 'existente';
     var clienteSeleccionadoId = '';
     var clientesLista = [];
@@ -82,12 +83,12 @@
     function htmlPrendaRow(p, idx) {
         p = p || {};
         var Ui = global.ObebeAdminCamposUi;
-        var invHint = p.inventarioId
-            ? '<span class="admin-ap-inv-hint">Vinculado inventario</span>'
-            : '<span class="admin-ap-inv-hint admin-muted-text">Sin vínculo</span>';
         return '<div class="admin-apartado-prenda-row" data-prenda-idx="' + idx + '">' +
             '<input type="hidden" class="admin-ap-prenda-invid" value="' + esc(p.inventarioId || '') + '">' +
             '<input type="hidden" class="admin-ap-prenda-filasheet" value="' + esc(p.filaSheet || '') + '">' +
+            '<div class="admin-field admin-ap-field-ref"><label>Ref</label>' +
+            '<input type="text" class="admin-ap-prenda-ref" inputmode="numeric" value="' +
+            esc(p.ref || ObebeAdminData.refParaArticulo(p) || '') + '" placeholder="Ref"></div>' +
             '<div class="admin-field admin-field-grow admin-ap-field-nombre"><label>Nombre</label>' +
             '<input type="text" class="admin-ap-prenda-nombre" value="' + esc(p.nombre) + '" placeholder="Prenda…"></div>' +
             '<div class="admin-field admin-field-select-otro"><label>Marca</label>' +
@@ -114,15 +115,17 @@
                 otroClass: 'admin-ap-prenda-talla-otro',
                 otroPlaceholder: 'Otra talla…'
             }) : '') + '</div>' +
+            '<div class="admin-ap-prenda-tail">' +
             '<div class="admin-field admin-field-narrow"><label>Precio</label>' +
             '<input type="text" class="admin-ap-prenda-precio" inputmode="decimal" value="' +
             (p.precio != null && p.precio !== '' ? esc(String(p.precio)) : '') + '" placeholder="0"></div>' +
             '<div class="admin-field admin-field-narrow"><label>Cant.</label>' +
             '<input type="number" min="1" class="admin-ap-prenda-cant" value="' +
             (p.cantidad != null ? esc(String(p.cantidad)) : '1') + '"></div>' +
-            '<div class="admin-ap-prenda-inv-col">' + invHint +
+            '<div class="admin-ap-prenda-inv-col">' +
             '<button type="button" class="admin-btn admin-btn-ghost admin-ap-prenda-inv" title="Vincular inventario">Inv.</button></div>' +
-            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm admin-ap-prenda-quitar" title="Quitar prenda">×</button></div>';
+            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm admin-ap-prenda-quitar" title="Quitar prenda">×</button>' +
+            '</div></div>';
     }
 
     function leerPrendasDelForm(container) {
@@ -146,6 +149,7 @@
                     row.querySelector('.admin-ap-prenda-talla-select'),
                     row.querySelector('.admin-ap-prenda-talla-otro')
                 ) : '',
+                ref: parseInt((row.querySelector('.admin-ap-prenda-ref') || {}).value, 10) || 0,
                 inventarioId: ((row.querySelector('.admin-ap-prenda-invid') || {}).value || '').trim(),
                 filaSheet: parseInt((row.querySelector('.admin-ap-prenda-filasheet') || {}).value, 10) || 0,
                 precio: ObebeApartadosStore.parseMonto((row.querySelector('.admin-ap-prenda-precio') || {}).value),
@@ -272,14 +276,17 @@
         if (!pagos.length) {
             return '<p class="admin-muted-text">Aún no hay abonos.</p>';
         }
-        var rows = pagos.map(function (p) {
+        var rows = pagos.map(function (p, i) {
+            var pid = p.id || ('idx-' + i);
             return '<tr><td>' + esc(ObebeAdminData.formatoFecha('', p.fechaRaw)) + '</td>' +
                 '<td>' + fmt(p.monto) + '</td>' +
                 '<td>' + esc(ObebeAdminData.etiquetaCuentaVentas(p.cuenta)) + '</td>' +
-                '<td>' + esc(p.vendedor || '—') + '</td></tr>';
+                '<td>' + esc(p.vendedor || '—') + '</td>' +
+                '<td><button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-editar-pago="' +
+                esc(ap.id) + '" data-pago-id="' + esc(pid) + '">Editar</button></td></tr>';
         }).join('');
         return '<div class="admin-table-wrap"><table class="admin-table admin-table-compact">' +
-            '<thead><tr><th>Fecha</th><th>Monto</th><th>Cuenta</th><th>Vendedor</th></tr></thead><tbody>' +
+            '<thead><tr><th>Fecha</th><th>Monto</th><th>Cuenta</th><th>Vendedor</th><th></th></tr></thead><tbody>' +
             rows + '</tbody></table></div>';
     }
 
@@ -327,7 +334,7 @@
             '<div class="admin-apartado-progress" aria-hidden="true"><div class="admin-apartado-progress-fill" style="width:' + pct + '%"></div></div>' +
             '<div class="admin-apartado-card-body">' +
             '<div class="admin-apartado-col"><h4>Prendas</h4>' + htmlPrendasTabla(ap) + '</div>' +
-            '<div class="admin-apartado-col"><h4>Abonos (van a Ventas)</h4>' + htmlPagosLista(ap) + '</div></div>' +
+            '<div class="admin-apartado-col"><h4>Abonos</h4>' + htmlPagosLista(ap) + '</div></div>' +
             (ap.notas ? '<p class="admin-apartado-notas"><span class="admin-muted-text">Notas:</span> ' + esc(ap.notas) + '</p>' : '') +
             '<div class="admin-apartado-card-actions">' + acciones + '</div></div></details></article>';
     }
@@ -385,7 +392,7 @@
         var list = getFilasInv().slice();
         if (q) {
             list = list.filter(function (r) {
-                var blob = [r.nombre, r.marca, r.color, r.talla, r.tipo].join(' ').toLowerCase();
+                var blob = [r.nombre, r.marca, r.color, r.talla, r.tipo, String(r.ref || '')].join(' ').toLowerCase();
                 return blob.indexOf(q) >= 0;
             });
         }
@@ -406,7 +413,8 @@
             var sel = inventarioPickSelected && inventarioPickSelected.invId === id ? ' is-selected' : '';
             return '<button type="button" class="admin-ap-inv-pick' + sel + '" data-inv-id="' + esc(id) + '" data-fila="' +
                 esc(r.filaSheet) + '">' + thumbInvHtml(r) +
-                '<span class="admin-ap-inv-pick-text"><strong>' + esc(r.nombre) + '</strong> · ' + esc(r.marca) +
+                '<span class="admin-ap-inv-pick-text">' + ObebeAdminData.htmlRef(r.ref) +
+                '<strong>' + esc(r.nombre) + '</strong> · ' + esc(r.marca) +
                 ' · ' + esc(r.talla) + ' · ' + esc(r.color) + ' · Stock ' + (r.stock || 0) + '</span></button>';
         }).join('');
         var btnOk = document.getElementById('adminApartadoInvConfirm');
@@ -427,6 +435,7 @@
     function aplicarInventarioAPrendaRow(rowEl, filaInv) {
         if (!rowEl || !filaInv) return;
         (rowEl.querySelector('.admin-ap-prenda-nombre') || {}).value = filaInv.nombre || '';
+        (rowEl.querySelector('.admin-ap-prenda-ref') || {}).value = filaInv.ref || '';
         var Ui = global.ObebeAdminCamposUi;
         if (Ui) {
             Ui.setSelectConOtro(
@@ -554,8 +563,7 @@
             '<p id="adminApartadoAbonoResumen" class="admin-apartado-abono-resumen"></p>' +
             '<div class="admin-field-row">' +
             '<div class="admin-field"><label for="adminApartadoAbonoFecha">Fecha</label>' +
-            '<input id="adminApartadoAbonoFechaPick" type="date" class="admin-ap-fecha-cal">' +
-            '<input id="adminApartadoAbonoFecha" type="text" placeholder="dd/mm/aaaa" autocomplete="off" class="admin-ap-fecha-text"></div>' +
+            '<input id="adminApartadoAbonoFechaPick" type="date" class="admin-ap-fecha-cal" required></div>' +
             '<div class="admin-field"><label for="adminApartadoAbonoMonto">Monto del abono</label>' +
             '<input id="adminApartadoAbonoMonto" type="text" inputmode="decimal" placeholder="0" required></div></div>' +
             '<div class="admin-field-row">' +
@@ -565,7 +573,7 @@
             '<p id="adminApartadoAbonoError" class="admin-login-error" role="alert"></p>' +
             '<div class="admin-apartado-modal-actions">' +
             '<button type="button" class="admin-btn admin-btn-danger" data-ap-modal-dismiss="1">Cerrar</button>' +
-            '<button type="submit" class="admin-btn admin-btn-primary">Registrar en ventas</button></div></form></div>';
+            '<button type="submit" class="admin-btn admin-btn-primary" id="adminApartadoAbonoSave">Registrar en ventas</button></div></form></div>';
         document.body.appendChild(root);
         root.querySelectorAll('[data-ap-modal-dismiss]').forEach(function (el) {
             el.addEventListener('click', function (ev) {
@@ -574,22 +582,12 @@
             });
         });
         document.getElementById('adminApartadoAbonoForm').addEventListener('submit', onSubmitAbono);
-        var pickF = document.getElementById('adminApartadoAbonoFechaPick');
-        var txtF = document.getElementById('adminApartadoAbonoFecha');
-        if (pickF && txtF) {
-            pickF.addEventListener('change', function () {
-                if (pickF.value) txtF.value = isoFechaToRaw(pickF.value);
-            });
-            txtF.addEventListener('input', function () {
-                var iso = rawFechaToIso(txtF.value);
-                if (iso) pickF.value = iso;
-            });
-        }
         return root;
     }
 
     function cerrarAbonoModal() {
         abonoApartadoId = null;
+        abonoEditPagoId = null;
         var root = document.getElementById('adminApartadoAbonoModal');
         if (!root) return;
         root.classList.add('admin-hidden');
@@ -603,13 +601,12 @@
         if (!ap) return;
         ensureAbonoModal();
         abonoApartadoId = apartadoId;
+        abonoEditPagoId = null;
         var root = document.getElementById('adminApartadoAbonoModal');
         var pend = ObebeApartadosStore.saldoPendiente(ap);
         document.getElementById('adminApartadoAbonoTitulo').textContent = 'Abono · ' + ap.cliente;
         document.getElementById('adminApartadoAbonoResumen').innerHTML =
             'Pendiente: <strong>' + fmt(pend) + '</strong> de ' + fmt(ap.totalAPagar);
-        var rawHoy = hoyRaw();
-        document.getElementById('adminApartadoAbonoFecha').value = rawHoy;
         var pickHoy = document.getElementById('adminApartadoAbonoFechaPick');
         if (pickHoy) pickHoy.value = hoyIsoDate();
         document.getElementById('adminApartadoAbonoMonto').value = '';
@@ -618,12 +615,107 @@
         if (EQUIPO.indexOf(vendDef) < 0) vendDef = '';
         var selC = document.getElementById('adminApartadoAbonoCuenta');
         var selV = document.getElementById('adminApartadoAbonoVendedor');
+        var btnSave = document.getElementById('adminApartadoAbonoSave');
         if (selC) selC.value = '';
         if (selV) selV.value = vendDef;
+        if (btnSave) btnSave.textContent = 'Registrar en ventas';
         root.classList.remove('admin-hidden');
         root.setAttribute('aria-hidden', 'false');
         document.body.classList.add('admin-apartado-modal-open');
         document.getElementById('adminApartadoAbonoMonto').focus();
+    }
+
+    function pagoPorId(ap, pagoId) {
+        var pagos = (ap && ap.pagos) || [];
+        var i;
+        for (i = 0; i < pagos.length; i++) {
+            var pid = pagos[i].id || ('idx-' + i);
+            if (pid === pagoId) return pagos[i];
+        }
+        return null;
+    }
+
+    function ventaDePago(pago) {
+        var id = parseInt(pago && pago.ventaId, 10);
+        if (!id || !ObebeAdminData.getEstado) return null;
+        var ventas = (ObebeAdminData.getEstado().ventas || []);
+        var i;
+        for (i = 0; i < ventas.length; i++) {
+            if (parseInt(ventas[i].filaSheet, 10) === id) return ventas[i];
+        }
+        return null;
+    }
+
+    function abrirEditarAbono(apartadoId, pagoId) {
+        var ap = ObebeApartadosStore.getById(apartadoId);
+        if (!ap) return;
+        var pago = pagoPorId(ap, pagoId);
+        if (!pago) return;
+        ensureAbonoModal();
+        abonoApartadoId = apartadoId;
+        abonoEditPagoId = pagoId;
+        var root = document.getElementById('adminApartadoAbonoModal');
+        document.getElementById('adminApartadoAbonoTitulo').textContent = 'Editar abono · ' + ap.cliente;
+        document.getElementById('adminApartadoAbonoResumen').innerHTML =
+            'Monto actual: <strong>' + fmt(pago.monto) + '</strong>';
+        var pick = document.getElementById('adminApartadoAbonoFechaPick');
+        if (pick) pick.value = rawFechaToIso(pago.fechaRaw) || hoyIsoDate();
+        document.getElementById('adminApartadoAbonoMonto').value = pago.monto != null ? String(pago.monto) : '';
+        document.getElementById('adminApartadoAbonoError').textContent = '';
+        var selC = document.getElementById('adminApartadoAbonoCuenta');
+        var selV = document.getElementById('adminApartadoAbonoVendedor');
+        var btnSave = document.getElementById('adminApartadoAbonoSave');
+        if (selC) selC.value = EQUIPO.indexOf(pago.cuenta) >= 0 ? pago.cuenta : '';
+        if (selV) selV.value = EQUIPO.indexOf(pago.vendedor) >= 0 ? pago.vendedor : '';
+        if (btnSave) btnSave.textContent = 'Guardar cambios';
+        root.classList.remove('admin-hidden');
+        root.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('admin-apartado-modal-open');
+        document.getElementById('adminApartadoAbonoMonto').focus();
+    }
+
+    function guardarEdicionAbono(ap, pago, err) {
+        var pagoId = abonoEditPagoId;
+        var prev = pagoPorId(ap, pagoId);
+        if (!prev) {
+            if (err) err.textContent = 'No se encontró el abono.';
+            return;
+        }
+        var editado = {
+            fechaRaw: pago.fechaRaw,
+            monto: pago.monto,
+            cuenta: pago.cuenta,
+            vendedor: pago.vendedor,
+            ventaId: prev.ventaId || 0
+        };
+        ObebeAdminDialog.confirm({
+            title: '¿Estás seguro?',
+            message: 'Se guardarán los cambios de este abono (' + fmt(pago.monto) + ').',
+            confirmText: 'Guardar',
+            cancelText: 'Cancelar',
+            variant: 'warn',
+            cancelDanger: true
+        }).then(function (ok) {
+            if (!ok) return;
+            var ventaPrev = ventaDePago(prev);
+            ObebeAdminData.editarAbonoApartado(ap, editado, ventaPrev).then(function (res) {
+                if (!res || res.ok === false) {
+                    if (err) err.textContent = (res && res.error) || 'No se pudo guardar.';
+                    return;
+                }
+                ObebeApartadosStore.actualizarPago(ap.id, pagoId, editado);
+                cerrarAbonoModal();
+                if (typeof mount._repintar === 'function') mount._repintar();
+                if (typeof mount._onVentasActualizada === 'function') mount._onVentasActualizada(res);
+                ObebeAdminDialog.alert({
+                    title: 'Abono actualizado',
+                    message: 'Quedó en ' + fmt(editado.monto) + ' · ' + editado.fechaRaw + '.',
+                    confirmText: 'Listo'
+                });
+            }).catch(function (e) {
+                if (err) err.textContent = e.message || String(e);
+            });
+        });
     }
 
     function onSubmitAbono(ev) {
@@ -635,7 +727,24 @@
         var monto = ObebeApartadosStore.parseMonto((document.getElementById('adminApartadoAbonoMonto') || {}).value);
         var cuenta = (document.getElementById('adminApartadoAbonoCuenta') || {}).value || '';
         var vendedor = (document.getElementById('adminApartadoAbonoVendedor') || {}).value || '';
-        var fechaRaw = ((document.getElementById('adminApartadoAbonoFecha') || {}).value || '').trim() || hoyRaw();
+        var fechaIso = ((document.getElementById('adminApartadoAbonoFechaPick') || {}).value || '').trim();
+        var fechaRaw = isoFechaToRaw(fechaIso) || hoyRaw();
+        if (abonoEditPagoId) {
+            if (monto <= 0) {
+                if (err) err.textContent = 'Indica cuánto te pagaron.';
+                return;
+            }
+            if (EQUIPO.indexOf(cuenta) < 0) {
+                if (err) err.textContent = 'Elige quién tiene el dinero (Ugo, Daniel o Fer).';
+                return;
+            }
+            if (EQUIPO.indexOf(vendedor) < 0) {
+                if (err) err.textContent = 'Elige vendedor (Ugo, Daniel o Fer).';
+                return;
+            }
+            guardarEdicionAbono(ap, { monto: monto, cuenta: cuenta, vendedor: vendedor, fechaRaw: fechaRaw }, err);
+            return;
+        }
         if (monto <= 0) {
             if (err) err.textContent = 'Indica cuánto te pagaron.';
             return;
@@ -771,15 +880,27 @@
             ) : '') + '</div>' +
             '<div class="admin-field admin-field-grow"><label for="adminApartadoLinkNuevo">Link <span class="admin-label-opt">(opc.)</span></label>' +
             '<input id="adminApartadoLinkNuevo" type="text"></div></div></div></div>' +
+            '<div class="admin-apartado-prendas-block">' +
+            '<div class="admin-apartado-prendas-head"><h4>Prendas del apartado</h4></div>' +
             '<div class="admin-apartado-total-row">' +
             '<span class="admin-muted-text">Total a pagar (suma de prendas)</span>' +
             '<strong id="adminApartadoTotalDisplay" class="admin-apartado-total-val">' + fmt(0) + '</strong></div>' +
-            '<div class="admin-apartado-prendas-block">' +
-            '<div class="admin-apartado-prendas-head"><h4>Prendas del apartado</h4>' +
+            '<div class="admin-apartado-add-prenda-wrap">' +
             '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" id="adminApartadoAddPrenda">+ Prenda</button></div>' +
             '<div id="adminApartadoPrendasRows">' + htmlPrendaRow({}, 0) + '</div></div>' +
             '<div class="admin-field"><label for="adminApartadoNotas">Notas <span class="admin-label-opt">(opc.)</span></label>' +
             '<input id="adminApartadoNotas" type="text" placeholder="Entrega estimada, ubicación de piezas…"></div>' +
+            '<div class="admin-apartado-anticipo">' +
+            '<h4>Anticipo <span class="admin-label-opt">(opcional)</span></h4>' +
+            '<div class="admin-field-row">' +
+            '<div class="admin-field"><label for="adminApartadoAnticipoFecha">Fecha</label>' +
+            '<input id="adminApartadoAnticipoFecha" type="date" value="' + esc(hoyIsoDate()) + '"></div>' +
+            '<div class="admin-field"><label for="adminApartadoAnticipoMonto">Monto</label>' +
+            '<input id="adminApartadoAnticipoMonto" type="text" inputmode="decimal" placeholder="0"></div></div>' +
+            '<div class="admin-field-row">' +
+            selectEquipo('adminApartadoAnticipoCuenta', 'Quién tiene el dinero') +
+            selectEquipo('adminApartadoAnticipoVendedor', 'Vendedor') +
+            '</div></div>' +
             '<p id="adminApartadoFormError" class="admin-login-error" role="alert"></p>' +
             '<button type="submit" class="admin-btn admin-btn-primary">Guardar apartado</button></form></div>' +
             '<div class="admin-panel admin-apartados-panel-lista">' +
@@ -875,16 +996,36 @@
                 if (err) err.textContent = 'Cada prenda debe tener precio mayor a 0.';
                 return;
             }
+            var anticipo = ObebeApartadosStore.parseMonto((document.getElementById('adminApartadoAnticipoMonto') || {}).value);
+            var cuentaAnt = (document.getElementById('adminApartadoAnticipoCuenta') || {}).value || '';
+            var vendAnt = (document.getElementById('adminApartadoAnticipoVendedor') || {}).value || '';
+            var fechaAntIso = (document.getElementById('adminApartadoAnticipoFecha') || {}).value || '';
+            if (anticipo > 0) {
+                if (anticipo > total + 0.01) {
+                    if (err) err.textContent = 'El anticipo no puede ser mayor al total.';
+                    return;
+                }
+                if (EQUIPO.indexOf(cuentaAnt) < 0) {
+                    if (err) err.textContent = 'Para el anticipo elige quién tiene el dinero.';
+                    return;
+                }
+                if (EQUIPO.indexOf(vendAnt) < 0) {
+                    if (err) err.textContent = 'Para el anticipo elige el vendedor.';
+                    return;
+                }
+            }
+            var msgGuardar = '¿Guardar este apartado para ' + metaCli.cliente + ' por ' + fmt(total) + '?';
+            if (anticipo > 0) msgGuardar += ' Se registrará un anticipo de ' + fmt(anticipo) + ' en Ventas.';
             ObebeAdminDialog.confirm({
                 title: '¿Estás seguro?',
-                message: '¿Guardar este apartado para ' + metaCli.cliente + ' por ' + fmt(total) + '?',
+                message: msgGuardar,
                 confirmText: 'Guardar apartado',
                 cancelText: 'Cancelar',
                 variant: 'warn',
                 cancelDanger: true
             }).then(function (ok) {
                 if (!ok) return;
-            ObebeApartadosStore.crearApartado({
+            var ap = ObebeApartadosStore.crearApartado({
                 cliente: metaCli.cliente,
                 clienteId: metaCli.clienteId,
                 totalAPagar: total,
@@ -894,7 +1035,10 @@
                 link: metaCli.link,
                 notas: (document.getElementById('adminApartadoNotas') || {}).value || ''
             });
+            function terminarCreacion(extraMsg) {
             document.getElementById('adminApartadoNuevoForm').reset();
+            var fechaIn = document.getElementById('adminApartadoAnticipoFecha');
+            if (fechaIn) fechaIn.value = hoyIsoDate();
             clienteSeleccionadoId = '';
             document.getElementById('adminApartadoPrendasRows').innerHTML = htmlPrendaRow({}, 0);
             if (global.ObebeAdminCamposUi) global.ObebeAdminCamposUi.bindSelectOtros(container);
@@ -906,8 +1050,37 @@
             pintarLista();
             ObebeAdminDialog.alert({
                 title: 'Apartado guardado',
-                message: 'Ya puedes registrar abonos; cada uno sumará en Ventas.',
+                message: extraMsg || 'Ya puedes registrar más abonos; cada uno sumará en Ventas.',
                 confirmText: 'Listo'
+            });
+            }
+            if (!(anticipo > 0) || !ap) {
+                terminarCreacion();
+                return;
+            }
+            var pago = {
+                monto: anticipo,
+                cuenta: cuentaAnt,
+                vendedor: vendAnt,
+                fechaRaw: isoFechaToRaw(fechaAntIso) || hoyRaw()
+            };
+            ObebeAdminData.registrarAbonoApartado(ap, pago).then(function (res) {
+                if (!res || !res.ok) {
+                    terminarCreacion('El apartado se guardó, pero el anticipo no se registró: ' +
+                        ((res && res.error) || 'error'));
+                    return;
+                }
+                ObebeApartadosStore.agregarPago(ap.id, {
+                    fechaRaw: pago.fechaRaw,
+                    monto: pago.monto,
+                    cuenta: pago.cuenta,
+                    vendedor: pago.vendedor,
+                    ventaId: res.ventaId || 0
+                });
+                if (typeof mount._onVentasActualizada === 'function') mount._onVentasActualizada(res);
+                terminarCreacion('Anticipo de ' + fmt(anticipo) + ' registrado en Ventas.');
+            }).catch(function (e) {
+                terminarCreacion('El apartado se guardó, pero el anticipo falló: ' + (e.message || e));
             });
             });
         });
@@ -928,6 +1101,12 @@
             var entT = ev.target.closest('[data-ap-entregar-todo]');
             if (entT) {
                 ejecutarEntregarTodas(entT.getAttribute('data-ap-entregar-todo'));
+                return;
+            }
+            var editP = ev.target.closest('[data-ap-editar-pago]');
+            if (editP) {
+                ev.preventDefault();
+                abrirEditarAbono(editP.getAttribute('data-ap-editar-pago'), editP.getAttribute('data-pago-id'));
                 return;
             }
             var abono = ev.target.closest('[data-ap-abono]');

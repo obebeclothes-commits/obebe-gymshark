@@ -162,9 +162,70 @@
         });
     }
 
+    var busyN = 0;
+    var busyHideTimer = null;
+
+    function ensureBusyRoot() {
+        var root = document.getElementById('adminBusyRoot');
+        if (root) return root;
+        root = document.createElement('div');
+        root.id = 'adminBusyRoot';
+        root.className = 'admin-busy-root admin-hidden';
+        root.setAttribute('aria-hidden', 'true');
+        root.innerHTML =
+            '<div class="admin-busy-backdrop"></div>' +
+            '<div class="admin-busy-card" role="status" aria-live="polite">' +
+            '<div class="admin-busy-spinner" aria-hidden="true"></div>' +
+            '<p id="adminBusyText">Cargando…</p></div>';
+        document.body.appendChild(root);
+        return root;
+    }
+
+    function mostrarOcupado(mensaje) {
+        if (busyHideTimer) {
+            clearTimeout(busyHideTimer);
+            busyHideTimer = null;
+        }
+        busyN += 1;
+        var root = ensureBusyRoot();
+        var txt = document.getElementById('adminBusyText');
+        if (txt) txt.textContent = mensaje || 'Cargando…';
+        root.classList.remove('admin-hidden');
+        root.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('admin-busy-open');
+    }
+
+    function ocultarOcupado() {
+        busyN = Math.max(0, busyN - 1);
+        if (busyN > 0) return;
+        busyHideTimer = setTimeout(function () {
+            busyHideTimer = null;
+            if (busyN > 0) return;
+            var root = document.getElementById('adminBusyRoot');
+            if (!root) return;
+            root.classList.add('admin-hidden');
+            root.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('admin-busy-open');
+        }, 160);
+    }
+
+    function mientras(promesa, mensaje) {
+        mostrarOcupado(mensaje);
+        return Promise.resolve(promesa).then(function (v) {
+            ocultarOcupado();
+            return v;
+        }, function (err) {
+            ocultarOcupado();
+            throw err;
+        });
+    }
+
     global.ObebeAdminDialog = {
         confirm: confirm,
         alert: alert,
-        confirmPassword: confirmPassword
+        confirmPassword: confirmPassword,
+        mostrarOcupado: mostrarOcupado,
+        ocultarOcupado: ocultarOcupado,
+        mientras: mientras
     };
 })(window);

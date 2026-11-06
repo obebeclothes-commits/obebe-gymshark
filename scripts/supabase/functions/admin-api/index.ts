@@ -391,65 +391,90 @@ async function registrarVentaRetail(body: Record<string, unknown>) {
   if (eV) throw eV;
 
   for (const u of stockUpdates) {
-    const id = parseInt(String(u.row), 10);
     const stock = parseInt(String(u.stock), 10);
-    if (!id || isNaN(stock) || stock < 0) continue;
-    const { data: fila, error: eF } = await sb
-      .from("inventario_filas")
-      .select("celdas")
-      .eq("id", id)
-      .maybeSingle();
-    if (eF || !fila) continue;
+    if (isNaN(stock) || stock < 0) continue;
+    const fila = await inventarioFilaPorRef(parseInt(String(u.row), 10));
+    if (!fila) continue;
+    const dbId = fila.id as number;
     const celdas = padCeldas((fila.celdas as unknown[]) || []);
     celdas[COL_STOCK - 1] = String(stock);
     await sb
       .from("inventario_filas")
       .update({ celdas, updated_at: new Date().toISOString() })
-      .eq("id", id);
+      .eq("id", dbId);
   }
   return { ok: true, ventas: ventas.length, stockUpdates: stockUpdates.length };
 }
 
-async function actualizarStock(filaSheet: number, stock: number) {
-  const id = parseInt(String(filaSheet), 10);
-  const n = parseInt(String(stock), 10);
-  if (!id || isNaN(n) || n < 0) return { ok: false, error: "Fila o stock inválido." };
+async function inventarioFilaPorRef(rowRef: number) {
+  const ref = parseInt(String(rowRef), 10);
+  if (!ref || isNaN(ref)) return null;
   const sb = adminClient();
-  const { data: fila, error: eF } = await sb
+  const { data: byId, error: e1 } = await sb
     .from("inventario_filas")
-    .select("celdas")
-    .eq("id", id)
+    .select("id, celdas")
+    .eq("id", ref)
     .maybeSingle();
-  if (eF || !fila) return { ok: false, error: "Fila no encontrada." };
+  if (!e1 && byId) return byId;
+  const { data: byLegacy, error: e2 } = await sb
+    .from("inventario_filas")
+    .select("id, celdas")
+    .eq("legacy_sheet_row", ref)
+    .maybeSingle();
+  if (e2 || !byLegacy) return null;
+  return byLegacy;
+}
+
+async function actualizarStock(
+  filaSheet: number,
+  stock: number,
+  inventarioDbId?: number
+) {
+  const ref = parseInt(String(filaSheet), 10);
+  const n = parseInt(String(stock), 10);
+  const dbIdHint = parseInt(String(inventarioDbId ?? ""), 10);
+  if (isNaN(n) || n < 0) return { ok: false, error: "Fila o stock inválido." };
+  const sb = adminClient();
+  let fila: { id: number; celdas: unknown } | null = null;
+  if (dbIdHint && !isNaN(dbIdHint)) {
+    const { data, error } = await sb
+      .from("inventario_filas")
+      .select("id, celdas")
+      .eq("id", dbIdHint)
+      .maybeSingle();
+    if (!error && data) fila = data as { id: number; celdas: unknown };
+  }
+  if (!fila && ref && !isNaN(ref)) {
+    fila = await inventarioFilaPorRef(ref);
+  }
+  if (!fila) return { ok: false, error: "Fila no encontrada." };
+  const dbId = fila.id as number;
   const celdas = padCeldas((fila.celdas as unknown[]) || []);
   celdas[COL_STOCK - 1] = String(n);
   const { error } = await sb
     .from("inventario_filas")
     .update({ celdas, updated_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", dbId);
   if (error) throw error;
-  return { ok: true, row: id, stock: n };
+  return { ok: true, row: ref || dbId, stock: n };
 }
 
 async function updateCells(updates: { row: number; col: number; value: string }[]) {
   const sb = adminClient();
   let n = 0;
   for (const u of updates) {
-    const id = parseInt(String(u.row), 10);
+    const rowRef = parseInt(String(u.row), 10);
     const col = parseInt(String(u.col), 10);
-    if (!id || col < 1 || col > NUM_COLUMNAS) continue;
-    const { data: fila, error: eF } = await sb
-      .from("inventario_filas")
-      .select("celdas")
-      .eq("id", id)
-      .maybeSingle();
-    if (eF || !fila) continue;
+    if (!rowRef || col < 1 || col > NUM_COLUMNAS) continue;
+    const fila = await inventarioFilaPorRef(rowRef);
+    if (!fila) continue;
+    const dbId = fila.id as number;
     const celdas = padCeldas((fila.celdas as unknown[]) || []);
     celdas[col - 1] = u.value == null ? "" : String(u.value);
     const { error } = await sb
       .from("inventario_filas")
       .update({ celdas, updated_at: new Date().toISOString() })
-      .eq("id", id);
+      .eq("id", dbId);
     if (!error) n++;
   }
   return { ok: true, updated: n };
@@ -842,7 +867,9 @@ Deno.serve(async (req) => {
       return json(await createVentaLine(body));
     }
     if (action === "actualizarStock") {
-      return json(await actualizarStock(body.filaSheet, body.stock));
+      return json(
+        await actualizarStock(body.filaSheet, body.stock, body.inventarioDbId)
+      );
     }
     if (action === "updateCells") {
       return json(await updateCells(body.updates || []));

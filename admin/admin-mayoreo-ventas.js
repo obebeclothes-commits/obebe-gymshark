@@ -164,7 +164,7 @@
             q = norm(q);
             var list = catalogo.filter(function (l) {
                 if (!q) return true;
-                var blob = [l.nombre, l.talla, l.color, l.tipo, l.marca].join(' ').toLowerCase();
+                var blob = [l.nombre, l.talla, l.color, l.tipo, l.marca, String(ObebeAdminData.refParaArticulo(l) || '')].join(' ').toLowerCase();
                 return blob.indexOf(q) >= 0;
             }).slice(0, 24);
 
@@ -181,6 +181,7 @@
                     ' data-linea-id="' + esc(l.id) + '">' +
                     thumbHtml(l.imagenUrl, l.nombre) +
                     '<span class="admin-venta-result-info">' +
+                    ObebeAdminData.htmlRef(ObebeAdminData.refParaArticulo(l)) +
                     '<strong>' + esc(l.nombre) + '</strong>' +
                     '<span>' + esc(l.talla) + ' · ' + esc(l.color) + '</span>' +
                     '<span>' + fmtMoney(precio) + ' · disp. ' + rest + '</span></span></button>';
@@ -200,7 +201,8 @@
                 total += sub;
                 var max = dispRestante(c.lineaId) + c.cantidad;
                 return '<tr><td>' + thumbHtml(c.imagenUrl, c.nombre) + '</td>' +
-                    '<td>' + esc(c.nombre) + '<br><span class="admin-muted-text">' + esc(c.talla) + ' · ' + esc(c.color) + '</span></td>' +
+                    '<td>' + ObebeAdminData.htmlRef(ObebeAdminData.refParaArticulo(c)) +
+                    esc(c.nombre) + '<br><span class="admin-muted-text">' + esc(c.talla) + ' · ' + esc(c.color) + '</span></td>' +
                     '<td><input type="number" class="admin-venta-num admin-venta-cart-cant" min="1" max="' + max + '" value="' + c.cantidad + '" data-idx="' + idx + '"></td>' +
                     '<td><input type="number" class="admin-venta-num admin-venta-cart-precio" min="0" step="1" value="' + c.precioUnitario + '" data-idx="' + idx + '"></td>' +
                     '<td>' + fmtMoney(sub) + '</td>' +

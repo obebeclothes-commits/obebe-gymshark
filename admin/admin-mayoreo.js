@@ -128,7 +128,8 @@
             tRetail += r.precioRetail || 0;
             tEllos += r.precioVentaPlaneado || 0;
             var disp = r.cantidadDisponible != null ? r.cantidadDisponible : r.cantidad;
-            return '<tr><td>' + esc(r.nombre) + '</td>' +
+            return '<tr><td>' + ObebeAdminData.htmlRef(ObebeAdminData.refParaArticulo(r)) +
+                esc(r.nombre) + '</td>' +
                 '<td>' + r.cantidad + (disp < r.cantidad ? ' <span class="admin-tag admin-tag-warn">disp. ' + disp + '</span>' : '') + '</td>' +
                 '<td>' + esc(r.talla) + '</td><td>' + esc(r.color) + '</td>' +
                 '<td>' + esc(r.tipo) + '</td><td>' + esc(r.marca) + '</td>' +
@@ -305,7 +306,7 @@
                     ? ObebeAdminData.formatoFecha(r.fechaStockIso, '')
                     : ObebeAdminData.formatoFecha(ObebeMayoreoStore.FECHA_STOCK_LEGACY, '');
                 return '<tr data-linea-id="' + esc(r.id) + '">' +
-                    '<td>' + esc(r.nombre) + '</td>' +
+                    '<td>' + ObebeAdminData.htmlRef(ObebeAdminData.refParaArticulo(r)) + esc(r.nombre) + '</td>' +
                     '<td>' + r.cantidad + (disp < r.cantidad ? ' <span class="admin-tag admin-tag-warn">disp. ' + disp + '</span>' : '') + '</td>' +
                     '<td>' + esc(fStock) + '</td>' +
                     '<td>' + esc(r.talla) + '</td><td>' + esc(r.color) + '</td>' +
@@ -314,7 +315,8 @@
                     celdaPrecioVenta(r) +
                     celdaImagenMayoreo(r.imagenUrl, r.nombre) + '</tr>';
             }
-            return '<tr><td>' + esc(r.cliente) + '</td><td>' + esc(r.nombre) + '</td>' +
+            return '<tr><td>' + esc(r.cliente) + '</td><td>' +
+                ObebeAdminData.htmlRef(ObebeAdminData.refParaArticulo(r)) + esc(r.nombre) + '</td>' +
                 '<td>' + r.cantidad + '</td><td>' + esc(r.talla) + '</td><td>' + esc(r.color) + '</td>' +
                 '<td>' + esc(r.tipo) + '</td><td>' + esc(r.marca) + '</td>' +
                 '<td>' + ObebeAdminData.formatoMoney(r.precioRetail) + '</td>' +

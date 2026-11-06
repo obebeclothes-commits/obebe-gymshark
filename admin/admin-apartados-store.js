@@ -164,6 +164,29 @@
         return saveApartado(ap);
     }
 
+    function actualizarPago(apartadoId, pagoId, patch) {
+        var ap = getById(apartadoId);
+        if (!ap || !pagoId) return null;
+        patch = patch || {};
+        var found = false;
+        ap.pagos = (ap.pagos || []).map(function (p, i) {
+            var pid = p.id || ('idx-' + i);
+            if (pid !== pagoId) return p;
+            found = true;
+            return {
+                id: p.id || pid,
+                fechaRaw: String(patch.fechaRaw != null ? patch.fechaRaw : p.fechaRaw || '').trim(),
+                monto: parseMonto(patch.monto != null ? patch.monto : p.monto),
+                cuenta: String(patch.cuenta != null ? patch.cuenta : p.cuenta || '').trim(),
+                vendedor: String(patch.vendedor != null ? patch.vendedor : p.vendedor || '').trim(),
+                ventaId: p.ventaId || 0,
+                creadoEn: p.creadoEn || Date.now()
+            };
+        });
+        if (!found) return null;
+        return saveApartado(ap);
+    }
+
     function marcarEstado(id, estado) {
         var ap = getById(id);
         if (!ap) return null;
@@ -208,6 +231,7 @@
         saveApartado: saveApartado,
         crearApartado: crearApartado,
         agregarPago: agregarPago,
+        actualizarPago: actualizarPago,
         marcarEstado: marcarEstado,
         desliquidar: desliquidar,
         removeApartado: removeApartado,

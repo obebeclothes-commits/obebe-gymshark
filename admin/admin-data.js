@@ -1635,9 +1635,13 @@
     function parsearFilasInventarioSupabase(rows) {
         var out = [];
         (rows || []).forEach(function (r) {
-            var filaId = parseInt(r.legacy_sheet_row, 10) || parseInt(r.id, 10) || 0;
+            var dbId = parseInt(r.id, 10) || 0;
+            var filaId = parseInt(r.legacy_sheet_row, 10) || dbId || 0;
             var row = filaInventarioDesdeCeldas(celdasDesdeRegistroSupabase(r.celdas), filaId);
-            if (row) out.push(row);
+            if (row) {
+                row.inventarioDbId = dbId;
+                out.push(row);
+            }
         });
         return out;
     }
@@ -1723,6 +1727,7 @@
                 telefono: String(celda(f, idx.telefono) || '').trim(),
                 filaSheet: i + 1
             });
+            decorarVentaPrecioOriginal(out[out.length - 1]);
         }
         return out.sort(function (a, b) {
             var ta = a.fechaIso ? new Date(a.fechaIso + 'T12:00:00').getTime() : 0;
@@ -2092,6 +2097,26 @@
         return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + d.getFullYear();
     }
 
+    function linkConPrecioOriginal(link, precioCobrado, precioOriginal) {
+        link = String(link || '').replace(/\[\[orig:[\d.]+\]\]/g, '').trim();
+        var orig = parseNum(precioOriginal);
+        var cob = parseNum(precioCobrado);
+        if (orig > 0 && Math.abs(orig - cob) >= 0.5) {
+            link = (link ? link + ' ' : '') + '[[orig:' + orig + ']]';
+        }
+        return link;
+    }
+
+    function decorarVentaPrecioOriginal(v) {
+        if (!v) return v;
+        var raw = String(v.link || '');
+        var m = raw.match(/\[\[orig:([\d.]+)\]\]/);
+        if (m) v.precioOriginal = parseNum(m[1]);
+        else if (!v.precioOriginal) v.precioOriginal = 0;
+        v.linkVisible = raw.replace(/\[\[orig:[\d.]+\]\]/g, '').trim();
+        return v;
+    }
+
     function lineaVentaDesdeFila(f, meta) {
         meta = meta || {};
         return [
@@ -2106,7 +2131,7 @@
             meta.vendedor || '',
             meta.cuenta || '',
             meta.redSocial || '',
-            meta.link || '',
+            linkConPrecioOriginal(meta.link || '', meta.precio != null ? meta.precio : (f.precio || 0), meta.precioOriginal),
             meta.telefono || ''
         ];
     }
@@ -2128,37 +2153,42 @@
             vendedor: meta.vendedor || '',
             cuenta: meta.cuenta || '',
             redSocial: meta.redSocial || '',
-            link: meta.link || '',
+            link: linkConPrecioOriginal(meta.link || '', precio, meta.precioOriginal),
             telefono: meta.telefono || '',
             filaSheet: 0
         };
     }
 
     function apiAdminScript(action, payload) {
+        var bloquea = /registrarVenta|actualizarStock|updateVenta|deleteVenta|createVenta|updateCells|appendRow|deleteRows|import/i.test(String(action || ''));
+        function envolver(p) {
+            if (!bloquea || !global.ObebeAdminDialog || !ObebeAdminDialog.mientras) return p;
+            return ObebeAdminDialog.mientras(p, 'Procesando…');
+        }
         if (usarSupabase()) {
             if (!supabaseListo()) {
                 return Promise.reject(new Error(
                     'Supabase incompleto: supabaseUrl, supabaseAnonKey y adminApiUrl en admin-config.js.'
                 ));
             }
-            return ObebeAdminBackend.callAdminApi(action, payload).then(function (res) {
+            return envolver(ObebeAdminBackend.callAdminApi(action, payload).then(function (res) {
                 if (!res || res.ok === false) {
                     throw new Error((res && res.error) || 'Error API Supabase');
                 }
                 return res;
-            });
+            }));
         }
         var c = cfgAdmin();
         if (!c.appsScriptUrl) {
             return Promise.reject(new Error('Falta appsScriptUrl en admin-config.js (Web App Apps Script).'));
         }
         var body = Object.assign({ action: action, secret: c.inventarioSecret || '' }, payload || {});
-        return fetch(c.appsScriptUrl, {
+        return envolver(fetch(c.appsScriptUrl, {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(body)
-        }).then(function (res) { return res.json(); });
+        }).then(function (res) { return res.json(); }));
     }
 
     function cargarInventarioDesdeSupabase() {
@@ -2167,7 +2197,6 @@
                 estado.encabezadosFila2 = combinarEncabezadosInventario([]);
             }
             estado.filas = parsearFilasInventarioSupabase(rows);
-            aplicarOverridesStockEnFilas(estado.filas, leerPendienteSync().stockByRow);
             if (!rows.length) {
                 estado.avisoSupabase =
                     'Supabase no tiene inventario todavía. Importa desde Google (admin-api) una vez. ' +
@@ -2191,6 +2220,7 @@
         return ObebeAdminBackend.fetchVentasDesdeApi().then(function (ventas) {
             var pend = leerPendienteSync();
             estado.ventas = fusionarVentasConPendientes(ventas, pend.ventasLocales);
+            estado.ventas.forEach(decorarVentaPrecioOriginal);
             estado.ventasCargadoEn = Date.now();
             guardarCacheVentasLocal();
             var pack = paqueteVentasDesdeEstado();
@@ -2329,7 +2359,10 @@
             var qty = c.cantidad || 1;
             if (stockByRow[f.filaSheet] == null) stockByRow[f.filaSheet] = f.stock || 0;
             var precioU = c.precioUnitario != null ? c.precioUnitario : precioVentaRetailFila(f);
-            var lineMeta = Object.assign({}, meta, { precio: precioU });
+            var lineMeta = Object.assign({}, meta, {
+                precio: precioU,
+                precioOriginal: c.precioOriginal != null ? c.precioOriginal : precioVentaRetailFila(f)
+            });
             for (var i = 0; i < qty; i++) {
                 ventas.push(lineaVentaDesdeFila(f, lineMeta));
                 ventasLocal.push(ventaObjetoDesdeFila(f, lineMeta));
@@ -3213,13 +3246,24 @@
         return false;
     }
 
-    function actualizarStockFila(filaSheet, stock) {
+    function refApiInventarioFila(filaSheet, filaObj) {
+        if (filaObj && filaObj.inventarioDbId) return parseInt(filaObj.inventarioDbId, 10);
+        var hit = (estado.filas || []).find(function (x) { return x.filaSheet === filaSheet; });
+        if (hit && hit.inventarioDbId) return parseInt(hit.inventarioDbId, 10);
+        return parseInt(filaSheet, 10);
+    }
+
+    function actualizarStockFila(filaSheet, stock, opts) {
+        opts = opts || {};
         stock = parseInt(stock, 10);
         if (isNaN(stock) || stock < 0) {
             return Promise.resolve({ ok: false, error: 'Stock inválido.' });
         }
+        var filaRef = refApiInventarioFila(filaSheet, opts.fila || null);
         if (escrituraLocalHabilitada()) {
-            var hitL = estado.filas.find(function (x) { return x.filaSheet === filaSheet; });
+            var hitL = estado.filas.find(function (x) {
+                return x.filaSheet === filaSheet || (x.inventarioDbId && x.inventarioDbId === filaRef);
+            });
             if (hitL) {
                 hitL.stock = stock;
                 if (hitL.celdas) hitL.celdas[IDX.stock] = String(stock);
@@ -3232,11 +3276,17 @@
             guardarCacheInventarioLocal();
             return Promise.resolve({ ok: true, stock: stock, soloLocal: true });
         }
-        return apiAdminScript('actualizarStock', { filaSheet: filaSheet, stock: stock }).then(function (res) {
+        return apiAdminScript('actualizarStock', {
+            filaSheet: filaRef,
+            stock: stock,
+            inventarioDbId: filaRef
+        }).then(function (res) {
             if (!res || res.ok === false) {
                 throw new Error((res && res.error) || 'No se pudo actualizar stock');
             }
-            var hit = estado.filas.find(function (x) { return x.filaSheet === filaSheet; });
+            var hit = estado.filas.find(function (x) {
+                return x.filaSheet === filaSheet || (x.inventarioDbId && x.inventarioDbId === filaRef);
+            });
             if (hit) {
                 hit.stock = stock;
                 if (hit.celdas) hit.celdas[IDX.stock] = String(stock);
@@ -3554,6 +3604,218 @@
         return Math.max(0, fila.stock || 0);
     }
 
+    var SUCURSALES_INVENTARIO = [
+        { id: 'mercadolibre', nombre: 'Mercado Libre', cuenta: 'Mercado Libre', redSocial: 'Mercado Libre' },
+        { id: 'cubos-penaflor', nombre: 'Cubos Peñaflor', cuenta: 'Cubos Peñaflor', redSocial: 'Tienda Cubos Peñaflor' }
+    ];
+
+    function listarSucursalesInventario() {
+        return SUCURSALES_INVENTARIO.slice();
+    }
+
+    function definicionSucursalInventario(sucursalId) {
+        return SUCURSALES_INVENTARIO.find(function (s) { return s.id === sucursalId; }) || null;
+    }
+
+    function filaDesdeLineaSucursal(line) {
+        if (!line) return null;
+        var f = (estado.filas || []).find(function (x) { return x.filaSheet === line.filaSheet; });
+        if (f) return f;
+        return {
+            filaSheet: line.filaSheet,
+            ref: line.ref || 0,
+            nombre: line.nombre || '',
+            talla: line.talla || '',
+            color: line.color || '',
+            tipo: line.tipo || '',
+            marca: line.marca || '',
+            segmento: line.segmento || '',
+            precio: line.precioUnitario || 0,
+            stock: 0
+        };
+    }
+
+    function filaInventarioPrincipal(filaSheet, filaSnapshot) {
+        filaSheet = parseInt(filaSheet, 10);
+        var f = (estado.filas || []).find(function (x) { return x.filaSheet === filaSheet; });
+        if (f) return f;
+        if (filaSnapshot && parseInt(filaSnapshot.filaSheet, 10) === filaSheet) return filaSnapshot;
+        return null;
+    }
+
+    function trasladarInventarioASucursal(sucursalId, filaSheet, cantidad, filaSnapshot) {
+        if (!global.ObebeSucursalesStore) {
+            return Promise.resolve({ ok: false, error: 'Módulo de sucursales no cargado.' });
+        }
+        var def = definicionSucursalInventario(sucursalId);
+        if (!def) return Promise.resolve({ ok: false, error: 'Sucursal no válida.' });
+        filaSheet = parseInt(filaSheet, 10);
+        cantidad = parseInt(cantidad, 10) || 0;
+        if (!filaSheet || cantidad <= 0) {
+            return Promise.resolve({ ok: false, error: 'Indica artículo y cantidad válida.' });
+        }
+        var f = filaInventarioPrincipal(filaSheet, filaSnapshot);
+        if (!f) return Promise.resolve({ ok: false, error: 'Artículo no encontrado en inventario principal.' });
+        var live = (estado.filas || []).find(function (x) { return x.filaSheet === filaSheet; });
+        var disp = Math.max(0, live ? (live.stock || 0) : (f.stock || 0));
+        if (cantidad > disp) {
+            return Promise.resolve({
+                ok: false,
+                error: 'Stock insuficiente en inventario principal (disponible: ' + disp + ').'
+            });
+        }
+        var nuevoStock = disp - cantidad;
+        var precioU = precioVentaRetailFila(f);
+        return actualizarStockFila(filaSheet, nuevoStock, { fila: f }).then(function (res) {
+            if (!res || res.ok === false) {
+                return { ok: false, error: (res && res.error) || 'No se pudo actualizar el inventario principal.' };
+            }
+            if (live) {
+                live.stock = nuevoStock;
+                if (live.celdas && IDX.stock != null) live.celdas[IDX.stock] = String(nuevoStock);
+            } else if (f && f !== live) {
+                f.stock = nuevoStock;
+            }
+            var linea = ObebeSucursalesStore.agregarOIncrementar({
+                sucursalId: sucursalId,
+                filaSheet: f.filaSheet || filaSheet,
+                inventarioDbId: f.inventarioDbId || 0,
+                ref: f.ref,
+                nombre: f.nombre,
+                talla: f.talla,
+                color: f.color,
+                tipo: f.tipo,
+                marca: f.marca,
+                segmento: f.segmento,
+                precioUnitario: precioU,
+                imagenUrl: (global.ObebeAdminData && ObebeAdminData.urlImagenFilaInventario)
+                    ? ObebeAdminData.urlImagenFilaInventario(f)
+                    : '',
+                cantidad: cantidad
+            });
+            if (!linea) {
+                return { ok: false, error: 'No se pudo guardar en la sucursal (store).' };
+            }
+            return { ok: true, linea: linea, stockPrincipal: nuevoStock };
+        }).catch(function (err) {
+            return { ok: false, error: err.message || String(err) };
+        });
+    }
+
+    function trasladarLoteInventarioASucursal(sucursalId, items) {
+        items = items || [];
+        if (!items.length) {
+            return Promise.resolve({ ok: false, error: 'Agrega al menos un artículo.' });
+        }
+        var chain = Promise.resolve({ traslados: 0, piezas: 0, errores: [] });
+        items.forEach(function (it) {
+            chain = chain.then(function (acc) {
+                return trasladarInventarioASucursal(
+                    sucursalId,
+                    it.filaSheet,
+                    it.cantidad,
+                    it.fila
+                ).then(function (res) {
+                    if (!res || !res.ok) {
+                        acc.errores.push(res && res.error ? res.error : 'Error al trasladar.');
+                        return acc;
+                    }
+                    acc.traslados += 1;
+                    acc.piezas += it.cantidad || 0;
+                    return acc;
+                });
+            });
+        });
+        return chain.then(function (acc) {
+            if (acc.errores.length && !acc.traslados) {
+                return { ok: false, error: acc.errores[0] };
+            }
+            if (acc.errores.length) {
+                return {
+                    ok: true,
+                    parcial: true,
+                    traslados: acc.traslados,
+                    piezas: acc.piezas,
+                    error: acc.errores[0]
+                };
+            }
+            return { ok: true, traslados: acc.traslados, piezas: acc.piezas };
+        });
+    }
+
+    function registrarVentasDesdeSucursal(lineaId, cantidad, metaExtra) {
+        if (!global.ObebeSucursalesStore) {
+            return Promise.resolve({ ok: false, error: 'Módulo de sucursales no cargado.' });
+        }
+        var line = ObebeSucursalesStore.getById(lineaId);
+        if (!line) return Promise.resolve({ ok: false, error: 'Línea de sucursal no encontrada.' });
+        cantidad = parseInt(cantidad, 10) || 0;
+        if (cantidad <= 0) return Promise.resolve({ ok: false, error: 'Indica cuántas piezas vendiste.' });
+        if (cantidad > (line.cantidad || 0)) {
+            return Promise.resolve({ ok: false, error: 'Solo hay ' + line.cantidad + ' en esta sucursal.' });
+        }
+        var def = definicionSucursalInventario(line.sucursalId);
+        metaExtra = metaExtra || {};
+        var cliente = String(metaExtra.cliente || '').trim();
+        if (!cliente) return Promise.resolve({ ok: false, error: 'Indica el cliente (o comprador).' });
+        var f = filaDesdeLineaSucursal(line);
+        var precioU = metaExtra.precioUnitario != null && metaExtra.precioUnitario > 0
+            ? metaExtra.precioUnitario
+            : (line.precioUnitario != null && line.precioUnitario > 0
+                ? line.precioUnitario
+                : precioVentaRetailFila(f));
+        var metaBase = {
+            fechaRaw: metaExtra.fechaRaw || fechaTextoHoyVentas(),
+            cliente: cliente,
+            vendedor: String(metaExtra.vendedor || 'OBEBE').trim() || 'OBEBE',
+            cuenta: String(metaExtra.cuenta || (def && def.cuenta) || '').trim(),
+            redSocial: line.sucursalId === 'mercadolibre'
+                ? 'Mercado libre'
+                : String(metaExtra.redSocial || (def && def.redSocial) || '').trim(),
+            link: String(metaExtra.link || '').trim(),
+            telefono: String(metaExtra.telefono || '').trim(),
+            precio: precioU,
+            precioOriginal: metaExtra.precioOriginal != null ? metaExtra.precioOriginal : (line.precioUnitario || 0)
+        };
+        var chain = Promise.resolve({ n: 0 });
+        var j;
+        for (j = 0; j < cantidad; j++) {
+            chain = chain.then(function (acc) {
+                return crearVentaLineaManual({
+                    fechaRaw: metaBase.fechaRaw,
+                    nombre: f.nombre,
+                    tipo: f.tipo,
+                    precio: metaBase.precio,
+                    talla: f.talla,
+                    color: f.color,
+                    segmento: f.segmento,
+                    cliente: metaBase.cliente,
+                    vendedor: metaBase.vendedor,
+                    cuenta: metaBase.cuenta,
+                    redSocial: metaBase.redSocial,
+                    link: linkConPrecioOriginal('', metaBase.precio, metaBase.precioOriginal),
+                    telefono: metaBase.telefono
+                }, { ajustarStock: false }).then(function (res) {
+                    if (!res || res.ok === false) {
+                        throw new Error((res && res.error) || 'No se pudo registrar la venta.');
+                    }
+                    return { n: acc.n + 1 };
+                });
+            });
+        }
+        return chain.then(function (acc) {
+            var red = ObebeSucursalesStore.reducirCantidad(lineaId, cantidad);
+            if (!red.ok) {
+                return { ok: false, error: red.error || 'Ventas registradas pero falló actualizar sucursal.' };
+            }
+            return sincronizarVentasParaEdicion().then(function () {
+                return { ok: true, lineas: acc.n, linea: red.linea };
+            });
+        }).catch(function (err) {
+            return { ok: false, error: err.message || String(err) };
+        });
+    }
+
     function validarCarritoEntrega(carrito) {
         if (!carrito || !carrito.length) {
             return { ok: false, error: 'Agrega al menos un artículo.' };
@@ -3852,18 +4114,77 @@
         });
     }
 
+    function editarAbonoApartado(apartado, pago, ventaPrevia) {
+        pago = pago || {};
+        var ventaId = parseInt(pago.ventaId, 10);
+        if (!ventaId) return Promise.resolve({ ok: true, sinVenta: true });
+        var monto = parseNum(pago.monto);
+        if (!monto || monto <= 0) {
+            return Promise.resolve({ ok: false, error: 'Indica un monto válido.' });
+        }
+        var resumen = resumenApartadoParaVenta(apartado);
+        var prev = ventaPrevia || {};
+        var campos = {
+            fechaRaw: String(pago.fechaRaw || '').trim() || prev.fechaRaw || fechaTextoHoyVentas(),
+            nombre: prev.nombre || resumen.nombre,
+            tipo: prev.tipo || resumen.tipo,
+            precio: monto,
+            talla: prev.talla || resumen.talla,
+            color: prev.color || resumen.color,
+            segmento: prev.segmento || resumen.segmento,
+            cliente: prev.cliente || (apartado && apartado.cliente) || '',
+            vendedor: String(pago.vendedor || '').trim(),
+            cuenta: String(pago.cuenta || '').trim(),
+            redSocial: prev.redSocial || (apartado && apartado.redSocial) || '',
+            link: prev.link || (apartado && apartado.link) || '',
+            telefono: prev.telefono || (apartado && apartado.telefono) || ''
+        };
+        return actualizarVentaLinea(ventaId, campos).then(function (res) {
+            if (!res || res.ok === false) {
+                return { ok: false, error: (res && res.error) || 'No se pudo actualizar la venta.' };
+            }
+            return { ok: true, venta: res.venta, ventaId: ventaId, soloLocal: !!res.soloLocal };
+        });
+    }
+
+    function tsOrdenVenta(v) {
+        var raw = String((v && v.fechaRaw) || '').trim();
+        var m = raw.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+        if (m) {
+            var y = parseInt(m[3], 10);
+            if (y < 100) y += 2000;
+            var desdeRaw = new Date(y, parseInt(m[2], 10) - 1, parseInt(m[1], 10), 12).getTime();
+            if (!isNaN(desdeRaw)) return desdeRaw;
+        }
+        if (v && v.fechaIso) {
+            var t = new Date(String(v.fechaIso).slice(0, 10) + 'T12:00:00').getTime();
+            if (!isNaN(t)) return t;
+        }
+        return 0;
+    }
+
+    function ordenarVentasPorFecha(list) {
+        return (list || []).slice().sort(function (a, b) {
+            var d = tsOrdenVenta(b) - tsOrdenVenta(a);
+            if (d) return d;
+            return (parseInt(b.filaSheet, 10) || 0) - (parseInt(a.filaSheet, 10) || 0);
+        });
+    }
+
     function filtrarVentas(ventas, query) {
         var base = (ventas || []).filter(esLineaVentaRetail);
         query = norm(query);
-        if (!query) return base;
-        return base.filter(function (v) {
-            var blob = [
-                v.nombre, v.tipo, v.talla, v.color, v.segmento, v.cliente,
-                v.vendedor, v.cuenta, v.redSocial, v.link, v.telefono,
-                v.fechaRaw, v.fechaIso, String(v.filaSheet || '')
-            ].join(' ').toLowerCase();
-            return blob.indexOf(query) >= 0;
-        });
+        if (query) {
+            base = base.filter(function (v) {
+                var blob = [
+                    v.nombre, v.tipo, v.talla, v.color, v.segmento, v.cliente,
+                    v.vendedor, v.cuenta, v.redSocial, v.link, v.telefono,
+                    v.fechaRaw, v.fechaIso, String(v.filaSheet || '')
+                ].join(' ').toLowerCase();
+                return blob.indexOf(query) >= 0;
+            });
+        }
+        return ordenarVentasPorFecha(base);
     }
 
     function formatoMoney(n) {
@@ -3884,6 +4205,28 @@
         }).sort(function (a, b) { return b.val - a.val; }).slice(0, n || 5);
     }
 
+    function filasPorRef(ref) {
+        var n = parseInt(ref, 10);
+        if (!n) return [];
+        return (estado.filas || []).filter(function (f) { return f.ref === n; });
+    }
+
+    function refParaArticulo(obj) {
+        obj = obj || {};
+        var directo = parseInt(obj.ref, 10);
+        if (directo > 0) return directo;
+        if (obj.fila && parseInt(obj.fila.ref, 10) > 0) return parseInt(obj.fila.ref, 10);
+        var nombre = obj.nombre || obj.nombreMostrar || obj.nombreSheet || '';
+        var hit = buscarFilaInventarioPorVenta(nombre, obj.talla, obj.color);
+        return hit && hit.ref ? hit.ref : 0;
+    }
+
+    function htmlRef(ref) {
+        var n = parseInt(ref, 10);
+        if (!n) return '';
+        return '<span class="admin-ref">Ref ' + n + '</span>';
+    }
+
     global.ObebeAdminData = {
         cargarInventario: cargarInventario,
         snapshotInventarioCacheLocal: snapshotInventarioCacheLocal,
@@ -3901,6 +4244,9 @@
             return resolverImagenMayoreo(linea, mapa, filasInventario);
         },
         filtrarFilas: filtrarFilas,
+        filasPorRef: filasPorRef,
+        refParaArticulo: refParaArticulo,
+        htmlRef: htmlRef,
         filtrarVentas: filtrarVentas,
         listarHistoricoInventario: listarHistoricoInventario,
         filtrarHistoricoBd: filtrarHistoricoBd,
@@ -3968,6 +4314,7 @@
         eliminarVentaLinea: eliminarVentaLinea,
         crearVentaLineaManual: crearVentaLineaManual,
         registrarAbonoApartado: registrarAbonoApartado,
+        editarAbonoApartado: editarAbonoApartado,
         resumenApartadoParaVenta: resumenApartadoParaVenta,
         buscarFilaInventarioApartado: buscarFilaInventarioApartado,
         recibirPrendaApartadoEnInventario: recibirPrendaApartadoEnInventario,
@@ -3975,6 +4322,11 @@
         ventaCamposDesdeObj: ventaCamposDesdeObj,
         edicionVentasHabilitada: edicionVentasHabilitada,
         actualizarStockFila: actualizarStockFila,
+        listarSucursalesInventario: listarSucursalesInventario,
+        definicionSucursalInventario: definicionSucursalInventario,
+        trasladarInventarioASucursal: trasladarInventarioASucursal,
+        trasladarLoteInventarioASucursal: trasladarLoteInventarioASucursal,
+        registrarVentasDesdeSucursal: registrarVentasDesdeSucursal,
         apiAdminScript: apiAdminScript,
         appsScriptConfigurado: appsScriptConfigurado,
         escrituraLocalHabilitada: escrituraLocalHabilitada,

@@ -41,6 +41,7 @@
                 ubicacion: f.ubicacion,
                 fotoUrl: f.fotoUrl,
                 filaSheet: f.filaSheet,
+                inventarioDbId: f.inventarioDbId || 0,
                 celdas: (f.celdas || []).slice(),
                 _dirty: {},
                 _localId: f._localId,
@@ -115,7 +116,7 @@
             Object.keys(f._dirty).forEach(function (colIdx) {
                 var c = parseInt(colIdx, 10);
                 updates.push({
-                    row: f.filaSheet,
+                    row: f.inventarioDbId || f.filaSheet,
                     col: c + 1,
                     value: f.celdas[c]
                 });
@@ -293,6 +294,7 @@
             thLetters += '<th class="admin-inv-th-letter" title="Columna ' + esc(ObebeAdminData.colLetter(c)) + '">' +
                 esc(ObebeAdminData.colLetter(c)) + '</th>';
             var titulo = (enc[c] || '').trim();
+            if (/^(no\.?\s*)?imagen|^ref$|^#$/i.test(titulo) || titulo.toLowerCase() === 'no imagen') titulo = 'Ref';
             thSheet += '<th class="admin-inv-th-title" title="' + esc(titulo) + '">' + esc(titulo) + '</th>';
         }
         var selHead = pick ? '<th class="admin-inv-sel admin-inv-sticky-corner">✓</th>' : '';
