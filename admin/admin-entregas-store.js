@@ -31,7 +31,8 @@
 
     function getAll() {
         var arr = leerJson([]);
-        return Array.isArray(arr) ? arr : [];
+        if (!Array.isArray(arr)) return [];
+        return arr.filter(function (e) { return e && e.id !== 'obebe-sucursales-blob'; });
     }
 
     function getById(id) {
