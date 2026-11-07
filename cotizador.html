@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotizador - Obebe Clothes</title>
+    <meta name="description" content="Cotiza artículos en dólares y conoce el precio final si te los traemos a México con Obebe.">
+    <link rel="canonical" href="https://obebe.store/cotizador.html">
+    <script>
+    (function(w,d){d.documentElement.style.setProperty('--vh',(w.innerHeight/100)+'px');w.__obebeRedMovil=(function(){try{var c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;if(c&&(c.type==='wifi'||c.type==='ethernet'))return false;if(c&&(c.saveData||c.type==='cellular'||/^(slow-2g|2g|3g)$/.test(String(c.effectiveType||''))))return true;}catch(e){}return/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);})();w.__obebeOmitirSyncSheet=false;w.__obebeSyncEnBackground=true;w.__obebeCargaExterna=true;if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(x){x.unregister();});}).catch(function(){});}})(window,document);
+    </script>
+    <style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5;color:#333;background:#f8f9fa}
+a{text-decoration:none;color:inherit}
+img{max-width:100%;height:auto;display:block}
+.promo-bar{background:#000;color:#fff;text-align:center;padding:.5rem 0;position:relative;z-index:1001;min-height:2rem}
+.promo-message.active{opacity:1;visibility:visible}
+header{background:#fff;color:#1a1a1a;padding:.75rem 0;position:sticky;top:0;z-index:1000;box-shadow:0 2px 10px rgba(0,0,0,.08);min-height:3rem}
+header .container{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.logo h1{font-size:1.1rem;margin:0;letter-spacing:.05em;color:#1a1a1a}
+main,.container{max-width:1200px;margin:0 auto}
+@media(max-width:768px){.mobile-menu-btn{display:flex}}
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261107g" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20261107g"></noscript>
+    <script>
+    (function(w, d) {
+        function activarCss() {
+            var l = d.getElementById('cssPrincipal');
+            if (l && l.media !== 'all') l.media = 'all';
+        }
+        d.addEventListener('DOMContentLoaded', activarCss);
+        w.addEventListener('load', activarCss);
+        setTimeout(activarCss, 3000);
+    })(window, document);
+    </script>
+    <style>
+        @media (min-width: 769px) {
+            .promo-bar .promo-messages { transform: translateX(2rem); }
+        }
+        .cart-icon-btn {
+            width: 45px !important;
+            height: 45px !important;
+            padding: 0.5rem !important;
+        }
+        .cart-icon-btn svg {
+            width: 24px !important;
+            height: 24px !important;
+        }
+        .cot-main {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 2rem 1.2rem 3.5rem;
+        }
+        .cot-hero-copy h1 {
+            margin: 0 0 .4rem;
+            font-family: "Bebas Neue", sans-serif;
+            font-size: clamp(2.4rem, 8vw, 3.6rem);
+            letter-spacing: .04em;
+            line-height: .95;
+            color: #1a1a1a;
+            font-weight: 400;
+        }
+        .cot-hero-copy p {
+            margin: 0 0 1.4rem;
+            max-width: 36rem;
+            color: #666;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+        .cot-card {
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--border-color, #e0e0e0);
+            border-radius: 12px;
+            padding: 1.15rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,.05);
+        }
+        .cot-rows { display: grid; gap: .65rem; }
+        .cot-row {
+            display: grid;
+            grid-template-columns: 1fr 132px 42px;
+            gap: .5rem;
+            align-items: stretch;
+        }
+        @media (max-width: 640px) {
+            .cot-row { grid-template-columns: 1fr 110px 40px; }
+        }
+        .cot-input {
+            width: 100%;
+            border: 1px solid var(--border-color, #e0e0e0);
+            background: #fff;
+            color: #1a1a1a;
+            border-radius: 8px;
+            padding: .8rem .9rem;
+            font: inherit;
+            font-size: 1rem;
+        }
+        .cot-input:focus {
+            outline: none;
+            border-color: #1a1a1a;
+            box-shadow: 0 0 0 2px rgba(26,26,26,.12);
+        }
+        .cot-usd-wrap { position: relative; }
+        .cot-usd-wrap::before {
+            content: 'USD';
+            position: absolute;
+            right: .7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: .68rem;
+            font-weight: 800;
+            letter-spacing: .06em;
+            color: #e53935;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .cot-usd-wrap .cot-input {
+            padding-right: 2.55rem;
+            border-color: #ff6b6b;
+            box-shadow:
+                0 0 0 2px rgba(255, 107, 107, .28),
+                0 0 14px rgba(229, 57, 53, .45),
+                0 0 28px rgba(229, 57, 53, .22);
+            animation: cotUsdGlow 1.8s ease-in-out infinite alternate;
+        }
+        .cot-usd-wrap .cot-input:focus {
+            border-color: #e53935;
+            box-shadow:
+                0 0 0 3px rgba(229, 57, 53, .35),
+                0 0 18px rgba(229, 57, 53, .55),
+                0 0 34px rgba(229, 57, 53, .28);
+        }
+        @keyframes cotUsdGlow {
+            from {
+                box-shadow:
+                    0 0 0 2px rgba(255, 107, 107, .22),
+                    0 0 10px rgba(229, 57, 53, .32),
+                    0 0 20px rgba(229, 57, 53, .14);
+            }
+            to {
+                box-shadow:
+                    0 0 0 2px rgba(255, 107, 107, .4),
+                    0 0 16px rgba(229, 57, 53, .55),
+                    0 0 32px rgba(229, 57, 53, .28);
+            }
+        }
+        .cot-remove {
+            border: 1px solid var(--border-color, #e0e0e0);
+            background: #fff;
+            color: #666;
+            border-radius: 8px;
+            font-size: 1.25rem;
+            cursor: pointer;
+        }
+        .cot-remove:hover {
+            border-color: var(--secondary-color, #ff6b6b);
+            color: var(--secondary-color, #ff6b6b);
+        }
+        .cot-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .65rem;
+            margin-top: 1rem;
+            align-items: center;
+        }
+        .cot-btn-add {
+            appearance: none;
+            border: 1px dashed #bbb;
+            background: transparent;
+            color: #1a1a1a;
+            border-radius: 999px;
+            padding: .7rem 1.1rem;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .cot-btn-add:hover { border-color: #1a1a1a; }
+        .cot-btn-add:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+        .cot-count {
+            margin-left: auto;
+            color: #888;
+            font-size: .85rem;
+            font-weight: 600;
+        }
+        .cot-total-box {
+            margin-top: 1.15rem;
+            padding: 1.1rem 1.15rem;
+            border-radius: 10px;
+            background: #1a1a1a;
+            color: #fff;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .cot-total-box small {
+            display: block;
+            color: rgba(255,255,255,.65);
+            font-size: .75rem;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            margin-bottom: .2rem;
+        }
+        .cot-total-box strong {
+            font-family: "Bebas Neue", sans-serif;
+            font-size: clamp(2.2rem, 7vw, 3rem);
+            letter-spacing: .04em;
+            font-weight: 400;
+            line-height: 1;
+            color: #fff;
+        }
+        .cot-wa {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .75rem 1.05rem;
+            border-radius: 999px;
+            background: #25d366;
+            color: #062210;
+            font-weight: 800;
+            text-decoration: none;
+        }
+        .cot-wa:hover { filter: brightness(1.05); }
+        .cot-hint {
+            margin: .85rem 0 0;
+            color: #888;
+            font-size: .82rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="promo-bar">
+        <div class="promo-container">
+            <div class="promo-messages">
+                <div class="promo-message active">Repartos en Quéretaro</div>
+                <div class="promo-message">Descuento por mayoreo</div>
+                <div class="promo-message">5% off en referidos</div>
+            </div>
+        </div>
+    </div>
+    <header>
+        <div class="container">
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menú">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="header-left">
+                <nav class="desktop-nav">
+                    <a href="productos.html?categoria=Hombre" class="category-btn" id="btnHombre">Hombre</a>
+                    <a href="productos.html?categoria=Mujer" class="category-btn" id="btnMujer">Mujer</a>
+                    <a href="productos.html?mayoreo50=1" class="category-btn" id="btnMayoreo">Mayoreo</a>
+                </nav>
+            </div>
+            <a href="index.html" class="logo-link" id="logoLink">
+                <div class="logo">
+                    <h1>OBEBE CLOTHES</h1>
+                </div>
+            </a>
+            <div class="header-right">
+                <div class="social-links">
+                <a href="https://www.instagram.com/obebeclothes/" target="_blank" class="social-link instagram" aria-label="Instagram">
+                    <svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                </a>
+                <a href="https://wa.me/524462207365?text=Hola%20bro%2C%20me%20gustar%C3%ADa%20comprar%20algunos%20art%C3%ADculos%20GymShark" target="_blank" class="social-link whatsapp" aria-label="WhatsApp">
+                    <svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                    </svg>
+                </a>
+                </div>
+                <button class="cart-icon-btn" id="cartIconBtn" aria-label="Carrito de compras">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                    </svg>
+                    <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+                </button>
+            </div>
+        </div>
+        <nav class="mobile-nav" id="mobileNav" aria-label="Menú móvil">
+            <a href="productos.html?categoria=Hombre" class="category-btn" id="btnHombreMobile">Hombre</a>
+            <a href="productos.html?categoria=Mujer" class="category-btn" id="btnMujerMobile">Mujer</a>
+            <a href="productos.html?mayoreo50=1" class="category-btn" id="btnMayoreoMobile">Mayoreo</a>
+        </nav>
+    </header>
+
+    <main class="cot-main">
+        <div class="cot-hero-copy">
+            <h1>Cotiza tus prendas</h1>
+            <p>Escribe los precios en dólares de hasta 10 artículos y te mostramos el total estimado para traerlos con Obebe.</p>
+        </div>
+
+        <section class="cot-card" aria-label="Cotizador">
+            <div class="cot-rows" id="cotRows"></div>
+            <div class="cot-actions">
+                <button type="button" class="cot-btn-add" id="cotAdd">+ Agregar artículo</button>
+                <span class="cot-count" id="cotCount">0 / 10</span>
+            </div>
+            <div class="cot-total-box" aria-live="polite">
+                <div>
+                    <small>Total estimado</small>
+                    <strong id="cotTotal">$0.00 MXN</strong>
+                </div>
+                <a class="cot-wa" id="cotWa" href="https://wa.me/524462207365?text=Hola%20quiero%20cotizar%20estos%20art%C3%ADculos" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+            </div>
+            <p class="cot-hint">Máximo 10 artículos por cotización. El total ya incluye conversión, envío y margen Obebe.</p>
+        </section>
+    </main>
+
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-sidebar">
+            <div class="cart-header">
+                <h2>Carrito de Compras</h2>
+                <button type="button" class="close-cart-btn" id="closeCartBtn" aria-label="Cerrar carrito">&times;</button>
+            </div>
+            <div class="cart-items" id="cartItems"></div>
+            <div class="cart-total">
+                <div class="cart-total-price" id="cartTotal">Total: $0.00</div>
+            </div>
+            <button type="button" class="clear-cart-btn" id="clearCartBtn">Vaciar carrito</button>
+            <button type="button" class="checkout-btn" id="checkoutBtn">Comprar Carrito</button>
+        </div>
+    </div>
+
+<script src="obebe-data-config.js?v=20261107"></script>
+<script src="cotizador-config.js?v=20261107"></script>
+<script>
+(function () {
+    var MAX = 10;
+    var cfg = Object.assign({}, window.OBEBE_COTIZADOR_DEFAULTS || {
+        factorUsd: 1.085, valorDolar: 17.5, envio: 40, margen: 1.3
+    }, window.OBEBE_COTIZADOR_CONFIG || {});
+
+    function money(n) {
+        return '$' + (Number(n) || 0).toLocaleString('es-MX', {
+            minimumFractionDigits: 2, maximumFractionDigits: 2
+        });
+    }
+
+    function normalizar(c) {
+        c = c || {};
+        return {
+            factorUsd: Number(c.factorUsd) > 0 ? Number(c.factorUsd) : 1.085,
+            valorDolar: Number(c.valorDolar) > 0 ? Number(c.valorDolar) : 17.5,
+            envio: Number(c.envio) >= 0 ? Number(c.envio) : 40,
+            margen: Number(c.margen) > 0 ? Number(c.margen) : 1.3
+        };
+    }
+
+    function cargarConfigNube() {
+        var dataCfg = window.OBEBE_DATA_CONFIG || {};
+        var adminCfg = window.OBEBE_ADMIN_CONFIG || {};
+        var url = String(dataCfg.adminApiUrl || adminCfg.adminApiUrl || '').trim();
+        var key = String(dataCfg.supabaseAnonKey || adminCfg.supabaseAnonKey || '').trim();
+        if (!url) return Promise.resolve(cfg);
+        return fetch(url, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer ' + key,
+                apikey: key
+            },
+            body: JSON.stringify({ action: 'getCotizadorConfig' })
+        }).then(function (res) { return res.json(); }).then(function (data) {
+            if (data && data.ok && data.config) {
+                cfg = normalizar(data.config);
+                window.OBEBE_COTIZADOR_CONFIG = cfg;
+            }
+            return cfg;
+        }).catch(function () { return cfg; });
+    }
+
+    function filaHtml() {
+        return '<div class="cot-row">' +
+            '<input type="text" class="cot-input cot-nombre" placeholder="Nombre del artículo (opcional)">' +
+            '<div class="cot-usd-wrap"><input type="number" class="cot-input cot-usd" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>' +
+            '<button type="button" class="cot-remove" title="Quitar" aria-label="Quitar artículo">&times;</button>' +
+            '</div>';
+    }
+
+    function actualizarCount() {
+        var n = document.getElementById('cotRows').children.length;
+        document.getElementById('cotCount').textContent = n + ' / ' + MAX;
+        document.getElementById('cotAdd').disabled = n >= MAX;
+    }
+
+    function sumaUsd() {
+        var total = 0;
+        document.querySelectorAll('#cotRows .cot-usd').forEach(function (inp) {
+            var n = parseFloat(inp.value);
+            if (!isNaN(n) && n > 0) total += n;
+        });
+        return Math.round(total * 100) / 100;
+    }
+
+    function armarWa() {
+        var lineas = [];
+        document.querySelectorAll('#cotRows .cot-row').forEach(function (row, idx) {
+            var nom = ((row.querySelector('.cot-nombre') || {}).value || '').trim() || ('Artículo ' + (idx + 1));
+            var usd = parseFloat((row.querySelector('.cot-usd') || {}).value);
+            if (!isNaN(usd) && usd > 0) lineas.push('- ' + nom + ': $' + usd + ' USD');
+        });
+        var total = document.getElementById('cotTotal').textContent;
+        var txt = 'Hola, quiero cotizar estos artículos:%0A' +
+            encodeURIComponent(lineas.join('\n') || '(sin montos)') +
+            '%0A%0ATotal estimado: ' + encodeURIComponent(total);
+        document.getElementById('cotWa').href = 'https://wa.me/524462207365?text=' + txt;
+    }
+
+    function recalcular() {
+        cfg = normalizar(cfg);
+        var usd = sumaUsd();
+        var total = usd > 0
+            ? Math.round((((usd * cfg.factorUsd) * cfg.valorDolar) + cfg.envio) * cfg.margen * 100) / 100
+            : 0;
+        document.getElementById('cotTotal').textContent = money(total) + ' MXN';
+        armarWa();
+        actualizarCount();
+    }
+
+    var rows = document.getElementById('cotRows');
+    rows.insertAdjacentHTML('beforeend', filaHtml());
+
+    rows.addEventListener('input', function (e) {
+        if (e.target && (e.target.classList.contains('cot-usd') || e.target.classList.contains('cot-nombre'))) {
+            recalcular();
+        }
+    });
+    rows.addEventListener('click', function (e) {
+        var btn = e.target.closest('.cot-remove');
+        if (!btn) return;
+        if (rows.children.length <= 1) {
+            var row = btn.parentElement;
+            row.querySelector('.cot-usd').value = '';
+            row.querySelector('.cot-nombre').value = '';
+        } else {
+            btn.parentElement.remove();
+        }
+        recalcular();
+    });
+    document.getElementById('cotAdd').addEventListener('click', function () {
+        if (rows.children.length >= MAX) return;
+        rows.insertAdjacentHTML('beforeend', filaHtml());
+        recalcular();
+    });
+
+    cfg = normalizar(cfg);
+    recalcular();
+    cargarConfigNube().then(recalcular);
+})();
+</script>
+    <script defer src="productos-hombre.js?v=20261021c"></script>
+    <script defer src="productos-mujer.js?v=20261021c"></script>
+    <script defer src="script.js?v=20261114"></script>
+    <script defer src="productos.js?v=20261114"></script>
+    <script defer src="obebe-listo.js?v=20261155"></script>
+    <script>
+    document.addEventListener('obebe-scripts-ready', function () {
+        if (typeof inicializarPromoBar === 'function') inicializarPromoBar();
+    });
+    </script>
+</body>
+</html>

@@ -600,8 +600,90 @@ a.category-btn {
 }
 
 .hero-slide--ofertas.active,
-.hero-slide--nuevo.active {
+.hero-slide--nuevo.active,
+.hero-slide--cotizador.active {
     z-index: 3;
+}
+
+.hero-slide--cotizador {
+    background: #111;
+}
+
+.hero-cotizador-link {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    color: #fff;
+}
+
+.hero-cotizador-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.28) 0%,
+        rgba(0, 0, 0, 0.12) 45%,
+        rgba(0, 0, 0, 0.52) 100%
+    );
+}
+
+.hero-slide--cotizador img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center top;
+}
+
+.hero-cotizador-copy {
+    position: absolute;
+    top: clamp(0.75rem, 8%, 3.5rem);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(96%, 680px);
+    margin: 0;
+    padding: 0 0.5rem;
+    box-sizing: border-box;
+    text-align: center;
+    pointer-events: none;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.hero-cotizador-label {
+    margin: 0;
+    font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+    font-size: clamp(2.35rem, 9.5vw, 4.6rem);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #ffffff;
+    text-shadow:
+        0 2px 0 rgba(0, 0, 0, 0.95),
+        0 4px 22px rgba(0, 0, 0, 0.92),
+        0 0 2px rgba(0, 0, 0, 1);
+}
+
+.hero-cotizador-sub {
+    margin: 0;
+    max-width: 28rem;
+    font-size: clamp(0.82rem, 2.5vw, 1.02rem);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+    color: #ffffff;
+    text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.9),
+        0 3px 14px rgba(0, 0, 0, 0.85);
 }
 
 .hero-slide--ofertas {

@@ -784,7 +784,33 @@ async function getDbStats() {
   };
 }
 
-const MODULO_BLOB_KEYS = new Set(["apartados", "entregas", "sucursales"]);
+const MODULO_BLOB_KEYS = new Set(["apartados", "entregas", "sucursales", "cotizador"]);
+
+const COTIZADOR_DEFAULTS = {
+  factorUsd: 1.085,
+  valorDolar: 17.5,
+  envio: 40,
+  margen: 1.3,
+};
+
+function cotizadorDesdePayload(payload: unknown) {
+  const arr = Array.isArray(payload) ? payload : [];
+  const hit = arr.find((x) => x && typeof x === "object" &&
+    ((x as { id?: string }).id === "obebe-cotizador-config" ||
+      (x as { factorUsd?: unknown }).factorUsd != null)) as Record<string, unknown> | undefined;
+  const src = hit || {};
+  const num = (v: unknown, fb: number) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n >= 0 ? n : fb;
+  };
+  return {
+    factorUsd: num(src.factorUsd, COTIZADOR_DEFAULTS.factorUsd) || COTIZADOR_DEFAULTS.factorUsd,
+    valorDolar: num(src.valorDolar, COTIZADOR_DEFAULTS.valorDolar) || COTIZADOR_DEFAULTS.valorDolar,
+    envio: num(src.envio, COTIZADOR_DEFAULTS.envio),
+    margen: num(src.margen, COTIZADOR_DEFAULTS.margen) || COTIZADOR_DEFAULTS.margen,
+    actualizadoEn: Number(src.actualizadoEn) || 0,
+  };
+}
 
 async function getAdminModuloBlob(body: Record<string, unknown>) {
   const moduleKey = String(body.moduleKey ?? "").trim();
@@ -828,16 +854,39 @@ async function setAdminModuloBlob(body: Record<string, unknown>) {
   return { ok: true };
 }
 
+/** Lectura pública del cotizador (sin secret admin). */
+async function getCotizadorConfig() {
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("admin_modulos_blob")
+    .select("payload, updated_at")
+    .eq("module_key", "cotizador")
+    .maybeSingle();
+  if (error) throw error;
+  const cfg = cotizadorDesdePayload(data?.payload);
+  return {
+    ok: true,
+    config: cfg,
+    updatedAt: data?.updated_at ?? null,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: cors });
   }
   try {
     const body = await req.json();
+    const action = body.action as string;
+
+    // Público: cotizador de la tienda
+    if (action === "getCotizadorConfig") {
+      return json(await getCotizadorConfig());
+    }
+
     const auth = checkAuth(body);
     if (auth) return json(auth, 401);
 
-    const action = body.action as string;
     if (action === "ping") {
       return json({ ok: true, message: "admin-api Supabase OK", apiVersion: 3 });
     }

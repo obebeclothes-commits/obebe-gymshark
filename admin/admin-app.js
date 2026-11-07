@@ -19,6 +19,7 @@
             children: [
                 { id: 'ventas', label: 'Ventas', live: true },
                 { id: 'apartados', label: 'Apartados', live: true },
+                { id: 'cotizador', label: 'Cotizador', live: true },
                 { id: 'clientes', label: 'Clientes', live: true },
                 { id: 'gastos', label: 'Gastos', live: false }
             ]
@@ -926,6 +927,14 @@
             case 'registrar_venta': renderRegistrarVenta(); break;
             case 'entregas': renderEntregas(); break;
             case 'ventas': renderVentas(); break;
+            case 'cotizador':
+                elContent.innerHTML = '<div id="adminCotizadorMount"></div>';
+                if (window.ObebeAdminCotizador) {
+                    ObebeAdminCotizador.mount(document.getElementById('adminCotizadorMount'));
+                } else {
+                    elContent.innerHTML = '<p class="admin-apartados-hint">No se cargó el módulo Cotizador.</p>';
+                }
+                break;
             case 'apartados':
                 elContent.innerHTML = '<div id="adminApartadosMount"></div>';
                 ObebeAdminApartados.mount(document.getElementById('adminApartadosMount'), {
@@ -1115,6 +1124,9 @@
             if (window.ObebeAdminModulosCloud) {
                 ObebeAdminModulosCloud.syncApartados().catch(function () { /* ignore */ });
                 ObebeAdminModulosCloud.syncEntregas().catch(function () { /* ignore */ });
+                if (ObebeAdminModulosCloud.syncCotizador) {
+                    ObebeAdminModulosCloud.syncCotizador().catch(function () { /* ignore */ });
+                }
             }
             irModulo(inicio);
             if (!d || !(d.filas || []).length) {
