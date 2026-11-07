@@ -782,6 +782,71 @@ function inicializarCarouselMarcas() {
     reiniciarAuto();
 }
 
+function configurarAutoplayCarruselScroll(opciones) {
+    var carousel = opciones && opciones.carousel;
+    var wrapper = opciones && opciones.wrapper;
+    var scrollFn = opciones && opciones.scrollFn;
+    var getScroll = opciones && opciones.getScroll;
+    var setScroll = opciones && opciones.setScroll;
+    var updateArrows = opciones && opciones.updateArrows;
+    var autoMs = (opciones && opciones.autoMs) || 5000;
+    if (!carousel || !wrapper || typeof scrollFn !== 'function' || typeof getScroll !== 'function') return;
+
+    var autoTimer = null;
+    var paused = false;
+
+    function maxScroll() {
+        return Math.max(0, carousel.scrollWidth - wrapper.offsetWidth);
+    }
+
+    function avanzar() {
+        if (paused) return;
+        var max = maxScroll();
+        if (max <= 1) return;
+        if (getScroll() >= max - 2) {
+            if (typeof setScroll === 'function') setScroll(0);
+            carousel.style.transition = 'transform 0.3s ease-out';
+            carousel.style.transform = 'translateX(0)';
+            if (typeof updateArrows === 'function') updateArrows();
+            return;
+        }
+        scrollFn('right');
+    }
+
+    function reiniciar() {
+        if (autoTimer) clearInterval(autoTimer);
+        if (maxScroll() <= 1) return;
+        autoTimer = setInterval(avanzar, autoMs);
+    }
+
+    function pausar() {
+        paused = true;
+        if (autoTimer) clearInterval(autoTimer);
+        autoTimer = null;
+    }
+
+    function reanudar() {
+        paused = false;
+        reiniciar();
+    }
+
+    wrapper.addEventListener('mouseenter', pausar);
+    wrapper.addEventListener('mouseleave', reanudar);
+    wrapper.addEventListener('touchstart', pausar, { passive: true });
+    wrapper.addEventListener('touchend', function() {
+        setTimeout(reanudar, 1200);
+    }, { passive: true });
+
+    if (opciones.arrowLeft) {
+        opciones.arrowLeft.addEventListener('click', function() { reiniciar(); });
+    }
+    if (opciones.arrowRight) {
+        opciones.arrowRight.addEventListener('click', function() { reiniciar(); });
+    }
+
+    reiniciar();
+}
+
 function inicializarCarouselColecciones() {
     var carousel = document.getElementById('coleccionesCarousel');
     var wrapper = document.getElementById('coleccionesCarouselWrapper');
@@ -846,6 +911,17 @@ function inicializarCarouselColecciones() {
     carousel.style.transform = 'translateX(0)';
     actualizarFlechasColecciones();
     window.addEventListener('resize', actualizarFlechasColecciones);
+    configurarAutoplayCarruselScroll({
+        carousel: carousel,
+        wrapper: wrapper,
+        scrollFn: scrollCarouselColecciones,
+        getScroll: function() { return currentScrollColecciones; },
+        setScroll: function(v) { currentScrollColecciones = v; },
+        updateArrows: actualizarFlechasColecciones,
+        arrowLeft: arrowLeft,
+        arrowRight: arrowRight,
+        autoMs: 5000
+    });
 }
 
 function inicializarCarouselMujer() {
@@ -887,6 +963,19 @@ function inicializarCarouselMujer() {
 
     actualizarFlechasMujer();
     window.addEventListener('resize', actualizarFlechasMujer);
+    if (carousel && wrapper) {
+        configurarAutoplayCarruselScroll({
+            carousel: carousel,
+            wrapper: wrapper,
+            scrollFn: scrollCarouselMujer,
+            getScroll: function() { return currentScrollMujer; },
+            setScroll: function(v) { currentScrollMujer = v; },
+            updateArrows: actualizarFlechasMujer,
+            arrowLeft: arrowLeft,
+            arrowRight: arrowRight,
+            autoMs: 5000
+        });
+    }
 }
 
 function inicializarCarouselOfertas() {
@@ -926,6 +1015,19 @@ function inicializarCarouselOfertas() {
 
     actualizarFlechasOfertas();
     window.addEventListener('resize', actualizarFlechasOfertas);
+    if (carousel && wrapper) {
+        configurarAutoplayCarruselScroll({
+            carousel: carousel,
+            wrapper: wrapper,
+            scrollFn: scrollCarouselOfertas,
+            getScroll: function() { return currentScrollOfertas; },
+            setScroll: function(v) { currentScrollOfertas = v; },
+            updateArrows: actualizarFlechasOfertas,
+            arrowLeft: arrowLeft,
+            arrowRight: arrowRight,
+            autoMs: 5000
+        });
+    }
 }
 
 // Funci��n para manejar el scroll del carrusel
@@ -1113,6 +1215,20 @@ function inicializarCarousel() {
     window.addEventListener('resize', () => {
         actualizarFlechas();
     });
+
+    if (carousel && wrapper) {
+        configurarAutoplayCarruselScroll({
+            carousel: carousel,
+            wrapper: wrapper,
+            scrollFn: scrollCarousel,
+            getScroll: function() { return currentScroll; },
+            setScroll: function(v) { currentScroll = v; },
+            updateArrows: actualizarFlechas,
+            arrowLeft: arrowLeft,
+            arrowRight: arrowRight,
+            autoMs: 5000
+        });
+    }
 }
 
 // Funci��n para mostrar modal de restricci��n

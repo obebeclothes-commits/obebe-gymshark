@@ -51,8 +51,8 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261107h" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20261107h"></noscript>
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261107j" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20261107j"></noscript>
     <script>
     // Respaldo: si el onload del <link> no dispara, la hoja quedaria en media=print y sin aplicar.
     (function(w, d) {
@@ -74,7 +74,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                 transform: translateX(2rem);
             }
         }
-        /* Icono del carrito mismo tamaÃ±o que en productos.html (45px) */
+        /* Icono del carrito mismo tamaño que en productos.html (45px) */
         .cart-icon-btn {
             width: 45px !important;
             height: 45px !important;
@@ -90,7 +90,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
     <div class="promo-bar">
         <div class="promo-container">
             <div class="promo-messages">
-                <div class="promo-message active">Repartos en QuÃ©retaro</div>
+                <div class="promo-message active">Repartos en Querétaro</div>
                 <div class="promo-message">Descuento por mayoreo</div>
                 <div class="promo-message">5% off en referidos</div>
             </div>
@@ -98,7 +98,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
     </div>
     <header>
         <div class="container">
-            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="MenÃº">
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menú">
                 <span></span>
                 <span></span>
                 <span></span>
@@ -136,10 +136,12 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                 </button>
             </div>
         </div>
-        <nav class="mobile-nav" id="mobileNav" aria-label="MenÃº mÃ³vil">
+        <nav class="mobile-nav" id="mobileNav" aria-label="Menú móvil">
+            <a href="index.html" class="category-btn" id="btnHomeMobile">Home</a>
             <a href="productos.html?categoria=Hombre" class="category-btn" id="btnHombreMobile">Hombre</a>
             <a href="productos.html?categoria=Mujer" class="category-btn" id="btnMujerMobile">Mujer</a>
             <a href="productos.html?mayoreo50=1" class="category-btn" id="btnMayoreoMobile">Mayoreo</a>
+            <a href="cotizador.html" class="category-btn" id="btnCotizadorMobile">Cotizador</a>
         </nav>
     </header>
 
@@ -160,6 +162,17 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                             <span class="hero-cotizador-label">COTIZA TUS PRENDAS</span>
                             <span class="hero-cotizador-sub">Ingresa el precio de tus prendas favoritas en USD y cotiza en MXN</span>
                         </span>
+                        <span class="hero-cotizador-cta" aria-hidden="true">Cotizar ahora</span>
+                    </a>
+                </div>
+                <div class="hero-slide hero-slide--mayoreo50" data-hero-slide="mayoreo50" aria-label="Mayoreo +50">
+                    <a class="hero-mayoreo50-link" href="productos.html?mayoreo50=1" aria-label="Ver mayoreo +50">
+                        <img src="secciones/mayoreo-50.jpg?v=20260915m" alt="Mayoreo +50 Obebe" width="1200" height="1500" loading="lazy" decoding="async">
+                        <span class="hero-mayoreo50-copy" aria-hidden="true">
+                            <span class="hero-mayoreo50-label">MAYOREO +50</span>
+                            <span class="hero-mayoreo50-sub">Compra por volumen y paga menos por prenda</span>
+                        </span>
+                        <span class="hero-mayoreo50-cta" aria-hidden="true">Ver mayoreo +50</span>
                     </a>
                 </div>
                 <div class="hero-slide hero-slide--ofertas" data-hero-slide="ofertas" aria-label="Ofertas semanales">
@@ -172,6 +185,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                     <a class="hero-nuevo-link" href="productos.html?coleccion=NARUTO" aria-label="Ver coleccion destacada - Nuevo drop">
                         <img src="colecciones/NEW-1.png?v=20260916n" alt="Lo nuevo en Obebe - coleccion NARUTO" width="819" height="1024" loading="lazy" decoding="async">
                         <span class="hero-nuevo-drop-label" aria-hidden="true">NUEVO DROP</span>
+                        <span class="hero-nuevo-cta" aria-hidden="true">Ver nuevo drop</span>
                     </a>
                 </div>
             </div>
@@ -222,7 +236,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                                     <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
                                 </svg>
                             </button>
-                            <button type="button" class="nav-arrow nav-arrow-right" id="coleccionesArrowRight" aria-label="Ver mÃ¡s colecciones">
+                            <button type="button" class="nav-arrow nav-arrow-right" id="coleccionesArrowRight" aria-label="Ver más colecciones">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
                                     <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
                                 </svg>
@@ -234,7 +248,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                             <a href="productos.html?coleccion=NARUTO" class="product-card coleccion-carousel-card">
                                 <div class="product-image-wrap coleccion-card-image" data-label="NARUTO">
                                     <div class="product-image">
-                                        <img src="colecciones/naruto.png?v=20260914e" alt="ColecciÃ³n NARUTO" loading="lazy" width="320" height="380">
+                                        <img src="colecciones/naruto.png?v=20260914e" alt="Colección NARUTO" loading="lazy" width="320" height="380">
                                     </div>
                                 </div>
                                 <div class="product-info">
@@ -244,7 +258,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                             <a href="productos.html?coleccion=CBUM" class="product-card coleccion-carousel-card coleccion-img-top">
                                 <div class="product-image-wrap coleccion-card-image" data-label="CBUM">
                                     <div class="product-image">
-                                        <img src="colecciones/cbum.png?v=20260914e" alt="ColecciÃ³n CBUM" loading="lazy" width="320" height="380">
+                                        <img src="colecciones/cbum.png?v=20260914e" alt="Colección CBUM" loading="lazy" width="320" height="380">
                                     </div>
                                 </div>
                                 <div class="product-info">
@@ -254,7 +268,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                             <a href="productos.html?coleccion=DEVANT" class="product-card coleccion-carousel-card">
                                 <div class="product-image-wrap coleccion-card-image" data-label="DEVANT">
                                     <div class="product-image">
-                                        <img src="colecciones/devant.avif?v=20260914e" alt="ColecciÃ³n DEVANT" loading="lazy" width="320" height="380">
+                                        <img src="colecciones/devant.avif?v=20260914e" alt="Colección DEVANT" loading="lazy" width="320" height="380">
                                     </div>
                                 </div>
                                 <div class="product-info">
@@ -264,7 +278,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                             <a href="productos.html?coleccion=GOLDS%20GYM" class="product-card coleccion-carousel-card coleccion-img-top">
                                 <div class="product-image-wrap coleccion-card-image" data-label="GOLDS GYM">
                                     <div class="product-image">
-                                        <img src="colecciones/golds%20gym.png?v=20260914e" alt="ColecciÃ³n Golds Gym" loading="lazy" width="320" height="380">
+                                        <img src="colecciones/golds%20gym.png?v=20260914e" alt="Colección Golds Gym" loading="lazy" width="320" height="380">
                                     </div>
                                 </div>
                                 <div class="product-info">
@@ -274,7 +288,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                             <a href="productos.html?coleccion=BELCAST" class="product-card coleccion-carousel-card">
                                 <div class="product-image-wrap coleccion-card-image" data-label="BELCAST">
                                     <div class="product-image">
-                                        <img src="colecciones/belcast.png?v=20260915w" alt="ColecciÃ³n BELCAST" loading="lazy" width="320" height="380">
+                                        <img src="colecciones/belcast.png?v=20260915w" alt="Colección BELCAST" loading="lazy" width="320" height="380">
                                     </div>
                                 </div>
                                 <div class="product-info">
@@ -294,7 +308,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                                     <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
                                 </svg>
                             </button>
-                            <button type="button" class="nav-arrow nav-arrow-right" id="marcasArrowRight" aria-label="Ver mÃ¡s marcas">
+                            <button type="button" class="nav-arrow nav-arrow-right" id="marcasArrowRight" aria-label="Ver más marcas">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
                                     <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
                                 </svg>
@@ -411,7 +425,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                 </div>
                 <div class="products-carousel-wrapper products-carousel-wrapper-mujer">
                     <div class="products-carousel products-carousel--static" id="productsCarouselMujer">
-                        <!-- Placeholder: si hay productos en productosMujer, script.js los pinta aquÃ­ con botÃ³n Agregar al Carrito -->
+                        <!-- Placeholder: si hay productos en productosMujer, script.js los pinta aquí con botón Agregar al Carrito -->
                         <a href="productos.html?categoria=Mujer" class="product-card product-card-link product-card-mujer-placeholder">
                             <div class="product-image">ðŸ‘š</div>
                             <div class="product-info">
@@ -474,7 +488,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                                 <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
                             </svg>
                         </button>
-                        <button type="button" class="nav-arrow nav-arrow-right" id="arrowRightOfertas" aria-label="Ver mÃ¡s ofertas">
+                        <button type="button" class="nav-arrow nav-arrow-right" id="arrowRightOfertas" aria-label="Ver más ofertas">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
                                 <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
                             </svg>
@@ -535,19 +549,19 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
         </div>
     </div>
 
-    <!-- Modal de RestricciÃ³n -->
+    <!-- Modal de Restricción -->
     <div class="restriction-modal" id="restrictionModal">
         <div class="restriction-content">
             <div class="restriction-icon">ðŸš«</div>
-            <h2>PrÃ³ximamente</h2>
-            <p>La secciÃ³n de productos para mujeres estarÃ¡ disponible muy pronto.</p>
+            <h2>Próximamente</h2>
+            <p>La sección de productos para mujeres estará disponible muy pronto.</p>
             <button class="restriction-close-btn" id="closeRestrictionBtn">Cerrar</button>
         </div>
     </div>
 
     <script defer src="productos-hombre.js?v=20261021c"></script>
     <script defer src="productos-mujer.js?v=20261021c"></script>
-    <script defer src="script.js?v=20261114"></script>
+    <script defer src="script.js?v=20261107j"></script>
     <script defer src="productos.js?v=20261114"></script>
     <script defer src="obebe-listo.js?v=20261155"></script>
     <script>
