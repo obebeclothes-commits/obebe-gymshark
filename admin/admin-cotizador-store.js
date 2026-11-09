@@ -6,9 +6,9 @@
 
     var DEFAULTS = {
         factorUsd: 1.085,
-        valorDolar: 17.5,
+        valorDolar: 18.9,
         envio: 40,
-        margen: 1.3
+        margen: 0.3
     };
 
     function defaults() {
@@ -37,6 +37,7 @@
         if (!isFinite(out.valorDolar) || out.valorDolar <= 0) out.valorDolar = d.valorDolar;
         if (!isFinite(out.envio) || out.envio < 0) out.envio = d.envio;
         if (!isFinite(out.margen) || out.margen <= 0) out.margen = d.margen;
+        if (out.margen > 1) out.margen = 0.3;
         return out;
     }
 
@@ -88,10 +89,14 @@
 
     function cotizarTotalUsd(sumaUsd, cfg) {
         cfg = normalizar(cfg || leer());
+        if (global.ObebeCotizadorFormula && ObebeCotizadorFormula.cotizarUsd) {
+            return ObebeCotizadorFormula.cotizarUsd(sumaUsd, cfg, { conEnvio: true });
+        }
         var usd = Number(sumaUsd) || 0;
         if (usd <= 0) return 0;
         var base = ((usd * cfg.factorUsd) * cfg.valorDolar) + cfg.envio;
-        return Math.round(base * cfg.margen * 100) / 100;
+        var div = 1 - (cfg.margen > 0 && cfg.margen < 1 ? cfg.margen : 0.3);
+        return Math.ceil((base / div) / 10) * 10;
     }
 
     global.ObebeCotizadorStore = {

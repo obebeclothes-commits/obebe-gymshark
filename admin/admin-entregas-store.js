@@ -2,6 +2,7 @@
     'use strict';
 
     var KEY = 'obebe_entregas_v1';
+    var KEY_DELETED = 'obebe_entregas_deleted_v1';
 
     function leerJson(fallback) {
         try {
@@ -10,6 +11,29 @@
             return JSON.parse(raw);
         } catch (e) {
             return fallback;
+        }
+    }
+
+    function leerBorradas() {
+        try {
+            var raw = localStorage.getItem(KEY_DELETED);
+            if (!raw) return {};
+            var o = JSON.parse(raw);
+            return o && typeof o === 'object' ? o : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function marcarBorrada(id) {
+        if (!id) return;
+        var map = leerBorradas();
+        map[id] = Date.now();
+        try {
+            localStorage.setItem(KEY_DELETED, JSON.stringify(map));
+        } catch (e) { /* ignore */ }
+        if (global.ObebeAdminModulosCloud && ObebeAdminModulosCloud.marcarEntregaBorrada) {
+            ObebeAdminModulosCloud.marcarEntregaBorrada(id);
         }
     }
 
@@ -29,11 +53,25 @@
         return 'ent-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
     }
 
+    // Entrega zombie que la nube seguía devolviendo
+    (function sembrarBorradaFija() {
+        var idZombie = 'ent-mw3obctu-dxpgvf';
+        var map = leerBorradas();
+        if (map[idZombie]) return;
+        map[idZombie] = Date.now();
+        try { localStorage.setItem(KEY_DELETED, JSON.stringify(map)); } catch (e) { /* ignore */ }
+    })();
+
     function getAll() {
         var arr = leerJson([]);
         if (!Array.isArray(arr)) return [];
+        var borradas = leerBorradas();
         return arr.filter(function (e) {
-            return e && e.id !== 'obebe-sucursales-blob' && e.id !== 'obebe-compras-blob';
+            if (!e || !e.id) return false;
+            if (e.id === 'obebe-sucursales-blob' || e.id === 'obebe-compras-blob') return false;
+            if (e.id === 'obebe-entregas-deleted-blob') return false;
+            if (borradas[e.id]) return false;
+            return true;
         });
     }
 
@@ -51,6 +89,7 @@
     }
 
     function removeEntrega(id) {
+        marcarBorrada(id);
         guardar(getAll().filter(function (e) { return e.id !== id; }));
     }
 
@@ -83,6 +122,7 @@
         removeEntrega: removeEntrega,
         listar: listar,
         cantidadReservadaPorFila: cantidadReservadaPorFila,
-        uid: uid
+        uid: uid,
+        leerBorradas: leerBorradas
     };
 })(window);

@@ -863,9 +863,9 @@ const MODULO_BLOB_KEYS = new Set(["apartados", "entregas", "sucursales", "cotiza
 
 const COTIZADOR_DEFAULTS = {
   factorUsd: 1.085,
-  valorDolar: 17.5,
+  valorDolar: 18.9,
   envio: 40,
-  margen: 1.3,
+  margen: 0.3,
 };
 
 function cotizadorDesdePayload(payload: unknown) {

@@ -113,7 +113,7 @@
         var subt = modo === 'editar'
             ? 'Actualiza fecha, lugar u otros datos. Los artículos vienen de la venta.'
             : (opts.reservarSinVenta
-                ? 'Si guardas, el stock se aparta y la venta se registra al completar. Si omites, la venta se registra ahora sin programar entrega.'
+                ? 'Si programas la entrega, el stock se aparta y la venta se registra al completar.'
                 : 'La venta ya está registrada. Completa cuándo y dónde entregar.');
 
         var cliente = ent ? ent.cliente : (meta.cliente || '');
@@ -145,8 +145,10 @@
             '<div class="admin-field"><label>Notas (opcional)</label><input type="text" id="adminEntregaModalNotas" value="' + esc(notasIn) + '"></div>' +
             '<p id="adminEntregaModalError" class="admin-login-error" role="alert"></p></div>' +
             '<div class="admin-entrega-modal-actions">' +
-            '<button type="button" class="admin-btn admin-btn-ghost" id="adminEntregaModalCancel">' +
-            (modo === 'editar' ? 'Cancelar' : 'Omitir (registrar venta)') + '</button>' +
+            '<button type="button" class="admin-btn ' +
+            (modo === 'editar' ? 'admin-btn-ghost' : (opts.reservarSinVenta ? 'admin-btn-danger' : 'admin-btn-ghost')) +
+            '" id="adminEntregaModalCancel">' +
+            (modo === 'editar' ? 'Cancelar' : 'Cancelar') + '</button>' +
             '<button type="button" class="admin-btn admin-btn-primary" id="adminEntregaModalGuardar">' +
             (modo === 'editar' ? 'Guardar cambios' : 'Guardar entrega') + '</button></div></div>';
 
@@ -159,8 +161,15 @@
                 resolve(result);
             }
 
-            root.querySelector('[data-dismiss]').addEventListener('click', function () { cerrar(null); });
-            document.getElementById('adminEntregaModalCancel').addEventListener('click', function () { cerrar(null); });
+            function cancelarSinProgramar() {
+                if (modo === 'crear' && opts.reservarSinVenta) {
+                    cerrar({ soloRegistrarVenta: true });
+                } else {
+                    cerrar(null);
+                }
+            }
+            root.querySelector('[data-dismiss]').addEventListener('click', cancelarSinProgramar);
+            document.getElementById('adminEntregaModalCancel').addEventListener('click', cancelarSinProgramar);
             document.getElementById('adminEntregaModalGuardar').addEventListener('click', function () {
                 var err = document.getElementById('adminEntregaModalError');
                 if (err) err.textContent = '';

@@ -598,6 +598,24 @@ function adjuntarBadgeOfertaSemanalEnImagen(imageWrap, producto) {
     adjuntarBadgeDescuentoEnImagen(imageWrap, producto);
 }
 
+function refProductoTienda(producto) {
+    if (!producto) return '';
+    var id = parseInt(producto.id, 10);
+    return id > 0 ? String(id) : '';
+}
+
+function adjuntarRefEnImagen(imageWrap, producto) {
+    if (!imageWrap || !producto) return;
+    var ref = refProductoTienda(producto);
+    if (!ref) return;
+    var badge = document.createElement('span');
+    badge.className = 'product-ref-badge';
+    badge.textContent = ref;
+    badge.title = 'Ref ' + ref;
+    badge.setAttribute('aria-hidden', 'true');
+    imageWrap.appendChild(badge);
+}
+
 function htmlPrecioListadoProducto(producto, opciones) {
     var opts = opciones || {};
     if (!esModoMayoreo50() && !esModoMayoreo()) {
@@ -668,6 +686,7 @@ window.htmlPrecioListadoProducto = htmlPrecioListadoProducto;
 window.htmlPrecioOfertaSemanalMarkup = htmlPrecioOfertaSemanalMarkup;
 window.adjuntarBadgeOfertaSemanalEnImagen = adjuntarBadgeOfertaSemanalEnImagen;
 window.adjuntarBadgeDescuentoEnImagen = adjuntarBadgeDescuentoEnImagen;
+window.adjuntarRefEnImagen = adjuntarRefEnImagen;
 window.esProductoOfertaSemanal = esProductoOfertaSemanal;
 window.precioOfertaSemanalProducto = precioOfertaSemanalProducto;
 window.porcentajeDescuentoOfertaSemanalProducto = porcentajeDescuentoOfertaSemanalProducto;
@@ -1301,14 +1320,23 @@ function obtenerTerminoBusqueda() {
     var mobile = document.getElementById('productSearchInput');
     var desktop = document.getElementById('productSearchInputDesktop');
     var valor = (mobile && mobile.value.trim()) || (desktop && desktop.value.trim()) || '';
+    if (!valor) {
+        var params = new URLSearchParams(window.location.search);
+        valor = (params.get('q') || '').trim();
+    }
     return valor.toLowerCase();
 }
 
 function aplicarBusquedaNombre(productosFiltrados) {
     var term = obtenerTerminoBusqueda();
     if (!term) return productosFiltrados;
+    var termTrim = term.trim();
+    var soloRef = /^\d+$/.test(termTrim);
     return productosFiltrados.filter(function(p) {
-        return p.nombre.toLowerCase().includes(term);
+        if (soloRef) return String(p.id) === termTrim;
+        if (p.nombre && p.nombre.toLowerCase().includes(term)) return true;
+        if (/^\d+$/.test(termTrim) && String(p.id).indexOf(termTrim) !== -1) return true;
+        return false;
     });
 }
 
@@ -1778,6 +1806,7 @@ function crearTarjetaProducto(producto) {
     }
 
     adjuntarBadgeDescuentoEnImagen(imageWrap, producto);
+    adjuntarRefEnImagen(imageWrap, producto);
 
     linkProducto.appendChild(imageWrap);
 

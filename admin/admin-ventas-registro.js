@@ -400,13 +400,15 @@
         if (del) {
             var v2 = findVenta(del.getAttribute('data-vr-del'));
             if (!v2) return;
-            var msg = 'Se eliminará la línea: ' + (v2.nombre || 'venta') + '.';
-            var devolverStock = /\[\[stock:\d+:-?\d+\]\]/.test(String(v2.link || ''));
+            var nombreLinea = v2.nombre || 'venta';
+            var devolverStock = ObebeAdminData.ventaDebeDevolverStock
+                ? ObebeAdminData.ventaDebeDevolverStock(v2)
+                : /\[\[stock:\d+:-?\d+\]\]/.test(String(v2.link || ''));
+            var msg = 'Se eliminará la línea: ' + nombreLinea + '.';
+            if (devolverStock) msg += ' Se devolverá 1 unidad al inventario.';
             ObebeAdminDialog.confirm({
                 title: '¿Borrar venta?',
-                message: msg + (devolverStock
-                    ? ' Se devolverá 1 unidad al inventario porque esta venta sí bajó stock.'
-                    : ' No se devolverá stock (esta venta no tiene baja de inventario registrada; así evitamos piezas fantasma).'),
+                message: msg,
                 confirmText: 'Borrar',
                 cancelText: 'Cancelar'
             }).then(function (ok) {
@@ -455,7 +457,9 @@
                     chain = chain.then(function () {
                         if (fallo) return;
                         var vDel = findVenta(id);
-                        var devolver = vDel && /\[\[stock:\d+:-?\d+\]\]/.test(String(vDel.link || ''));
+                        var devolver = vDel && (ObebeAdminData.ventaDebeDevolverStock
+                            ? ObebeAdminData.ventaDebeDevolverStock(vDel)
+                            : /\[\[stock:\d+:-?\d+\]\]/.test(String(vDel.link || '')));
                         return ObebeAdminData.eliminarVentaLinea(id, { ajustarStock: !!devolver }).then(function (res) {
                             if (!res || res.ok === false) {
                                 fallo = (res && res.error) || 'No se pudo borrar una venta.';

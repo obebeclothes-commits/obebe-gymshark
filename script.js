@@ -279,6 +279,9 @@ function renderizarCarruselHombre(categoria = 'Hombre', mostrarTodos = false) {
         if (typeof adjuntarBadgeDescuentoEnImagen === 'function') {
             adjuntarBadgeDescuentoEnImagen(imageWrap, producto);
         }
+        if (typeof adjuntarRefEnImagen === 'function') {
+            adjuntarRefEnImagen(imageWrap, producto);
+        }
 
         card.appendChild(imageWrap);
 
@@ -383,6 +386,9 @@ function renderizarProductosMujer() {
 
         if (typeof adjuntarBadgeDescuentoEnImagen === 'function') {
             adjuntarBadgeDescuentoEnImagen(imageWrap, producto);
+        }
+        if (typeof adjuntarRefEnImagen === 'function') {
+            adjuntarRefEnImagen(imageWrap, producto);
         }
 
         card.appendChild(imageWrap);
@@ -530,6 +536,9 @@ function renderizarCarruselOfertas() {
             : 0;
         badge.textContent = pctOferta > 0 ? ('-' + pctOferta + '%') : '-%';
         imageWrap.appendChild(badge);
+        if (typeof adjuntarRefEnImagen === 'function') {
+            adjuntarRefEnImagen(imageWrap, producto);
+        }
 
         card.appendChild(imageWrap);
 

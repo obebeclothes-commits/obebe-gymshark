@@ -85,6 +85,9 @@ window.iniciarDetalleProducto = function() {
         } else if (typeof adjuntarBadgeOfertaSemanalEnImagen === 'function') {
             adjuntarBadgeOfertaSemanalEnImagen(wrap, producto);
         }
+        if (typeof adjuntarRefEnImagen === 'function') {
+            adjuntarRefEnImagen(wrap, producto);
+        }
         return wrap;
     }
 

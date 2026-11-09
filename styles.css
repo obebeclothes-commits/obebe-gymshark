@@ -1657,6 +1657,22 @@ a.product-image-link:visited .product-image {
     width: 100%;
 }
 
+.product-ref-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 4;
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #fff;
+    background: rgba(17, 17, 17, 0.62);
+    padding: 2px 5px;
+    border-radius: 4px;
+    pointer-events: none;
+    letter-spacing: 0.03em;
+}
+
 .product-image-wrap.out-of-stock .product-image img,
 .product-image-wrap.out-of-stock .product-image,
 .product-image-wrap.out-of-stock img {

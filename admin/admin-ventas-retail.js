@@ -758,7 +758,7 @@
                             limpiarCarrito();
                             var msgOk = res.soloLocal
                                 ? 'Guardado en este navegador. Google Sheets y la tienda web no se actualizaron. Configura appsScriptUrl para sincronizar.'
-                                : 'Stock bajado en inventario (Supabase) y venta registrada. Recarga obebe.store para verlo fuera.';
+                                : 'Stock bajado en inventario y venta registrada.';
                             ObebeAdminDialog.alert({
                                 title: 'Venta registrada',
                                 message: msgOk,
@@ -774,7 +774,7 @@
                     }
                     return ObebeAdminDialog.confirm({
                         title: '¿Programar entrega?',
-                        message: 'Si programas la entrega, el stock se aparta y la venta se registra al completar. Si omites o eliges no por ahora, la venta se registra ya (sin programar entrega).',
+                        message: 'Si programas la entrega, el stock se aparta y la venta se registra al completar.',
                         confirmText: 'Sí, programar',
                         cancelText: 'No por ahora',
                         variant: 'warn',
@@ -797,9 +797,10 @@
                                 if (opts.onVentaRegistrada) opts.onVentaRegistrada({ ok: true, entregaPendiente: true });
                             }
                         }).then(function (entrega) {
-                            // Omitir / cerrar modal sin guardar = no quieres programar → registrar venta ya.
-                            if (entrega) return;
-                            return registrarAhora();
+                            if (entrega && entrega.id) return;
+                            return registrarAhora().catch(function (e) {
+                                if (err) err.textContent = e.message || String(e);
+                            });
                         });
                     }).catch(function (e) {
                         if (err) err.textContent = e.message || String(e);

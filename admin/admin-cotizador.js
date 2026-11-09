@@ -161,8 +161,8 @@
                 'Pesos mexicanos por 1 USD', true) +
             numInput('cotEnvio', 'Envío (MXN)', cfg.envio,
                 'Se suma una sola vez por cotización', true) +
-            numInput('cotMargen', 'Margen final', cfg.margen,
-                'Multiplicador al final de la fórmula', true) +
+            numInput('cotMargen', 'Margen de ganancia', cfg.margen,
+                'Decimal entre 0 y 1 (ej. 0.3 = 30 %). Precio = costo ÷ (1 − margen)', true) +
             '</form>' +
             '<div id="adminCotizadorDemo">' + demoHtml() + '</div>' +
             '<p id="adminCotizadorMsg" class="admin-cot-msg"></p>' +

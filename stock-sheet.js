@@ -692,16 +692,66 @@
         return datos;
     }
 
+    function claveDatosFila(datos) {
+        if (!datos) return '';
+        return claveProducto(
+            datos.nombre,
+            normalizarTalla(datos.talla),
+            datos.color,
+            datos.marca,
+            parsearNumeroImagen(datos.refImagen)
+        );
+    }
+
+    function claveCatalogoProducto(p) {
+        if (!p) return '';
+        return claveProducto(
+            p.nombre,
+            normalizarTalla(p.tallaBase || p.talla),
+            p.color,
+            p.marca,
+            extraerRefImagenProducto(p) || parsearNumeroImagen(p.id)
+        );
+    }
+
     function sincronizarCatalogo(catalogo, mapaSheet, mapaPorRef) {
         if (!Array.isArray(catalogo)) return 0;
+        var usados = {};
         var actualizados = 0;
+
+        function aplicarSiLibre(p, datos) {
+            if (!datos) return false;
+            var k = claveDatosFila(datos);
+            if (k && usados[k]) return false;
+            aplicarDatosSheetEnProducto(p, datos);
+            if (k) usados[k] = true;
+            actualizados += 1;
+            return true;
+        }
+
+        // 1) Matches exactos (nombre/talla/color/marca/ref) para no “robar” filas
         catalogo.forEach(function(p) {
-            var datos = datosSheetParaProducto(p, mapaSheet, mapaPorRef);
-            if (datos) {
-                aplicarDatosSheetEnProducto(p, datos);
-                actualizados += 1;
+            if (!p) return;
+            var talla = normalizarTalla(p.tallaBase || String(p.talla || '').split('-')[0].trim());
+            var refImagen = extraerRefImagenProducto(p);
+            var datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca, refImagen);
+            if (!datos && p.id) {
+                datos = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca, p.id);
             }
+            aplicarSiLibre(p, datos);
         });
+
+        // 2) Fallback por ref (p. ej. cambió la talla en inventario)
+        catalogo.forEach(function(p) {
+            if (!p) return;
+            var talla = normalizarTalla(p.tallaBase || String(p.talla || '').split('-')[0].trim());
+            var refImagen = extraerRefImagenProducto(p);
+            var yaExacto = buscarEnMapa(mapaSheet, p.nombre, talla, p.color, p.marca, refImagen);
+            if (yaExacto && usados[claveDatosFila(yaExacto)]) return;
+            var datos = buscarEnMapaPorRef(mapaPorRef, p, mapaSheet);
+            aplicarSiLibre(p, datos);
+        });
+
         return actualizados;
     }
 
@@ -717,6 +767,27 @@
         }
         if (removidos > 0) {
             console.info('[stock-sheet] Productos quitados (no están en el sheet):', removidos);
+        }
+        return removidos;
+    }
+
+    /** Si hubo cambio de talla/color, evita dejar dos cards iguales en la tienda. */
+    function dedupeCatalogoTrasSync(catalogo) {
+        if (!Array.isArray(catalogo)) return 0;
+        var vistos = {};
+        var removidos = 0;
+        for (var i = catalogo.length - 1; i >= 0; i--) {
+            var k = claveCatalogoProducto(catalogo[i]);
+            if (!k) continue;
+            if (vistos[k]) {
+                catalogo.splice(i, 1);
+                removidos += 1;
+            } else {
+                vistos[k] = true;
+            }
+        }
+        if (removidos > 0) {
+            console.info('[stock-sheet] Duplicados quitados tras sync:', removidos);
         }
         return removidos;
     }
@@ -860,16 +931,19 @@
         var opcionesSheet = {};
         if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) {
             var datosHombre = leerFilasSheet(csv, 'Hombre');
-            inyectarProductosFaltantesDesdeMapa(productosHombre, datosHombre.mapa, 'Hombre');
+            // Primero actualizar (p. ej. cambio de talla); luego inyectar solo lo que aún falte
             sincronizarCatalogo(productosHombre, datosHombre.mapa, datosHombre.mapaPorRef);
+            inyectarProductosFaltantesDesdeMapa(productosHombre, datosHombre.mapa, 'Hombre');
             podarCatalogoSegunSheet(productosHombre, datosHombre.mapa, datosHombre.mapaPorRef);
+            dedupeCatalogoTrasSync(productosHombre);
             opcionesSheet.Hombre = datosHombre.opciones;
         }
         if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) {
             var datosMujer = leerFilasSheet(csv, 'Mujer');
-            inyectarProductosFaltantesDesdeMapa(productosMujer, datosMujer.mapa, 'Mujer');
             sincronizarCatalogo(productosMujer, datosMujer.mapa, datosMujer.mapaPorRef);
+            inyectarProductosFaltantesDesdeMapa(productosMujer, datosMujer.mapa, 'Mujer');
             podarCatalogoSegunSheet(productosMujer, datosMujer.mapa, datosMujer.mapaPorRef);
+            dedupeCatalogoTrasSync(productosMujer);
             opcionesSheet.Mujer = datosMujer.opciones;
         }
         window.opcionesInventarioSheet = opcionesSheet;

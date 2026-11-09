@@ -751,7 +751,10 @@
         datosCache.resumenVentas = ObebeAdminData.calcularResumenVentas(datosCache.ventas);
         datosCache.clientes = res.clientes || ObebeAdminData.calcularPerfilesClientes(datosCache.ventas);
         datosCache.resumen = ObebeAdminData.calcularResumen(datosCache.filas);
-        if (vistaActual === 'registrar_venta') pintarTablaVentasUltimas();
+        if (vistaActual === 'registrar_venta') {
+            pintarTablaVentasUltimas();
+            remountRetailRegistrarVenta();
+        }
         if (vistaActual === 'ventas') pintarTablaVentasRegistro();
     }
 
@@ -765,6 +768,14 @@
         };
     }
 
+    function remountRetailRegistrarVenta() {
+        if (vistaActual !== 'registrar_venta') return;
+        var mount = document.getElementById('adminVentaRetailMount');
+        if (mount && global.ObebeAdminVentasRetail) {
+            ObebeAdminVentasRetail.mount(mount, opcionesMountRetail());
+        }
+    }
+
     function refrescarDatosTrasEditarVenta() {
         var st = ObebeAdminData.getEstado();
         datosCache.ventas = st.ventas || datosCache.ventas;
@@ -773,6 +784,8 @@
         function repintarTablasVentas() {
             if (vistaActual === 'registrar_venta') pintarTablaVentasUltimas();
             if (vistaActual === 'ventas') pintarTablaVentasRegistro();
+            if (vistaActual === 'inventario' && typeof pintarInv === 'function') pintarInv();
+            remountRetailRegistrarVenta();
         }
         if (ObebeAdminData.usarSupabase && ObebeAdminData.usarSupabase()) {
             return ObebeAdminData.cargarVentas(true).then(function (p) {

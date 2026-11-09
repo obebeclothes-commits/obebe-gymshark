@@ -2108,6 +2108,39 @@
         return link;
     }
 
+    function metaStockDesdeLinkVenta(link) {
+        var m = String(link || '').match(/\[\[stock:(\d+):(-?\d+)\]\]/);
+        if (!m) return null;
+        var inventarioId = parseInt(m[1], 10) || 0;
+        var delta = parseInt(m[2], 10) || 0;
+        if (!inventarioId || !delta) return null;
+        var unidades = Math.abs(delta);
+        if (!unidades) return null;
+        return { inventarioId: inventarioId, unidades: unidades };
+    }
+
+    function ventaDebeDevolverStock(v) {
+        return !!(v && metaStockDesdeLinkVenta(v.link));
+    }
+
+    function restaurarStockPorVentaLinea(v) {
+        var meta = metaStockDesdeLinkVenta(v && v.link);
+        if (!meta) return Promise.resolve(null);
+        var hit = (estado.filas || []).find(function (x) {
+            return x.inventarioDbId && x.inventarioDbId === meta.inventarioId;
+        });
+        if (!hit) {
+            hit = buscarFilaInventarioPorVenta(v.nombre, v.talla, v.color);
+        }
+        if (!hit || !hit.filaSheet) return Promise.resolve(null);
+        var unidades = Math.min(1, meta.unidades);
+        var nuevo = Math.max(0, (hit.stock || 0) + unidades);
+        return actualizarStockFila(hit.filaSheet, nuevo, {
+            fila: hit,
+            inventarioDbId: meta.inventarioId
+        });
+    }
+
     function decorarVentaPrecioOriginal(v) {
         if (!v) return v;
         var raw = String(v.link || '');
@@ -2450,7 +2483,10 @@
                 // Cinturón: aunque la Edge Function antigua ignore fallos de stock,
                 // forzar cada baja con actualizarStock (exige inventarioDbId).
                 var chain = Promise.resolve(res);
-                if (moverStock && stockUpdates.length) {
+                var aplicadosApi = Array.isArray(res.stockAplicados) ? res.stockAplicados.length : (res.stockUpdates || 0);
+                var requiereCinturon = moverStock && stockUpdates.length &&
+                    (!aplicadosApi || aplicadosApi < stockUpdates.length);
+                if (requiereCinturon) {
                     stockUpdates.forEach(function (u) {
                         chain = chain.then(function () {
                             return apiAdminScript('actualizarStock', {
@@ -3203,9 +3239,8 @@
     }
 
     function devolverStockPorVenta(v) {
-        var hit = buscarFilaInventarioPorVenta(v.nombre, v.talla, v.color);
-        if (!hit || !hit.filaSheet) return Promise.resolve(null);
-        return actualizarStockFila(hit.filaSheet, Math.max(0, (hit.stock || 0) + 1));
+        if (ventaDebeDevolverStock(v)) return restaurarStockPorVentaLinea(v);
+        return Promise.resolve(null);
     }
 
     function descontarStockPorCampos(campos) {
@@ -3233,7 +3268,9 @@
         var v = estado.ventas.find(function (x) { return x.filaSheet === id; });
         if (!v) return Promise.resolve({ ok: false, error: 'Venta no encontrada.' });
         var rest = estado.ventas.filter(function (x) { return x.filaSheet !== id; });
-        var stockP = opts.ajustarStock !== false ? devolverStockPorVenta(v) : Promise.resolve(null);
+        var stockP = (opts.ajustarStock !== false && ventaDebeDevolverStock(v))
+            ? restaurarStockPorVentaLinea(v)
+            : Promise.resolve(null);
         return stockP.then(function () {
             return reescribirVentasSupabaseDesdeEstado(rest);
         }).then(function () {
@@ -3292,19 +3329,17 @@
             reemplazarVentaEnEstado(id, null);
             return Promise.resolve({ ok: true, soloLocal: true });
         }
+        var vPrevia = estado.ventas.find(function (x) { return x.filaSheet === id; });
+        var devolver = opts.ajustarStock !== false && ventaDebeDevolverStock(vPrevia);
         var pedido = apiAdminScript('deleteVentaLine', {
             ventaId: id,
-            ajustarStock: opts.ajustarStock !== false
+            ajustarStock: false
         }).then(function (res) {
             reemplazarVentaEnEstado(id, null);
-            if (res.stock && res.stock.matched && res.stock.row != null && res.stock.stock != null) {
-                aplicarStockUpdateEnEstado([{
-                    row: res.stock.row,
-                    inventarioDbId: res.stock.row,
-                    stock: res.stock.stock
-                }]);
-            }
-            return res;
+            if (!devolver || !vPrevia) return res;
+            return restaurarStockPorVentaLinea(vPrevia).then(function () {
+                return res;
+            });
         }).catch(function (err) {
             if (!esErrorAccionVentaAntigua(err)) throw err;
             return eliminarVentaLineaLegacyApi(id, opts);
@@ -4446,6 +4481,7 @@
         registrarVentaRetail: registrarVentaRetail,
         actualizarVentaLinea: actualizarVentaLinea,
         eliminarVentaLinea: eliminarVentaLinea,
+        ventaDebeDevolverStock: ventaDebeDevolverStock,
         crearVentaLineaManual: crearVentaLineaManual,
         registrarAbonoApartado: registrarAbonoApartado,
         editarAbonoApartado: editarAbonoApartado,

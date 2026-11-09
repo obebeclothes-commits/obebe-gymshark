@@ -223,11 +223,18 @@
                 title: '¿Exportar Excel?',
                 message: 'Se descargará un Excel con ' + n + ' fila(s) de Compras, tal como se ven ahora.',
                 confirmText: 'Sí, exportar',
-                cancelText: 'Cancelar'
+                cancelText: 'Cancelar',
+                confirmSuccess: true
             }).then(function (ok) {
                 if (!ok) return;
                 exportarExcel();
                 pintar(root);
+                setTimeout(function () {
+                    if (aviso.indexOf('Excel exportado') === 0) {
+                        aviso = '';
+                        pintar(root);
+                    }
+                }, 5000);
             });
         });
         var subirBtn = root.querySelector('#adminComprasSubir');
