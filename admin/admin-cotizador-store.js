@@ -87,16 +87,26 @@
         return hit ? normalizar(hit) : null;
     }
 
-    function cotizarTotalUsd(sumaUsd, cfg) {
+    function cotizarListaUsd(usdList, cfg) {
         cfg = normalizar(cfg || leer());
-        if (global.ObebeCotizadorFormula && ObebeCotizadorFormula.cotizarUsd) {
-            return ObebeCotizadorFormula.cotizarUsd(sumaUsd, cfg, { conEnvio: true });
+        var list = (usdList || []).map(function (u) {
+            return Number(u) || 0;
+        }).filter(function (u) {
+            return u > 0;
+        });
+        if (!list.length) return 0;
+        if (global.ObebeCotizadorFormula && ObebeCotizadorFormula.cotizarCarrito) {
+            return ObebeCotizadorFormula.cotizarCarrito(list, cfg);
         }
-        var usd = Number(sumaUsd) || 0;
-        if (usd <= 0) return 0;
-        var base = ((usd * cfg.factorUsd) * cfg.valorDolar) + cfg.envio;
-        var div = 1 - (cfg.margen > 0 && cfg.margen < 1 ? cfg.margen : 0.3);
-        return Math.ceil((base / div) / 10) * 10;
+        if (list.length === 1 && global.ObebeCotizadorFormula && ObebeCotizadorFormula.cotizarUsd) {
+            return ObebeCotizadorFormula.cotizarUsd(list[0], cfg, { conEnvio: true });
+        }
+        var sumaUsd = list.reduce(function (a, u) { return a + u; }, 0);
+        return cotizarListaUsd([sumaUsd], cfg);
+    }
+
+    function cotizarTotalUsd(sumaUsd, cfg) {
+        return cotizarListaUsd([Number(sumaUsd) || 0], cfg);
     }
 
     global.ObebeCotizadorStore = {
@@ -108,6 +118,7 @@
         guardar: guardar,
         payloadParaCloud: payloadParaCloud,
         desdePayloadCloud: desdePayloadCloud,
-        cotizarTotalUsd: cotizarTotalUsd
+        cotizarTotalUsd: cotizarTotalUsd,
+        cotizarListaUsd: cotizarListaUsd
     };
 })(window);

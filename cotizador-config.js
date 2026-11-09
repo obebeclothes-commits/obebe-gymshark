@@ -40,5 +40,34 @@ window.ObebeCotizadorFormula = {
         var div = window.ObebeCotizadorFormula.divisorMargen(cfg.margen);
         if (!(div > 0)) div = 0.7;
         return window.ObebeCotizadorFormula.redondearMasDecenas(mxn / div);
+    },
+    /** Envío una sola vez por pedido, con margen y redondeo a decenas. */
+    cargoEnvioMxn: function (cfg) {
+        cfg = cfg && typeof cfg === 'object' ? cfg : {};
+        var envio = Number(cfg.envio) >= 0 ? Number(cfg.envio) : 40;
+        var div = window.ObebeCotizadorFormula.divisorMargen(cfg.margen);
+        if (!(div > 0)) div = 0.7;
+        return window.ObebeCotizadorFormula.redondearMasDecenas(envio / div);
+    },
+    /**
+     * Varios artículos: cada USD con la fórmula sin envío + envío una vez.
+     * Un solo artículo: incluye envío en ese precio (coincide línea y total).
+     */
+    cotizarCarrito: function (usdList, cfg) {
+        cfg = cfg && typeof cfg === 'object' ? cfg : {};
+        var list = (usdList || []).map(function (u) {
+            return Number(u) || 0;
+        }).filter(function (u) {
+            return u > 0;
+        });
+        if (!list.length) return 0;
+        if (list.length === 1) {
+            return window.ObebeCotizadorFormula.cotizarUsd(list[0], cfg, { conEnvio: true });
+        }
+        var sum = 0;
+        list.forEach(function (u) {
+            sum += window.ObebeCotizadorFormula.cotizarUsd(u, cfg, { conEnvio: false });
+        });
+        return sum + window.ObebeCotizadorFormula.cargoEnvioMxn(cfg);
     }
 };

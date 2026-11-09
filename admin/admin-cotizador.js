@@ -76,6 +76,14 @@
         return ObebeCotizadorStore.normalizar(leerForm());
     }
 
+    function urlCotizadorTienda() {
+        var h = String(global.location.hostname || '').toLowerCase();
+        if (h === 'obebe.store' || h === 'www.obebe.store') {
+            return global.location.origin + '/cotizador.html';
+        }
+        return 'https://obebe.store/cotizador.html';
+    }
+
     function wireDemo() {
         var rows = document.getElementById('adminCotDemoRows');
         var addBtn = document.getElementById('adminCotDemoAdd');
@@ -87,12 +95,12 @@
             var n = rows.children.length;
             countEl.textContent = n + ' / ' + MAX_DEMO;
             addBtn.disabled = n >= MAX_DEMO;
-            var usd = 0;
+            var usdList = [];
             rows.querySelectorAll('.admin-cot-demo-usd').forEach(function (inp) {
                 var v = parseFloat(inp.value);
-                if (!isNaN(v) && v > 0) usd += v;
+                if (!isNaN(v) && v > 0) usdList.push(v);
             });
-            var total = ObebeCotizadorStore.cotizarTotalUsd(usd, cfgActual());
+            var total = ObebeCotizadorStore.cotizarListaUsd(usdList, cfgActual());
             totalEl.textContent = money(total) + ' MXN';
         }
 
@@ -147,7 +155,7 @@
             '<p class="admin-cot-eyebrow">Ventas · Configuración</p>' +
             '<h2 class="admin-cot-title">Cotizador</h2>' +
             '<p class="admin-cot-sub">Parámetros de la calculadora pública. ' +
-            '<a href="../cotizador.html" id="adminCotAbrirPagina">Abrir página</a></p>' +
+            '<a href="' + esc(urlCotizadorTienda()) + '" id="adminCotAbrirPagina" target="_blank" rel="noopener">Abrir página web</a></p>' +
             '</div>' +
             '<div class="admin-cot-actions" id="adminCotActions">' +
             '<button type="button" class="admin-btn admin-btn-primary admin-cot-btn" id="adminCotEdit">Editar</button>' +
@@ -172,12 +180,10 @@
         var actions = document.getElementById('adminCotActions');
         var abrir = document.getElementById('adminCotAbrirPagina');
         if (abrir) {
+            abrir.href = urlCotizadorTienda();
             abrir.addEventListener('click', function (e) {
                 e.preventDefault();
-                if (!window.confirm('¿Seguro que quieres abrir la página del cotizador? Se abrirá en otra ventana.')) {
-                    return;
-                }
-                window.open('../cotizador.html', '_blank', 'noopener');
+                global.open(urlCotizadorTienda(), '_blank', 'noopener,noreferrer');
             });
         }
         wireDemo();

@@ -414,7 +414,7 @@ main,.container{max-width:1200px;margin:0 auto}
     </div>
 
 <script src="obebe-data-config.js?v=20261107"></script>
-<script src="cotizador-config.js?v=20261109"></script>
+<script src="cotizador-config.js?v=20261110"></script>
 <script>
 (function () {
     var MAX = 10;
@@ -457,19 +457,26 @@ main,.container{max-width:1200px;margin:0 auto}
         };
     }
 
-    function precioItemObebe(usd) {
+    function precioItemObebe(usd, nActivos) {
+        if (!(usd > 0)) return 0;
         if (window.ObebeCotizadorFormula) {
+            if (nActivos <= 1) {
+                return ObebeCotizadorFormula.cotizarUsd(usd, cfg, { conEnvio: true });
+            }
             return ObebeCotizadorFormula.cotizarUsd(usd, cfg, { conEnvio: false });
         }
-        if (!(usd > 0)) return 0;
         return 0;
     }
 
-    function totalObebe(sumaUsd) {
-        if (window.ObebeCotizadorFormula) {
-            return ObebeCotizadorFormula.cotizarUsd(sumaUsd, cfg, { conEnvio: true });
+    function totalObebe(usdList) {
+        if (window.ObebeCotizadorFormula && ObebeCotizadorFormula.cotizarCarrito) {
+            return ObebeCotizadorFormula.cotizarCarrito(usdList, cfg);
         }
-        if (!(sumaUsd > 0)) return 0;
+        var suma = (usdList || []).reduce(function (a, u) { return a + (Number(u) || 0); }, 0);
+        if (!(suma > 0)) return 0;
+        if (window.ObebeCotizadorFormula) {
+            return ObebeCotizadorFormula.cotizarUsd(suma, cfg, { conEnvio: true });
+        }
         return 0;
     }
 
@@ -527,23 +534,32 @@ main,.container{max-width:1200px;margin:0 auto}
         document.getElementById('cotAdd').disabled = n >= MAX;
     }
 
-    function leerItems() {
+    function leerItems(nActivos) {
         var items = [];
+        if (nActivos == null) {
+            document.querySelectorAll('#cotRows .cot-item').forEach(function (item) {
+                var usd = parseFloat((item.querySelector('.cot-usd') || {}).value);
+                if (!isNaN(usd) && usd > 0) items.push({ usd: usd });
+            });
+            return items;
+        }
         document.querySelectorAll('#cotRows .cot-item').forEach(function (item, idx) {
             var nom = ((item.querySelector('.cot-nombre') || {}).value || '').trim() || ('Artículo ' + (idx + 1));
             var usd = parseFloat((item.querySelector('.cot-usd') || {}).value);
             var mxnEl = item.querySelector('.cot-item-mxn');
             var usdOk = !isNaN(usd) && usd > 0 ? usd : 0;
-            var mxn = precioItemObebe(usdOk);
-            if (mxnEl) mxnEl.textContent = money(mxn) + ' MXN';
+            var mxn = precioItemObebe(usdOk, nActivos);
+            if (mxnEl) {
+                mxnEl.textContent = usdOk > 0 ? money(mxn) + ' MXN' : '$0.00 MXN';
+            }
             items.push({ nom: nom, usd: usdOk, mxn: mxn });
         });
         return items;
     }
 
-    function armarWa(totalObe, totalDiy, ahorro) {
+    function armarWa(totalObe, totalDiy, ahorro, items) {
         var lineas = [];
-        leerItems().forEach(function (it) {
+        (items || []).forEach(function (it) {
             if (it.usd > 0) {
                 lineas.push('- ' + it.nom + ': $' + it.usd + ' USD → ' + money(it.mxn) + ' MXN con Obebe');
             }
@@ -560,11 +576,13 @@ main,.container{max-width:1200px;margin:0 auto}
 
     function recalcular() {
         cfg = normalizar(cfg);
-        var items = leerItems();
-        var conMonto = items.filter(function (it) { return it.usd > 0; });
-        var suma = round2(conMonto.reduce(function (a, it) { return a + it.usd; }, 0));
+        var draft = leerItems();
+        var conMonto = draft.filter(function (it) { return it.usd > 0; });
         var n = conMonto.length;
-        var obe = totalObebe(suma);
+        var usdList = conMonto.map(function (it) { return it.usd; });
+        var items = leerItems(n);
+        var suma = round2(usdList.reduce(function (a, u) { return a + u; }, 0));
+        var obe = totalObebe(usdList);
         var diy = totalSolo(suma, n);
         var ahorro = round2(Math.max(0, diy - obe));
         var pct = diy > 0 ? Math.round((ahorro / diy) * 100) : 0;
@@ -592,7 +610,7 @@ main,.container{max-width:1200px;margin:0 auto}
             }
         }
 
-        armarWa(obe, diy, ahorro);
+        armarWa(obe, diy, ahorro, items);
         actualizarCount();
     }
 
