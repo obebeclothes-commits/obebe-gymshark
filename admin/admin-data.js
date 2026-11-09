@@ -2075,20 +2075,11 @@
     }
 
     function aplicarVentaRetailEnEstado(stockUpdates, ventasLocal) {
-        (stockUpdates || []).forEach(function (u) {
-            var hit = estado.filas.find(function (x) { return x.filaSheet === u.row; });
-            if (hit) {
-                hit.stock = u.stock;
-                if (hit.celdas) hit.celdas[IDX.stock] = String(u.stock);
-            }
-            notificarCambioStockInventario(u.row, u.stock);
-        });
+        aplicarStockUpdateEnEstado(stockUpdates);
         (ventasLocal || []).forEach(function (v) {
             estado.ventas.unshift(v);
         });
         estado.ventasCargadoEn = Date.now();
-        sincronizarHistoricoInventario(estado.filas);
-        guardarCacheInventarioLocal();
         guardarCacheVentasLocal();
     }
 
@@ -2107,14 +2098,37 @@
         return link;
     }
 
+    function linkConMetaStock(link, inventarioDbId, delta) {
+        link = String(link || '').replace(/\[\[stock:\d+:-?\d+\]\]/g, '').trim();
+        var id = parseInt(inventarioDbId, 10) || 0;
+        var d = parseInt(delta, 10) || 0;
+        if (id && d) {
+            link = (link ? link + ' ' : '') + '[[stock:' + id + ':' + d + ']]';
+        }
+        return link;
+    }
+
     function decorarVentaPrecioOriginal(v) {
         if (!v) return v;
         var raw = String(v.link || '');
         var m = raw.match(/\[\[orig:([\d.]+)\]\]/);
         if (m) v.precioOriginal = parseNum(m[1]);
         else if (!v.precioOriginal) v.precioOriginal = 0;
-        v.linkVisible = raw.replace(/\[\[orig:[\d.]+\]\]/g, '').trim();
+        v.linkVisible = raw
+            .replace(/\[\[orig:[\d.]+\]\]/g, '')
+            .replace(/\[\[stock:\d+:-?\d+\]\]/g, '')
+            .trim();
         return v;
+    }
+
+    function linkVentaDesdeMeta(f, meta) {
+        meta = meta || {};
+        var precio = meta.precio != null ? meta.precio : (f && f.precio) || 0;
+        var link = linkConPrecioOriginal(meta.link || '', precio, meta.precioOriginal);
+        if (meta.stockDelta) {
+            link = linkConMetaStock(link, meta.inventarioDbId || (f && f.inventarioDbId), meta.stockDelta);
+        }
+        return link;
     }
 
     function lineaVentaDesdeFila(f, meta) {
@@ -2131,7 +2145,7 @@
             meta.vendedor || '',
             meta.cuenta || '',
             meta.redSocial || '',
-            linkConPrecioOriginal(meta.link || '', meta.precio != null ? meta.precio : (f.precio || 0), meta.precioOriginal),
+            linkVentaDesdeMeta(f, meta),
             meta.telefono || ''
         ];
     }
@@ -2153,9 +2167,10 @@
             vendedor: meta.vendedor || '',
             cuenta: meta.cuenta || '',
             redSocial: meta.redSocial || '',
-            link: linkConPrecioOriginal(meta.link || '', precio, meta.precioOriginal),
+            link: linkVentaDesdeMeta(f, meta),
             telefono: meta.telefono || '',
-            filaSheet: 0
+            filaSheet: 0,
+            inventarioDbId: f.inventarioDbId || meta.inventarioDbId || 0
         };
     }
 
@@ -2345,6 +2360,22 @@
         });
     }
 
+    function resolverFilaInventarioViva(f) {
+        if (!f) return null;
+        var dbId = parseInt(f.inventarioDbId, 10) || 0;
+        var filaSheet = parseInt(f.filaSheet, 10) || 0;
+        var live = (estado.filas || []).find(function (x) {
+            if (dbId && x.inventarioDbId === dbId) return true;
+            return filaSheet && x.filaSheet === filaSheet;
+        });
+        if (live) return live;
+        if (f.nombre) {
+            live = buscarFilaInventarioPorVenta(f.nombre, f.talla, f.color);
+            if (live) return live;
+        }
+        return f;
+    }
+
     function registrarVentaRetail(carrito, meta, opts) {
         meta = meta || {};
         opts = opts || {};
@@ -2354,32 +2385,53 @@
         }
         var ventas = [];
         var ventasLocal = [];
-        var stockByRow = {};
+        var stockByKey = {};
+        var filasPorKey = {};
         carrito.forEach(function (c) {
-            var f = c.fila;
-            if (!f || !f.filaSheet) return;
+            var live = resolverFilaInventarioViva(c.fila);
+            if (!live) return;
+            var dbId = parseInt(live.inventarioDbId, 10) || 0;
+            var filaSheet = parseInt(live.filaSheet, 10) || 0;
+            if (!dbId && !filaSheet) return;
+            var key = dbId ? ('id:' + dbId) : ('sheet:' + filaSheet);
             var qty = c.cantidad || 1;
-            if (stockByRow[f.filaSheet] == null) stockByRow[f.filaSheet] = f.stock || 0;
-            var precioU = c.precioUnitario != null ? c.precioUnitario : precioVentaRetailFila(f);
+            if (stockByKey[key] == null) stockByKey[key] = live.stock || 0;
+            filasPorKey[key] = live;
+            var precioU = c.precioUnitario != null ? c.precioUnitario : precioVentaRetailFila(live);
             var lineMeta = Object.assign({}, meta, {
                 precio: precioU,
-                precioOriginal: c.precioOriginal != null ? c.precioOriginal : precioVentaRetailFila(f)
+                precioOriginal: c.precioOriginal != null ? c.precioOriginal : precioVentaRetailFila(live),
+                inventarioDbId: dbId,
+                stockDelta: moverStock ? -1 : 0
             });
             for (var i = 0; i < qty; i++) {
-                ventas.push(lineaVentaDesdeFila(f, lineMeta));
-                ventasLocal.push(ventaObjetoDesdeFila(f, lineMeta));
+                ventas.push(lineaVentaDesdeFila(live, lineMeta));
+                ventasLocal.push(ventaObjetoDesdeFila(live, lineMeta));
             }
-            stockByRow[f.filaSheet] = Math.max(0, stockByRow[f.filaSheet] - qty);
+            stockByKey[key] = Math.max(0, stockByKey[key] - qty);
         });
-        var stockUpdates = moverStock ? Object.keys(stockByRow).map(function (k) {
-            var filaRef = parseInt(k, 10);
-            var filaHit = (estado.filas || []).find(function (x) { return x.filaSheet === filaRef; });
+        if (!ventas.length) {
+            return Promise.resolve({ ok: false, error: 'No se pudo identificar el artículo en inventario.' });
+        }
+        var stockUpdates = moverStock ? Object.keys(stockByKey).map(function (k) {
+            var live = filasPorKey[k];
+            var dbId = parseInt(live && live.inventarioDbId, 10) || 0;
+            var filaSheet = parseInt(live && live.filaSheet, 10) || 0;
             return {
-                row: filaRef,
-                stock: stockByRow[k],
-                inventarioDbId: filaHit && filaHit.inventarioDbId ? filaHit.inventarioDbId : 0
+                row: dbId || filaSheet,
+                stock: stockByKey[k],
+                inventarioDbId: dbId
             };
         }) : [];
+        if (moverStock && usarSupabase() && supabaseListo()) {
+            var sinId = stockUpdates.some(function (u) { return !u.inventarioDbId; });
+            if (sinId) {
+                return Promise.resolve({
+                    ok: false,
+                    error: 'Falta el id de inventario del artículo. Recarga el admin e inténtalo de nuevo.'
+                });
+            }
+        }
         if (escrituraLocalHabilitada()) {
             aplicarVentaRetailEnEstado(stockUpdates, ventasLocal);
             registrarPendienteTrasVentaLocal(stockUpdates, ventasLocal);
@@ -2395,9 +2447,33 @@
                 if (!res || res.ok === false) {
                     throw new Error((res && res.error) || 'Error al registrar venta');
                 }
-                limpiarPendienteSync();
-                aplicarVentaRetailEnEstado(stockUpdates, ventasLocal);
-                return { ok: true, ventas: ventasLocal.length, clientes: calcularPerfilesClientes(estado.ventas) };
+                // Cinturón: aunque la Edge Function antigua ignore fallos de stock,
+                // forzar cada baja con actualizarStock (exige inventarioDbId).
+                var chain = Promise.resolve(res);
+                if (moverStock && stockUpdates.length) {
+                    stockUpdates.forEach(function (u) {
+                        chain = chain.then(function () {
+                            return apiAdminScript('actualizarStock', {
+                                filaSheet: u.inventarioDbId || u.row,
+                                stock: u.stock,
+                                inventarioDbId: u.inventarioDbId
+                            }).then(function (r) {
+                                if (!r || r.ok === false) {
+                                    throw new Error((r && r.error) || 'No se pudo bajar el stock en inventario.');
+                                }
+                                return r;
+                            });
+                        });
+                    });
+                }
+                return chain.then(function () {
+                    limpiarPendienteSync();
+                    aplicarVentaRetailEnEstado(
+                        Array.isArray(res.stockAplicados) && res.stockAplicados.length ? res.stockAplicados : stockUpdates,
+                        ventasLocal
+                    );
+                    return { ok: true, ventas: ventasLocal.length, clientes: calcularPerfilesClientes(estado.ventas) };
+                });
             });
     }
 
@@ -3605,19 +3681,34 @@
 
     function stockUpdatesDesdeCarritoEntrega(carrito, signo) {
         signo = signo < 0 ? -1 : 1;
-        var porFila = {};
+        var porKey = {};
+        var filasPorKey = {};
         (carrito || []).forEach(function (c) {
             var f = c.fila;
-            if (!f || !f.filaSheet) return;
-            var row = f.filaSheet;
-            if (porFila[row] == null) {
-                var hit = estado.filas.find(function (x) { return x.filaSheet === row; });
-                porFila[row] = hit ? (hit.stock || 0) : (f.stock || 0);
+            if (!f) return;
+            var dbId = parseInt(f.inventarioDbId, 10) || 0;
+            var filaSheet = parseInt(f.filaSheet, 10) || 0;
+            if (!dbId && !filaSheet) return;
+            var key = dbId ? ('id:' + dbId) : ('sheet:' + filaSheet);
+            if (porKey[key] == null) {
+                var hit = (estado.filas || []).find(function (x) {
+                    if (dbId && x.inventarioDbId === dbId) return true;
+                    return filaSheet && x.filaSheet === filaSheet;
+                });
+                porKey[key] = hit ? (hit.stock || 0) : (f.stock || 0);
+                filasPorKey[key] = hit || f;
             }
-            porFila[row] = Math.max(0, porFila[row] + signo * (c.cantidad || 1));
+            porKey[key] = Math.max(0, porKey[key] + signo * (c.cantidad || 1));
         });
-        return Object.keys(porFila).map(function (k) {
-            return { row: parseInt(k, 10), stock: porFila[k] };
+        return Object.keys(porKey).map(function (k) {
+            var live = filasPorKey[k];
+            var dbId = parseInt(live && live.inventarioDbId, 10) || 0;
+            var filaSheet = parseInt(live && live.filaSheet, 10) || 0;
+            return {
+                row: dbId || filaSheet,
+                stock: porKey[k],
+                inventarioDbId: dbId
+            };
         });
     }
 

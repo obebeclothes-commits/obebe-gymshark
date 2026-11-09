@@ -113,7 +113,7 @@
         var subt = modo === 'editar'
             ? 'Actualiza fecha, lugar u otros datos. Los artículos vienen de la venta.'
             : (opts.reservarSinVenta
-                ? 'La venta se registra cuando confirmes la entrega. El stock queda apartado.'
+                ? 'Si guardas, el stock se aparta y la venta se registra al completar. Si omites, la venta se registra ahora sin programar entrega.'
                 : 'La venta ya está registrada. Completa cuándo y dónde entregar.');
 
         var cliente = ent ? ent.cliente : (meta.cliente || '');
@@ -146,7 +146,7 @@
             '<p id="adminEntregaModalError" class="admin-login-error" role="alert"></p></div>' +
             '<div class="admin-entrega-modal-actions">' +
             '<button type="button" class="admin-btn admin-btn-ghost" id="adminEntregaModalCancel">' +
-            (modo === 'editar' ? 'Cancelar' : 'Omitir') + '</button>' +
+            (modo === 'editar' ? 'Cancelar' : 'Omitir (registrar venta)') + '</button>' +
             '<button type="button" class="admin-btn admin-btn-primary" id="adminEntregaModalGuardar">' +
             (modo === 'editar' ? 'Guardar cambios' : 'Guardar entrega') + '</button></div></div>';
 

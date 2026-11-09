@@ -312,20 +312,38 @@ async function aplicarDeltaStockInventario(
   return { ok: true, stock, row: invId };
 }
 
+function parseStockMetaDesdeLink(link: unknown): { inventarioId: number; delta: number } | null {
+  const m = String(link || "").match(/\[\[stock:(\d+):(-?\d+)\]\]/);
+  if (!m) return null;
+  const inventarioId = parseInt(m[1], 10);
+  const delta = parseInt(m[2], 10);
+  if (!inventarioId || isNaN(inventarioId) || isNaN(delta) || !delta) return null;
+  return { inventarioId, delta };
+}
+
 async function ajustarStockPorLineaVenta(
   sb: ReturnType<typeof createClient>,
-  linea: { nombre?: string; talla?: string; color?: string },
+  linea: { nombre?: string; talla?: string; color?: string; link?: string },
   delta: number,
 ) {
-  const hit = await buscarInventarioPorVenta(
-    sb,
-    linea.nombre || "",
-    linea.talla || "",
-    linea.color || "",
-  );
-  if (!hit) return { ok: false, matched: false };
-  const r = await aplicarDeltaStockInventario(sb, hit.id, hit.celdas, delta);
-  return { ok: r.ok, matched: true, stock: r.stock, row: hit.id };
+  // Solo devolver/descontar si la venta registró meta [[stock:id:delta]].
+  // Evita inventarios fantasma al borrar ventas que nunca bajaron stock en DB.
+  const meta = parseStockMetaDesdeLink(linea.link);
+  if (!meta) {
+    return { ok: false, matched: false, skipped: true, reason: "sin_meta_stock" };
+  }
+  const invId = meta.inventarioId;
+  const aplicar = delta > 0 ? -meta.delta : meta.delta;
+  const { data, error } = await sb
+    .from("inventario_filas")
+    .select("id, celdas")
+    .eq("id", invId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return { ok: false, matched: false, reason: "inventario_no_encontrado" };
+  const celdas = padCeldas((data.celdas as unknown[]) || []);
+  const r = await aplicarDeltaStockInventario(sb, invId, celdas, aplicar);
+  return { ok: r.ok, matched: true, stock: r.stock, row: invId };
 }
 
 async function updateVentaLine(body: Record<string, unknown>) {
@@ -382,18 +400,28 @@ async function createVentaLine(body: Record<string, unknown>) {
 
 async function registrarVentaRetail(body: Record<string, unknown>) {
   const ventas = (body.ventas || []) as unknown[][];
-  const stockUpdates = (body.stockUpdates || []) as { row: number; stock: number }[];
+  const stockUpdates = (body.stockUpdates || []) as {
+    row?: number;
+    stock: number;
+    inventarioDbId?: number;
+  }[];
   if (!ventas.length) return { ok: false, error: "Sin líneas de venta." };
 
   const sb = adminClient();
-  const rows = ventas.map(ventaLineToRow);
-  const { error: eV } = await sb.from("ventas_lineas").insert(rows);
-  if (eV) throw eV;
+  const aplicados: {
+    row: number;
+    inventarioDbId: number;
+    stock: number;
+    stockAntes: number;
+  }[] = [];
 
+  // Primero stock (si falla, no se registran ventas).
   for (const u of stockUpdates) {
     const stock = parseInt(String(u.stock), 10);
-    if (isNaN(stock) || stock < 0) continue;
-    const dbHint = parseInt(String((u as { inventarioDbId?: number }).inventarioDbId ?? ""), 10);
+    if (isNaN(stock) || stock < 0) {
+      return { ok: false, error: "Stock inválido en actualización de inventario." };
+    }
+    const dbHint = parseInt(String(u.inventarioDbId ?? ""), 10);
     let fila: { id: number; celdas: unknown } | null = null;
     if (dbHint && !isNaN(dbHint)) {
       const { data, error } = await sb
@@ -401,38 +429,85 @@ async function registrarVentaRetail(body: Record<string, unknown>) {
         .select("id, celdas")
         .eq("id", dbHint)
         .maybeSingle();
-      if (!error && data) fila = data as { id: number; celdas: unknown };
+      if (error) throw error;
+      if (data) fila = data as { id: number; celdas: unknown };
     }
-    if (!fila) fila = await inventarioFilaPorRef(parseInt(String(u.row), 10));
-    if (!fila) continue;
+    if (!fila) {
+      const rowRef = parseInt(String(u.row), 10);
+      if (rowRef && !isNaN(rowRef)) fila = await inventarioFilaPorRef(rowRef);
+    }
+    if (!fila) {
+      return {
+        ok: false,
+        error:
+          "No se pudo ubicar el artículo en inventario para bajar stock (falta inventarioDbId).",
+      };
+    }
     const dbId = fila.id as number;
     const celdas = padCeldas((fila.celdas as unknown[]) || []);
-    celdas[COL_STOCK - 1] = String(stock);
-    await sb
+    const stockAntes = parseInt(celdas[IDX_INV_STOCK], 10);
+    celdas[IDX_INV_STOCK] = String(stock);
+    const { error: eUp } = await sb
       .from("inventario_filas")
       .update({ celdas, updated_at: new Date().toISOString() })
       .eq("id", dbId);
+    if (eUp) throw eUp;
+    aplicados.push({
+      row: dbId,
+      inventarioDbId: dbId,
+      stock,
+      stockAntes: isNaN(stockAntes) ? 0 : stockAntes,
+    });
   }
-  return { ok: true, ventas: ventas.length, stockUpdates: stockUpdates.length };
+
+  const rows = ventas.map(ventaLineToRow);
+  const { error: eV } = await sb.from("ventas_lineas").insert(rows);
+  if (eV) {
+    for (const a of aplicados.slice().reverse()) {
+      const { data } = await sb
+        .from("inventario_filas")
+        .select("id, celdas")
+        .eq("id", a.inventarioDbId)
+        .maybeSingle();
+      if (!data) continue;
+      const celdas = padCeldas((data.celdas as unknown[]) || []);
+      celdas[IDX_INV_STOCK] = String(a.stockAntes);
+      await sb
+        .from("inventario_filas")
+        .update({ celdas, updated_at: new Date().toISOString() })
+        .eq("id", a.inventarioDbId);
+    }
+    throw eV;
+  }
+
+  return {
+    ok: true,
+    ventas: ventas.length,
+    stockUpdates: aplicados.length,
+    stockAplicados: aplicados,
+    apiVersion: 4,
+  };
 }
 
 async function inventarioFilaPorRef(rowRef: number) {
   const ref = parseInt(String(rowRef), 10);
   if (!ref || isNaN(ref)) return null;
   const sb = adminClient();
-  const { data: byId, error: e1 } = await sb
-    .from("inventario_filas")
-    .select("id, celdas")
-    .eq("id", ref)
-    .maybeSingle();
-  if (!e1 && byId) return byId;
+  // Preferir legacy_sheet_row: el id numérico de Postgres a menudo coincide
+  // con otra fila distinta y actualizaba el artículo equivocado.
   const { data: byLegacy, error: e2 } = await sb
     .from("inventario_filas")
     .select("id, celdas")
     .eq("legacy_sheet_row", ref)
     .maybeSingle();
-  if (e2 || !byLegacy) return null;
-  return byLegacy;
+  if (!e2 && byLegacy) return byLegacy;
+  const { data: byId, error: e1 } = await sb
+    .from("inventario_filas")
+    .select("id, celdas")
+    .eq("id", ref)
+    .maybeSingle();
+  if (e1 || !byId) return null;
+  return byId;
 }
 
 async function actualizarStock(
@@ -888,7 +963,7 @@ Deno.serve(async (req) => {
     if (auth) return json(auth, 401);
 
     if (action === "ping") {
-      return json({ ok: true, message: "admin-api Supabase OK", apiVersion: 3 });
+      return json({ ok: true, message: "admin-api Supabase OK", apiVersion: 4 });
     }
 
     if (action === "getVentas") return json(await getVentas());
