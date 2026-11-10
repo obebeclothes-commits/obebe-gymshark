@@ -1,4 +1,4 @@
-﻿function formatearPrecio(valor) {
+function formatearPrecio(valor) {
     var n = Number(valor) || 0;
     return Number.isInteger(n) ? String(n) : n.toFixed(2);
 }
@@ -1298,7 +1298,161 @@ function mostrarRestriccion() {
 }
 
 // Funci��n para suavizar el scroll en los enlaces
+function usaMenuMovilConOverlay() {
+    var nav = document.getElementById('mobileNav');
+    return !!document.getElementById('homeMenuOverlay')
+        && !!(nav && nav.classList.contains('page-home-mobile-nav'));
+}
+
+function sincronizarOverlaysMenuCerrados() {
+    var mobileNav = document.getElementById('mobileNav');
+    var mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    var menuAbierto = !!(mobileNav && mobileNav.classList.contains('active'));
+    if (!menuAbierto) {
+        if (mobileMenuBtn) mobileMenuBtn.classList.remove('active');
+        if (mobileNav) mobileNav.classList.remove('active');
+        document.body.classList.remove('mobile-menu-open');
+        var homeMenuOverlay = document.getElementById('homeMenuOverlay');
+        if (homeMenuOverlay) {
+            homeMenuOverlay.classList.remove('is-open');
+            homeMenuOverlay.hidden = true;
+        }
+    }
+    var searchOverlay = document.getElementById('homeSearchOverlay');
+    if (searchOverlay && !searchOverlay.classList.contains('is-open')) {
+        searchOverlay.hidden = true;
+        document.body.classList.remove('home-search-open');
+    }
+}
+
+function cerrarMenuMovilGlobal() {
+    var mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    var mobileNav = document.getElementById('mobileNav');
+    var homeMenuOverlay = document.getElementById('homeMenuOverlay');
+    if (mobileMenuBtn) mobileMenuBtn.classList.remove('active');
+    if (mobileNav) mobileNav.classList.remove('active');
+    document.body.classList.remove('mobile-menu-open');
+    if (homeMenuOverlay) {
+        homeMenuOverlay.classList.remove('is-open');
+        homeMenuOverlay.hidden = true;
+    }
+}
+
+function abrirMenuMovilGlobal() {
+    var mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    var mobileNav = document.getElementById('mobileNav');
+    var homeMenuOverlay = document.getElementById('homeMenuOverlay');
+    if (!mobileMenuBtn || !mobileNav) return;
+
+    var searchOverlay = document.getElementById('homeSearchOverlay');
+    if (searchOverlay && searchOverlay.classList.contains('is-open')) {
+        var sb = document.getElementById('homeSearchBackdrop');
+        if (sb) sb.click();
+    }
+    var promoBar = document.querySelector('.promo-bar');
+    if (promoBar) {
+        document.documentElement.style.setProperty('--obebe-promo-h', promoBar.offsetHeight + 'px');
+    }
+    if (typeof actualizarLayoutPromoYMenu === 'function') {
+        actualizarLayoutPromoYMenu();
+    } else if (promoBar) {
+        document.documentElement.style.setProperty('--obebe-promo-h', promoBar.offsetHeight + 'px');
+    }
+    if (usaMenuMovilConOverlay()) {
+        asegurarMenuMovilHomeListo();
+    }
+    mobileMenuBtn.classList.add('active');
+    mobileNav.classList.add('active');
+    document.body.classList.add('mobile-menu-open');
+    if (usaMenuMovilConOverlay() && homeMenuOverlay) {
+        homeMenuOverlay.hidden = false;
+        homeMenuOverlay.classList.add('is-open');
+    }
+}
+
+function alternarMenuMovilGlobal() {
+    var mobileNav = document.getElementById('mobileNav');
+    if (!mobileNav) return;
+    if (mobileNav.classList.contains('active')) cerrarMenuMovilGlobal();
+    else abrirMenuMovilGlobal();
+}
+
+function onMobileMenuBtnPointer(ev) {
+    if (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+    }
+    alternarMenuMovilGlobal();
+}
+
+function enlazarMenuSandwichMovil() {
+    sincronizarOverlaysMenuCerrados();
+
+    var mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    var mobileNav = document.getElementById('mobileNav');
+    if (!mobileMenuBtn || !mobileNav) return;
+
+    window.__obebeCerrarMenuMovil = cerrarMenuMovilGlobal;
+
+    var homeMenuBackdrop = document.getElementById('homeMenuBackdrop');
+    if (usaMenuMovilConOverlay()) {
+        if (homeMenuBackdrop && homeMenuBackdrop.dataset.obebeBackdropBound !== '1') {
+            homeMenuBackdrop.dataset.obebeBackdropBound = '1';
+            homeMenuBackdrop.addEventListener('click', cerrarMenuMovilGlobal);
+        }
+        if (document.documentElement.dataset.obebeMenuEscBound !== '1') {
+            document.documentElement.dataset.obebeMenuEscBound = '1';
+            document.addEventListener('keydown', function(e) {
+                var nav = document.getElementById('mobileNav');
+                if (e.key === 'Escape' && nav && nav.classList.contains('active')) {
+                    cerrarMenuMovilGlobal();
+                }
+            });
+        }
+    }
+
+    if (mobileMenuBtn.dataset.obebeSandwichClick !== '1') {
+        mobileMenuBtn.dataset.obebeSandwichClick = '1';
+        mobileMenuBtn.addEventListener('click', onMobileMenuBtnPointer);
+    }
+
+    if (mobileNav.classList.contains('page-home-mobile-nav')) {
+        enlazarDelegacionFiltroGeneroMenuMovil(mobileNav);
+    }
+
+    if (mobileNav.dataset.obebeNavCloseBound !== '1') {
+        mobileNav.dataset.obebeNavCloseBound = '1';
+        mobileNav.addEventListener('click', function(e) {
+            if (e.target.closest('.home-menu-gender-btn')) return;
+            if (e.target.closest('.home-menu-categories-acc > summary')) return;
+            if (e.target.closest('.home-menu-categories-acc .home-menu-categories-list a')) {
+                cerrarMenuMovilGlobal();
+                return;
+            }
+            if (e.target.closest('.home-menu-action-btn')) {
+                cerrarMenuMovilGlobal();
+                return;
+            }
+            if (e.target.closest('.home-menu-img-link')) {
+                cerrarMenuMovilGlobal();
+                return;
+            }
+            if (e.target.closest('.home-menu-contact a')) {
+                cerrarMenuMovilGlobal();
+            }
+        });
+    }
+
+    if (document.getElementById('homeMenuCategoriesList')) {
+        inicializarMenuMovilHome();
+    }
+}
+
 function inicializarNavegacion() {
+    enlazarMenuSandwichMovil();
+    if (window.__obebeNavegacionIniciada) return;
+    window.__obebeNavegacionIniciada = true;
+
     const logoLink = document.getElementById('logoLink') || document.querySelector('.logo-link');
     
     if (logoLink) {
@@ -1313,109 +1467,10 @@ function inicializarNavegacion() {
         });
     }
 
-    // Menú móvil en todas las páginas que tengan el botón (index, productos, producto)
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const mobileNav = document.getElementById('mobileNav');
-    const homeMenuOverlay = document.getElementById('homeMenuOverlay');
-    const homeMenuBackdrop = document.getElementById('homeMenuBackdrop');
-    const esMenuDrawerHome = () =>
-        document.body.classList.contains('page-home') && !!homeMenuOverlay;
-
-    function cerrarMenuMovil() {
-        if (!mobileMenuBtn || !mobileNav) return;
-        mobileMenuBtn.classList.remove('active');
-        mobileNav.classList.remove('active');
-        document.body.classList.remove('mobile-menu-open');
-        if (homeMenuOverlay) {
-            homeMenuOverlay.classList.remove('is-open');
-            setTimeout(() => {
-                homeMenuOverlay.hidden = true;
-            }, 320);
-        }
-    }
-
-    function abrirMenuMovil() {
-        const searchOverlay = document.getElementById('homeSearchOverlay');
-        if (searchOverlay && searchOverlay.classList.contains('is-open')) {
-            document.getElementById('homeSearchBackdrop')?.click();
-        }
-        if (typeof actualizarLayoutPromoYMenu === 'function') {
-            actualizarLayoutPromoYMenu();
-        }
-        mobileMenuBtn.classList.add('active');
-        mobileNav.classList.add('active');
-        document.body.classList.add('mobile-menu-open');
-        if (esMenuDrawerHome() && homeMenuOverlay) {
-            homeMenuOverlay.hidden = false;
-            homeMenuOverlay.classList.add('is-open');
-        }
-    }
-
-    window.__obebeCerrarMenuMovil = cerrarMenuMovil;
-
-    if (mobileMenuBtn && mobileNav) {
-        mobileMenuBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const isOpen = mobileNav.classList.contains('active');
-            if (isOpen) {
-                cerrarMenuMovil();
-            } else {
-                abrirMenuMovil();
-            }
-        }, true);
-
-        if (document.body.classList.contains('page-home')) {
-            if (homeMenuBackdrop) {
-                homeMenuBackdrop.addEventListener('click', cerrarMenuMovil);
-            }
-            const homeMenuDrawerClose = document.getElementById('homeMenuDrawerClose');
-            if (homeMenuDrawerClose) {
-                homeMenuDrawerClose.addEventListener('click', cerrarMenuMovil);
-            }
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
-                    cerrarMenuMovil();
-                }
-            });
-        } else {
-            document.addEventListener('click', (e) => {
-                if (!mobileMenuBtn.contains(e.target) && !mobileNav.contains(e.target)) {
-                    cerrarMenuMovil();
-                }
-            });
-        }
-
-        mobileNav.addEventListener('click', (e) => {
-            if (e.target.closest('a')) {
-                cerrarMenuMovil();
-            }
-        });
-    }
-
-    // Bot��n "Hombre" en el header (desktop y mobile)
-    const btnHombre = document.getElementById('btnHombre');
-    const btnHombreMobile = document.getElementById('btnHombreMobile');
-    
-    if (btnHombre) {
-        btnHombre.addEventListener('click', () => {
+    var btnHombreDesktop = document.querySelector('.header-left .desktop-nav #btnHombre');
+    if (btnHombreDesktop && btnHombreDesktop.tagName === 'BUTTON' && !btnHombreDesktop.closest('.page-home-mobile-nav')) {
+        btnHombreDesktop.addEventListener('click', function() {
             window.location.href = 'productos.html?categoria=Hombre';
-        });
-    }
-    
-    if (btnHombreMobile) {
-        btnHombreMobile.addEventListener('click', () => {
-            window.location.href = 'productos.html?categoria=Hombre';
-            if (typeof cerrarMenuMovil === 'function') cerrarMenuMovil();
-        });
-    }
-
-    // Bot��n "Mujer" es un <a href="productos.html?categoria=Mujer">: no interceptar el clic
-    // para que funcione siempre (localhost y en l��nea) sin depender de JavaScript.
-    const btnMujerMobile = document.getElementById('btnMujerMobile');
-    if (btnMujerMobile) {
-        btnMujerMobile.addEventListener('click', () => {
-            if (typeof cerrarMenuMovil === 'function') cerrarMenuMovil();
         });
     }
 
@@ -1451,6 +1506,283 @@ function inicializarNavegacion() {
     }
 }
 
+var HOME_MENU_IMG_EXTS = ['.jpg', '.jpeg', '.webp', '.png'];
+
+var HOME_MENU_IMG_EXT_FIJA = {
+    'menu-1-hombre': '.jpg',
+    'menu-2-hombre': '.jpg',
+    'menu-1-mujer': '.jpg',
+    'menu-2-mujer': '.jpg',
+    'hombre-final': '.jpg',
+    'mujer-final': '.jpg',
+    'OFERTAS': '.jpg'
+};
+
+var HOME_MENU_IMG_POR_GENERO = {
+    Hombre: { primario: 'menu-1-hombre', secundario: 'menu-2-hombre' },
+    Mujer: { primario: 'menu-1-mujer', secundario: 'menu-2-mujer' }
+};
+
+function asignarImagenMenuSeccion(imgEl, baseName) {
+    if (!imgEl || !baseName) return;
+    var extFija = HOME_MENU_IMG_EXT_FIJA[baseName];
+    if (extFija) {
+        imgEl.onerror = null;
+        imgEl.src = 'secciones/' + baseName + extFija;
+        return;
+    }
+    var intento = 0;
+    imgEl.onerror = function() {
+        intento += 1;
+        if (intento >= HOME_MENU_IMG_EXTS.length) {
+            imgEl.removeAttribute('src');
+            imgEl.alt = '';
+            return;
+        }
+        imgEl.src = 'secciones/' + baseName + HOME_MENU_IMG_EXTS[intento];
+    };
+    imgEl.src = 'secciones/' + baseName + HOME_MENU_IMG_EXTS[0];
+}
+
+function productoPerteneceGeneroMenu(p, categoria) {
+    if (!p) return false;
+    var cat = String(p.categoria || '').trim();
+    if (cat === 'Unisex') return true;
+    if (categoria === 'Mujer') return cat === 'Mujer' || (!cat && categoria === 'Mujer');
+    if (categoria === 'Hombre') return cat !== 'Mujer';
+    return true;
+}
+
+function obtenerTiposMenuHome(categoria) {
+    if (typeof window.obebeTiposParaMenuMovil === 'function') {
+        try {
+            var tiposCatalogo = window.obebeTiposParaMenuMovil(categoria);
+            if (tiposCatalogo && tiposCatalogo.length) return tiposCatalogo;
+        } catch (errMenuTipos) { /* fallback abajo */ }
+    }
+    var lista = [];
+    if (categoria === 'Mujer') {
+        lista = typeof productosMujer !== 'undefined' && Array.isArray(productosMujer) ? productosMujer : [];
+    } else {
+        lista = typeof productosHombre !== 'undefined' && Array.isArray(productosHombre) ? productosHombre : [];
+    }
+    var tipos = {};
+    lista.forEach(function(p) {
+        if (!p || !p.tipo) return;
+        if ((Number(p.stock) || 0) <= 0) return;
+        if (!productoPerteneceGeneroMenu(p, categoria)) return;
+        tipos[String(p.tipo).trim()] = true;
+    });
+    var ordenados = Object.keys(tipos).sort(function(a, b) {
+        return String(a).localeCompare(String(b), 'es', { sensitivity: 'base' });
+    });
+    if (categoria === 'Hombre' && typeof window.obebeTiposPermitidosEnCatalogo === 'function') {
+        var permitidos = window.obebeTiposPermitidosEnCatalogo('Hombre');
+        ordenados = ordenados.filter(function(t) { return permitidos.has(t); });
+    }
+    return ordenados;
+}
+
+function urlCatalogoMenuHome(opts) {
+    var params = new URLSearchParams();
+    var cat = opts && opts.categoria ? opts.categoria : 'Hombre';
+    params.set('categoria', cat);
+    if (opts && opts.nuevoStock) params.set('nuevoStock', '1');
+    if (opts && opts.mayoreo50) params.set('mayoreo50', '1');
+    if (opts && opts.tipo) params.set('tipo', opts.tipo);
+    return 'productos.html?' + params.toString();
+}
+
+function urlOfertasMenuHome(categoria) {
+    var cat = categoria === 'Mujer' ? 'Mujer' : 'Hombre';
+    return 'ofertas-semanales.html?categoria=' + encodeURIComponent(cat);
+}
+
+function normalizarGeneroMenuMovil(val) {
+    return val === 'Mujer' ? 'Mujer' : 'Hombre';
+}
+
+function obtenerGeneroMenuMovilInicial() {
+    if (window.__obebeMenuGeneroFiltro) {
+        return normalizarGeneroMenuMovil(window.__obebeMenuGeneroFiltro);
+    }
+    try {
+        var params = new URLSearchParams(window.location.search);
+        var catUrl = (params.get('categoria') || '').trim();
+        if (catUrl === 'Mujer' || catUrl === 'Hombre') {
+            return catUrl;
+        }
+    } catch (e) { /* ignore */ }
+    var nav = document.getElementById('mobileNav');
+    if (nav) {
+        var btnMujer = nav.querySelector('#btnMujerMobile');
+        if (btnMujer && btnMujer.classList.contains('is-active')) {
+            return 'Mujer';
+        }
+    }
+    return 'Hombre';
+}
+
+function pintarCategoriasMenuMovil(genero, listaCategorias) {
+    if (!listaCategorias) return;
+    var tipos = obtenerTiposMenuHome(genero);
+    listaCategorias.innerHTML = '';
+    if (!tipos.length) {
+        var vacio = document.createElement('li');
+        vacio.className = 'home-menu-categories-empty';
+        vacio.textContent = 'Sin categorías por ahora';
+        vacio.style.padding = '0.55rem 0.95rem';
+        vacio.style.fontSize = '0.85rem';
+        vacio.style.color = '#666';
+        listaCategorias.appendChild(vacio);
+        return;
+    }
+    tipos.forEach(function(tipo) {
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.href = urlCatalogoMenuHome({ categoria: genero, tipo: tipo });
+        a.textContent = tipo;
+        li.appendChild(a);
+        listaCategorias.appendChild(li);
+    });
+}
+
+function aplicarFiltroGeneroMenuMovil(nuevoGenero) {
+    var genero = normalizarGeneroMenuMovil(nuevoGenero);
+    window.__obebeMenuGeneroFiltro = genero;
+
+    var nav = document.getElementById('mobileNav');
+    var btnHombre = nav && nav.querySelector('#btnHombreMobile');
+    var btnMujer = nav && nav.querySelector('#btnMujerMobile');
+    var img1 = document.getElementById('homeMenuImg1');
+    var img2 = document.getElementById('homeMenuImg2');
+    var linkImg1 = document.getElementById('homeMenuImg1Link');
+    var linkImg2 = document.getElementById('homeMenuImg2Link');
+    var linkNuevo = document.getElementById('homeMenuNuevoStock');
+    var linkTodos = document.getElementById('homeMenuTodos');
+    var linkMayoreo = document.getElementById('homeMenuMayoreo');
+    var accCategorias = document.getElementById('homeMenuCategoriesAcc');
+    var listaCategorias = document.getElementById('homeMenuCategoriesList');
+
+    if (btnHombre) {
+        var activoH = genero === 'Hombre';
+        btnHombre.classList.toggle('is-active', activoH);
+        btnHombre.setAttribute('aria-pressed', activoH ? 'true' : 'false');
+    }
+    if (btnMujer) {
+        var activoM = genero === 'Mujer';
+        btnMujer.classList.toggle('is-active', activoM);
+        btnMujer.setAttribute('aria-pressed', activoM ? 'true' : 'false');
+    }
+    if (accCategorias && accCategorias.open) accCategorias.open = false;
+
+    var imgsGen = HOME_MENU_IMG_POR_GENERO[genero] || HOME_MENU_IMG_POR_GENERO.Hombre;
+    asignarImagenMenuSeccion(img1, imgsGen.primario);
+    asignarImagenMenuSeccion(img2, imgsGen.secundario);
+    var imgsCarrusel = document.getElementById('homeMenuImages');
+    if (imgsCarrusel) imgsCarrusel.scrollLeft = 0;
+    if (linkImg1) linkImg1.href = urlCatalogoMenuHome({ categoria: genero });
+    if (linkImg2) linkImg2.href = urlCatalogoMenuHome({ categoria: genero, mayoreo50: true });
+    if (img1) {
+        img1.alt = genero === 'Mujer' ? 'Ver todo Mujer' : 'Ver todo Hombre';
+        img1.classList.remove('home-menu-thumb--pos-hombre', 'home-menu-thumb--pos-mujer');
+        img1.classList.add(genero === 'Mujer' ? 'home-menu-thumb--pos-mujer' : 'home-menu-thumb--pos-hombre');
+    }
+    if (img2) img2.alt = 'Mayoreo hasta 40% off';
+
+    if (linkNuevo) linkNuevo.href = urlCatalogoMenuHome({ categoria: genero, nuevoStock: true });
+    if (linkTodos) linkTodos.href = urlCatalogoMenuHome({ categoria: genero });
+    if (linkMayoreo) linkMayoreo.href = urlCatalogoMenuHome({ categoria: genero, mayoreo50: true });
+
+    pintarCategoriasMenuMovil(genero, listaCategorias);
+}
+
+function enlazarDelegacionFiltroGeneroMenuMovil(mobileNav) {
+    if (!mobileNav || mobileNav.dataset.obebeGeneroDelegado === '1') return;
+    mobileNav.dataset.obebeGeneroDelegado = '1';
+
+    mobileNav.addEventListener('click', function(e) {
+        var btnGenero = e.target.closest && e.target.closest('.home-menu-gender-btn');
+        if (!btnGenero || !mobileNav.contains(btnGenero)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        var g = btnGenero.getAttribute('data-genero') || btnGenero.id;
+        aplicarFiltroGeneroMenuMovil(g === 'Mujer' || g === 'btnMujerMobile' ? 'Mujer' : 'Hombre');
+    });
+
+    var accCategorias = document.getElementById('homeMenuCategoriesAcc');
+    if (accCategorias && accCategorias.dataset.obebeAccBound !== '1') {
+        accCategorias.dataset.obebeAccBound = '1';
+        accCategorias.addEventListener('click', function(e) {
+            if (e.target.closest('.home-menu-categories-list a')) return;
+            if (e.target.closest('summary') || e.target.closest('.home-menu-categories-summary')) {
+                e.stopPropagation();
+            }
+        });
+    }
+
+    var listaCat = document.getElementById('homeMenuCategoriesList');
+    if (listaCat && listaCat.dataset.obebeCatNavBound !== '1') {
+        listaCat.dataset.obebeCatNavBound = '1';
+        listaCat.addEventListener('click', function(e) {
+            var link = e.target.closest('a[href]');
+            if (!link) return;
+            cerrarMenuMovilGlobal();
+        });
+    }
+}
+
+function inicializarMenuMovilHome() {
+    if (!document.getElementById('homeMenuCategoriesList')) return;
+    var nav = document.getElementById('mobileNav');
+    if (!nav) return;
+    if (nav.classList.contains('page-home-mobile-nav')) {
+        enlazarDelegacionFiltroGeneroMenuMovil(nav);
+    }
+    var listaCategorias = document.getElementById('homeMenuCategoriesList');
+    if (nav.dataset.homeMenuReady === '1') {
+        var generoActual = window.__obebeMenuGeneroFiltro || obtenerGeneroMenuMovilInicial();
+        if (listaCategorias && !listaCategorias.children.length) {
+            pintarCategoriasMenuMovil(generoActual, listaCategorias);
+        }
+        return;
+    }
+    aplicarFiltroGeneroMenuMovil(obtenerGeneroMenuMovilInicial());
+    nav.dataset.homeMenuReady = '1';
+}
+
+function asegurarMenuMovilHomeListo() {
+    inicializarMenuMovilHome();
+}
+
+function arrancarUiGlobalTienda() {
+    var isIndex = document.getElementById('inicio') || document.querySelector('section.hero');
+    if (isIndex) return;
+    if (!document.getElementById('mobileMenuBtn')) return;
+    sincronizarOverlaysMenuCerrados();
+    inicializarNavegacion();
+    asegurarMenuMovilHomeListo();
+    if (!window.__obebeBusquedaIniciada) {
+        inicializarBusquedaHome();
+    }
+    if (!window.__obebeUiGlobalIniciado) {
+        window.__obebeUiGlobalIniciado = true;
+        if (typeof actualizarLayoutPromoYMenu === 'function' && document.querySelector('.promo-bar .promo-container.container')) {
+            actualizarLayoutPromoYMenu();
+            window.addEventListener('resize', actualizarLayoutPromoYMenu);
+        } else if (document.querySelector('.promo-bar')) {
+            document.documentElement.style.setProperty('--obebe-promo-h', (document.querySelector('.promo-bar').offsetHeight || 0) + 'px');
+            window.addEventListener('resize', function () {
+                var bar = document.querySelector('.promo-bar');
+                if (bar) document.documentElement.style.setProperty('--obebe-promo-h', bar.offsetHeight + 'px');
+            });
+        }
+        if (typeof inicializarPromoBar === 'function' && document.querySelector('.promo-message.active')) {
+            inicializarPromoBar();
+        }
+    }
+}
+
 /** Promo alineado al centro de OBEBE CLOTHES + altura de franja para menú móvil */
 function actualizarLayoutPromoYMenu() {
     var promoBar = document.querySelector('.promo-bar');
@@ -1468,11 +1800,18 @@ function actualizarLayoutPromoYMenu() {
     var logoLink = document.getElementById('logoLink');
     var promoWrap = document.querySelector('.promo-messages');
     if (!logoLink || !promoWrap || !promoBar) return;
-    var logoRect = logoLink.getBoundingClientRect();
-    var barRect = promoBar.getBoundingClientRect();
-    var centerX = logoRect.left + logoRect.width / 2;
-    promoWrap.style.left = (centerX - barRect.left) + 'px';
-    promoWrap.style.transform = 'translateX(-50%)';
+    if (window.matchMedia('(min-width: 769px)').matches) {
+        var anchor = promoWrap.parentElement;
+        if (!anchor) return;
+        var logoRect = logoLink.getBoundingClientRect();
+        var anchorRect = anchor.getBoundingClientRect();
+        var centerX = logoRect.left + logoRect.width / 2;
+        promoWrap.style.left = (centerX - anchorRect.left) + 'px';
+        promoWrap.style.transform = 'translateX(-50%)';
+    } else {
+        promoWrap.style.left = '50%';
+        promoWrap.style.transform = 'translateX(-50%)';
+    }
 }
 
 function inicializarPromoBar() {
@@ -1789,6 +2128,34 @@ function catalogoProductosHome() {
     return lista;
 }
 
+function esProductoVisibleBusquedaHome(p) {
+    if (!p) return false;
+    return (Number(p.stock) || 0) > 0;
+}
+
+function ordenarProductosMasRecientesPrimero(lista) {
+    return (lista || []).slice().sort(function(a, b) {
+        var fa = String(a.fechaStock || '');
+        var fb = String(b.fechaStock || '');
+        if (fa !== fb) return fb.localeCompare(fa);
+        return Number(b.id) - Number(a.id);
+    });
+}
+
+function obtenerUltimosProductosBusquedaHome() {
+    var listaH = typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)
+        ? productosHombre
+        : (typeof productos !== 'undefined' && Array.isArray(productos) ? productos : []);
+    var listaM = typeof productosMujer !== 'undefined' && Array.isArray(productosMujer) ? productosMujer : [];
+    var hombres = ordenarProductosMasRecientesPrimero(listaH.filter(function(p) {
+        return esProductoVisibleBusquedaHome(p) && p.categoria !== 'Mujer';
+    })).slice(0, 2);
+    var mujeres = ordenarProductosMasRecientesPrimero(listaM.filter(function(p) {
+        return esProductoVisibleBusquedaHome(p) && (p.categoria === 'Mujer' || p.categoria === 'Unisex');
+    })).slice(0, 2);
+    return hombres.concat(mujeres);
+}
+
 function filtrarBusquedaHome(term) {
     term = String(term || '').trim().toLowerCase();
     if (!term) return [];
@@ -1900,7 +2267,7 @@ function pintarSugerenciasBusquedaDrawer(suggestionsEl, term, onPick) {
         suggestionsEl.innerHTML = '';
         return;
     }
-    var hits = filtrarBusquedaHome(q).slice(0, 8);
+    var hits = filtrarBusquedaHome(q).slice(0, 4);
     if (!hits.length) {
         suggestionsEl.hidden = true;
         suggestionsEl.innerHTML = '';
@@ -1940,6 +2307,14 @@ function actualizarBusquedaDrawerEnHome(opts) {
     }
     pintarSugerenciasBusquedaDrawer(suggestionsEl, q, opts.onPickSuggestion);
     if (!q) {
+        var recientes = obtenerUltimosProductosBusquedaHome();
+        if (hintEl) {
+            hintEl.hidden = !recientes.length;
+            hintEl.textContent = recientes.length ? 'Últimos artículos agregados' : 'Escribe el nombre o el número de ref del artículo.';
+        }
+        recientes.forEach(function(p) {
+            resultsEl.appendChild(crearTarjetaProductoBusquedaHome(p));
+        });
         return;
     }
     var hits = filtrarBusquedaHome(q).slice(0, 30);
@@ -1964,7 +2339,7 @@ function actualizarBusquedaDrawerEnHome(opts) {
 }
 
 function inicializarBusquedaHome() {
-    if (!document.body.classList.contains('page-home')) return;
+    if (window.__obebeBusquedaIniciada) return;
 
     var overlay = document.getElementById('homeSearchOverlay');
     var drawer = document.getElementById('homeSearchDrawer');
@@ -1980,6 +2355,7 @@ function inicializarBusquedaHome() {
     var headerForm = document.getElementById('homeHeaderSearchForm');
 
     if (!overlay || !drawer || !input) return;
+    window.__obebeBusquedaIniciada = true;
 
     var timer;
 
@@ -2025,6 +2401,7 @@ function inicializarBusquedaHome() {
         document.body.classList.add('home-search-open');
         setBusquedaExpandida(true);
         sincronizarDesdeHeader();
+        refrescarBusquedaDrawer();
         setTimeout(function () {
             if (document.activeElement !== headerInput) {
                 input.focus();
@@ -2138,7 +2515,9 @@ function arrancarIndexPagina() {
         inicializarCarousel();
     inicializarCarouselColecciones();
     inicializarCarouselMarcas();
+        sincronizarOverlaysMenuCerrados();
         inicializarNavegacion();
+        asegurarMenuMovilHomeListo();
         inicializarPromoBar();
     actualizarHeroOfertasSemanales();
     inicializarHeroCarrusel();
@@ -2200,6 +2579,17 @@ function arrancarIndexPagina() {
 }
 
 document.addEventListener('obebe-scripts-ready', arrancarIndexPagina);
+document.addEventListener('obebe-scripts-ready', arrancarUiGlobalTienda);
+
+function asegurarMenuSandwichEnPagina() {
+    if (!document.getElementById('mobileMenuBtn')) return;
+    sincronizarOverlaysMenuCerrados();
+    enlazarMenuSandwichMovil();
+    asegurarMenuMovilHomeListo();
+    if (!window.__obebeNavegacionIniciada) inicializarNavegacion();
+}
+
+window.addEventListener('pageshow', asegurarMenuSandwichEnPagina);
 
 // Al volver atr��s (ej. desde productos.html) o abrir desde Instagram, la p��gina puede restaurarse desde bfcache
 // y DOMContentLoaded no se ejecuta de nuevo. pageshow s�� se dispara: actualizar badge y altura del hero (solo Instagram).

@@ -866,9 +866,13 @@ function tiposPermitidosEnCatalogo(categoria) {
     return permitidos;
 }
 
+if (typeof window !== 'undefined') {
+    window.obebeTiposPermitidosEnCatalogo = tiposPermitidosEnCatalogo;
+}
+
 function filtrarTiposOpcionesPorCategoria(tipos, categoria) {
-    if (categoria !== 'Hombre') return tipos;
-    var permitidos = tiposPermitidosEnCatalogo('Hombre');
+    if (categoria !== 'Hombre' && categoria !== 'Mujer') return tipos;
+    var permitidos = tiposPermitidosEnCatalogo(categoria);
     return (tipos || []).filter(function(t) { return permitidos.has(t); });
 }
 
@@ -1231,6 +1235,7 @@ window.etiquetaVolverDesdeDetalle = etiquetaVolverDesdeDetalle;
 
 // Función para obtener filtros activos
 function obtenerFiltrosActivos() {
+    var desdeUrl = leerFiltrosDesdeURL();
     const tallasSeleccionadas = Array.from(document.querySelectorAll('#tallaFilters .filter-checkbox:checked')).map(cb => cb.value);
     const tiposSeleccionados = Array.from(document.querySelectorAll('#tipoFilters .filter-checkbox:checked')).map(cb => cb.value);
     const colorFiltersEl = document.getElementById('colorFilters');
@@ -1242,15 +1247,41 @@ function obtenerFiltrosActivos() {
         ? Array.from(marcaFiltersEl.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value)
         : [];
     const sortByEl = document.getElementById('sortBy');
-    const ordenarPor = sortByEl ? sortByEl.value : '';
+    const ordenarPor = sortByEl && sortByEl.value ? sortByEl.value : (desdeUrl.ordenarPor || '');
 
     return {
-        tallas: tallasSeleccionadas,
-        tipos: tiposSeleccionados,
-        colores: coloresSeleccionados,
-        marcas: marcasSeleccionadas,
+        tallas: tallasSeleccionadas.length ? tallasSeleccionadas : (desdeUrl.tallas || []),
+        tipos: tiposSeleccionados.length ? tiposSeleccionados : (desdeUrl.tipos || []),
+        colores: coloresSeleccionados.length ? coloresSeleccionados : (desdeUrl.colores || []),
+        marcas: marcasSeleccionadas.length ? marcasSeleccionadas : (desdeUrl.marcas || []),
         ordenarPor: ordenarPor
     };
+}
+
+function tiposParaMenuMovil(categoria) {
+    var cat = categoria === 'Mujer' ? 'Mujer' : 'Hombre';
+    var base = obtenerCatalogoCompletoPorCategoria(cat).filter(function(p) {
+        if ((Number(p.stock) || 0) <= 0) return false;
+        return p.categoria === cat || p.categoria === 'Unisex';
+    });
+    var desdeProductos = opcionesDesdeListaProductos(base);
+    var sheet = typeof window.opcionesInventarioSheet !== 'undefined' ? window.opcionesInventarioSheet[cat] : null;
+    var tipos = sheet
+        ? filtrarTiposOpcionesPorCategoria(
+            ordenarAlfabetico(fusionarValoresFiltro(sheet.tipos, desdeProductos.tipos)),
+            cat
+        )
+        : filtrarTiposOpcionesPorCategoria(ordenarAlfabetico(desdeProductos.tipos), cat);
+    return tipos.filter(function(tipo) {
+        return base.some(function(p) {
+            var t = p.tipo || obtenerTipoProductoFallback(p.nombre);
+            return tipoCoincideFiltro(t, tipo);
+        });
+    });
+}
+
+if (typeof window !== 'undefined') {
+    window.obebeTiposParaMenuMovil = tiposParaMenuMovil;
 }
 
 // Función para aplicar filtros y ordenamiento
@@ -2254,81 +2285,6 @@ function mostrarRestriccion() {
     }
 }
 
-// Función para inicializar navegación (productos.js se carga después de script.js y sobrescribe esta función, así que el menú debe configurarse aquí para productos.html y producto.html)
-function inicializarNavegacion() {
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const mobileNav = document.getElementById('mobileNav');
-
-    if (mobileMenuBtn && mobileNav) {
-        function cerrarMenu() {
-            mobileMenuBtn.classList.remove('active');
-            mobileNav.classList.remove('active');
-            document.body.classList.remove('mobile-menu-open');
-        }
-
-        mobileMenuBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const isOpen = mobileNav.classList.contains('active');
-            if (isOpen) {
-                cerrarMenu();
-            } else {
-                mobileMenuBtn.classList.add('active');
-                mobileNav.classList.add('active');
-                document.body.classList.add('mobile-menu-open');
-            }
-        }, true);
-
-        document.addEventListener('click', (e) => {
-            if (!mobileMenuBtn.contains(e.target) && !mobileNav.contains(e.target)) {
-                cerrarMenu();
-            }
-        });
-    }
-
-    // Botón "Hombre" en el header (desktop y mobile)
-    const btnHombreMobile = document.getElementById('btnHombreMobile');
-    
-    if (btnHombreMobile) {
-        btnHombreMobile.addEventListener('click', () => {
-            window.location.href = 'productos.html?categoria=Hombre';
-            if (mobileMenuBtn && mobileNav) {
-                mobileMenuBtn.classList.remove('active');
-                mobileNav.classList.remove('active');
-                document.body.classList.remove('mobile-menu-open');
-            }
-        });
-    }
-
-    // Botón "Mujer" es un <a href="productos.html?categoria=Mujer">: no interceptar el clic
-    // para que funcione siempre (localhost y en línea) sin depender de JavaScript.
-    const btnMujerMobile = document.getElementById('btnMujerMobile');
-    if (btnMujerMobile && mobileMenuBtn && mobileNav) {
-        btnMujerMobile.addEventListener('click', () => {
-            mobileMenuBtn.classList.remove('active');
-            mobileNav.classList.remove('active');
-            document.body.classList.remove('mobile-menu-open');
-        });
-    }
-
-    // Cerrar modal de restricción
-    const closeRestrictionBtn = document.getElementById('closeRestrictionBtn');
-    const restrictionModal = document.getElementById('restrictionModal');
-    
-    if (closeRestrictionBtn && restrictionModal) {
-        closeRestrictionBtn.addEventListener('click', () => {
-            restrictionModal.classList.remove('active');
-        });
-        
-        // Cerrar al hacer clic fuera del modal
-        restrictionModal.addEventListener('click', (e) => {
-            if (e.target === restrictionModal) {
-                restrictionModal.classList.remove('active');
-            }
-        });
-    }
-}
-
 // Al volver atrás (bfcache), restaurar filtros y refrescar imágenes
 window.addEventListener('pageshow', (event) => {
     const grid = document.getElementById('productsGrid');
@@ -2383,6 +2339,10 @@ function arrancarProductosPagina() {
 
     window.__obebeProductosIniciado = true;
     preservarColeccionesCatalogo();
+
+    if (typeof arrancarUiGlobalTienda === 'function') {
+        arrancarUiGlobalTienda();
+    }
 
     var isProductDetailPage = document.getElementById('productDetailContainer') && !document.getElementById('productsGrid');
     var isProductsGridPage = document.getElementById('productsGrid');
