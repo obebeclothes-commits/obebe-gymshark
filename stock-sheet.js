@@ -67,7 +67,11 @@
         'YOUNGLA': 'YoungLA',
         'YOUNG LA': 'YoungLA',
         'UNIQLO': 'Uniqlo',
-        'ON CLOUD': 'On Cloud'
+        'ON CLOUD': 'On Cloud',
+        'DFYNE': 'DFYNE',
+        'ALO YOGA': 'Alo Yoga',
+        'BREATHDIVINITY': 'Breathdivinity',
+        'BREATH DIVINITY': 'Breathdivinity'
     };
 
     var COLORES = {

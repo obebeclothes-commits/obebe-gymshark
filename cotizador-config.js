@@ -15,6 +15,29 @@ window.OBEBE_COTIZADOR_DEFAULTS = {
 window.OBEBE_COTIZADOR_CONFIG = Object.assign({}, window.OBEBE_COTIZADOR_DEFAULTS);
 
 window.ObebeCotizadorFormula = {
+    /** Misma normalización que admin y admin-api (obebe.store). */
+    normalizarConfig: function (raw) {
+        var d = window.OBEBE_COTIZADOR_DEFAULTS || {
+            factorUsd: 1.085,
+            valorDolar: 18.9,
+            envio: 40,
+            margen: 0.3
+        };
+        raw = raw && typeof raw === 'object' ? raw : {};
+        var out = {
+            factorUsd: Number(raw.factorUsd),
+            valorDolar: Number(raw.valorDolar),
+            envio: Number(raw.envio),
+            margen: Number(raw.margen),
+            actualizadoEn: Number(raw.actualizadoEn) || 0
+        };
+        if (!isFinite(out.factorUsd) || out.factorUsd <= 0) out.factorUsd = d.factorUsd;
+        if (!isFinite(out.valorDolar) || out.valorDolar <= 0) out.valorDolar = d.valorDolar;
+        if (!isFinite(out.envio) || out.envio < 0) out.envio = d.envio;
+        if (!isFinite(out.margen) || out.margen <= 0) out.margen = d.margen;
+        if (out.margen > 1) out.margen = 0.3;
+        return out;
+    },
     /** margen 0.3 → divisor 0.7; valores > 1 se tratan como legacy (multiplicador antiguo). */
     divisorMargen: function (margen) {
         var m = Number(margen);
@@ -29,7 +52,7 @@ window.ObebeCotizadorFormula = {
     },
     cotizarUsd: function (usd, cfg, opts) {
         opts = opts || {};
-        cfg = cfg && typeof cfg === 'object' ? cfg : {};
+        cfg = window.ObebeCotizadorFormula.normalizarConfig(cfg);
         var u = Number(usd) || 0;
         if (u <= 0) return 0;
         var factorUsd = Number(cfg.factorUsd) > 0 ? Number(cfg.factorUsd) : 1.085;
@@ -43,7 +66,7 @@ window.ObebeCotizadorFormula = {
     },
     /** Envío una sola vez por pedido, con margen y redondeo a decenas. */
     cargoEnvioMxn: function (cfg) {
-        cfg = cfg && typeof cfg === 'object' ? cfg : {};
+        cfg = window.ObebeCotizadorFormula.normalizarConfig(cfg);
         var envio = Number(cfg.envio) >= 0 ? Number(cfg.envio) : 40;
         var div = window.ObebeCotizadorFormula.divisorMargen(cfg.margen);
         if (!(div > 0)) div = 0.7;
@@ -54,7 +77,7 @@ window.ObebeCotizadorFormula = {
      * Un solo artículo: incluye envío en ese precio (coincide línea y total).
      */
     cotizarCarrito: function (usdList, cfg) {
-        cfg = cfg && typeof cfg === 'object' ? cfg : {};
+        cfg = window.ObebeCotizadorFormula.normalizarConfig(cfg);
         var list = (usdList || []).map(function (u) {
             return Number(u) || 0;
         }).filter(function (u) {

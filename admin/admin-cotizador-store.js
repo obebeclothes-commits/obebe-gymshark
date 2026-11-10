@@ -24,21 +24,10 @@
     }
 
     function normalizar(raw) {
-        var d = defaults();
-        raw = raw && typeof raw === 'object' ? raw : {};
-        var out = {
-            factorUsd: Number(raw.factorUsd),
-            valorDolar: Number(raw.valorDolar),
-            envio: Number(raw.envio),
-            margen: Number(raw.margen),
-            actualizadoEn: Number(raw.actualizadoEn) || 0
-        };
-        if (!isFinite(out.factorUsd) || out.factorUsd <= 0) out.factorUsd = d.factorUsd;
-        if (!isFinite(out.valorDolar) || out.valorDolar <= 0) out.valorDolar = d.valorDolar;
-        if (!isFinite(out.envio) || out.envio < 0) out.envio = d.envio;
-        if (!isFinite(out.margen) || out.margen <= 0) out.margen = d.margen;
-        if (out.margen > 1) out.margen = 0.3;
-        return out;
+        if (global.ObebeCotizadorFormula && ObebeCotizadorFormula.normalizarConfig) {
+            return ObebeCotizadorFormula.normalizarConfig(raw);
+        }
+        return defaults();
     }
 
     function leer() {

@@ -874,15 +874,20 @@ function cotizadorDesdePayload(payload: unknown) {
     ((x as { id?: string }).id === "obebe-cotizador-config" ||
       (x as { factorUsd?: unknown }).factorUsd != null)) as Record<string, unknown> | undefined;
   const src = hit || {};
-  const num = (v: unknown, fb: number) => {
-    const n = Number(v);
-    return Number.isFinite(n) && n >= 0 ? n : fb;
-  };
+  let factorUsd = Number(src.factorUsd);
+  let valorDolar = Number(src.valorDolar);
+  let envio = Number(src.envio);
+  let margen = Number(src.margen);
+  if (!Number.isFinite(factorUsd) || factorUsd <= 0) factorUsd = COTIZADOR_DEFAULTS.factorUsd;
+  if (!Number.isFinite(valorDolar) || valorDolar <= 0) valorDolar = COTIZADOR_DEFAULTS.valorDolar;
+  if (!Number.isFinite(envio) || envio < 0) envio = COTIZADOR_DEFAULTS.envio;
+  if (!Number.isFinite(margen) || margen <= 0) margen = COTIZADOR_DEFAULTS.margen;
+  if (margen > 1) margen = 0.3;
   return {
-    factorUsd: num(src.factorUsd, COTIZADOR_DEFAULTS.factorUsd) || COTIZADOR_DEFAULTS.factorUsd,
-    valorDolar: num(src.valorDolar, COTIZADOR_DEFAULTS.valorDolar) || COTIZADOR_DEFAULTS.valorDolar,
-    envio: num(src.envio, COTIZADOR_DEFAULTS.envio),
-    margen: num(src.margen, COTIZADOR_DEFAULTS.margen) || COTIZADOR_DEFAULTS.margen,
+    factorUsd,
+    valorDolar,
+    envio,
+    margen,
     actualizadoEn: Number(src.actualizadoEn) || 0,
   };
 }

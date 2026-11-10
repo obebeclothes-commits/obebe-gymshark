@@ -14,7 +14,7 @@ const NUM_COLS = 29;
 function parseNum(val) {
   let t = String(val ?? '').trim();
   if (!t) return 0;
-  t = t.replace(/\$/g, '').replace(/\s/g, '');
+  t = t.replace(/\$/g, '').replace(/\s/g, ''); 
   if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, '').replace(',', '.');
   else if (/^\d+,\d{1,2}$/.test(t)) t = t.replace(',', '.');
   else t = t.replace(/,/g, '');

@@ -102,6 +102,10 @@ MARCAS = {
     "UNIQLO": "Uniqlo",
     "ON CLOUD": "On Cloud",
     "ON-CLOUD": "On Cloud",
+    "DFYNE": "DFYNE",
+    "ALO YOGA": "Alo Yoga",
+    "BREATHDIVINITY": "Breathdivinity",
+    "BREATH DIVINITY": "Breathdivinity",
 }
 
 COLORES = {

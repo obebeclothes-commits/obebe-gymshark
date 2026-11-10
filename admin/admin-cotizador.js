@@ -204,10 +204,27 @@
                     }
                     var saved = ObebeCotizadorStore.guardar(leerForm());
                     editando = false;
-                    pintar();
                     var m = document.getElementById('adminCotizadorMsg');
-                    if (m) {
-                        m.textContent = 'Guardado · ' + new Date(saved.actualizadoEn).toLocaleString('es-MX');
+                    if (m) m.textContent = 'Guardando en la nube para obebe.store…';
+                    var push = global.ObebeAdminModulosCloud && ObebeAdminModulosCloud.pushCotizadorNow;
+                    var fin = function (txt) {
+                        pintar();
+                        var msg = document.getElementById('adminCotizadorMsg');
+                        if (msg) msg.textContent = txt;
+                    };
+                    if (typeof push === 'function') {
+                        push().then(function (res) {
+                            if (res && res.ok) {
+                                fin('Guardado y sincronizado con obebe.store · ' +
+                                    new Date(saved.actualizadoEn).toLocaleString('es-MX'));
+                            } else if (res && res.offline) {
+                                fin('Guardado solo en este navegador (sin sesión admin en nube). Recarga obebe.store tras desplegar admin-api.');
+                            } else {
+                                fin('Guardado local, pero falló la nube: ' + ((res && res.error) || 'error desconocido'));
+                            }
+                        });
+                    } else {
+                        fin('Guardado · ' + new Date(saved.actualizadoEn).toLocaleString('es-MX'));
                     }
                 });
             } else {

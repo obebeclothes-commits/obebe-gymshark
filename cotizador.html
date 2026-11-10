@@ -414,7 +414,7 @@ main,.container{max-width:1200px;margin:0 auto}
     </div>
 
 <script src="obebe-data-config.js?v=20261107"></script>
-<script src="cotizador-config.js?v=20261110"></script>
+<script src="cotizador-config.js?v=20261110k"></script>
 <script>
 (function () {
     var MAX = 10;
@@ -445,16 +445,16 @@ main,.container{max-width:1200px;margin:0 auto}
     }
 
     function normalizar(c) {
-        c = c || {};
-        var margen = Number(c.margen);
-        if (!isFinite(margen) || margen <= 0) margen = 0.3;
-        if (margen > 1) margen = 0.3;
-        return {
-            factorUsd: Number(c.factorUsd) > 0 ? Number(c.factorUsd) : 1.085,
-            valorDolar: Number(c.valorDolar) > 0 ? Number(c.valorDolar) : 18.9,
-            envio: Number(c.envio) >= 0 ? Number(c.envio) : 40,
-            margen: margen
-        };
+        if (window.ObebeCotizadorFormula && ObebeCotizadorFormula.normalizarConfig) {
+            return ObebeCotizadorFormula.normalizarConfig(c);
+        }
+        return Object.assign({}, window.OBEBE_COTIZADOR_DEFAULTS || {});
+    }
+
+    function aplicarConfigRemota(raw) {
+        if (!raw || typeof raw !== 'object') return;
+        cfg = normalizar(raw);
+        window.OBEBE_COTIZADOR_CONFIG = cfg;
     }
 
     function precioItemObebe(usd, nActivos) {
@@ -491,12 +491,43 @@ main,.container{max-width:1200px;margin:0 auto}
         return round2(totalUsd * cfg.valorDolar * DIY.fxFee + DIY.gestionMxn);
     }
 
+    function cargarConfigSupabaseRest() {
+        var dataCfg = window.OBEBE_DATA_CONFIG || {};
+        var base = String(dataCfg.supabaseUrl || '').trim().replace(/\/$/, '');
+        var key = String(dataCfg.supabaseAnonKey || '').trim();
+        if (!base || !key) return Promise.resolve(cfg);
+        var rest = base + '/rest/v1/admin_modulos_blob?module_key=eq.cotizador&select=payload&limit=1';
+        return fetch(rest, {
+            method: 'GET',
+            mode: 'cors',
+            headers: { apikey: key, Authorization: 'Bearer ' + key }
+        }).then(function (res) {
+            if (!res.ok) return cfg;
+            return res.json();
+        }).then(function (rows) {
+            if (!Array.isArray(rows) || !rows[0] || !rows[0].payload) return cfg;
+            var payload = rows[0].payload;
+            var hit = null;
+            if (Array.isArray(payload)) {
+                for (var i = 0; i < payload.length; i++) {
+                    var p = payload[i];
+                    if (p && (p.id === 'obebe-cotizador-config' || p.factorUsd != null)) {
+                        hit = p;
+                        break;
+                    }
+                }
+            }
+            if (hit) aplicarConfigRemota(hit);
+            return cfg;
+        }).catch(function () { return cfg; });
+    }
+
     function cargarConfigNube() {
         var dataCfg = window.OBEBE_DATA_CONFIG || {};
         var adminCfg = window.OBEBE_ADMIN_CONFIG || {};
         var url = String(dataCfg.adminApiUrl || adminCfg.adminApiUrl || '').trim();
         var key = String(dataCfg.supabaseAnonKey || adminCfg.supabaseAnonKey || '').trim();
-        if (!url) return Promise.resolve(cfg);
+        if (!url) return cargarConfigSupabaseRest();
         return fetch(url, {
             method: 'POST',
             mode: 'cors',
@@ -506,13 +537,15 @@ main,.container{max-width:1200px;margin:0 auto}
                 apikey: key
             },
             body: JSON.stringify({ action: 'getCotizadorConfig' })
-        }).then(function (res) { return res.json(); }).then(function (data) {
-            if (data && data.ok && data.config) {
-                cfg = normalizar(data.config);
-                window.OBEBE_COTIZADOR_CONFIG = cfg;
-            }
-            return cfg;
-        }).catch(function () { return cfg; });
+        }).then(function (res) {
+            return res.json().catch(function () { return {}; }).then(function (data) {
+                if (data && data.ok && data.config) {
+                    aplicarConfigRemota(data.config);
+                    return cfg;
+                }
+                return cargarConfigSupabaseRest();
+            });
+        }).catch(function () { return cargarConfigSupabaseRest(); });
     }
 
     function filaHtml() {
@@ -641,9 +674,10 @@ main,.container{max-width:1200px;margin:0 auto}
         recalcular();
     });
 
-    cfg = normalizar(cfg);
-    recalcular();
-    cargarConfigNube().then(recalcular);
+    cargarConfigNube().then(function () {
+        cfg = normalizar(cfg);
+        recalcular();
+    });
 })();
 </script>
     <script defer src="productos-hombre.js?v=20261108b"></script>

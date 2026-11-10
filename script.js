@@ -104,18 +104,67 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
     contenedor.textContent = fuente;
 }
 
-/** Productos con columna U del Sheet = posiciones 1..6 en el carrusel (7.º recuadro = Ver más). */
+/** Anchura visible ≈ tarjetas de 320px; en home usamos esto para ofertas semanales. */
+function capacidadTarjetasCarruselHome(wrapper) {
+    var el = wrapper || document.getElementById('productsCarouselWrapper')
+        || document.getElementById('productsCarouselWrapperMujer');
+    var ancho = el && el.offsetWidth ? el.offsetWidth : (typeof window !== 'undefined' ? window.innerWidth : 1200);
+    var card = 320;
+    var gap = 14;
+    var n = Math.floor((ancho + gap) / (card + gap));
+    return Math.min(10, Math.max(4, n));
+}
+
+var MAX_ARTICULOS_CARRUSEL_HOME = 8;
+
+/** Máx. artículos por carrusel: hombre/mujer = posiciones 1..8 en Sheet (U) + tarjeta Ver más; ofertas = 8 + Ver más. */
+function maxPosicionesCarruselHombreMujerHome() {
+    return MAX_ARTICULOS_CARRUSEL_HOME;
+}
+
+/** Productos con columna U del Sheet = posiciones 1..N en el carrusel (siguiente recuadro = Ver más). */
 function obtenerProductosParaCarrusel(catalogo, categoria) {
-    var slots = new Array(6);
+    var maxPos = maxPosicionesCarruselHombreMujerHome();
+    var slots = new Array(maxPos);
+    var idsEnSlots = {};
     if (!Array.isArray(catalogo)) return [];
-    catalogo.forEach(function(p) {
+    catalogo.forEach(function (p) {
         if (p.categoria !== categoria && p.categoria !== 'Unisex') return;
         if (Number(p.stock) <= 0) return;
         var pos = parseInt(p.posicionCarrusel, 10);
-        if (pos >= 1 && pos <= 6) slots[pos - 1] = p;
+        if (pos >= 1 && pos <= maxPos && !slots[pos - 1]) {
+            slots[pos - 1] = p;
+            idsEnSlots[p.id] = true;
+        }
     });
+    var huecos = [];
+    var i;
+    for (i = 0; i < maxPos; i++) {
+        if (!slots[i]) huecos.push(i);
+    }
+    if (huecos.length) {
+        var extra = catalogo.filter(function (p) {
+            if (p.categoria !== categoria && p.categoria !== 'Unisex') return false;
+            if (Number(p.stock) <= 0) return false;
+            if (idsEnSlots[p.id]) return false;
+            return true;
+        });
+        extra.sort(function (a, b) {
+            var fa = String(a.fechaStock || '');
+            var fb = String(b.fechaStock || '');
+            if (fa !== fb) return fb.localeCompare(fa);
+            return Number(b.id) - Number(a.id);
+        });
+        var ei = 0;
+        huecos.forEach(function (slotIdx) {
+            if (ei >= extra.length) return;
+            slots[slotIdx] = extra[ei];
+            idsEnSlots[extra[ei].id] = true;
+            ei += 1;
+        });
+    }
     var resultado = [];
-    for (var i = 0; i < slots.length; i++) {
+    for (i = 0; i < slots.length; i++) {
         if (slots[i]) resultado.push(slots[i]);
     }
     return resultado;
@@ -470,7 +519,7 @@ function renderizarCarruselOfertas() {
     if (!carousel) return;
 
     var list = typeof obtenerProductosOfertaSemanal === 'function'
-        ? obtenerProductosOfertaSemanal(4)
+        ? obtenerProductosOfertaSemanal(MAX_ARTICULOS_CARRUSEL_HOME)
         : [];
 
     currentScrollOfertas = 0;
@@ -566,8 +615,8 @@ function renderizarCarruselOfertas() {
 
     carousel.appendChild(crearTarjetaVerMasCarrusel({
         href: 'ofertas-semanales.html',
-        archivoImagen: 'colecciones/OFERTAS.png',
-        imagenFallback: 'secciones/OFERTAS.jpg',
+        archivoImagen: 'secciones/NEW-1.png',
+        imagenFallback: 'secciones/NEW-1.png',
         titulo: 'OFERTAS SEMANALES',
         subtitulo: 'Ver todas las ofertas',
         estiloTitulo: 'nuevo-drop',
@@ -1264,32 +1313,82 @@ function inicializarNavegacion() {
         });
     }
 
-    // Men�� m��vil en todas las p��ginas que tengan el bot��n (index, productos, producto)
+    // Menú móvil en todas las páginas que tengan el botón (index, productos, producto)
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const mobileNav = document.getElementById('mobileNav');
-    
+    const homeMenuOverlay = document.getElementById('homeMenuOverlay');
+    const homeMenuBackdrop = document.getElementById('homeMenuBackdrop');
+    const esMenuDrawerHome = () =>
+        document.body.classList.contains('page-home') && !!homeMenuOverlay;
+
+    function cerrarMenuMovil() {
+        if (!mobileMenuBtn || !mobileNav) return;
+        mobileMenuBtn.classList.remove('active');
+        mobileNav.classList.remove('active');
+        document.body.classList.remove('mobile-menu-open');
+        if (homeMenuOverlay) {
+            homeMenuOverlay.classList.remove('is-open');
+            setTimeout(() => {
+                homeMenuOverlay.hidden = true;
+            }, 320);
+        }
+    }
+
+    function abrirMenuMovil() {
+        const searchOverlay = document.getElementById('homeSearchOverlay');
+        if (searchOverlay && searchOverlay.classList.contains('is-open')) {
+            document.getElementById('homeSearchBackdrop')?.click();
+        }
+        if (typeof actualizarLayoutPromoYMenu === 'function') {
+            actualizarLayoutPromoYMenu();
+        }
+        mobileMenuBtn.classList.add('active');
+        mobileNav.classList.add('active');
+        document.body.classList.add('mobile-menu-open');
+        if (esMenuDrawerHome() && homeMenuOverlay) {
+            homeMenuOverlay.hidden = false;
+            homeMenuOverlay.classList.add('is-open');
+        }
+    }
+
+    window.__obebeCerrarMenuMovil = cerrarMenuMovil;
+
     if (mobileMenuBtn && mobileNav) {
         mobileMenuBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             const isOpen = mobileNav.classList.contains('active');
             if (isOpen) {
-                mobileMenuBtn.classList.remove('active');
-                mobileNav.classList.remove('active');
-                document.body.classList.remove('mobile-menu-open');
+                cerrarMenuMovil();
             } else {
-                mobileMenuBtn.classList.add('active');
-                mobileNav.classList.add('active');
-                document.body.classList.add('mobile-menu-open');
+                abrirMenuMovil();
             }
         }, true);
 
-        // Cerrar men�� al hacer clic fuera
-        document.addEventListener('click', (e) => {
-            if (!mobileMenuBtn.contains(e.target) && !mobileNav.contains(e.target)) {
-                mobileMenuBtn.classList.remove('active');
-                mobileNav.classList.remove('active');
-                document.body.classList.remove('mobile-menu-open');
+        if (document.body.classList.contains('page-home')) {
+            if (homeMenuBackdrop) {
+                homeMenuBackdrop.addEventListener('click', cerrarMenuMovil);
+            }
+            const homeMenuDrawerClose = document.getElementById('homeMenuDrawerClose');
+            if (homeMenuDrawerClose) {
+                homeMenuDrawerClose.addEventListener('click', cerrarMenuMovil);
+            }
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
+                    cerrarMenuMovil();
+                }
+            });
+        } else {
+            document.addEventListener('click', (e) => {
+                if (!mobileMenuBtn.contains(e.target) && !mobileNav.contains(e.target)) {
+                    cerrarMenuMovil();
+                }
+            });
+        }
+
+        mobileNav.addEventListener('click', (e) => {
+            if (e.target.closest('a')) {
+                cerrarMenuMovil();
             }
         });
     }
@@ -1307,21 +1406,16 @@ function inicializarNavegacion() {
     if (btnHombreMobile) {
         btnHombreMobile.addEventListener('click', () => {
             window.location.href = 'productos.html?categoria=Hombre';
-            if (mobileMenuBtn && mobileNav) {
-                mobileMenuBtn.classList.remove('active');
-                mobileNav.classList.remove('active');
-            }
+            if (typeof cerrarMenuMovil === 'function') cerrarMenuMovil();
         });
     }
 
     // Bot��n "Mujer" es un <a href="productos.html?categoria=Mujer">: no interceptar el clic
     // para que funcione siempre (localhost y en l��nea) sin depender de JavaScript.
     const btnMujerMobile = document.getElementById('btnMujerMobile');
-    if (btnMujerMobile && mobileMenuBtn && mobileNav) {
+    if (btnMujerMobile) {
         btnMujerMobile.addEventListener('click', () => {
-                mobileMenuBtn.classList.remove('active');
-                mobileNav.classList.remove('active');
-            document.body.classList.remove('mobile-menu-open');
+            if (typeof cerrarMenuMovil === 'function') cerrarMenuMovil();
         });
     }
 
@@ -1357,31 +1451,50 @@ function inicializarNavegacion() {
     }
 }
 
-// Funci��n para rotar mensajes promocionales
+/** Promo alineado al centro de OBEBE CLOTHES + altura de franja para menú móvil */
+function actualizarLayoutPromoYMenu() {
+    var promoBar = document.querySelector('.promo-bar');
+    var header = document.querySelector('header');
+    var promoH = 0;
+    var headerH = 0;
+    if (promoBar) {
+        promoH = promoBar.offsetHeight;
+        document.documentElement.style.setProperty('--obebe-promo-h', promoH + 'px');
+    }
+    if (header) {
+        headerH = header.offsetHeight;
+        document.documentElement.style.setProperty('--obebe-header-h', headerH + 'px');
+    }
+    var logoLink = document.getElementById('logoLink');
+    var promoWrap = document.querySelector('.promo-messages');
+    if (!logoLink || !promoWrap || !promoBar) return;
+    var logoRect = logoLink.getBoundingClientRect();
+    var barRect = promoBar.getBoundingClientRect();
+    var centerX = logoRect.left + logoRect.width / 2;
+    promoWrap.style.left = (centerX - barRect.left) + 'px';
+    promoWrap.style.transform = 'translateX(-50%)';
+}
+
 function inicializarPromoBar() {
     const messages = document.querySelectorAll('.promo-message');
     let currentIndex = 0;
 
     function cambiarMensaje() {
-        // Agregar clase exit al mensaje actual para que salga hacia arriba
         messages[currentIndex].classList.remove('active');
         messages[currentIndex].classList.add('exit');
-        
-        // Avanzar al siguiente mensaje
         currentIndex = (currentIndex + 1) % messages.length;
-        
-        // Remover clases del nuevo mensaje y agregar active
         messages[currentIndex].classList.remove('exit');
         messages[currentIndex].classList.add('active');
-        
-        // Limpiar clase exit del mensaje anterior despu��s de la transici��n
+        requestAnimationFrame(actualizarLayoutPromoYMenu);
         setTimeout(() => {
             const previousIndex = (currentIndex - 1 + messages.length) % messages.length;
             messages[previousIndex].classList.remove('exit');
         }, 600);
     }
 
-    // Cambiar mensaje cada 5 segundos
+    actualizarLayoutPromoYMenu();
+    window.addEventListener('resize', actualizarLayoutPromoYMenu);
+    window.addEventListener('pageshow', actualizarLayoutPromoYMenu);
     setInterval(cambiarMensaje, 5000);
 }
 
@@ -1664,6 +1777,335 @@ window.addEventListener('pageshow', (event) => {
     });
 });
 
+function actualizarScrollbarCompensacion() {
+    var comp = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+    document.documentElement.style.setProperty('--scrollbar-comp', comp + 'px');
+}
+
+function catalogoProductosHome() {
+    var lista = [];
+    if (typeof productos !== 'undefined' && Array.isArray(productos)) lista = lista.concat(productos);
+    if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) lista = lista.concat(productosMujer);
+    return lista;
+}
+
+function filtrarBusquedaHome(term) {
+    term = String(term || '').trim().toLowerCase();
+    if (!term) return [];
+    var soloRef = /^\d+$/.test(term);
+    return catalogoProductosHome().filter(function (p) {
+        if (!p) return false;
+        if (soloRef) return String(p.id) === term;
+        if (p.nombre && p.nombre.toLowerCase().includes(term)) return true;
+        if (/^\d+$/.test(term) && String(p.id).indexOf(term) !== -1) return true;
+        return false;
+    });
+}
+
+function urlProductoDesdeHome(p) {
+    if (typeof construirUrlDetalleProducto === 'function') {
+        return construirUrlDetalleProducto(p);
+    }
+    var cat = p.categoria === 'Mujer' ? 'Mujer' : 'Hombre';
+    return 'producto.html?id=' + encodeURIComponent(p.id) + '&categoria=' + encodeURIComponent(cat);
+}
+
+function irBusquedaCompleta(term) {
+    term = String(term || '').trim();
+    if (!term) return;
+    window.location.href = 'productos.html?q=' + encodeURIComponent(term);
+}
+
+function crearTarjetaProductoBusquedaHome(producto) {
+    var agotado = producto.stock === 0;
+    var card = document.createElement('div');
+    card.className = 'product-card home-search-product-card' + (agotado ? ' product-card-agotado' : '');
+    card.setAttribute('data-product-id', producto.id);
+
+    var imageWrap = document.createElement('div');
+    imageWrap.className = 'product-image-wrap' + (agotado ? ' out-of-stock' : '');
+
+    var imageLink = document.createElement('a');
+    imageLink.className = 'product-image-link' + (agotado ? ' product-image-link-agotado' : '');
+    imageLink.href = agotado ? '#' : urlProductoDesdeHome(producto);
+    if (agotado) {
+        imageLink.addEventListener('click', function (e) {
+            e.preventDefault();
+        });
+    }
+    imageLink.setAttribute('aria-label', agotado ? (producto.nombre + ' (agotado)') : ('Ver ' + producto.nombre));
+
+    var imageContainer = document.createElement('div');
+    imageContainer.className = 'product-image';
+    imageContainer.dataset.alt = producto.nombre;
+    var imagen1 = typeof obtenerRutaImagenProducto === 'function' ? obtenerRutaImagenProducto(producto, 1) : '';
+    if (imagen1) {
+        imageContainer.dataset.type = 'img';
+        imageContainer.dataset.img1 = imagen1;
+        if (typeof renderizarImagenProducto === 'function') {
+            renderizarImagenProducto(imageContainer, imagen1);
+        }
+    } else if (typeof mostrarPlaceholderImagenProducto === 'function') {
+        mostrarPlaceholderImagenProducto(imageContainer, producto.nombre);
+    }
+    imageLink.appendChild(imageContainer);
+    imageWrap.appendChild(imageLink);
+
+    if (agotado) {
+        var overlay = document.createElement('div');
+        overlay.className = 'product-out-of-stock-overlay';
+        overlay.setAttribute('aria-hidden', 'true');
+        overlay.innerHTML = '<span>AGOTADO</span>';
+        imageWrap.appendChild(overlay);
+    }
+
+    if (typeof adjuntarRefEnImagen === 'function') {
+        adjuntarRefEnImagen(imageWrap, producto);
+    }
+
+    card.appendChild(imageWrap);
+
+    var info = document.createElement('div');
+    info.className = 'product-info';
+    var btnTexto = agotado ? 'Agotado' : 'Agregar al Carrito';
+    var btnClase = 'add-to-cart-carousel' + (agotado ? ' agotado' : '');
+    var precioHtml = typeof htmlPrecioListadoProducto === 'function'
+        ? htmlPrecioListadoProducto(producto, { sinBadgeOferta: true })
+        : ('<p class="product-price">$' + formatearPrecio(typeof precioVigenteProducto === 'function' ? precioVigenteProducto(producto) : producto.precio) + '</p>');
+    info.innerHTML =
+        '<h3 class="product-name">' + String(producto.nombre || 'Artículo').replace(/</g, '&lt;') + '</h3>' +
+        '<p class="product-size">Talla: ' + String(producto.talla || '—').replace(/</g, '&lt;') + '</p>' +
+        precioHtml +
+        '<button type="button" class="' + btnClase + '" data-product-id="' + producto.id + '"' + (agotado ? ' disabled' : '') + '>' + btnTexto + '</button>';
+
+    card.appendChild(info);
+
+    var addBtn = info.querySelector('.add-to-cart-carousel');
+    if (addBtn && !agotado && typeof agregarAlCarrito === 'function') {
+        addBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            agregarAlCarrito(producto, { button: addBtn });
+        });
+    }
+
+    return card;
+}
+
+function pintarSugerenciasBusquedaDrawer(suggestionsEl, term, onPick) {
+    if (!suggestionsEl) return;
+    var q = String(term || '').trim();
+    if (!q) {
+        suggestionsEl.hidden = true;
+        suggestionsEl.innerHTML = '';
+        return;
+    }
+    var hits = filtrarBusquedaHome(q).slice(0, 8);
+    if (!hits.length) {
+        suggestionsEl.hidden = true;
+        suggestionsEl.innerHTML = '';
+        return;
+    }
+    var label = document.createElement('p');
+    label.className = 'home-search-drawer-suggestions-label';
+    label.textContent = 'Sugerencias';
+    suggestionsEl.innerHTML = '';
+    suggestionsEl.appendChild(label);
+    hits.forEach(function (p) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'home-search-suggestion';
+        var nom = String(p.nombre || 'Artículo').replace(/</g, '&lt;');
+        btn.innerHTML = '<span class="home-search-suggestion-ref">#' + p.id + '</span><span class="home-search-suggestion-name">' + nom + '</span>';
+        btn.addEventListener('click', function () {
+            if (typeof onPick === 'function') {
+                onPick(p);
+            }
+        });
+        suggestionsEl.appendChild(btn);
+    });
+    suggestionsEl.hidden = false;
+}
+
+function actualizarBusquedaDrawerEnHome(opts) {
+    var resultsEl = opts.resultsEl;
+    var hintEl = opts.hintEl;
+    var suggestionsEl = opts.suggestionsEl;
+    var term = opts.term;
+    if (!resultsEl) return;
+    resultsEl.innerHTML = '';
+    var q = String(term || '').trim();
+    if (hintEl) {
+        hintEl.hidden = !!q;
+    }
+    pintarSugerenciasBusquedaDrawer(suggestionsEl, q, opts.onPickSuggestion);
+    if (!q) {
+        return;
+    }
+    var hits = filtrarBusquedaHome(q).slice(0, 30);
+    if (!hits.length) {
+        var vacio = document.createElement('p');
+        vacio.className = 'home-search-drawer-empty';
+        vacio.textContent = 'No encontramos artículos con “' + q + '”.';
+        resultsEl.appendChild(vacio);
+        return;
+    }
+    hits.forEach(function (p) {
+        resultsEl.appendChild(crearTarjetaProductoBusquedaHome(p));
+    });
+    var verTodos = document.createElement('button');
+    verTodos.type = 'button';
+    verTodos.className = 'home-search-ver-todos-drawer';
+    verTodos.textContent = 'Ver todos en tienda';
+    verTodos.addEventListener('click', function () {
+        irBusquedaCompleta(q);
+    });
+    resultsEl.appendChild(verTodos);
+}
+
+function inicializarBusquedaHome() {
+    if (!document.body.classList.contains('page-home')) return;
+
+    var overlay = document.getElementById('homeSearchOverlay');
+    var drawer = document.getElementById('homeSearchDrawer');
+    var backdrop = document.getElementById('homeSearchBackdrop');
+    var closeBtn = document.getElementById('homeSearchDrawerClose');
+    var form = document.getElementById('homeSearchDrawerForm');
+    var input = document.getElementById('homeSearchDrawerInput');
+    var results = document.getElementById('homeSearchDrawerResults');
+    var suggestions = document.getElementById('homeSearchDrawerSuggestions');
+    var hint = document.getElementById('homeSearchDrawerHint');
+    var toggle = document.getElementById('homeSearchToggle');
+    var headerInput = document.getElementById('homeHeaderSearchInput');
+    var headerForm = document.getElementById('homeHeaderSearchForm');
+
+    if (!overlay || !drawer || !input) return;
+
+    var timer;
+
+    function setBusquedaExpandida(expandido) {
+        if (toggle) toggle.setAttribute('aria-expanded', expandido ? 'true' : 'false');
+        if (headerInput) headerInput.setAttribute('aria-expanded', expandido ? 'true' : 'false');
+    }
+
+    function sincronizarDesdeHeader() {
+        if (headerInput && input.value !== headerInput.value) {
+            input.value = headerInput.value;
+        }
+    }
+
+    function sincronizarHaciaHeader() {
+        if (headerInput && headerInput.value !== input.value) {
+            headerInput.value = input.value;
+        }
+    }
+
+    function refrescarBusquedaDrawer() {
+        actualizarBusquedaDrawerEnHome({
+            resultsEl: results,
+            hintEl: hint,
+            suggestionsEl: suggestions,
+            term: input.value,
+            onPickSuggestion: function (p) {
+                input.value = String(p.nombre || p.id || '');
+                refrescarBusquedaDrawer();
+                input.focus();
+            }
+        });
+    }
+
+    function abrirPanel() {
+        if (typeof window.__obebeCerrarMenuMovil === 'function') {
+            window.__obebeCerrarMenuMovil();
+        }
+        overlay.hidden = false;
+        requestAnimationFrame(function () {
+            overlay.classList.add('is-open');
+        });
+        document.body.classList.add('home-search-open');
+        setBusquedaExpandida(true);
+        sincronizarDesdeHeader();
+        setTimeout(function () {
+            if (document.activeElement !== headerInput) {
+                input.focus();
+            }
+        }, 80);
+    }
+
+    function cerrarPanel() {
+        overlay.classList.remove('is-open');
+        document.body.classList.remove('home-search-open');
+        setBusquedaExpandida(false);
+        sincronizarHaciaHeader();
+        setTimeout(function () {
+            overlay.hidden = true;
+        }, 320);
+    }
+
+    if (toggle) {
+        toggle.addEventListener('click', function () {
+            if (overlay.classList.contains('is-open') || !overlay.hidden) {
+                cerrarPanel();
+            } else {
+                abrirPanel();
+            }
+        });
+    }
+
+    if (headerInput) {
+        headerInput.addEventListener('focus', function () {
+            sincronizarDesdeHeader();
+            if (!overlay.classList.contains('is-open')) {
+                abrirPanel();
+            }
+        });
+        headerInput.addEventListener('input', function () {
+            input.value = headerInput.value;
+            if (!overlay.classList.contains('is-open')) {
+                abrirPanel();
+            }
+            clearTimeout(timer);
+            timer = setTimeout(refrescarBusquedaDrawer, 160);
+        });
+    }
+
+    if (headerForm) {
+        headerForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            sincronizarDesdeHeader();
+            if (!input.value.trim()) {
+                abrirPanel();
+                return;
+            }
+            abrirPanel();
+            refrescarBusquedaDrawer();
+        });
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', cerrarPanel);
+    if (backdrop) backdrop.addEventListener('click', cerrarPanel);
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay.classList.contains('is-open')) {
+            cerrarPanel();
+        }
+    });
+
+    input.addEventListener('input', function () {
+        sincronizarHaciaHeader();
+        clearTimeout(timer);
+        timer = setTimeout(refrescarBusquedaDrawer, 160);
+    });
+
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (!input.value.trim()) return;
+            refrescarBusquedaDrawer();
+        });
+    }
+}
+
 // Inicializar cuando el DOM esta listo (solo en index; en productos/producto lo hace productos.js)
 function arrancarIndexPagina() {
     if (window.__obebeIndexIniciado) return;
@@ -1671,6 +2113,15 @@ function arrancarIndexPagina() {
 
     const isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
     if (!isIndexPage) return;
+
+    actualizarScrollbarCompensacion();
+    window.addEventListener('resize', actualizarScrollbarCompensacion);
+    window.addEventListener('resize', actualizarLayoutPromoYMenu);
+    if (document.querySelector('.promo-bar')) {
+        requestAnimationFrame(actualizarLayoutPromoYMenu);
+        setTimeout(actualizarLayoutPromoYMenu, 120);
+    }
+    inicializarBusquedaHome();
 
     var esInstagramInApp = /Instagram|FB_IAB|FBAV/i.test(navigator.userAgent);
     if (esInstagramInApp) {

@@ -43,16 +43,16 @@ header .container{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;ali
 .hero-text{color:#fff;max-width:500px}
 .hero-text h2{margin:0 0 .5rem;font-size:1.75rem;text-shadow:2px 2px 4px rgba(0,0,0,.5)}
 .hero-link{color:#fff;text-decoration:underline;font-weight:600}
-main,.container{max-width:1200px;margin:0 auto}
+.container{max-width:1200px;margin:0 auto}
 .inventory{padding:2rem 0}
 footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3px solid #1a1a1a}
-@media(max-width:768px){.hero-slides{height:auto;aspect-ratio:819/1024;max-height:92vh}.mobile-menu-btn{display:flex}}
+@media(max-width:768px){.hero-slides{height:auto;aspect-ratio:819/1024;max-height:92vh}.mobile-menu-btn{display:flex}.home-menu-overlay.is-open .home-menu-drawer{display:flex!important;background:#fff!important;color:#1a1a1a!important;transform:translateX(0)!important}.home-menu-drawer-head{display:flex!important;background:#fff!important;color:#1a1a1a!important;padding:.85rem 1rem;border-bottom:1px solid #e0e0e0}.home-menu-drawer-title{color:#1a1a1a!important;font-weight:700}.home-menu-drawer-links{display:flex!important;flex-direction:column;gap:.55rem;padding:.85rem 1.15rem;background:#fff!important}.home-menu-overlay.is-open .home-menu-drawer .category-btn{color:#1a1a1a!important;background:#fff!important;border:2px solid #1a1a1a!important;font-size:.95rem!important;display:flex!important;min-height:46px}}
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261110c" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20261110c"></noscript>
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261110ze" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20261110ze"></noscript>
     <script>
     // Respaldo: si el onload del <link> no dispara, la hoja quedaria en media=print y sin aplicar.
     (function(w, d) {
@@ -66,14 +66,8 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
     })(window, document);
     </script>
     <link rel="preload" as="image" type="image/webp" href="PORTADA1-movil.webp?v=20260734" media="(max-width: 768px)">
-    <link rel="preload" as="image" type="image/webp" href="PORTADA1.webp?v=20260734" media="(min-width: 769px)">
+    <link rel="preload" as="image" type="image/jpeg" href="secciones/PORTADA1-computadora.jpeg?v=20261110i" media="(min-width: 769px)">
     <style>
-        /* En desktop: texto de la barra promocional un poco a la derecha */
-        @media (min-width: 769px) {
-            .promo-bar .promo-messages {
-                transform: translateX(2rem);
-            }
-        }
         /* Icono del carrito mismo tamaño que en productos.html (45px) */
         .cart-icon-btn {
             width: 45px !important;
@@ -86,9 +80,9 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
         }
     </style>
 </head>
-<body>
+<body class="page-home">
     <div class="promo-bar">
-        <div class="promo-container">
+        <div class="promo-container container">
             <div class="promo-messages">
                 <div class="promo-message active">Repartos en Querétaro</div>
                 <div class="promo-message">Descuento por mayoreo</div>
@@ -116,18 +110,17 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                 </div>
             </a>
             <div class="header-right">
-                <div class="social-links">
-                <a href="https://www.instagram.com/obebeclothes/" target="_blank" class="social-link instagram" aria-label="Instagram">
-                    <svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                    </svg>
-                </a>
-                <a href="https://wa.me/524462207365?text=Hola%20bro%2C%20me%20gustar%C3%ADa%20comprar%20algunos%20art%C3%ADculos%20GymShark" target="_blank" class="social-link whatsapp" aria-label="WhatsApp">
-                    <svg class="social-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                    </svg>
-                </a>
+                <div class="header-home-search-bar" id="headerHomeSearchBar">
+                    <form class="header-home-search-form header-home-search-form--inline" id="homeHeaderSearchForm" role="search" action="productos.html" method="get">
+                        <span class="header-home-search-form-icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14z"/></svg>
+                        </span>
+                        <input type="search" class="header-home-search-input header-home-search-input--inline" id="homeHeaderSearchInput" name="q" placeholder="Buscar" aria-label="Buscar artículos" autocomplete="off" enterkeyhint="search">
+                    </form>
                 </div>
+                <button type="button" class="home-search-toggle" id="homeSearchToggle" aria-label="Buscar artículos" aria-expanded="false" aria-controls="homeSearchDrawer">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14z"/></svg>
+                </button>
                 <button class="cart-icon-btn" id="cartIconBtn" aria-label="Carrito de compras">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
                         <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
@@ -136,13 +129,6 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                 </button>
             </div>
         </div>
-        <nav class="mobile-nav" id="mobileNav" aria-label="Menú móvil">
-            <a href="index.html" class="category-btn" id="btnHomeMobile">Home</a>
-            <a href="productos.html?categoria=Hombre" class="category-btn" id="btnHombreMobile">Hombre</a>
-            <a href="productos.html?categoria=Mujer" class="category-btn" id="btnMujerMobile">Mujer</a>
-            <a href="productos.html?mayoreo50=1" class="category-btn" id="btnMayoreoMobile">Mayoreo</a>
-            <a href="cotizador.html" class="category-btn" id="btnCotizadorMobile">Cotizador</a>
-        </nav>
     </header>
 
     <main>
@@ -151,13 +137,16 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                 <div class="hero-slide hero-slide--portada active" data-hero-slide="portada">
                     <picture>
                         <source media="(max-width: 768px)" srcset="PORTADA1-movil.webp?v=20260734" type="image/webp">
-                        <source srcset="PORTADA1.webp?v=20260734" type="image/webp">
-                        <img src="PORTADA1.jpeg?v=20260716" alt="Obebe Clothes" decoding="async" fetchpriority="high" width="819" height="1024">
+                        <source media="(min-width: 769px)" srcset="secciones/PORTADA1-computadora.jpeg?v=20261110i" type="image/jpeg">
+                        <img src="PORTADA1-movil.webp?v=20260734" alt="Obebe Clothes" decoding="async" fetchpriority="high" width="819" height="1024">
                     </picture>
                 </div>
                 <div class="hero-slide hero-slide--cotizador" data-hero-slide="cotizador" aria-label="Cotiza tus prendas">
                     <a class="hero-cotizador-link" href="cotizador.html" aria-label="Cotiza tus prendas">
-                        <img src="secciones/cotizador.jpg?v=20261107f" alt="Cotiza tus prendas con Obebe" width="1200" height="1500" loading="lazy" decoding="async">
+                        <picture>
+                            <source media="(min-width: 769px)" srcset="secciones/cotizador-computadora.jpeg?v=20261110i" type="image/jpeg">
+                            <img src="secciones/cotizador.jpg?v=20261107f" alt="Cotiza tus prendas con Obebe" width="1200" height="1500" loading="lazy" decoding="async">
+                        </picture>
                         <span class="hero-cotizador-copy" aria-hidden="true">
                             <span class="hero-cotizador-label">COTIZA TUS PRENDAS</span>
                             <span class="hero-cotizador-sub">Ingresa el precio de tus prendas favoritas en USD y cotiza en MXN</span>
@@ -167,7 +156,10 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                 </div>
                 <div class="hero-slide hero-slide--mayoreo50" data-hero-slide="mayoreo50" aria-label="Mayoreo +50">
                     <a class="hero-mayoreo50-link" href="productos.html?mayoreo50=1" aria-label="Ver mayoreo +50">
-                        <img src="secciones/mayoreo-50.jpg?v=20260915m" alt="Mayoreo +50 Obebe" width="1200" height="1500" loading="lazy" decoding="async">
+                        <picture>
+                            <source media="(min-width: 769px)" srcset="secciones/mayoreo-50-computadora.jpeg?v=20261110i" type="image/jpeg">
+                            <img src="secciones/mayoreo-50.jpg?v=20260915m" alt="Mayoreo +50 Obebe" width="1200" height="1500" loading="lazy" decoding="async">
+                        </picture>
                         <span class="hero-mayoreo50-copy" aria-hidden="true">
                             <span class="hero-mayoreo50-label">MAYOREO +50</span>
                             <span class="hero-mayoreo50-sub">Compra por volumen y paga menos por prenda</span>
@@ -183,7 +175,10 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                 </div>
                 <div class="hero-slide hero-slide--nuevo" data-hero-slide="nuevo" aria-label="Lo nuevo">
                     <a class="hero-nuevo-link" href="productos.html?coleccion=NARUTO" aria-label="Ver coleccion destacada - Nuevo drop">
-                        <img src="colecciones/NEW-1.png?v=20260916n" alt="Lo nuevo en Obebe - coleccion NARUTO" width="819" height="1024" loading="lazy" decoding="async">
+                        <picture>
+                            <source media="(min-width: 769px)" srcset="secciones/NEW-1-computadora.jpeg?v=20261110i" type="image/jpeg">
+                            <img src="secciones/NEW-1.png?v=20260916n" alt="Lo nuevo en Obebe - coleccion NARUTO" width="819" height="1024" loading="lazy" decoding="async">
+                        </picture>
                         <span class="hero-nuevo-drop-label" aria-hidden="true">NUEVO DROP</span>
                         <span class="hero-nuevo-cta" aria-hidden="true">Ver nuevo drop</span>
                     </a>
@@ -215,14 +210,23 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
 
         <section id="inventario" class="inventory">
             <div class="container">
-                <div class="nuevo-stock-block">
+                <div class="nuevo-stock-block home-stock-cotizador-row">
                     <a href="productos.html?nuevoStock=1" class="nuevo-stock-cta home-tile-card home-tile-card--half home-tile-card--nuevo-foto" aria-label="Ver nuevo stock">
                         <div class="home-tile-photo-wrap coleccion-card-image" data-label="NUEVO STOCK">
                             <img src="secciones/nuevo-stock.jpg?v=20260915n" alt="" loading="lazy" width="160" height="190">
                         </div>
                         <div class="home-tile-card-caption home-tile-card-caption--nuevo-stock">
                             <span class="nuevo-stock-cta-text">Nuevo stock</span>
-                            <span class="nuevo-stock-cta-sub" id="nuevoStockFechaLabel">Ãšltima llegada</span>
+                            <span class="nuevo-stock-cta-sub" id="nuevoStockFechaLabel">Última llegada</span>
+                        </div>
+                    </a>
+                    <a href="cotizador.html" class="home-cotizador-tile home-tile-card home-tile-card--nuevo-foto home-tile-card--cotizador-home" aria-label="Cotiza tus prendas">
+                        <div class="home-tile-photo-wrap coleccion-card-image" data-label="COTIZADOR">
+                            <img src="secciones/cotizador.jpg?v=20261107f" alt="" loading="lazy" width="320" height="240">
+                        </div>
+                        <div class="home-tile-card-caption home-tile-card-caption--cotizador-home">
+                            <span class="nuevo-stock-cta-text">Cotizador</span>
+                            <span class="nuevo-stock-cta-sub">USD → MXN al instante</span>
                         </div>
                     </a>
                 </div>
@@ -354,6 +358,12 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                                     <div class="home-tile-photo-wrap coleccion-card-image" data-label="ALO YOGA">
                                         <img src="secciones/marca-aloyoga.webp?v=20261021e" alt="" loading="lazy" width="160" height="150">
                                         <span class="home-tile-marca-label home-tile-marca-label--aloyoga">ALO YOGA</span>
+                                    </div>
+                                </a>
+                                <a href="productos.html?categoria=Hombre&marca=Breathdivinity" class="brand-pill brand-pill-breathdivinity home-tile-card home-tile-card--solo-imagen home-tile-card--marca-centro" aria-label="Breathdivinity">
+                                    <div class="home-tile-photo-wrap coleccion-card-image" data-label="BREATHDIVINITY">
+                                        <img src="secciones/marca-breathdivinity.jpg?v=20261110p" alt="" loading="lazy" width="160" height="150">
+                                        <span class="home-tile-marca-label home-tile-marca-label--breathdivinity">BREATHDIVINITY</span>
                                     </div>
                                 </a>
                             </div>
@@ -503,6 +513,16 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
 
     </main>
 
+    <div class="home-fab-stack" aria-label="Redes y contacto">
+        <a href="https://www.instagram.com/obebeclothes/" class="home-fab home-fab--instagram" target="_blank" rel="noopener" aria-label="Instagram">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zm0 10.162a3.999 3.999 0 1 1 0-7.998 3.999 3.999 0 0 1 0 7.998zm6.406-11.845a1.44 1.44 0 1 1-2.881.001 1.44 1.44 0 0 1 2.881-.001z"/></svg>
+        </a>
+        <a href="https://wa.me/524462207365?text=Hola%20bro%2C%20me%20gustar%C3%ADa%20comprar%20algunos%20art%C3%ADculos%20GymShark" class="home-fab home-fab--whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        </a>
+        <a href="http://perfil.mercadolibre.com.mx/RODRIGUEZFLORESDANIEL1234" class="home-fab home-fab--mercadolibre" target="_blank" rel="noopener" aria-label="Mercado Libre">ML</a>
+    </div>
+
     <footer>
         <div class="container">
             <div class="footer-content">
@@ -533,6 +553,52 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
         </div>
     </footer>
 
+    <!-- Panel menú móvil home (4/5 pantalla) -->
+    <div class="home-menu-overlay" id="homeMenuOverlay" hidden>
+        <button type="button" class="home-menu-backdrop" id="homeMenuBackdrop" aria-label="Cerrar menú" tabindex="-1"></button>
+        <aside class="home-menu-drawer" id="mobileNav" aria-label="Menú móvil" role="dialog" aria-modal="true">
+            <div class="home-menu-drawer-head">
+                <span class="home-menu-drawer-title">Menú</span>
+                <button type="button" class="home-menu-drawer-close" id="homeMenuDrawerClose" aria-label="Cerrar menú">&times;</button>
+            </div>
+            <div class="home-menu-drawer-links">
+            <a href="index.html" class="category-btn" id="btnHomeMobile">Home</a>
+            <a href="productos.html?categoria=Hombre" class="category-btn" id="btnHombreMobile">Hombre</a>
+            <a href="productos.html?categoria=Mujer" class="category-btn" id="btnMujerMobile">Mujer</a>
+            <a href="productos.html?mayoreo50=1" class="category-btn" id="btnMayoreoMobile">Mayoreo</a>
+            <a href="cotizador.html" class="category-btn" id="btnCotizadorMobile">Cotizador</a>
+            </div>
+            <div class="mobile-nav-contact" aria-label="Contacto y ventas">
+                <a href="https://wa.me/524462207365?text=Hola%20bro%2C%20me%20gustar%C3%ADa%20comprar%20algunos%20art%C3%ADculos%20GymShark" class="mobile-nav-social mobile-nav-social--whatsapp" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                    WhatsApp
+                </a>
+                <a href="http://perfil.mercadolibre.com.mx/RODRIGUEZFLORESDANIEL1234" class="mobile-nav-social mobile-nav-social--mercadolibre" target="_blank" rel="noopener noreferrer" aria-label="Mercado Libre">ML</a>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Panel de búsqueda (4/5 pantalla) -->
+    <div class="home-search-overlay" id="homeSearchOverlay" hidden>
+        <button type="button" class="home-search-backdrop" id="homeSearchBackdrop" aria-label="Cerrar búsqueda" tabindex="-1"></button>
+        <aside class="home-search-drawer" id="homeSearchDrawer" role="dialog" aria-modal="true" aria-label="Buscar artículos">
+            <div class="home-search-drawer-head">
+                <form class="home-search-drawer-form" id="homeSearchDrawerForm" role="search" action="productos.html" method="get">
+                    <input type="search" class="header-home-search-input home-search-drawer-input" id="homeSearchDrawerInput" name="q" placeholder="Buscar por nombre o ref…" aria-label="Buscar por nombre o número de ref" autocomplete="off" enterkeyhint="search">
+                    <button type="submit" class="header-home-search-submit" aria-label="Buscar">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14z"/></svg>
+                    </button>
+                </form>
+                <button type="button" class="home-search-drawer-close" id="homeSearchDrawerClose" aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="home-search-drawer-suggestions" id="homeSearchDrawerSuggestions" hidden></div>
+            <div class="home-search-drawer-body" id="homeSearchDrawerBody">
+                <p class="home-search-drawer-hint" id="homeSearchDrawerHint">Escribe el nombre o el número de ref del artículo.</p>
+                <div class="home-search-drawer-results" id="homeSearchDrawerResults"></div>
+            </div>
+        </aside>
+    </div>
+
     <!-- Modal del Carrito -->
     <div class="cart-modal" id="cartModal">
         <div class="cart-sidebar">
@@ -559,9 +625,9 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
         </div>
     </div>
 
-    <script defer src="productos-hombre.js?v=20261108b"></script>
-    <script defer src="productos-mujer.js?v=20261021c"></script>
-    <script defer src="script.js?v=20261107j"></script>
+    <script defer src="productos-hombre.js?v=20261110u"></script>
+    <script defer src="productos-mujer.js?v=20261110u"></script>
+    <script defer src="script.js?v=20261110ze"></script>
     <script defer src="productos.js?v=20261114"></script>
     <script defer src="obebe-listo.js?v=20261108a"></script>
     <script>

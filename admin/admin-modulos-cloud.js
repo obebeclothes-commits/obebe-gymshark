@@ -375,21 +375,27 @@
             });
     }
 
+    function pushCotizadorNow() {
+        if (!canSync()) return Promise.resolve({ ok: false, offline: true });
+        var Store = global.ObebeCotizadorStore;
+        return ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
+            moduleKey: 'cotizador',
+            payload: Store ? Store.payloadParaCloud(Store.leer()) : []
+        }).then(function () { return { ok: true }; }).catch(function (err) {
+            var msg = (err && err.message) ? String(err.message) : String(err);
+            if (msg.indexOf('moduleKey no permitido') === -1) {
+                console.warn('[admin-modulos-cloud] push cotizador', err);
+            }
+            return { ok: false, error: msg };
+        });
+    }
+
     function notifyCotizadorSaved() {
         if (!canSync()) return;
         if (pushTimers.cotizador) clearTimeout(pushTimers.cotizador);
         pushTimers.cotizador = setTimeout(function () {
             pushTimers.cotizador = null;
-            var Store = global.ObebeCotizadorStore;
-            ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
-                moduleKey: 'cotizador',
-                payload: Store ? Store.payloadParaCloud(Store.leer()) : []
-            }).catch(function (err) {
-                var msg = (err && err.message) ? String(err.message) : String(err);
-                if (msg.indexOf('moduleKey no permitido') === -1) {
-                    console.warn('[admin-modulos-cloud] push cotizador', err);
-                }
-            });
+            pushCotizadorNow();
         }, 500);
     }
 
@@ -400,6 +406,7 @@
         syncSucursales: syncEntregasYSucursales,
         syncCompras: syncEntregasYSucursales,
         syncCotizador: syncCotizador,
+        pushCotizadorNow: pushCotizadorNow,
         notifyApartadosSaved: function () { programarPush('apartados', KEYS.apartados); },
         notifyEntregasSaved: programarPushEntregas,
         notifySucursalesSaved: programarPushSucursales,
