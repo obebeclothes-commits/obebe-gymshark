@@ -1,5 +1,5 @@
 /**
- * Inventario INVENTARIO (Google Sheet): columnas A–Y por título de encabezado,
+ * Inventario INVENTARIO (Supabase / admin): columnas A–Y por título de encabezado,
  * no por letra fija — si mueves columnas, basta con mantener el texto del título.
  */
 (function (global) {

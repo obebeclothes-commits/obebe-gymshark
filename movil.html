@@ -2597,7 +2597,7 @@ footer {
     <script>
 // =============================================================================
 // STOCK HOMBRE — Generado automáticamente con scripts/importar-stock.py
-// Fuente: Google Sheets (hoja INVENTARIO, columna T = HOMBRE/MUJER)
+// Fuente: Supabase inventario_filas
 // Edita el sheet y vuelve a ejecutar el script para actualizar.
 // =============================================================================
 const productosHombre = [
@@ -5776,7 +5776,7 @@ const productosHombre = [
     <script>
 // =============================================================================
 // STOCK MUJER — Generado automáticamente con scripts/importar-stock.py
-// Fuente: Google Sheets (hoja INVENTARIO, columna T = HOMBRE/MUJER)
+// Fuente: Supabase inventario_filas
 // Edita el sheet y vuelve a ejecutar el script para actualizar.
 // =============================================================================
 const productosMujer = [
@@ -10514,7 +10514,7 @@ function arrancarProductosPagina() {
 </script>
     <script>
 (function(w, d) {
-    var VERSION = '20261108a';
+    var VERSION = '20261112a';
 
     function cargarExtra(src, alTerminar) {
         if (d.querySelector('script[data-obebe-extra="' + src + '"]')) {
@@ -10530,23 +10530,26 @@ function arrancarProductosPagina() {
         d.body.appendChild(el);
     }
 
-    function syncStockEnBackground() {
-        if (typeof w.sincronizarStockDesdeSheets !== 'function') return;
-        w.sincronizarStockDesdeSheets().then(function() {
-            if (typeof w.refrescarTiendaTrasSyncStock === 'function') {
-                w.refrescarTiendaTrasSyncStock();
-            }
-        }).catch(function() {});
-    }
-
-    if (!w.__obebeScriptsReadyDisparado) {
+    function dispararScriptsReady() {
+        if (w.__obebeScriptsReadyDisparado) return;
         w.__obebeScriptsReadyDisparado = true;
         d.dispatchEvent(new Event('obebe-scripts-ready'));
     }
 
+    function arrancarInventarioYTienda() {
+        if (typeof w.aplicarInventarioCacheTienda === 'function') {
+            w.aplicarInventarioCacheTienda();
+        }
+        if (typeof w.sincronizarStockDesdeSheets !== 'function') {
+            dispararScriptsReady();
+            return;
+        }
+        w.sincronizarStockDesdeSheets().catch(function() {}).finally(dispararScriptsReady);
+    }
+
     cargarExtra('obebe-data-config.js', function() {
         cargarExtra('inventario-columnas.js', function() {
-            cargarExtra('stock-sheet.js', syncStockEnBackground);
+            cargarExtra('stock-sheet.js', arrancarInventarioYTienda);
         });
     });
     cargarExtra('mercadolibre-web.js', function() {

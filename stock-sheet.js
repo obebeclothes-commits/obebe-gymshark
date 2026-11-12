@@ -1,5 +1,5 @@
-// Sincroniza stock, precio, tipo, color, talla y marca desde Google Sheets al cargar la página.
-// Los filtros de la tienda usan los valores del sheet (solo filas con stock > 0).
+// Sincroniza stock, precio, tipo, color, talla y marca desde Supabase (inventario_filas) al cargar la tienda.
+// Los filtros usan los valores del inventario remoto (misma fuente que el panel admin).
 (function() {
     var SPREADSHEET_ID = '195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko';
     var HOJA_INVENTARIO = 'INVENTARIO';
@@ -951,8 +951,35 @@
             opcionesSheet.Mujer = datosMujer.opciones;
         }
         window.opcionesInventarioSheet = opcionesSheet;
+        try {
+            guardarInventarioCacheTienda(csv);
+        } catch (eCache) { /* quota u otro */ }
         return opcionesSheet;
     }
+
+    var CACHE_INVENTARIO_CSV_KEY = 'obebe_inventario_csv_v2';
+
+    function guardarInventarioCacheTienda(csv) {
+        if (!csv || typeof localStorage === 'undefined') return;
+        var texto = String(csv);
+        if (texto.length < 20 || texto.length > 4500000) return;
+        localStorage.setItem(CACHE_INVENTARIO_CSV_KEY, texto);
+        localStorage.setItem(CACHE_INVENTARIO_CSV_KEY + '_ts', String(Date.now()));
+    }
+
+    function aplicarInventarioCacheTienda() {
+        if (typeof localStorage === 'undefined') return false;
+        try {
+            var csv = localStorage.getItem(CACHE_INVENTARIO_CSV_KEY);
+            if (!csv || csv.length < 20) return false;
+            sincronizarDesdeCsv(csv);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    window.aplicarInventarioCacheTienda = aplicarInventarioCacheTienda;
 
     function usarSupabaseTienda() {
         var cfg = window.OBEBE_DATA_CONFIG || {};
@@ -1020,34 +1047,15 @@
 
         window.__obebeSheetSyncOk = false;
 
-        if (usarSupabaseTienda()) {
-            return sincronizarDesdeSupabase().catch(function(err) {
-                window.__obebeSheetSyncOk = false;
-                console.warn('[stock-sheet] inventario supabase:', err);
-                return null;
-            });
-        }
-
-        return descargarCsv(urlExport(GID_INVENTARIO), HOJA_INVENTARIO)
-            .catch(function() {
-                console.warn('[stock-sheet] Reintento export ' + HOJA_INVENTARIO);
-                return descargarCsv(urlExport(GID_INVENTARIO), HOJA_INVENTARIO);
-            })
-            .catch(function() {
-                console.warn('[stock-sheet] Probando hoja legacy ' + HOJA_INVENTARIO_LEGACY);
-                return descargarCsv(urlCsvHojaCompleta(HOJA_INVENTARIO_LEGACY), HOJA_INVENTARIO_LEGACY);
-            })
-            .then(function(csv) {
-                sincronizarDesdeCsv(csv);
-            })
-            .catch(function(err) {
-                window.__obebeSheetSyncOk = false;
-                console.warn('[stock-sheet] inventario:', err);
-                return null;
-            });
+        return sincronizarDesdeSupabase().catch(function(err) {
+            window.__obebeSheetSyncOk = false;
+            console.warn('[stock-sheet] inventario supabase:', err);
+            return null;
+        });
     };
 
     window.refrescarTiendaTrasSyncStock = function() {
+        if (!window.__obebeProductosIniciado && !window.__obebeIndexIniciado) return;
         if (typeof actualizarEtiquetaNuevoStock === 'function') actualizarEtiquetaNuevoStock();
         if (typeof window.obebeActualizarTituloPaginaFn === 'function') {
             window.obebeActualizarTituloPaginaFn();

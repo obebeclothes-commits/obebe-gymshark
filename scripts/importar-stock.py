@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 """
-Importa stock desde Google Sheets y genera productos-hombre.js (o productos-mujer.js).
+Genera productos-hombre.js o productos-mujer.js desde inventario_filas en Supabase.
 
 Uso:
   python scripts/importar-stock.py hombre
-  python scripts/importar-stock.py hombre --dry-run
   python scripts/importar-stock.py mujer
+  python scripts/importar-stock.py hombre --dry-run
 
-Requisitos:
-  - La hoja debe estar compartida como "Cualquier persona con el enlace puede ver".
-  - La hoja INVENTARIO unifica hombre y mujer; columna T = HOMBRE o MUJER.
-  - Columna J puede mostrar vista previa con scripts/actualizar-columna-j-imagenes.py
-  - Se importan filas con nombre y precio válidos (incluye stock 0 / agotados).
+Se importan filas con nombre y precio válidos (incluye stock 0 / agotados).
 """
 
 from __future__ import annotations
@@ -88,6 +84,38 @@ MESES_FECHA_STOCK = {
 }
 
 FILA_INICIO_DATOS = 3  # Primera fila de producto (fila 1 = título, fila 2 = encabezados)
+
+SUPABASE_URL = "https://yueajorzawaanubgekpm.supabase.co"
+SUPABASE_ANON = "sb_publishable_eML6LBPIdOyq0XRX2r6uEw_HCAsGAbp"
+NUM_COLS_INVENTARIO = 29
+
+TITULOS_INVENTARIO_DEFAULT = [
+    "NO. IMAGEN",
+    "ARTICULO",
+    "CANTIDAD",
+    "TALLA",
+    "COLOR",
+    "TIPO",
+    "MARCA",
+    "PRECIO RETAIL",
+    "TOTAL",
+    "FOTO",
+    "FECHA DE LLEGADA",
+    "COSTO BRUTO",
+    "COSTO NETO",
+    "INVERSION",
+    "MARGEN",
+    "MAYOREO +20",
+    "%MAYOREO +20",
+    "APLICA MAYOREO",
+    "FALTANTE",
+    "GENERO",
+    "CARRUSEL",
+    "MAYOREO +50",
+    "%MAYOREO +50",
+    "COLECCION",
+    "OFERTA SEMANAL",
+]
 
 # -----------------------------------------------------------------------------
 # Normalización
@@ -194,6 +222,50 @@ def descargar_csv_por_gid(spreadsheet_id: str, gid: int) -> str:
         f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
         f"/export?format=csv&gid={gid}"
     )
+
+
+def _esc_celda_csv(valor) -> str:
+    s = str(valor if valor is not None else "")
+    if re.search(r'[",\n\r]', s):
+        return '"' + s.replace('"', '""') + '"'
+    return s
+
+
+def descargar_csv_supabase() -> str:
+    """Inventario vigente en producción (misma fuente que la tienda en vivo)."""
+    url = (
+        f"{SUPABASE_URL.rstrip('/')}/rest/v1/inventario_filas"
+        "?select=celdas&order=id.asc&limit=5000"
+    )
+    req = urllib.request.Request(
+        url,
+        headers={
+            "apikey": SUPABASE_ANON,
+            "Authorization": f"Bearer {SUPABASE_ANON}",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            rows = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(f"No se pudo leer inventario Supabase (HTTP {exc.code})") from exc
+    except (TimeoutError, urllib.error.URLError) as exc:
+        raise RuntimeError(f"Error de red al leer Supabase: {exc}") from exc
+
+    titulos = list(TITULOS_INVENTARIO_DEFAULT)
+    while len(titulos) < NUM_COLS_INVENTARIO:
+        titulos.append("")
+    lineas = [
+        "",
+        ",".join(_esc_celda_csv(t) for t in titulos),
+    ]
+    for fila in rows:
+        celdas = fila.get("celdas") if isinstance(fila, dict) else None
+        if not isinstance(celdas, list):
+            celdas = []
+        cols = [_esc_celda_csv(celdas[i] if i < len(celdas) else "") for i in range(NUM_COLS_INVENTARIO)]
+        lineas.append(",".join(cols))
+    return "\n".join(lineas)
 
 
 def descargar_hoja_inventario(spreadsheet_id: str = SPREADSHEET_ID) -> str:
@@ -664,12 +736,21 @@ def producto_a_js(producto: dict, indent: str = "    ") -> str:
     return "\n".join(lineas)
 
 
-def generar_archivo_js(productos: list[dict], variable_js: str, categoria: str) -> str:
+def generar_archivo_js(
+    productos: list[dict],
+    variable_js: str,
+    categoria: str,
+    fuente: str = "sheets",
+) -> str:
     bloques = ",\n".join(producto_a_js(p) for p in productos)
+    slug = categoria.strip().lower()
+    fuente_txt = (
+        f"Fuente: Supabase inventario_filas (misma que la tienda en vivo).\n"
+        f"// Regenerar: python scripts/importar-stock.py {slug}"
+    )
     return f"""// =============================================================================
 // STOCK {categoria.upper()} — Generado automáticamente con scripts/importar-stock.py
-// Fuente: Google Sheets (hoja {HOJA_INVENTARIO}, columna T = HOMBRE/MUJER)
-// Edita el sheet y vuelve a ejecutar el script para actualizar.
+// {fuente_txt}
 // =============================================================================
 const {variable_js} = [
 {bloques}
@@ -711,7 +792,7 @@ def contar_imagenes_faltantes(productos: list[dict], carpeta: Path) -> list[int]
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Importar stock desde Google Sheets")
+    parser = argparse.ArgumentParser(description="Generar catálogo JS desde inventario Supabase")
     parser.add_argument(
         "hoja",
         choices=sorted(HOJAS.keys()),
@@ -726,6 +807,11 @@ def main() -> int:
         "--sheet",
         help="Sobrescribe el nombre de la hoja (ej. MUJER)",
     )
+    parser.add_argument(
+        "--from-sheets",
+        action="store_true",
+        help="(obsoleto) No usar salvo emergencia; el inventario oficial está en Supabase.",
+    )
     args = parser.parse_args()
 
     config = HOJAS[args.hoja]
@@ -734,16 +820,22 @@ def main() -> int:
     carpeta_img = raiz / config["carpeta_imagenes"]
     archivo_salida = raiz / config["archivo_salida"]
 
-    print(f"Descargando hoja '{nombre_hoja}'...")
-    if nombre_hoja == HOJA_INVENTARIO:
-        csv_texto = descargar_hoja_inventario(SPREADSHEET_ID)
+    fuente = "sheets" if args.from_sheets else "supabase"
+    if args.from_sheets:
+        print("[!] Modo obsoleto: importando desde Google Sheets...")
+        if nombre_hoja == HOJA_INVENTARIO:
+            csv_texto = descargar_hoja_inventario(SPREADSHEET_ID)
+        else:
+            try:
+                csv_texto = descargar_csv(SPREADSHEET_ID, nombre_hoja)
+            except RuntimeError:
+                print(f"  No se encontró '{nombre_hoja}', probando '{HOJA_INVENTARIO_LEGACY}'...")
+                csv_texto = descargar_csv(SPREADSHEET_ID, HOJA_INVENTARIO_LEGACY)
+                nombre_hoja = HOJA_INVENTARIO_LEGACY
     else:
-        try:
-            csv_texto = descargar_csv(SPREADSHEET_ID, nombre_hoja)
-        except RuntimeError:
-            print(f"  No se encontró '{nombre_hoja}', probando '{HOJA_INVENTARIO_LEGACY}'...")
-            csv_texto = descargar_csv(SPREADSHEET_ID, HOJA_INVENTARIO_LEGACY)
-            nombre_hoja = HOJA_INVENTARIO_LEGACY
+        print("Descargando inventario desde Supabase...")
+        csv_texto = descargar_csv_supabase()
+        nombre_hoja = HOJA_INVENTARIO
 
     print("Procesando filas...")
     productos = leer_productos_desde_csv(
@@ -770,7 +862,7 @@ def main() -> int:
     print(f"  Imágenes faltantes en {config['carpeta_imagenes']}/: {len(faltantes)}")
     sin_cat = filas_sin_categoria_en_catalogo(csv_texto, raiz, nombre_hoja)
     if sin_cat:
-        print(f"  [!] {len(sin_cat)} fila(s) del sheet no entran en Hombre ni Mujer (revisa T/AB/fotos):")
+        print(f"  [!] {len(sin_cat)} fila(s) del inventario no entran en Hombre ni Mujer (revisa T/AB/fotos):")
         for item in sin_cat[:15]:
             print(f"      fila {item['fila']} A={item['ref']} — {item['nombre'][:50]}")
     if faltantes and len(faltantes) <= 20:
@@ -785,7 +877,7 @@ def main() -> int:
             print(f"  #{p['id']} {p['nombre']} | stock={p['stock']} | {p['marca']} | ${p['precio']:.2f}")
         return 0
 
-    contenido = generar_archivo_js(productos, config["variable_js"], config["categoria"])
+    contenido = generar_archivo_js(productos, config["variable_js"], config["categoria"], fuente)
     archivo_salida.write_text(contenido, encoding="utf-8")
     print(f"\nArchivo generado: {archivo_salida}")
     print("Recarga http://localhost:5500 para ver los cambios.")

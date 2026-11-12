@@ -1,5 +1,5 @@
 (function(w, d) {
-    var VERSION = '20261108a';
+    var VERSION = '20261112a';
 
     function cargarExtra(src, alTerminar) {
         if (d.querySelector('script[data-obebe-extra="' + src + '"]')) {
@@ -15,23 +15,27 @@
         d.body.appendChild(el);
     }
 
-    function syncStockEnBackground() {
-        if (typeof w.sincronizarStockDesdeSheets !== 'function') return;
-        w.sincronizarStockDesdeSheets().then(function() {
-            if (typeof w.refrescarTiendaTrasSyncStock === 'function') {
-                w.refrescarTiendaTrasSyncStock();
-            }
-        }).catch(function() {});
-    }
-
-    if (!w.__obebeScriptsReadyDisparado) {
+    function dispararScriptsReady() {
+        if (w.__obebeScriptsReadyDisparado) return;
         w.__obebeScriptsReadyDisparado = true;
         d.dispatchEvent(new Event('obebe-scripts-ready'));
     }
 
+    /** Precios/stock vienen del inventario (Supabase); la tienda no debe pintar antes de sincronizar. */
+    function arrancarInventarioYTienda() {
+        if (typeof w.aplicarInventarioCacheTienda === 'function') {
+            w.aplicarInventarioCacheTienda();
+        }
+        if (typeof w.sincronizarStockDesdeSheets !== 'function') {
+            dispararScriptsReady();
+            return;
+        }
+        w.sincronizarStockDesdeSheets().catch(function() {}).finally(dispararScriptsReady);
+    }
+
     cargarExtra('obebe-data-config.js', function() {
         cargarExtra('inventario-columnas.js', function() {
-            cargarExtra('stock-sheet.js', syncStockEnBackground);
+            cargarExtra('stock-sheet.js', arrancarInventarioYTienda);
         });
     });
     cargarExtra('mercadolibre-web.js', function() {

@@ -467,8 +467,8 @@
     }
 
     function bannerFase() {
-        return '<div class="admin-banner info">Fase MVP: lectura desde Google Sheets (INVENTARIO). ' +
-            'Ventas, pedidos y escritura al Sheet llegarán con Apps Script. Sin Supabase todavía.</div>';
+        return '<div class="admin-banner info">Inventario, ventas y tienda en <strong>Supabase</strong>. ' +
+            'Actualiza <code>obebe-data-config.js</code> con el mismo proyecto.</div>';
     }
 
     function graficoBarrasVentas(buckets, titulo, meta, ariaLabel, optsChart) {
@@ -955,9 +955,9 @@
             return '<div class="admin-banner info">Ventas y stock en <strong>Supabase</strong>. La tienda debe usar <code>obebe-data-config.js</code> con el mismo origen.</div>';
         }
         if (ObebeAdminData.escrituraLocalHabilitada && ObebeAdminData.escrituraLocalHabilitada()) {
-            return '<div class="admin-banner warn">Modo <strong>solo admin (local)</strong>: no escribe en Google Sheets. Configura Supabase o <code>appsScriptUrl</code>.</div>';
+            return '<div class="admin-banner warn">Modo <strong>solo admin (local)</strong>: los cambios no se suben a Supabase ni a la tienda.</div>';
         }
-        return '<div class="admin-banner info">Las ventas se escriben en <strong>VENTAS (B–N)</strong> y bajan stock vía Apps Script.</div>';
+        return '<div class="admin-banner warn">Configura <code>admin-config.js</code> con <strong>dataSource: supabase</strong>.</div>';
     }
 
     function onVentaRegistradaDesdeRetail(res) {

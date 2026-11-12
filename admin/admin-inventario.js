@@ -908,7 +908,7 @@
 
         chain.then(function (res) {
             if (res && res.ok === false) throw new Error(res.error || 'Error al guardar');
-            state.msg = 'Cambios guardados en Google Sheets.';
+            state.msg = 'Cambios guardados en Supabase.';
             state.msgOk = true;
             state.modoEdicion = false;
             state.snapshot = null;

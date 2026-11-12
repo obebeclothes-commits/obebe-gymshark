@@ -1,13 +1,9 @@
 /**
- * dataSource: 'supabase' = inventario + ventas retail en PostgreSQL (sin Google Sheets).
- * dataSource: 'sheets' = lectura CSV + escritura Apps Script o modo local.
+ * dataSource: 'supabase' — inventario, ventas retail y sync con obebe.store.
  *
- * Supabase:
- * 1. Ejecuta scripts/supabase/schema.sql en el SQL Editor
- * 2. Despliega scripts/supabase/functions/admin-api
- * 3. Rellena supabaseUrl, supabaseAnonKey, adminApiUrl
- * 4. Configuración → Importar desde Google (una vez)
- * 5. Copia las mismas claves a obebe-data-config.js en la raíz (tienda web)
+ * 1. Schema y Edge Function: scripts/supabase/
+ * 2. Rellena supabaseUrl, supabaseAnonKey, adminApiUrl
+ * 3. Copia las mismas claves a obebe-data-config.js en la raíz (tienda web)
  */
 window.OBEBE_ADMIN_CONFIG = {
     dataSource: 'supabase',

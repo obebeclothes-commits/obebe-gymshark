@@ -11,18 +11,21 @@ document.documentElement.style.setProperty('--vh', (window.innerHeight / 100) + 
         return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
     })();
     w.__obebeOmitirSyncSheet = false;
-    // Nunca bloquear la tienda esperando Google Sheets (datos móviles / redes lentas).
+    // Sync de inventario en segundo plano en redes lentas (Supabase).
     w.__obebeSyncEnBackground = true;
     w.__obebeCargaExterna = true;
     w.__obebeScriptsFallidos = [];
 
-    ['https://docs.google.com', 'https://www.gstatic.com'].forEach(function(href) {
-        var link = d.createElement('link');
-        link.rel = 'preconnect';
-        link.href = href;
-        link.crossOrigin = 'anonymous';
-        d.head.appendChild(link);
-    });
+    var supaPre = (w.OBEBE_DATA_CONFIG && w.OBEBE_DATA_CONFIG.supabaseUrl) || '';
+    if (supaPre) {
+        try {
+            var link = d.createElement('link');
+            link.rel = 'preconnect';
+            link.href = new URL(supaPre).origin;
+            link.crossOrigin = 'anonymous';
+            d.head.appendChild(link);
+        } catch (e) { /* */ }
+    }
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(regs) {
