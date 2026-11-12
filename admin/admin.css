@@ -210,6 +210,25 @@ a { color: var(--admin-accent); }
     background: #f77;
 }
 
+.admin-btn-warn {
+    background: var(--admin-warn);
+    color: #1a1206;
+    border: none;
+}
+
+.admin-btn-warn:hover {
+    background: #e09518;
+    color: #1a1206;
+}
+
+html[data-admin-theme="light"] .admin-btn-warn {
+    color: #3d2800;
+}
+
+html[data-admin-theme="light"] .admin-btn-warn:hover {
+    color: #3d2800;
+}
+
 .admin-btn-success {
     background: var(--admin-ok);
     color: #fff;
@@ -1484,6 +1503,13 @@ html[data-admin-theme="light"] .admin-banner.info {
     gap: 0.25rem;
 }
 
+.admin-inv-edit-tipo {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: 0.35rem;
+}
+
 .admin-inv-genero .admin-inv-genero-btn.is-active {
     background: var(--admin-accent, #3dd6c6);
     color: #06211e;
@@ -1685,6 +1711,61 @@ html[data-admin-theme="light"] .admin-banner.info {
 .admin-inv-cell:focus {
     outline: 2px solid var(--admin-accent-dim);
     background: var(--admin-surface);
+}
+
+.admin-inv-select-td {
+    min-width: 6.5rem;
+    vertical-align: middle;
+}
+
+.admin-select-otro-slot {
+    display: block;
+    width: 100%;
+    position: relative;
+}
+
+.admin-select-otro-slot .admin-select-otro-swap-hidden {
+    display: none !important;
+}
+
+.admin-select-otro-slot .admin-campo-otro-input:not(.admin-hidden),
+.admin-select-otro-slot .admin-inv-cell-otro:not(.admin-hidden) {
+    margin: 0;
+    display: block;
+    position: relative;
+    z-index: 2;
+    pointer-events: auto;
+}
+
+.admin-inv-cell-select {
+    width: 100%;
+    max-width: 7rem;
+    min-width: 4.5rem;
+    font-size: 0.72rem;
+    padding: 0.3rem 0.25rem;
+    margin-bottom: 0;
+    border: 1px solid var(--admin-border);
+    border-radius: 4px;
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    box-sizing: border-box;
+}
+
+.admin-inv-cell-otro {
+    width: 100%;
+    max-width: 7rem;
+    font-size: 0.72rem;
+    padding: 0.3rem 0.25rem;
+    border: 1px solid var(--admin-border);
+    border-radius: 4px;
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    box-sizing: border-box;
+}
+
+.admin-inv-total-td .admin-inv-total {
+    font-weight: 600;
+    color: var(--admin-text);
 }
 
 .admin-inv-foot {
@@ -2787,6 +2868,51 @@ body.admin-ped-filtros-open {
     align-items: flex-start;
 }
 
+.admin-ped-acciones-pedido-obebe {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.admin-ped-acciones-pedido-obebe--col {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.admin-ped-acciones-par {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.admin-ped-acciones-pedido-obebe .admin-btn-primary,
+.admin-ped-acciones-pedido-obebe .admin-btn-danger,
+.admin-ped-acciones-par .admin-btn-primary,
+.admin-ped-acciones-par .admin-btn-danger {
+    width: auto;
+    min-width: 0;
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.admin-ped-acciones-pedido-obebe .admin-ped-acciones-hint {
+    flex: 1 1 100%;
+    margin: 0;
+}
+
+.admin-ped-item-acciones-cliente .admin-btn-sm {
+    width: auto;
+    min-width: 0;
+}
+
+.admin-ped-acciones-pedido-obebe .admin-tag {
+    margin: 0;
+}
+
 .admin-ped-resumen-rev {
     margin: 0.5rem 0 0;
     font-size: 0.88rem;
@@ -2803,6 +2929,102 @@ body.admin-ped-filtros-open {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+}
+
+.admin-ped-modo-btns--early {
+    margin-top: 0.35rem;
+}
+
+.admin-compras-section {
+    margin-top: 1.25rem;
+}
+
+.admin-compras-section:first-child {
+    margin-top: 0.5rem;
+}
+
+.admin-compras-section-head {
+    margin: 0 0 0.5rem;
+    padding: 0 0.25rem;
+}
+
+.admin-compras-zone-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.admin-compras-zone-toolbar-grp {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.admin-compras-zone-toolbar-grp--izq {
+    flex: 0 1 auto;
+}
+
+.admin-compras-zone-toolbar-grp--der {
+    flex: 1 1 auto;
+    justify-content: flex-start;
+}
+
+.admin-compras-zone-toolbar .admin-btn {
+    width: auto;
+    min-width: 0;
+    padding: 0.32rem 0.55rem;
+    font-size: 0.74rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.admin-compras-zone-toolbar .admin-btn-primary {
+    width: auto;
+}
+
+.admin-compras-zone-toolbar #adminComprasEditarPend,
+.admin-compras-zone-toolbar #adminComprasEditarEarly {
+    padding: 0.32rem 0.7rem;
+}
+
+.admin-compras-zone-toolbar .admin-compras-early {
+    padding: 0.32rem 0.65rem;
+}
+
+.admin-compras-section-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.admin-compras-section-search {
+    margin: 0.45rem 0 0.35rem;
+    max-width: 22rem;
+}
+
+.admin-compras-section-search .admin-compras-zone-search {
+    width: 100%;
+}
+
+.admin-compras-wrap tr.admin-compras-row--early td {
+    background: color-mix(in srgb, var(--admin-accent) 14%, var(--admin-surface-2));
+}
+
+.admin-compras-wrap tr.admin-compras-row--early td:first-child {
+    box-shadow: inset 3px 0 0 var(--admin-accent);
+}
+
+.admin-compras-wrap tr.admin-compras-row--tienda td {
+    background: color-mix(in srgb, #2d9f5a 10%, var(--admin-surface-2));
+    opacity: 0.92;
+}
+
+.admin-compras-wrap tr.admin-compras-row--tienda td:first-child {
+    box-shadow: inset 3px 0 0 #2d9f5a;
 }
 
 .admin-ped-modo-btn,
@@ -2936,6 +3158,56 @@ body.admin-ped-filtros-open {
     gap: 0.15rem;
     font-size: 0.78rem;
     min-width: 0;
+}
+
+.admin-ped-item-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+}
+
+.admin-ped-item-hint {
+    font-size: 0.68rem;
+}
+
+.admin-ped-ver {
+    flex-shrink: 0;
+}
+
+.admin-ped-fotos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 0.75rem 0;
+}
+
+.admin-ped-fotos-fig {
+    margin: 0;
+}
+
+.admin-ped-fotos-fig figcaption {
+    display: none;
+}
+
+.admin-ped-fotos-modal-solo-img #adminPedFotosSub,
+.admin-ped-fotos-modal-solo-img .admin-ped-fotos-hint {
+    display: none !important;
+}
+
+.admin-ped-fotos-img {
+    width: 100%;
+    max-height: min(50vh, 420px);
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid var(--admin-border);
+    background: var(--admin-surface-2);
+}
+
+.admin-ped-fotos-hint {
+    font-size: 0.72rem;
+    margin: 0;
 }
 
 .admin-ped-precios strong {
@@ -3164,15 +3436,15 @@ body.admin-ped-filtros-open {
     justify-content: center;
 }
 
-.admin-suc-venta-actions .admin-btn-primary {
+.admin-suc-venta-actions .admin-btn-danger {
     grid-column: 1;
+}
+
+.admin-suc-venta-actions .admin-btn-primary {
+    grid-column: 2;
     font-size: 0.78rem;
     padding: 0.4rem 0.45rem;
     line-height: 1.2;
-}
-
-.admin-suc-venta-actions .admin-btn-danger {
-    grid-column: 2;
 }
 
 @media (max-width: 640px) {
@@ -3194,8 +3466,25 @@ body.admin-ped-filtros-open {
 .admin-vr-bulk {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0.65rem 1rem 0.35rem;
+}
+
+.admin-vr-sel-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-right: auto;
+    font-size: 0.85rem;
+    color: var(--admin-text-muted, var(--admin-text));
+    cursor: pointer;
+    user-select: none;
+}
+
+.admin-table-ventas thead .admin-vr-sel-col {
+    pointer-events: none;
 }
 
 .admin-vr-sel-col {
@@ -3628,6 +3917,11 @@ body.admin-suc-modal-open {
     align-items: center;
 }
 
+.admin-ped-edit-row .admin-ped-eliminar {
+    width: auto;
+    min-width: 0;
+}
+
 .admin-ped-form-actions {
     display: flex;
     flex-wrap: wrap;
@@ -3638,6 +3932,13 @@ body.admin-suc-modal-open {
 .admin-ped-form-actions .admin-btn-primary {
     width: auto;
     flex: 1 1 12rem;
+}
+
+.admin-ped-form-actions--edit .admin-btn-primary,
+.admin-ped-form-actions--edit #adminPedCancelarEdicion {
+    flex: 1 1 0;
+    min-width: 10rem;
+    max-width: 100%;
 }
 
 .admin-ped-com-label {
@@ -4653,6 +4954,15 @@ body.admin-mayoreo-envio-lock {
 .admin-apartado-prenda-row .admin-ap-prenda-nombre {
     font-size: 0.78rem;
     padding: 0.28rem 0.35rem;
+    overflow-x: auto;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.admin-apartado-edit-prendas-rows {
+    max-height: min(52vh, 28rem);
+    overflow-y: auto;
+    margin: 0.5rem 0;
 }
 
 .admin-apartado-prenda-row .admin-field-narrow {
@@ -4880,6 +5190,10 @@ body.admin-mayoreo-envio-lock {
     width: 100%;
 }
 
+.admin-field-select-otro .admin-select-otro-slot .admin-campo-otro-input:not(.admin-hidden) {
+    margin-top: 0;
+}
+
 .admin-field-select-otro .admin-campo-otro-input {
     width: 100%;
     margin-top: 0.35rem;
@@ -4967,6 +5281,32 @@ body.admin-mayoreo-envio-lock {
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
+    align-items: center;
+}
+
+.admin-apartado-card-actions .admin-ap-btn-entregar {
+    order: 1;
+}
+
+.admin-apartado-card-actions .admin-ap-btn-abono {
+    order: 2;
+}
+
+.admin-apartado-prendas-wrap .admin-table-compact td:first-child,
+.admin-apartado-prendas-wrap .admin-table-compact th:first-child {
+    max-width: 14rem;
+    min-width: 6rem;
+}
+
+.admin-apartado-prendas-wrap .admin-ap-prenda-nombre-cell {
+    display: block;
+    max-width: 14rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
 }
 
 .admin-apartado-filtros .admin-btn.active {

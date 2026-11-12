@@ -927,6 +927,9 @@
         if (t.indexOf('hombre/') === 0 || t.indexOf('mujer/') === 0) {
             return '../' + t.split('?')[0] + '?v=' + VERSION_IMAGENES_ADMIN;
         }
+        if (t.indexOf('compras/') === 0) {
+            return '../' + t.split('?')[0] + '?v=' + VERSION_IMAGENES_ADMIN;
+        }
         if (/\.(webp|jpe?g|png|avif)(\?|$)/i.test(t)) {
             return '../' + t.split('?')[0] + '?v=' + VERSION_IMAGENES_ADMIN;
         }
@@ -973,6 +976,7 @@
         var celdas = (fila && fila.celdas) || [];
         var iFoto = idxInventario().foto != null ? idxInventario().foto : 9;
         var url = normalizarRutaImagenAdmin(celdas[iFoto] || fila.fotoUrl || '');
+        if (fila.soloComprasEarly && url && /etiquetadas/i.test(url)) url = '';
         var refFile = refArchivoImagenDesdeFila(fila);
         var refUrl = '';
         if (refFile) {
@@ -1010,6 +1014,141 @@
         var carpeta = hit.segmento === 'Mujer' ? 'mujer' : 'hombre';
         var ext = extensionImagenRef(hit);
         return '../' + carpeta + '/' + refName + '.' + ext + '?v=' + VERSION_IMAGENES_ADMIN;
+    }
+
+    var REFS_ETIQUETADAS_MUJER = {
+        580: 1, 581: 1, 582: 1, 583: 1, 584: 1, 585: 1, 586: 1, 587: 1, 588: 1,
+        592: 1, 593: 1, 594: 1, 613: 1, 614: 1, 615: 1, 616: 1, 617: 1, 618: 1, 619: 1
+    };
+
+    function refEsEtiquetadaMujer(ref) {
+        var n = parseInt(ref, 10);
+        return !isNaN(n) && !!REFS_ETIQUETADAS_MUJER[n];
+    }
+
+    function segmentoEtiquetadaRef(ref, fila) {
+        if (refEsEtiquetadaMujer(ref)) return 'mujer';
+        if (fila) {
+            var idx = idxInventario();
+            var col = idx.segmento != null ? idx.segmento : 19;
+            var celdas = fila.celdas || fila;
+            var raw = String((celdas[col] != null ? celdas[col] : '') || fila.segmento || '').trim();
+            if (/mujer/i.test(raw)) return 'mujer';
+        }
+        return 'hombre';
+    }
+
+    /** Early access / Compras: etiquetadas en carpeta compras (aún no en tienda). */
+    function urlsFotosComprasEtiquetadas(fila) {
+        if (!fila) return { foto1: '', foto2: '', candidatos1: [], candidatos2: [] };
+        var v = '?v=' + VERSION_IMAGENES_ADMIN;
+        var ref = fila.ref || parseRef(fila.celdas && fila.celdas[0]);
+        var seg = segmentoEtiquetadaRef(ref, fila);
+        var otro = seg === 'mujer' ? 'hombre' : 'mujer';
+        var candidatos1 = [];
+        var iFoto = idxInventario().foto != null ? idxInventario().foto : 9;
+        var celdaFoto = fila.celdas && fila.celdas[iFoto];
+        var norm = normalizarRutaImagenAdmin(celdaFoto || fila.fotoUrl || '');
+        if (norm) candidatos1.push(norm);
+        if (ref > 0) {
+            candidatos1.push('../compras/etiquetadas/' + seg + '/' + ref + '.jpg' + v);
+            candidatos1.push('../compras/etiquetadas/' + otro + '/' + ref + '.jpg' + v);
+        }
+        candidatos1 = candidatos1.filter(function (u, i, a) { return u && a.indexOf(u) === i; });
+        var candidatos2 = [];
+        if (ref > 0) {
+            candidatos2.push('../compras/etiquetadas/' + seg + '/' + ref + '.1.jpg' + v);
+            candidatos2.push('../compras/etiquetadas/' + otro + '/' + ref + '.1.jpg' + v);
+        }
+        candidatos2 = candidatos2.filter(function (u, i, a) { return u && a.indexOf(u) === i; });
+        return {
+            foto1: candidatos1[0] || '',
+            foto2: candidatos2[0] || '',
+            candidatos1: candidatos1,
+            candidatos2: candidatos2
+        };
+    }
+
+  /** Fotos sin info en carpetas hombre/ y mujer (las que subes a la tienda). */
+    function urlsFotosTiendaDesdeRefFila(fila) {
+        if (!fila) return { foto1: '', foto2: '', candidatos1: [], candidatos2: [] };
+        var refFile = refArchivoImagenDesdeFila(fila);
+        var ref = fila.ref || parseRef(fila.celdas && fila.celdas[0]);
+        var seg = fila.segmento === 'Mujer' ? 'mujer' : 'hombre';
+        if (refEsEtiquetadaMujer(ref)) seg = 'mujer';
+        else if (ref > 0) {
+            var segFix = segmentoEtiquetadaRef(ref, fila);
+            if (segFix === 'mujer') seg = 'mujer';
+        }
+        var ext = extensionImagenRef({ marca: fila.marca, nombre: fila.nombre });
+        var v = '?v=' + VERSION_IMAGENES_ADMIN;
+        var base = refFile ? ('../' + seg + '/' + refFile) : '';
+        var candidatos1 = [];
+        if (base) {
+            candidatos1.push(base + '.' + ext + v);
+            if (ext !== 'webp') candidatos1.push(base + '.webp' + v);
+            if (ext !== 'avif') candidatos1.push(base + '.avif' + v);
+            candidatos1.push(base + '.jpg' + v);
+            candidatos1.push(base + '.jpeg' + v);
+        }
+        candidatos1 = candidatos1.filter(function (u, i, a) { return u && a.indexOf(u) === i; });
+        var candidatos2 = [];
+        if (base) {
+            ['.' + ext, '.webp', '.jpg', '.jpeg', '.png', '.avif'].forEach(function (suf) {
+                candidatos2.push(base + '.1' + suf + v);
+            });
+        }
+        candidatos2 = candidatos2.filter(function (u, i, a) { return u && a.indexOf(u) === i; });
+        return {
+            foto1: candidatos1[0] || '',
+            foto2: candidatos2[0] || '',
+            candidatos1: candidatos1,
+            candidatos2: candidatos2
+        };
+    }
+
+    /** Fotos publicadas en obebe.store: principal y segunda (.1), como en el catálogo. */
+    function urlsFotosTiendaObebe(fila) {
+        if (!fila) return { foto1: '', foto2: '', candidatos1: [], candidatos2: [] };
+        if (fila.soloComprasEarly) {
+            return urlsFotosTiendaDesdeRefFila(fila);
+        }
+        var iFoto = idxInventario().foto != null ? idxInventario().foto : 9;
+        var celdaFoto = fila.celdas && fila.celdas[iFoto];
+        if ((celdaFoto && /etiquetadas/i.test(String(celdaFoto))) ||
+            (fila.fotoUrl && /etiquetadas/i.test(String(fila.fotoUrl)))) {
+            return urlsFotosTiendaDesdeRefFila(fila);
+        }
+        var refFile = refArchivoImagenDesdeFila(fila);
+        var seg = fila.segmento === 'Mujer' ? 'mujer' : 'hombre';
+        var ext = extensionImagenRef({ marca: fila.marca, nombre: fila.nombre });
+        var v = '?v=' + VERSION_IMAGENES_ADMIN;
+        var base = refFile ? ('../' + seg + '/' + refFile) : '';
+        var invUrl = urlImagenFilaInventario(fila);
+        if (invUrl && /etiquetadas/i.test(invUrl)) invUrl = '';
+        var candidatos1 = [];
+        if (base) {
+            candidatos1.push(base + '.' + ext + v);
+            if (ext !== 'webp') candidatos1.push(base + '.webp' + v);
+            if (ext !== 'avif') candidatos1.push(base + '.avif' + v);
+            candidatos1.push(base + '.jpg' + v);
+            candidatos1.push(base + '.jpeg' + v);
+        }
+        if (invUrl) candidatos1.push(invUrl);
+        candidatos1 = candidatos1.filter(function (u, i, a) { return u && a.indexOf(u) === i; });
+        var candidatos2 = [];
+        if (base) {
+            ['.' + ext, '.webp', '.jpg', '.jpeg', '.png', '.avif'].forEach(function (suf) {
+                candidatos2.push(base + '.1' + suf + v);
+            });
+        }
+        candidatos2 = candidatos2.filter(function (u, i, a) { return u && a.indexOf(u) === i; });
+        return {
+            foto1: candidatos1[0] || '',
+            foto2: candidatos2[0] || '',
+            candidatos1: candidatos1,
+            candidatos2: candidatos2
+        };
     }
 
     function candidatosUrlImagenAdmin(url) {
@@ -1646,6 +1785,46 @@
         return out;
     }
 
+    function filaInventarioDesdeComprasCeldas(celdas) {
+        return filaInventarioDesdeCeldas(padCeldas(celdas || []), 0);
+    }
+
+    function idsBorrarInventarioPorRefs(refs, filasInv) {
+        var set = {};
+        (refs || []).forEach(function (r) { set[String(r)] = true; });
+        var ids = [];
+        (filasInv || []).forEach(function (f) {
+            var ref = f.ref || parseInt(f.celdas && f.celdas[0], 10);
+            if (!ref || !set[String(ref)]) return;
+            var id = f.inventarioDbId || f.filaSheet;
+            if (id) ids.push(id);
+        });
+        return ids.filter(function (v, i, a) { return a.indexOf(v) === i; });
+    }
+
+    function combinarInventarioConComprasEarly(filasInv) {
+        filasInv = (filasInv || []).slice();
+        var Store = global.ObebeComprasStore;
+        if (!Store || !Store.getAll) return filasInv;
+        var compras = Store.getAll().filter(function (f) {
+            return f.earlyAccess && !f.enTienda;
+        });
+        if (!compras.length) return filasInv;
+        var refsInv = {};
+        filasInv.forEach(function (f) {
+            if (f.ref) refsInv[String(f.ref)] = true;
+        });
+        compras.forEach(function (c) {
+            var row = filaInventarioDesdeComprasCeldas(c.celdas);
+            if (!row || !row.ref || refsInv[String(row.ref)]) return;
+            if (refEsEtiquetadaMujer(row.ref)) row.segmento = 'Mujer';
+            row.soloComprasEarly = true;
+            if (row.fotoUrl && /etiquetadas/i.test(row.fotoUrl)) row.fotoUrl = '';
+            filasInv.push(row);
+        });
+        return filasInv;
+    }
+
     function cargarInventarioDesdeSheetsRed() {
         return fetchTextoHoja(HOJA_INVENTARIO).then(function (texto) {
             estado.encabezadosFila2 = leerEncabezadosInventario(texto);
@@ -2207,8 +2386,10 @@
         };
     }
 
-    function apiAdminScript(action, payload) {
-        var bloquea = /registrarVenta|actualizarStock|updateVenta|deleteVenta|createVenta|updateCells|appendRow|deleteRows|import/i.test(String(action || ''));
+    function apiAdminScript(action, payload, uiOpts) {
+        uiOpts = uiOpts || {};
+        var bloquea = !uiOpts.silent &&
+            /registrarVenta|actualizarStock|updateVenta|deleteVenta|createVenta|updateCells|appendRow|deleteRows|import/i.test(String(action || ''));
         function envolver(p) {
             if (!bloquea || !global.ObebeAdminDialog || !ObebeAdminDialog.mientras) return p;
             return ObebeAdminDialog.mientras(p, 'Procesando…');
@@ -2813,6 +2994,30 @@
         if (idx < 0) return;
         todos[idx].stockInventarioObebeAplicado = !!aplicado;
         todos[idx].stockInventarioObebeAplicadoEn = aplicado ? Date.now() : null;
+        if (aplicado) {
+            (todos[idx].items || []).forEach(function (it) {
+                if (it.disponibilidad === 'si') it.stockObebeAplicado = true;
+            });
+        } else {
+            (todos[idx].items || []).forEach(function (it) {
+                it.stockObebeAplicado = false;
+            });
+        }
+        guardarPedidosMayoreoLocal(todos);
+    }
+
+    function marcarStockObebeItemsPedidoMayoreo(pedidoId, itemsMarcados) {
+        if (!itemsMarcados || !itemsMarcados.length) return;
+        var ids = {};
+        itemsMarcados.forEach(function (it) {
+            if (it && it.itemId) ids[it.itemId] = true;
+        });
+        var todos = leerPedidosMayoreoLocal();
+        var idx = todos.findIndex(function (p) { return p.id === pedidoId; });
+        if (idx < 0) return;
+        (todos[idx].items || []).forEach(function (it) {
+            if (ids[it.itemId]) it.stockObebeAplicado = true;
+        });
         guardarPedidosMayoreoLocal(todos);
     }
 
@@ -2857,7 +3062,8 @@
         });
     }
 
-    function aplicarUpdatesStockSecuencial(updates) {
+    function aplicarUpdatesStockSecuencial(updates, opts) {
+        opts = opts || {};
         if (!updates.length) return Promise.resolve({ ok: true, count: 0 });
         var i = 0;
         function next() {
@@ -2865,35 +3071,61 @@
                 return Promise.resolve({ ok: true, count: updates.length });
             }
             var u = updates[i++];
-            return actualizarStockFila(u.row, u.stock).then(next);
+            return actualizarStockFila(u.row, u.stock, opts).then(next);
         }
         return next();
     }
 
-    function descontarStockPedidoMayoreo(pedido) {
+    function descontarStockPedidoMayoreo(pedido, opts) {
+        opts = opts || {};
         if (!pedido || !pedido.id) {
             return Promise.resolve({ ok: false, error: 'Pedido inválido.' });
-        }
-        if (pedido.stockInventarioObebeAplicado) {
-            return Promise.resolve({ ok: true, omitido: true });
         }
         if (pedido.estado !== 'revisado') {
             return Promise.resolve({ ok: false, error: 'El pedido no está confirmado.' });
         }
-        var updates = calcularUpdatesStockPedidoMayoreo(pedido, -1);
-        return aplicarUpdatesStockSecuencial(updates).then(function (res) {
-            marcarStockObebePedidoMayoreo(pedido.id, true);
+        var incremental = !!(opts.soloItemsNuevos && pedido.stockInventarioObebeAplicado);
+        if (pedido.stockInventarioObebeAplicado && !incremental) {
+            return Promise.resolve({ ok: true, omitido: true });
+        }
+        var base = pedido;
+        if (incremental) {
+            var siItems = (pedido.items || []).filter(function (it) { return it.disponibilidad === 'si'; });
+            var algunoMarcado = siItems.some(function (it) { return it.stockObebeAplicado; });
+            if (siItems.length && !algunoMarcado) {
+                marcarStockObebePedidoMayoreo(pedido.id, true);
+                siItems.forEach(function (it) { it.stockObebeAplicado = true; });
+            }
+            base = Object.assign({}, pedido, {
+                items: (pedido.items || []).filter(function (it) {
+                    return it.disponibilidad === 'si' && !it.stockObebeAplicado;
+                })
+            });
+            if (!base.items.length) {
+                return Promise.resolve({ ok: true, omitido: true });
+            }
+        }
+        var updates = calcularUpdatesStockPedidoMayoreo(base, -1);
+        if (!updates.length) {
+            return Promise.resolve({ ok: true, omitido: true });
+        }
+        return aplicarUpdatesStockSecuencial(updates, opts).then(function (res) {
+            if (incremental) {
+                marcarStockObebeItemsPedidoMayoreo(pedido.id, base.items);
+            } else {
+                marcarStockObebePedidoMayoreo(pedido.id, true);
+            }
             sincronizarHistoricoInventario(estado.filas);
             return Object.assign({ ok: true }, res, { unidades: updates.length });
         });
     }
 
-    function revertirStockPedidoMayoreo(pedido) {
+    function revertirStockPedidoMayoreo(pedido, opts) {
         if (!pedido || !pedido.id || !pedido.stockInventarioObebeAplicado) {
             return Promise.resolve({ ok: true, omitido: true });
         }
         var updates = calcularUpdatesStockPedidoMayoreo(pedido, 1);
-        return aplicarUpdatesStockSecuencial(updates).then(function (res) {
+        return aplicarUpdatesStockSecuencial(updates, opts).then(function (res) {
             marcarStockObebePedidoMayoreo(pedido.id, false);
             sincronizarHistoricoInventario(estado.filas);
             return Object.assign({ ok: true }, res);
@@ -2909,7 +3141,7 @@
         var chain = Promise.resolve();
         pend.forEach(function (p) {
             chain = chain.then(function () {
-                return descontarStockPedidoMayoreo(p).then(function (r) {
+                return descontarStockPedidoMayoreo(p, { silent: true }).then(function (r) {
                     if (r && r.ok && !r.omitido) aplicados += 1;
                 });
             });
@@ -3412,7 +3644,7 @@
             filaSheet: filaRef,
             stock: stock,
             inventarioDbId: filaRef
-        }).then(function (res) {
+        }, { silent: !!opts.silent }).then(function (res) {
             if (!res || res.ok === false) {
                 throw new Error((res && res.error) || 'No se pudo actualizar stock');
             }
@@ -4509,7 +4741,15 @@
         fetchTextoHoja: fetchTextoHoja,
         normalizarMarca: normalizarMarca,
         urlImagenFilaInventario: urlImagenFilaInventario,
+        normalizarRutaImagenAdmin: normalizarRutaImagenAdmin,
         INVENTARIO_COLS_VISTA: columnasVistaInventario().length,
+        urlsFotosComprasEtiquetadas: urlsFotosComprasEtiquetadas,
+        candidatosUrlImagenAdmin: candidatosUrlImagenAdmin,
+        refEsEtiquetadaMujer: refEsEtiquetadaMujer,
+        segmentoEtiquetadaRef: segmentoEtiquetadaRef,
+        filaInventarioDesdeComprasCeldas: filaInventarioDesdeComprasCeldas,
+        idsBorrarInventarioPorRefs: idsBorrarInventarioPorRefs,
+        combinarInventarioConComprasEarly: combinarInventarioConComprasEarly,
         columnasVistaInventario: columnasVistaInventario,
         idxInventario: idxInventario,
         combinarEncabezadosInventario: combinarEncabezadosInventario,

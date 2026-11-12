@@ -108,19 +108,56 @@
             .sort(function (a, b) { return a.localeCompare(b, 'es'); });
     }
 
+    function stockVentaDisponible(fila) {
+        if (global.ObebeSucursalesStore && ObebeSucursalesStore.stockDisponibleInventarioPrincipal) {
+            return ObebeSucursalesStore.stockDisponibleInventarioPrincipal(fila);
+        }
+        return (fila && fila.stock) || 0;
+    }
+
     function catalogoConStock(filas) {
-        return (filas || []).filter(function (r) { return (r.stock || 0) > 0; });
+        return (filas || []).filter(function (r) { return stockVentaDisponible(r) > 0; });
     }
 
     function esCuentaTarjeta(cuenta) {
         return norm(cuenta).indexOf('tarjeta') >= 0;
     }
 
+    var METODOS_PAGO_NATY = ['Efectivo', 'Transferencia', 'Tarjeta crédito'];
+
     function selectCuentaRetail(id, label) {
         var opts = '<option value="">— Elegir —</option>' +
             CUENTAS_RETAIL.map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join('');
         return '<div class="admin-field"><label>' + esc(label) + '</label>' +
             '<select id="' + id + '" class="admin-venta-pago-select admin-vr-cuenta-select">' + opts + '</select></div>';
+    }
+
+    function selectMetodoPagoNaty(id) {
+        var opts = '<option value="">— Elegir —</option>' +
+            METODOS_PAGO_NATY.map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join('');
+        return '<div class="admin-field"><label>Método de pago</label>' +
+            '<select id="' + id + '" class="admin-venta-pago-select admin-vr-cuenta-select">' + opts + '</select></div>';
+    }
+
+    function vendedorFijoNaty(id) {
+        return '<div class="admin-field"><label>Vendedor</label>' +
+            '<input type="hidden" id="' + esc(id) + '" value="NATY">' +
+            '<p class="admin-muted-text" style="margin:0.35rem 0 0">NATY</p></div>';
+    }
+
+    function camposPagoVendedorRetail(cuentaId, vendId, esMayoreo) {
+        if (esMayoreo) {
+            return '<div class="admin-field-row">' + selectMetodoPagoNaty(cuentaId) + vendedorFijoNaty(vendId) + '</div>';
+        }
+        return '<div class="admin-field-row">' + selectCuentaRetail(cuentaId, 'Quien tiene el dinero') +
+            selectEquipo(vendId, 'Vendedor') + '</div>';
+    }
+
+    function metodoPagoDesdeEtiquetaNaty(cuenta) {
+        var n = norm(cuenta);
+        if (n.indexOf('tarjeta') >= 0) return 'tarjeta';
+        if (n.indexOf('transfer') >= 0) return 'transferencia';
+        return 'efectivo';
     }
 
     function selectEquipo(id, label) {
@@ -130,14 +167,32 @@
             '<select id="' + id + '" class="admin-venta-pago-select">' + opts + '</select></div>';
     }
 
+    function selectPagoMayoreo(id, label) {
+        label = label || 'Forma de pago';
+        return '<div class="admin-field"><label>' + esc(label) + '</label>' +
+            '<div class="admin-venta-select-wrap">' +
+            '<select id="' + id + '" class="admin-venta-pago-select admin-vr-pago-mayoreo">' +
+            '<option value="efectivo">Efectivo</option>' +
+            '<option value="tarjeta">Tarjeta</option>' +
+            '<option value="transferencia">Transferencia</option>' +
+            '</select></div></div>';
+    }
+
     function mount(container, opts) {
         opts = opts || {};
-        var filasInv = catalogoConStock(opts.filas || []);
-        var clientes = (opts.clientes || []).slice().sort(function (a, b) {
+        var cfgMayoreo = opts.mayoreo || null;
+        var filasInv = catalogoConStock(
+            cfgMayoreo && cfgMayoreo.getFilas
+                ? cfgMayoreo.getFilas()
+                : (opts.filas || [])
+        );
+        var clientes = (cfgMayoreo && cfgMayoreo.clientes
+            ? cfgMayoreo.clientes
+            : (opts.clientes || [])).slice().sort(function (a, b) {
             return String(a.nombre).localeCompare(String(b.nombre), 'es');
         });
         var carrito = [];
-        var tipoCliente = 'existente';
+        var tipoCliente = clientes.length ? 'existente' : 'nuevo';
         var generoCatalogo = 'todos';
         var clienteSeleccionadoId = '';
         var descuentoManual = false;
@@ -276,7 +331,16 @@
         }
 
         function imagenFila(r) {
-            return ObebeAdminData.urlImagenFilaInventario(r);
+            if (!r) return '';
+            var u = ObebeAdminData.urlImagenFilaInventario
+                ? ObebeAdminData.urlImagenFilaInventario(r)
+                : '';
+            if (u) return u;
+            var raw = r.imagenUrl || r.fotoUrl || '';
+            if (raw && ObebeAdminData.normalizarRutaImagenAdmin) {
+                return ObebeAdminData.normalizarRutaImagenAdmin(raw) || raw;
+            }
+            return raw;
         }
 
         function thumbHtml(url, alt, cls) {
@@ -413,7 +477,7 @@
                     '<span class="admin-ped-item-info">' + ObebeAdminData.htmlRef(r.ref) +
                     '<strong>' + esc(r.nombre) + '</strong>' +
                     '<span class="admin-ped-tags"><span class="admin-tag admin-tag-muted">' + esc(seg) + '</span></span>' +
-                    '<span>' + esc(r.talla) + ' · ' + esc(r.color) + ' · ' + esc(r.tipo) + ' · Stock ' + r.stock + '</span>' +
+                    '<span>' + esc(r.talla) + ' · ' + esc(r.color) + ' · ' + esc(r.tipo) + ' · Stock ' + stockVentaDisponible(r) + '</span>' +
                     htmlPrecioCatalogo(r) + '</span></button>';
             }).join('');
         }
@@ -441,7 +505,7 @@
                     '<div>' + ObebeAdminData.htmlRef(c.fila.ref) +
                     '<span class="admin-ped-cart-name">' + esc(c.fila.nombre) + '</span>' +
                     '<span class="admin-muted-text">' + esc(c.fila.talla) + ' · ' + esc(c.fila.color) + '</span></div></div></td>' +
-                    '<td><input type="number" min="1" max="' + c.fila.stock + '" value="' + c.cantidad + '" class="admin-venta-num admin-venta-retail-qty" data-idx="' + idx + '"></td>' +
+                    '<td><input type="number" min="1" max="' + stockVentaDisponible(c.fila) + '" value="' + c.cantidad + '" class="admin-venta-num admin-venta-retail-qty" data-idx="' + idx + '"></td>' +
                     '<td><input type="number" min="0" step="1" class="admin-venta-num admin-venta-retail-precio" data-idx="' + idx + '" value="' + (c.precioUnitario || 0) + '"></td>' +
                     '<td>' + fmt(sub) + '</td>' +
                     '<td><button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-venta-retail-quitar" data-idx="' + idx + '">Quitar</button></td></tr>';
@@ -512,19 +576,13 @@
         }
 
         function buildShell() {
-            return '<div class="admin-panel"><div class="admin-panel-head"><h3>Registrar venta</h3></div>' +
-                '<div class="admin-venta-retail-cliente">' +
-                '<p class="admin-ped-filtros-sub">Tipo de cliente</p>' +
-                '<div class="admin-ped-genero-btns">' +
-                '<button type="button" class="admin-ped-genero-btn admin-vr-tipo-btn" data-tipo="existente">Cliente existente</button>' +
-                '<button type="button" class="admin-ped-genero-btn admin-vr-tipo-btn" data-tipo="nuevo">Cliente nuevo</button>' +
-                '</div>' +
+            var tituloReg = 'Registrar venta';
+            var panelesCliente =
                 '<div id="adminVentaRetailPanelExistente" class="admin-venta-retail-panel">' +
                 '<div class="admin-field"><label>Cliente</label>' +
                 '<select id="adminVentaRetailClienteSelect" class="admin-venta-pago-select">' + opcionesClientesExistentes() + '</select></div>' +
                 '<div id="adminVentaRetailClienteResumen"></div>' +
-                '<div class="admin-field-row">' + selectCuentaRetail('adminVentaRetailCuentaEx', 'Quien tiene el dinero') +
-                selectEquipo('adminVentaRetailVendedorEx', 'Vendedor') + '</div>' +
+                camposPagoVendedorRetail('adminVentaRetailCuentaEx', 'adminVentaRetailVendedorEx', !!cfgMayoreo) +
                 '<div id="adminVrTarjetaSlotEx"></div></div>' +
                 '<div id="adminVentaRetailPanelNuevo" class="admin-venta-retail-panel admin-hidden">' +
                 '<div class="admin-field"><label>Nombre cliente</label><input type="text" id="adminVentaRetailNombreNuevo" placeholder="Nombre completo" required></div>' +
@@ -536,9 +594,17 @@
                 ) : '<input type="text" id="adminVentaRetailRedNuevo" placeholder="Instagram…">') +
                 '</div></div>' +
                 '<div class="admin-field"><label>Link <span class="admin-label-opt">(opcional)</span></label><input type="text" id="adminVentaRetailLinkNuevo" placeholder="https://…"></div>' +
-                '<div class="admin-field-row">' + selectCuentaRetail('adminVentaRetailCuentaNuevo', 'Quien tiene el dinero') +
-                selectEquipo('adminVentaRetailVendedorNuevo', 'Vendedor') + '</div>' +
-                '<div id="adminVrTarjetaSlotNuevo"></div></div></div></div>' +
+                camposPagoVendedorRetail('adminVentaRetailCuentaNuevo', 'adminVentaRetailVendedorNuevo', !!cfgMayoreo) +
+                '<div id="adminVrTarjetaSlotNuevo"></div></div>';
+            var btnConfirm = 'Vender y descontar stock';
+            return '<div class="admin-panel"><div class="admin-panel-head"><h3>' + tituloReg + '</h3></div>' +
+                '<div class="admin-venta-retail-cliente">' +
+                '<p class="admin-ped-filtros-sub">Tipo de cliente</p>' +
+                '<div class="admin-ped-genero-btns">' +
+                '<button type="button" class="admin-ped-genero-btn admin-vr-tipo-btn" data-tipo="existente">Cliente existente</button>' +
+                '<button type="button" class="admin-ped-genero-btn admin-vr-tipo-btn" data-tipo="nuevo">Cliente nuevo</button>' +
+                '</div>' +
+                panelesCliente + '</div></div>' +
                 '<div class="admin-ped-filtros-backdrop admin-hidden" id="adminVentaRetailFiltrosBackdrop"></div>' +
                 '<div class="admin-panel"><div class="admin-ped-layout">' + panelFiltrosHtml() +
                 '<div class="admin-ped-main">' +
@@ -552,7 +618,7 @@
                 '<div id="adminVentaRetailCarrito"></div>' +
                 '<p id="adminVentaRetailError" class="admin-login-error" role="alert"></p>' +
                 '<div class="admin-ped-form-actions" style="padding:0 1rem 1rem">' +
-                '<button type="button" class="admin-btn admin-btn-primary" id="adminVentaRetailConfirm">Vender y descontar stock</button></div></div>';
+                '<button type="button" class="admin-btn admin-btn-primary" id="adminVentaRetailConfirm">' + btnConfirm + '</button></div></div>';
         }
 
         function cerrarDrawerFiltros() {
@@ -600,6 +666,14 @@
             if (!meta.cliente) {
                 if (errEl) errEl.textContent = tipoCliente === 'nuevo' ? 'Escribe el nombre del cliente.' : 'Selecciona un cliente.';
                 return false;
+            }
+            if (cfgMayoreo) {
+                if (METODOS_PAGO_NATY.indexOf(meta.cuenta) < 0) {
+                    if (errEl) errEl.textContent = 'Elige método de pago: Efectivo, Transferencia o Tarjeta crédito.';
+                    return false;
+                }
+                meta.vendedor = 'NATY';
+                return true;
             }
             if (CUENTAS_RETAIL.indexOf(meta.cuenta) < 0) {
                 if (errEl) errEl.textContent = 'Elige quién tiene el dinero (Ugo, Daniel, Fer o Tarjeta crédito).';
@@ -681,8 +755,9 @@
                 var f = getFilasInv().find(function (r) { return idFila(r) === fid; });
                 if (!f) return;
                 var ex = carrito.find(function (c) { return idFila(c.fila) === fid; });
+                var disp = stockVentaDisponible(f);
                 if (ex) {
-                    if (ex.cantidad < f.stock) ex.cantidad += 1;
+                    if (ex.cantidad < disp) ex.cantidad += 1;
                 } else {
                     carrito.push({
                         fila: f,
@@ -750,6 +825,35 @@
                         rebuildFiltrosPanel();
                     }
                     function registrarAhora() {
+                        if (cfgMayoreo && global.ObebeMayoreoStore) {
+                            var items = carritoVendido.map(function (c) {
+                                var fid = c.fila && c.fila.mayoreoLineaId;
+                                if (!fid) return null;
+                                return {
+                                    lineaId: fid,
+                                    cantidad: c.cantidad,
+                                    precioUnitario: c.precioUnitario
+                                };
+                            }).filter(Boolean);
+                            var rMay = ObebeMayoreoStore.registrarVenta({
+                                clienteKey: cfgMayoreo.clienteKey,
+                                comprador: metaVenta.cliente,
+                                metodoPago: metodoPagoDesdeEtiquetaNaty(metaVenta.cuenta || 'Efectivo'),
+                                items: items
+                            });
+                            if (!rMay.ok) {
+                                if (err) err.textContent = rMay.error || 'Error';
+                                return;
+                            }
+                            limpiarCarrito();
+                            ObebeAdminDialog.alert({
+                                title: 'Venta registrada',
+                                message: 'Venta guardada y stock actualizado en tu inventario mayoreo.',
+                                confirmText: 'Listo'
+                            });
+                            if (opts.onVentaRegistrada) opts.onVentaRegistrada(rMay);
+                            return;
+                        }
                         return ObebeAdminData.registrarVentaRetail(carritoVendido, metaVenta).then(function (res) {
                             if (!res.ok) {
                                 if (err) err.textContent = res.error || 'Error';
@@ -767,7 +871,7 @@
                             if (opts.onVentaRegistrada) opts.onVentaRegistrada(res);
                         });
                     }
-                    if (!global.ObebeAdminEntregas || !ObebeAdminEntregas.abrirModalPostVenta) {
+                    if (cfgMayoreo || !global.ObebeAdminEntregas || !ObebeAdminEntregas.abrirModalPostVenta) {
                         return registrarAhora().catch(function (e) {
                             if (err) err.textContent = e.message || String(e);
                         });
@@ -835,7 +939,7 @@
                 var idx = parseInt(qty.getAttribute('data-idx'), 10);
                 if (isNaN(idx) || !carrito[idx]) return;
                 var n = parseInt(qty.value, 10);
-                var max = carrito[idx].fila.stock || 1;
+                var max = stockVentaDisponible(carrito[idx].fila) || 1;
                 if (isNaN(n) || n < 1) n = 1;
                 if (n > max) n = max;
                 carrito[idx].cantidad = n;

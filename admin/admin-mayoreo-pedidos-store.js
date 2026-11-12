@@ -4,6 +4,7 @@
     var KEY = 'obebe_mayoreo_pedidos_v1';
     var PEDIDO_NATY_LEGACY_ID = 'mp-naty-pedido-20261017';
     var FECHA_PEDIDO_NATY_LEGACY = '2026-10-17';
+    var KEY_LEGACY_NATY_VENTA_MARCADA = 'obebe_mayoreo_naty_1710_venta_marcada_v1';
 
     function leerJson(key, fallback) {
         try {
@@ -110,6 +111,106 @@
         });
     }
 
+    function refsDesdeItemsPedido(items) {
+        var refs = [];
+        (items || []).forEach(function (it) {
+            var r = parseInt(it.ref, 10);
+            if (!isNaN(r) && r > 0) refs.push(r);
+        });
+        return refs;
+    }
+
+    function bajarEarlyAccessPorItemsPedido(items) {
+        if (!global.ObebeComprasEarlyStore) return { ok: true, refs: 0 };
+        var refs = refsDesdeItemsPedido(items).filter(function (r) {
+            return ObebeComprasEarlyStore.tieneRef(r);
+        });
+        if (!refs.length) return { ok: true, refs: 0 };
+        ObebeComprasEarlyStore.quitarRefs(refs);
+        if (global.ObebeComprasStore) {
+            var idx = global.ObebeAdminData && ObebeAdminData.idxInventario
+                ? ObebeAdminData.idxInventario() : { imagen: 0 };
+            var col = idx.imagen != null ? idx.imagen : 0;
+            var refSet = {};
+            refs.forEach(function (r) { refSet[r] = true; });
+            var filas = ObebeComprasStore.getAll();
+            var dirty = false;
+            filas.forEach(function (f) {
+                var r = parseInt(f.celdas && f.celdas[col], 10);
+                if (refSet[r] && f.earlyAccess) {
+                    f.earlyAccess = false;
+                    f.earlyAccessEn = null;
+                    f.earlyAccessSuspendidoPorPedido = true;
+                    dirty = true;
+                }
+            });
+            if (dirty) ObebeComprasStore.reemplazar(filas);
+        }
+        return { ok: true, refs: refs.length };
+    }
+
+    /** Al cancelar/borrar pedido: artículos de Compras vuelven a tabla 2 (early access confirmado). */
+    function restaurarEarlyAccessPorItemsPedido(items) {
+        var refs = refsDesdeItemsPedido(items);
+        if (!refs.length || !global.ObebeComprasStore) return { ok: true, refs: 0 };
+        var idx = global.ObebeAdminData && ObebeAdminData.idxInventario
+            ? ObebeAdminData.idxInventario() : { imagen: 0 };
+        var col = idx.imagen != null ? idx.imagen : 0;
+        var refSet = {};
+        refs.forEach(function (r) { refSet[r] = true; });
+        var filasC = ObebeComprasStore.getAll();
+        var dirty = false;
+        var restauradas = [];
+        var t = Date.now();
+        filasC.forEach(function (f) {
+            if (f.enTienda) return;
+            var r = parseInt(f.celdas && f.celdas[col], 10);
+            if (isNaN(r) || !refSet[r]) return;
+            if (!f.earlyAccessSuspendidoPorPedido) return;
+            f.earlyAccess = true;
+            f.earlyAccessEn = f.earlyAccessEn || t;
+            f.earlyAccessSuspendidoPorPedido = false;
+            dirty = true;
+            restauradas.push(r);
+        });
+        if (dirty) ObebeComprasStore.reemplazar(filasC);
+        if (global.ObebeComprasEarlyStore && restauradas.length) {
+            ObebeComprasEarlyStore.marcarRefs(restauradas);
+        }
+        if (dirty && typeof document !== 'undefined') {
+            try {
+                document.dispatchEvent(new CustomEvent('obebe-compras-early-access'));
+            } catch (e) { /* ignore */ }
+        }
+        return { ok: true, refs: restauradas.length };
+    }
+
+    /** Pedido 17/10/2026 (94 pzas.): venta ya hecha en Ventas; solo marcar sin volver a registrar. */
+    function marcarVentaConfirmadaPedidoLegacyNaty1710() {
+        try {
+            if (localStorage.getItem(KEY_LEGACY_NATY_VENTA_MARCADA)) {
+                return { ok: true, omitido: true };
+            }
+        } catch (e) { /* ignore */ }
+        var hit = findPedido(PEDIDO_NATY_LEGACY_ID);
+        if (hit.idx < 0) return { ok: true, omitido: true, sinPedido: true };
+        var p = hit.pedido;
+        if (p.ventaRetailRegistradaEn) {
+            try { localStorage.setItem(KEY_LEGACY_NATY_VENTA_MARCADA, String(Date.now())); } catch (e2) { /* */ }
+            return { ok: true, omitido: true, yaMarcado: true };
+        }
+        var tsVenta = timestampLocal(2026, 10, 17);
+        p.ventaRetailRegistradaEn = tsVenta;
+        p.ventaRetailSoloMarcada = true;
+        p.estado = 'revisado';
+        p.revisadoEn = p.revisadoEn || tsVenta;
+        p.stockInventarioObebeAplicado = true;
+        hit.todos[hit.idx] = p;
+        setPedidos(hit.todos);
+        try { localStorage.setItem(KEY_LEGACY_NATY_VENTA_MARCADA, String(Date.now())); } catch (e3) { /* */ }
+        return { ok: true, pedido: p };
+    }
+
     function registrarPedido(payload) {
         payload = payload || {};
         var items = normalizarItems(payload.items);
@@ -138,6 +239,7 @@
         var todos = getPedidos();
         todos.unshift(pedido);
         setPedidos(todos);
+        bajarEarlyAccessPorItemsPedido(items);
         return { ok: true, pedido: pedido };
     }
 
@@ -220,12 +322,11 @@
         p.revisadoEn = Date.now();
         hit.todos[hit.idx] = p;
         setPedidos(hit.todos);
-        if (global.ObebeMayoreoStore && global.ObebeMayoreoStore.ingresarInventarioDesdePedido) {
-            global.ObebeMayoreoStore.ingresarInventarioDesdePedido(p);
-        }
         var fresh = findPedido(pedidoId).pedido || p;
         if (global.ObebeAdminData && global.ObebeAdminData.descontarStockPedidoMayoreo) {
-            return global.ObebeAdminData.descontarStockPedidoMayoreo(fresh).then(function (sr) {
+            var optsStock = { silent: true };
+            if (fresh.stockInventarioObebeAplicado) optsStock.soloItemsNuevos = true;
+            return global.ObebeAdminData.descontarStockPedidoMayoreo(fresh, optsStock).then(function (sr) {
                 return { ok: true, pedido: findPedido(pedidoId).pedido || fresh, stockObebe: sr };
             });
         }
@@ -245,21 +346,29 @@
         if (!global.ObebeAdminData || !global.ObebeAdminData.registrarVentasDesdePedidoMayoreo) {
             return Promise.resolve({ ok: false, error: 'Registro de ventas no disponible.' });
         }
-        return global.ObebeAdminData.registrarVentasDesdePedidoMayoreo(p).then(function (res) {
+        var ventaP = global.ObebeAdminData.registrarVentasDesdePedidoMayoreo(p).then(function (res) {
             if (!res || !res.ok) return res || { ok: false, error: 'Error al registrar venta.' };
-            var hit2 = findPedido(pedidoId);
-            if (hit2.idx >= 0) {
-                hit2.pedido.ventaRetailRegistradaEn = Date.now();
-                hit2.todos[hit2.idx] = hit2.pedido;
-                setPedidos(hit2.todos);
+            p.ventaRetailRegistradaEn = Date.now();
+            hit.todos[hit.idx] = p;
+            setPedidos(hit.todos);
+            var pedidoAct = findPedido(pedidoId).pedido || p;
+            if (global.ObebeMayoreoStore && global.ObebeMayoreoStore.ingresarInventarioDesdePedido) {
+                global.ObebeMayoreoStore.ingresarInventarioDesdePedido(pedidoAct);
             }
             return {
                 ok: true,
                 lineas: res.lineas,
-                pedido: hit2.idx >= 0 ? hit2.pedido : p,
+                pedido: findPedido(pedidoId).pedido || pedidoAct,
                 soloLocal: !!res.soloLocal
             };
         });
+        if (global.ObebeAdminData.descontarStockPedidoMayoreo && !p.stockInventarioObebeAplicado) {
+            return global.ObebeAdminData.descontarStockPedidoMayoreo(p, { silent: true }).then(function (sr) {
+                if (sr && sr.ok === false && !sr.omitido) return sr;
+                return ventaP;
+            });
+        }
+        return ventaP;
     }
 
     function actualizarEstado(pedidoId, estado) {
@@ -287,6 +396,40 @@
         return p;
     }
 
+    /** Conserva Sí hay / No hay (y comentarios) en líneas que ya existían; solo líneas nuevas quedan sin revisar. */
+    function fusionarItemsTrasEdicionCliente(prevItems, nextItems) {
+        var byId = {};
+        var byInv = {};
+        (prevItems || []).forEach(function (it) {
+            if (it.itemId) byId[it.itemId] = it;
+            if (it.inventarioId) byInv[it.inventarioId] = it;
+        });
+        return (nextItems || []).map(function (it) {
+            var prev = (it.itemId && byId[it.itemId]) ||
+                (it.inventarioId && byInv[it.inventarioId]) || null;
+            if (!prev) {
+                it.disponibilidad = null;
+                it.comentarioObebe = '';
+                it.clienteConfirmoNoHay = false;
+                it.stockObebeAplicado = false;
+                return it;
+            }
+            it.itemId = prev.itemId;
+            if (prev.disponibilidad === 'si' || prev.disponibilidad === 'no') {
+                it.disponibilidad = prev.disponibilidad;
+                it.comentarioObebe = prev.comentarioObebe || '';
+                it.clienteConfirmoNoHay = !!prev.clienteConfirmoNoHay;
+                it.stockObebeAplicado = !!prev.stockObebeAplicado;
+            } else {
+                it.disponibilidad = null;
+                it.comentarioObebe = prev.comentarioObebe || '';
+                it.clienteConfirmoNoHay = false;
+                it.stockObebeAplicado = false;
+            }
+            return it;
+        });
+    }
+
     function actualizarPedidoCliente(pedidoId, clienteKey, items) {
         var hit = findPedido(pedidoId);
         if (hit.idx < 0) return { ok: false, error: 'Pedido no encontrado.' };
@@ -297,18 +440,38 @@
         if (p.estado === 'cancelado') {
             return { ok: false, error: 'Este pedido está cancelado.' };
         }
+        if (p.ventaRetailRegistradaEn) {
+            return { ok: false, error: 'Ya confirmaste la venta; no puedes editar el pedido.' };
+        }
+        var prevItems = (p.items || []).slice();
+        var estabaRevisado = p.estado === 'revisado';
         items = normalizarItems(items || []);
         if (!items.length) return { ok: false, error: 'Agrega al menos un artículo.' };
-        items.forEach(function (it) {
-            it.disponibilidad = null;
-        });
+        if (estabaRevisado) {
+            items = fusionarItemsTrasEdicionCliente(prevItems, items);
+        } else {
+            items.forEach(function (it) {
+                it.disponibilidad = null;
+                it.comentarioObebe = '';
+                it.clienteConfirmoNoHay = false;
+                it.stockObebeAplicado = false;
+            });
+        }
         p.items = items;
         recalcTotalesPedido(p);
-        p.estado = 'pendiente';
-        p.revisadoEn = null;
+        if (todosItemsMarcados(p)) {
+            p.estado = 'revisado';
+            if (!p.revisadoEn) p.revisadoEn = Date.now();
+        } else if (estabaRevisado || p.estado === 'en_revision') {
+            p.estado = 'en_revision';
+        } else {
+            p.estado = 'pendiente';
+            p.revisadoEn = null;
+        }
         hit.todos[hit.idx] = p;
         setPedidos(hit.todos);
-        return { ok: true, pedido: p };
+        bajarEarlyAccessPorItemsPedido(items);
+        return { ok: true, pedido: p, pendienteRevision: !todosItemsMarcados(p) };
     }
 
     function timestampLocal(y, m, d) {
@@ -388,6 +551,7 @@
         if (idx >= 0) todos[idx] = pedido;
         else todos.unshift(pedido);
         setPedidos(todos);
+        marcarVentaConfirmadaPedidoLegacyNaty1710();
         return { ok: true, pedido: pedido, items: items.length };
     }
 
@@ -563,6 +727,9 @@
         if (p.estado !== 'revisado') {
             return { ok: false, error: 'Aún no hay respuesta de Obebe sobre este pedido.' };
         }
+        if (p.ventaRetailRegistradaEn) {
+            return { ok: false, error: 'La venta ya fue confirmada; no puedes modificar el pedido.' };
+        }
         var item = (p.items || []).find(function (it) { return it.itemId === itemId; });
         if (!item) return { ok: false, error: 'Artículo no encontrado.' };
         if (item.disponibilidad !== 'no') {
@@ -590,6 +757,9 @@
         if (rol === 'cliente') {
             if (claveCliente(p.clienteKey) !== claveCliente(clienteKeyOpcional)) {
                 return { ok: false, error: 'No puedes modificar este pedido.' };
+            }
+            if (p.ventaRetailRegistradaEn) {
+                return { ok: false, error: 'La venta ya fue confirmada; no puedes modificar el pedido.' };
             }
             if (p.estado !== 'revisado') {
                 return { ok: false, error: 'Espera la respuesta de Obebe antes de quitar artículos.' };
@@ -628,12 +798,127 @@
         return { ok: true };
     }
 
+    var KEY_REVERT_NATY_PED2_2910 = 'obebe_naty_revert_ped2_inv_20261029_v3';
+    var KEY_INV_SOLO_VENTA_CONFIRMADA = 'obebe_mayoreo_inv_en_venta_confirmada_v1';
+
+    function fechaLocalIsoDesdeMs(ms) {
+        var d = new Date(ms || 0);
+        if (isNaN(d.getTime())) return '';
+        var y = d.getFullYear();
+        var m = d.getMonth() + 1;
+        var day = d.getDate();
+        return y + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
+    }
+
+    function pedidosNatyEnFechaCreado(fechaIso) {
+        fechaIso = String(fechaIso || '').trim();
+        return getPedidos()
+            .filter(function (p) {
+                if (claveCliente(p.clienteKey) !== 'naty') return false;
+                if (p.estado === 'combinado') return false;
+                return fechaLocalIsoDesdeMs(p.creadoEn) === fechaIso;
+            })
+            .sort(function (a, b) { return (a.creadoEn || 0) - (b.creadoEn || 0); });
+    }
+
+    /**
+     * Pedidos con respuesta enviada pero sin venta retail: quitar líneas del inventario mayoreo Naty
+     * (el stock Obebe debe seguir descontado hasta venta confirmada o reabrir revisión).
+     */
+    function revertirInventarioNatyPedidosSinVentaConfirmada() {
+        try {
+            if (localStorage.getItem(KEY_INV_SOLO_VENTA_CONFIRMADA)) {
+                return Promise.resolve({ ok: true, omitido: true });
+            }
+        } catch (e) { /* ignore */ }
+        var todos = getPedidos();
+        var chain = Promise.resolve({ quitados: 0 });
+        todos.forEach(function (p) {
+            if (p.estado !== 'revisado' || p.ventaRetailRegistradaEn) return;
+            chain = chain.then(function (acc) {
+                if (!global.ObebeMayoreoStore || !ObebeMayoreoStore.revertirInventarioDesdePedido) {
+                    return acc;
+                }
+                return Promise.resolve(ObebeMayoreoStore.revertirInventarioDesdePedido(p, { forzar: true }))
+                    .then(function () {
+                        var hit = findPedido(p.id);
+                        if (hit.idx >= 0) {
+                            hit.pedido.inventarioAplicado = false;
+                            hit.pedido.inventarioAplicadoEn = null;
+                            hit.todos[hit.idx] = hit.pedido;
+                            setPedidos(hit.todos);
+                        }
+                        return { quitados: acc.quitados + 1 };
+                    });
+            });
+        });
+        return chain.then(function (acc) {
+            var stockP = Promise.resolve();
+            if (global.ObebeAdminData && global.ObebeAdminData.aplicarStockPendientePedidosMayoreo) {
+                stockP = ObebeAdminData.aplicarStockPendientePedidosMayoreo();
+            }
+            return stockP.then(function () {
+                try {
+                    localStorage.setItem(KEY_INV_SOLO_VENTA_CONFIRMADA, String(Date.now()));
+                } catch (e) { /* ignore */ }
+                return Object.assign({ ok: true, migracion: true }, acc);
+            });
+        });
+    }
+
+    /** 2.º pedido Naty 29/10/2026: solo inventario mayoreo (no toca stock Obebe). */
+    function quitarInventarioNatySegundoPedido2910() {
+        try {
+            if (localStorage.getItem(KEY_REVERT_NATY_PED2_2910)) {
+                return Promise.resolve({ ok: true, omitido: true });
+            }
+        } catch (e) { /* ignore */ }
+        var lista = pedidosNatyEnFechaCreado('2026-10-29');
+        if (lista.length < 2) {
+            return Promise.resolve({ ok: true, omitido: true, motivo: 'menos de 2 pedidos ese día' });
+        }
+        var p = lista[1];
+        if (p.ventaRetailRegistradaEn) {
+            return Promise.resolve({ ok: true, omitido: true, motivo: 'venta ya confirmada' });
+        }
+        var chain = Promise.resolve();
+        if (global.ObebeMayoreoStore && global.ObebeMayoreoStore.revertirInventarioDesdePedido) {
+            chain = chain.then(function () {
+                return ObebeMayoreoStore.revertirInventarioDesdePedido(p, { forzar: true });
+            });
+        }
+        return chain.then(function () {
+            var hit = findPedido(p.id);
+            if (hit.idx >= 0) {
+                hit.pedido.inventarioAplicado = false;
+                hit.pedido.inventarioAplicadoEn = null;
+                hit.todos[hit.idx] = hit.pedido;
+                setPedidos(hit.todos);
+            }
+            try {
+                localStorage.setItem(KEY_REVERT_NATY_PED2_2910, String(Date.now()));
+            } catch (e) { /* ignore */ }
+            return {
+                ok: true,
+                pedidoId: p.id,
+                items: (p.items || []).length,
+                revertido: true
+            };
+        });
+    }
+
     function eliminarPedido(pedidoId, clienteKeyOpcional) {
         var hit = findPedido(pedidoId);
         if (hit.idx < 0) return Promise.resolve({ ok: false, error: 'Pedido no encontrado.' });
         if (clienteKeyOpcional != null && clienteKeyOpcional !== '') {
             if (claveCliente(hit.pedido.clienteKey) !== claveCliente(clienteKeyOpcional)) {
                 return Promise.resolve({ ok: false, error: 'No puedes eliminar este pedido.' });
+            }
+            if (hit.pedido.ventaRetailRegistradaEn) {
+                return Promise.resolve({
+                    ok: false,
+                    error: 'La venta ya fue confirmada; no puedes eliminar este pedido.'
+                });
             }
         }
         if (hit.pedido.id === PEDIDO_NATY_LEGACY_ID) {
@@ -657,6 +942,7 @@
             });
         }
         return chain.then(function () {
+            restaurarEarlyAccessPorItemsPedido(p.items || []);
             var fresh = findPedido(pedidoId);
             if (fresh.idx >= 0) {
                 fresh.todos.splice(fresh.idx, 1);
@@ -688,6 +974,9 @@
         eliminarItemPedido: eliminarItemPedido,
         marcarClienteVioAvisoPedido: marcarClienteVioAvisoPedido,
         asegurarPedidoNatyLegacy20261017: asegurarPedidoNatyLegacy20261017,
+        quitarInventarioNatySegundoPedido2910: quitarInventarioNatySegundoPedido2910,
+        revertirInventarioNatyPedidosSinVentaConfirmada: revertirInventarioNatyPedidosSinVentaConfirmada,
+        pedidosNatyEnFechaCreado: pedidosNatyEnFechaCreado,
         PEDIDO_NATY_LEGACY_ID: PEDIDO_NATY_LEGACY_ID
     };
 })(window);

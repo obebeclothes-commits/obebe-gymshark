@@ -182,6 +182,33 @@
         return todos[idx];
     }
 
+    function lineaCoincideFilaInventario(line, fila) {
+        if (!line || !fila) return false;
+        var db = parseInt(fila.inventarioDbId, 10);
+        var sheet = parseInt(fila.filaSheet, 10);
+        var ldb = parseInt(line.inventarioDbId, 10);
+        var lsh = parseInt(line.filaSheet, 10);
+        if (ldb && (fila.inventarioDbId === ldb || fila.filaSheet === ldb)) return true;
+        if (lsh && (fila.filaSheet === lsh || fila.inventarioDbId === lsh)) return true;
+        return false;
+    }
+
+    /** Piezas en sucursal que aún no se descontaron del inventario principal (evita doble conteo). */
+    function reservadoSucursalSinDescontar(fila) {
+        var total = 0;
+        getAll().forEach(function (line) {
+            if ((line.cantidad || 0) <= 0) return;
+            if (line.stockDescontado) return;
+            if (lineaCoincideFilaInventario(line, fila)) total += line.cantidad;
+        });
+        return total;
+    }
+
+    function stockDisponibleInventarioPrincipal(fila) {
+        var stock = (fila && fila.stock) || 0;
+        return Math.max(0, stock - reservadoSucursalSinDescontar(fila));
+    }
+
     function reducirCantidad(id, qty) {
         qty = parseInt(qty, 10) || 0;
         if (qty <= 0) return { ok: false, error: 'Cantidad inválida.' };
@@ -208,6 +235,8 @@
         reducirCantidad: reducirCantidad,
         fijarCantidad: fijarCantidad,
         marcarStockDescontado: marcarStockDescontado,
-        sincronizarConInventario: sincronizarConInventario
+        sincronizarConInventario: sincronizarConInventario,
+        stockDisponibleInventarioPrincipal: stockDisponibleInventarioPrincipal,
+        reservadoSucursalSinDescontar: reservadoSucursalSinDescontar
     };
 })(window);

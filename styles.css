@@ -2694,6 +2694,11 @@ a.mayoreo-cta-50:active {
     z-index: 1;
 }
 
+/* Catálogo: buscador móvil va fuera del .container (solo ≤768px) */
+section.inventory > .filters-search-row {
+    display: none;
+}
+
 @media (max-width: 768px) {
     section.inventory .filters-products-wrapper,
     section.inventory .products-content,
@@ -2704,16 +2709,48 @@ a.mayoreo-cta-50:active {
         box-sizing: border-box;
     }
 
-    section.inventory .filters-search-row {
+    section.inventory {
+        padding-top: 0;
+    }
+
+    section.inventory > .filters-search-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
         width: 100%;
-        max-width: 100%;
-        margin-left: 0;
-        margin-right: 0;
+        max-width: none;
+        margin: 0 0 0.25rem;
+        padding: 0.5rem 20px;
         box-sizing: border-box;
+        position: sticky;
+        top: 64px;
+        z-index: 1001;
+        background: var(--card-bg, #fff);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+        border-bottom: 1px solid var(--border-color, #e0e0e0);
+        min-height: 52px;
+    }
+
+    body.filters-mobile-open section.inventory > .filters-search-row {
+        position: fixed;
+        left: 0;
+        right: 0;
+        width: 100%;
+        margin: 0;
+        z-index: 1102;
+        border-bottom: 2px solid var(--border-color, #e0e0e0);
+        box-shadow: none;
     }
 
     section.inventory .container {
+        overflow-x: visible;
+    }
+
+    section.inventory .filters-products-wrapper,
+    section.inventory .products-content {
         overflow-x: clip;
+        max-width: 100%;
     }
 
     section.inventory .products-grid-full {
@@ -4349,6 +4386,11 @@ footer {
         padding: 0 15px;
     }
 
+    section.inventory > .filters-search-row {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
     .hero-slides {
         height: auto;
         aspect-ratio: 819 / 1024;
@@ -4641,19 +4683,6 @@ body.mobile-menu-open .header-left .desktop-nav button {
 }
 
 @media (max-width: 768px) {
-    body.mobile-menu-open.obebe-unified-nav header,
-    body.mobile-menu-open.page-home.obebe-unified-nav header {
-        height: auto !important;
-        min-height: 0 !important;
-        padding: 0.2rem 0 0.35rem !important;
-    }
-
-    body.mobile-menu-open.obebe-unified-nav header > .container,
-    body.mobile-menu-open.page-home.obebe-unified-nav header > .container {
-        height: auto !important;
-        min-height: 0 !important;
-    }
-
     header > .page-home-mobile-nav {
         display: none;
         position: fixed;
@@ -4898,8 +4927,12 @@ body.mobile-menu-open .header-left .desktop-nav button {
         object-position: center 38%;
     }
 
-    header > .page-home-mobile-nav #homeMenuImg2 {
+    header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb--pos2-hombre {
         object-position: center top;
+    }
+
+    header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb--pos2-mujer {
+        object-position: center 12%;
     }
 
     header > .page-home-mobile-nav .home-menu-actions {
@@ -5014,45 +5047,37 @@ body.mobile-menu-open .header-left .desktop-nav button {
         background: #f5f5f5;
     }
 
-    body.mobile-menu-open.obebe-unified-nav header .logo-link,
-    body.mobile-menu-open.page-home.obebe-unified-nav header .logo-link,
-    body.mobile-menu-open.obebe-unified-nav header .header-right,
-    body.mobile-menu-open.page-home.obebe-unified-nav header .header-right {
-        opacity: 0;
-        visibility: hidden;
+    body.mobile-menu-open header > .container {
+        position: relative;
+        z-index: 1;
+        background: transparent;
         pointer-events: none;
     }
 
-    body.mobile-menu-open header > .container {
-        position: relative;
-        z-index: 1295;
-        background: transparent;
+    body.mobile-menu-open header > .container .logo-link,
+    body.mobile-menu-open header > .container .header-right {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
     }
 
     body.mobile-menu-open header > .page-home-mobile-nav.active {
         z-index: 1290;
     }
 
-    body.mobile-menu-open .mobile-menu-btn {
-        z-index: 1296;
+    body.mobile-menu-open .mobile-menu-btn,
+    body.mobile-menu-open .mobile-menu-btn.active {
+        z-index: 1310;
         position: fixed;
         left: 15px;
         top: calc(var(--obebe-promo-h, 0px) - 0.5cm + (var(--obebe-menu-fila-h, 46px) / 2));
         transform: translateY(-50%);
         pointer-events: auto;
         visibility: visible;
-    }
-
-    body.mobile-menu-open .mobile-menu-btn.active {
-        position: fixed;
-        left: 15px;
-        top: calc(var(--obebe-promo-h, 0px) - 0.5cm + (var(--obebe-menu-fila-h, 46px) / 2));
-        transform: translateY(-50%);
-    }
-}
-
-@media (min-width: 769px) {
-    .home-menu-overlay {
+        opacity: 1;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
         display: none !important;
     }
 }

@@ -47,9 +47,10 @@
     ];
 
     var MODULOS_MAYOREO_CLIENTE = [
+        { id: 'dashboard_mayoreo', label: 'Dashboard', live: true },
         { id: 'mayoreo', label: 'Inventario', live: true },
-        { id: 'calendario_mayoreo', label: 'Calendario', live: true },
         { id: 'pedidos_mayoreo', label: 'Pedidos', live: true },
+        { id: 'registrar_venta_mayoreo', label: 'Registrar venta', live: true },
         { id: 'ventas_mayoreo', label: 'Ventas', live: true },
         { id: 'clientes_mayoreo', label: 'Clientes', live: true }
     ];
@@ -392,7 +393,9 @@
         ObebeAdminData.cargarInventario(false).then(function (inv) {
             if (!datosCache) datosCache = baseDatosMayoreoCliente(inv);
             else datosCache.filas = inv.filas || [];
-            if (vistaActual === 'mayoreo' || vistaActual === 'ventas_mayoreo' || vistaActual === 'pedidos_mayoreo') {
+            if (vistaActual === 'mayoreo' || vistaActual === 'ventas_mayoreo' ||
+                vistaActual === 'registrar_venta_mayoreo' || vistaActual === 'dashboard_mayoreo' ||
+                vistaActual === 'pedidos_mayoreo') {
                 renderModulo(vistaActual);
             }
         }).catch(function () { /* fotos opcionales */ });
@@ -563,6 +566,219 @@
             '<div class="label">' + esc(label) + '</div>' +
             '<div class="value">' + esc(String(value)) + '</div>' +
             (hint ? '<div class="hint">' + esc(hint) + '</div>' : '') + '</div>';
+    }
+
+    function clienteMayoreoKey() {
+        return userActual && userActual.clienteMayoreo ? userActual.clienteMayoreo : 'naty';
+    }
+
+    function ventasLineasNatyCache() {
+        return ObebeAdminMayoreoVentas.ventasMayoreoLineasRetail(clienteMayoreoKey());
+    }
+
+    function opcionesEdicionVentasMayoreo() {
+        var key = clienteMayoreoKey();
+        return {
+            guardarEdicion: function (venta, campos) {
+                return ObebeAdminMayoreoVentas.guardarEdicionVentaMayoreoRetail(key, venta, campos);
+            },
+            eliminarLinea: function (venta) {
+                return ObebeAdminMayoreoVentas.eliminarLineaVentaMayoreoRetail(key, venta);
+            }
+        };
+    }
+
+    function opcionesMountRetailMayoreo() {
+        var key = clienteMayoreoKey();
+        var filasInv = datosCache ? (datosCache.filas || []) : [];
+        var clientesRank = ObebeAdminMayoreoVentas.clientesRetailDesdeRanking(key);
+        return {
+            filas: [],
+            clientes: clientesRank,
+            vendedor: (userActual && userActual.nombre) ? userActual.nombre : 'NATY',
+            mayoreo: {
+                clienteKey: key,
+                clientes: clientesRank,
+                getFilas: function () {
+                    return ObebeAdminMayoreoVentas.filasRetailDesdeInventarioMayoreo(key, filasInv);
+                }
+            },
+            getFilas: function () {
+                return ObebeAdminMayoreoVentas.filasRetailDesdeInventarioMayoreo(key, filasInv);
+            },
+            onVentaRegistrada: function () {
+                onVentaRegistradaMayoreoDesdeRetail();
+            }
+        };
+    }
+
+    function onVentaRegistradaMayoreoDesdeRetail() {
+        pintarTablaVentasUltimasMayoreo();
+        remountRetailRegistrarVentaMayoreo();
+        if (vistaActual === 'mayoreo') renderModulo('mayoreo');
+        if (vistaActual === 'dashboard_mayoreo') renderDashboardMayoreo();
+        if (vistaActual === 'ventas_mayoreo') renderVentasMayoreo();
+        if (vistaActual === 'clientes_mayoreo') renderModulo('clientes_mayoreo');
+    }
+
+    function remountRetailRegistrarVentaMayoreo() {
+        if (vistaActual !== 'registrar_venta_mayoreo') return;
+        var mount = document.getElementById('adminVentaRetailMount');
+        if (mount && window.ObebeAdminVentasRetail) {
+            ObebeAdminVentasRetail.mount(mount, opcionesMountRetailMayoreo());
+        }
+    }
+
+    function pintarTablaVentasUltimasMayoreo() {
+        var el = document.getElementById('adminVentasUltimasTable');
+        if (!el) return;
+        var recientes = ventasOrdenRecientes(ventasLineasNatyCache()).slice(0, 5);
+        ObebeAdminVentasRegistro.renderInto(el, recientes, {
+            editable: true,
+            edicionMayoreo: opcionesEdicionVentasMayoreo(),
+            limite: 5,
+            getVentas: function () {
+                return ventasOrdenRecientes(ventasLineasNatyCache()).slice(0, 5);
+            },
+            onChanged: onVentaRegistradaMayoreoDesdeRetail
+        });
+    }
+
+    function pintarTablaVentasRegistroMayoreo() {
+        var el = document.getElementById('adminVentasTable');
+        if (!el) return;
+        var q = (document.getElementById('adminSearchVentas') || {}).value || '';
+        var f = ObebeAdminData.filtrarVentas(ventasLineasNatyCache(), q);
+        ObebeAdminVentasRegistro.renderInto(el, f, {
+            editable: true,
+            seleccionAlEditar: true,
+            edicionMayoreo: opcionesEdicionVentasMayoreo(),
+            limite: 500,
+            getVentas: function () {
+                var qq = (document.getElementById('adminSearchVentas') || {}).value || '';
+                return ObebeAdminData.filtrarVentas(ventasLineasNatyCache(), qq);
+            },
+            onChanged: onVentaRegistradaMayoreoDesdeRetail
+        });
+    }
+
+    function renderVentasMayoreo() {
+        var lineas = ventasLineasNatyCache();
+        var sv = ObebeAdminData.calcularResumenVentas(lineas);
+        var cuentasSemHtml = ObebeAdminData.topEntries(sv.porCuentaSemana, 8).map(function (x) {
+            return '<tr><td>' + esc(x.key) + '</td><td>' + ObebeAdminData.formatoMoney(x.val) + '</td></tr>';
+        }).join('');
+        var cuentasMesHtml = ObebeAdminData.topEntries(sv.porCuentaMes, 8).map(function (x) {
+            return '<tr><td>' + esc(x.key) + '</td><td>' + ObebeAdminData.formatoMoney(x.val) + '</td></tr>';
+        }).join('');
+        elContent.innerHTML =
+            panelVentasDashboard(sv, lineas) +
+            '<div class="admin-ventas-cuentas-grid">' +
+            '<div class="admin-panel"><div class="admin-panel-head"><h3>Dinero por cuenta (semana)</h3></div>' +
+            '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Cuenta</th><th>Total</th></tr></thead><tbody>' +
+            (cuentasSemHtml || '<tr><td colspan="2">Sin datos</td></tr>') + '</tbody></table></div></div>' +
+            '<div class="admin-panel"><div class="admin-panel-head"><h3>Dinero por cuenta (mes)</h3></div>' +
+            '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Cuenta</th><th>Total</th></tr></thead><tbody>' +
+            (cuentasMesHtml || '<tr><td colspan="2">Sin datos</td></tr>') + '</tbody></table></div></div></div>' +
+            graficoBarrasVentasPorSemana(lineas) +
+            '<div class="admin-panel">' +
+            '<div class="admin-panel-head admin-panel-head--ventas-reg">' +
+            '<h3>Registro de ventas</h3>' +
+            '<div class="admin-panel-head-actions">' +
+            '<input type="search" class="admin-search" id="adminSearchVentas" placeholder="Buscar artículo, cliente, vendedor…">' +
+            '</div></div>' +
+            '<div id="adminVentasTable"></div></div>';
+        pintarTablaVentasRegistroMayoreo();
+        bindSearch('adminSearchVentas', pintarTablaVentasRegistroMayoreo);
+    }
+
+    function renderRegistrarVentaMayoreo() {
+        elContent.innerHTML =
+            '<div id="adminVentaRetailMount"></div>' +
+            '<div class="admin-panel admin-panel-ventas-ultimas">' +
+            '<div class="admin-panel-head admin-panel-head--ventas-reg">' +
+            '<h3>Últimas 5 ventas</h3>' +
+            '<div class="admin-panel-head-actions">' +
+            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-module="ventas_mayoreo">Ver registro completo</button>' +
+            '</div></div>' +
+            '<div id="adminVentasUltimasTable"></div></div>';
+        if (window.ObebeAdminVentasRetail) {
+            ObebeAdminVentasRetail.mount(document.getElementById('adminVentaRetailMount'), opcionesMountRetailMayoreo());
+        }
+        pintarTablaVentasUltimasMayoreo();
+        var ir = elContent.querySelector('[data-module="ventas_mayoreo"]');
+        if (ir) ir.addEventListener('click', function () { irModulo('ventas_mayoreo'); });
+    }
+
+    function renderDashboardMayoreo() {
+        var key = clienteMayoreoKey();
+        var filasInv = datosCache ? (datosCache.filas || []) : [];
+        var filasNaty = ObebeAdminMayoreoVentas.filasInventarioDesdeMayoreoCliente(key, filasInv);
+        var r = ObebeAdminData.calcularResumen(filasNaty);
+        var ventasLineas = ObebeAdminMayoreoVentas.lineasVentasMayoreoParaResumen(key);
+        var sv = ObebeAdminData.calcularResumenVentas(ventasLineas);
+        var marcasOrden = Object.keys(r.porMarca).map(function (k) {
+            return { key: k, val: r.porMarca[k] };
+        }).sort(function (a, b) { return b.val - a.val; });
+        var marcasHtml = marcasOrden.map(function (x) {
+            return '<tr><td>' + esc(x.key) + '</td><td>' + x.val + '</td></tr>';
+        }).join('');
+        var marcasPanel =
+            '<div class="admin-panel admin-panel-marcas admin-panel-marcas--focus"><div class="admin-panel-head"><h3>Stock por marca</h3></div>' +
+            '<div class="admin-panel-marcas-table"><table class="admin-table admin-table-compact admin-table-marcas"><thead><tr><th>Marca</th><th>Stock</th></tr></thead><tbody>' +
+            (marcasHtml || '<tr><td colspan="2">Sin datos</td></tr>') +
+            '</tbody></table></div></div>';
+        var invKpiGrid =
+            '<div class="admin-kpi-grid admin-kpi-grid--dashboard admin-kpi-grid--dashboard-focus">' +
+            kpiDestacado('Stock total', r.unidades, '') +
+            kpiDestacado('Stock Hombre / Mujer', r.porSegmento.Hombre + ' / ' + r.porSegmento.Mujer, '') +
+            kpiDestacado('Valor stock', ObebeAdminData.formatoMoney(r.valorEstimado), '') +
+            '</div>';
+        elContent.innerHTML =
+            '<div class="admin-dashboard-layout">' +
+            '<div class="admin-dashboard-slot admin-dashboard-slot--ventas">' +
+            panelVentasDashboardKpis(sv) + '</div>' +
+            '<div class="admin-dashboard-slot admin-dashboard-slot--marcas">' + marcasPanel + '</div>' +
+            '<div class="admin-dashboard-slot admin-dashboard-slot--inv-kpi">' + invKpiGrid + '</div>' +
+            '<div class="admin-dashboard-slot admin-dashboard-slot--chart-mes">' +
+            graficoBarrasVentasPorMes(ventasLineas) + '</div></div>';
+    }
+
+    function renderInventarioMayoreoCliente() {
+        var key = clienteMayoreoKey();
+        var dm = datosMayoreoParaVista();
+        var rm = dm.resumenMayoreo || {};
+        var gan = ObebeMayoreoStore.resumenGananciaCliente(key);
+        var pzas = gan.piezasVendidas || 0;
+        var kpis =
+            '<div class="admin-kpi-grid" id="adminMayoreoKpisInv" style="margin-bottom:1rem">' +
+            kpi('Unidades', rm.articulos || 0) +
+            kpi('Total invertido', ObebeAdminData.formatoMoney(rm.totalCobrado || 0)) +
+            kpi('Lo vendido', ObebeAdminData.formatoMoney(gan.totalVendido || 0), pzas + ' pzas.') +
+            kpi('Utilidad total', ObebeAdminData.formatoMoney(gan.utilidadTotal || 0), pzas + ' pzas.') +
+            '</div>';
+        var filasInv = datosCache.filas || [];
+        var filas = ObebeAdminMayoreoVentas.filasInventarioDesdeMayoreoCliente(key, filasInv);
+        var enc = datosCache.encabezadosFila2 || [];
+        function pintarInv() {
+            elContent.innerHTML = kpis + '<div id="adminInvMount"></div>';
+            ObebeAdminInventario.mount(
+                document.getElementById('adminInvMount'),
+                filas,
+                onReloadInvMayoreo,
+                enc,
+                {
+                    soloLectura: false,
+                    mayoreoInventario: { clienteKey: key },
+                    columnasOcultas: ObebeAdminMayoreoVentas.COLS_INV_OCULTAS_MAYOREO
+                }
+            );
+        }
+        function onReloadInvMayoreo() {
+            enriquecerInventarioNatyEnFondo();
+            return Promise.resolve();
+        }
+        pintarInv();
     }
 
     function renderDashboard() {
@@ -771,7 +987,7 @@
     function remountRetailRegistrarVenta() {
         if (vistaActual !== 'registrar_venta') return;
         var mount = document.getElementById('adminVentaRetailMount');
-        if (mount && global.ObebeAdminVentasRetail) {
+        if (mount && window.ObebeAdminVentasRetail) {
             ObebeAdminVentasRetail.mount(mount, opcionesMountRetail());
         }
     }
@@ -919,8 +1135,9 @@
     }
 
     function renderModulo(id) {
-        if (!datosCache && id !== 'ventas_mayoreo' && id !== 'mayoreo' &&
-            id !== 'clientes_mayoreo' && id !== 'calendario_mayoreo' && id !== 'pedidos_mayoreo' &&
+        if (!datosCache && id !== 'ventas_mayoreo' && id !== 'registrar_venta_mayoreo' &&
+            id !== 'dashboard_mayoreo' && id !== 'mayoreo' &&
+            id !== 'clientes_mayoreo' && id !== 'pedidos_mayoreo' &&
             id !== 'compras') {
             elContent.innerHTML = '<div class="admin-loading">Cargando…</div>';
             cargarDatos(false).then(function () { renderModulo(id); }).catch(function (err) {
@@ -928,12 +1145,14 @@
             });
             return;
         }
-        if (!datosCache && (id === 'mayoreo' || id === 'ventas_mayoreo' || id === 'clientes_mayoreo' ||
-            id === 'calendario_mayoreo' || id === 'pedidos_mayoreo')) {
+        if (!datosCache && (id === 'mayoreo' || id === 'ventas_mayoreo' || id === 'registrar_venta_mayoreo' ||
+            id === 'dashboard_mayoreo' || id === 'clientes_mayoreo' ||
+            id === 'pedidos_mayoreo')) {
             datosCache = { filas: [], lineasMayoreo: [], errorMayoreo: null };
         }
         switch (id) {
             case 'dashboard': renderDashboard(); break;
+            case 'dashboard_mayoreo': renderDashboardMayoreo(); break;
             case 'inventario': renderInventario(); break;
             case 'sucursales': renderSucursales(); break;
             case 'historico': renderHistoricoInventario(); break;
@@ -1008,28 +1227,35 @@
                 });
                 break;
             case 'mayoreo':
-                ObebeAdminMayoreo.mount(elContent, datosMayoreoParaVista());
+                if (ObebeAdminAuth.esMayoreoCliente(userActual)) {
+                    renderInventarioMayoreoCliente();
+                } else {
+                    ObebeAdminMayoreo.mount(elContent, datosMayoreoParaVista());
+                }
+                break;
+            case 'registrar_venta_mayoreo':
+                if (!datosCache) datosCache = { filas: [], lineasMayoreo: [], errorMayoreo: null };
+                renderRegistrarVentaMayoreo();
                 break;
             case 'ventas_mayoreo':
                 if (!datosCache) datosCache = { filas: [], lineasMayoreo: [], errorMayoreo: null };
-                ObebeAdminMayoreoVentas.mount(elContent, {
-                    clienteKey: userActual.clienteMayoreo || 'naty',
-                    filasInv: datosCache.filas || [],
-                    onVentaGuardada: function () {
-                        if (vistaActual === 'mayoreo') renderModulo('mayoreo');
-                        if (vistaActual === 'clientes_mayoreo') renderModulo('clientes_mayoreo');
-                    }
-                });
+                renderVentasMayoreo();
                 break;
             case 'clientes_mayoreo':
-                ObebeAdminMayoreoClientes.mount(elContent, {
-                    clienteKey: userActual.clienteMayoreo || 'naty'
-                });
-                break;
-            case 'calendario_mayoreo':
-                ObebeAdminMayoreoCalendario.mount(elContent, {
-                    clienteKey: userActual.clienteMayoreo || 'naty'
-                });
+                (function () {
+                    var ck = clienteMayoreoKey();
+                    ObebeAdminClientes.mount(elContent, ObebeAdminMayoreoVentas.clientesPerfilDesdeMayoreo(ck), {
+                        refrescarClientes: function () {
+                            return ObebeAdminMayoreoVentas.clientesPerfilDesdeMayoreo(ck);
+                        },
+                        persistirCliente: function (id, campos) {
+                            return ObebeMayoreoStore.actualizarContactoComprador(ck, id, campos);
+                        },
+                        onChanged: function () {
+                            if (vistaActual === 'registrar_venta_mayoreo') remountRetailRegistrarVentaMayoreo();
+                        }
+                    });
+                })();
                 break;
             case 'pedidos_mayoreo':
                 if (ObebeAdminAuth.esMayoreoCliente(userActual)) {
@@ -1037,7 +1263,9 @@
                         ObebeAdminMayoreoPedidos.mount(elContent, {
                             clienteKey: userActual.clienteMayoreo || 'naty',
                             clienteNombre: userActual.nombre || 'NATY',
-                            filasInv: datosCache.filas || []
+                            filasInv: ObebeAdminData.combinarInventarioConComprasEarly
+                                ? ObebeAdminData.combinarInventarioConComprasEarly(datosCache.filas || [])
+                                : (datosCache.filas || [])
                         });
                     };
                     if (!(datosCache.filas || []).length) {
@@ -1053,6 +1281,7 @@
                     var dmPed = datosMayoreoParaVista();
                     ObebeAdminMayoreoPedidos.mount(elContent, {
                         modoObebe: true,
+                        filtroClienteInicial: 'naty',
                         filasInv: datosCache.filas || [],
                         clientesMayoreo: dmPed.clientesMayoreo || [],
                         onInventarioActualizado: function () {
@@ -1097,11 +1326,11 @@
 
     function mantenimientoMayoreoLocal() {
         try {
-            if (window.ObebeMayoreoStore && ObebeMayoreoStore.ejecutarLimpiezaProgramadaMayoreo) {
-                ObebeMayoreoStore.ejecutarLimpiezaProgramadaMayoreo();
-            }
             if (window.ObebeMayoreoPedidosStore && ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017) {
                 ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017();
+            }
+            if (window.ObebeMayoreoStore && ObebeMayoreoStore.ejecutarLimpiezaProgramadaMayoreo) {
+                ObebeMayoreoStore.ejecutarLimpiezaProgramadaMayoreo();
             }
         } catch (e) {
             console.warn('[admin-app] mantenimiento mayoreo', e);
@@ -1122,7 +1351,7 @@
         }
         actualizarMarcaPanel(user);
         renderNav();
-        var inicio = ObebeAdminAuth.esMayoreoCliente(user) ? 'mayoreo' : 'dashboard';
+        var inicio = ObebeAdminAuth.esMayoreoCliente(user) ? 'dashboard_mayoreo' : 'dashboard';
         if (ObebeAdminAuth.esMayoreoCliente(user)) {
             datosCache = baseDatosMayoreoCliente({ filas: [] });
             irModulo(inicio);
@@ -1310,6 +1539,13 @@
             if (inv.resumen) datosCache.resumen = inv.resumen;
             if (inv.encabezadosFila2) datosCache.encabezadosFila2 = inv.encabezadosFila2;
         }).catch(function () { /* el inventario se vuelve a leer al entrar */ });
+    });
+
+    document.addEventListener('obebe-compras-early-access', function () {
+        if (vistaActual === 'compras' && window.ObebeAdminCompras) {
+            var comprasMount = document.getElementById('adminComprasMount');
+            if (comprasMount) ObebeAdminCompras.mount(comprasMount);
+        }
     });
 
     document.addEventListener('DOMContentLoaded', function () {

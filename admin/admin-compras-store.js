@@ -48,7 +48,11 @@
         return {
             id: row.id || uid(),
             celdas: celdas,
-            actualizadoEn: row.actualizadoEn || Date.now()
+            actualizadoEn: row.actualizadoEn || Date.now(),
+            earlyAccess: !!row.earlyAccess,
+            earlyAccessEn: row.earlyAccessEn || null,
+            enTienda: !!row.enTienda,
+            enTiendaEn: row.enTiendaEn || null
         };
     }
 

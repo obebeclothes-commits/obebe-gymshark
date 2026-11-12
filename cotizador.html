@@ -25,8 +25,8 @@ main,.container{max-width:1200px;margin:0 auto}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261111j" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20261111j"></noscript>
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261111p" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20261111p"></noscript>
     <script>
     (function(w, d) {
         function activarCss() {
@@ -469,8 +469,9 @@ main,.container{max-width:1200px;margin:0 auto}
         </div>
     </div>
 
-<script src="obebe-data-config.js?v=20261107"></script>
-<script src="cotizador-config.js?v=20261110k"></script>
+<script src="obebe-data-config.js?v=20261112"></script>
+<script src="cotizador-config.js?v=20261112"></script>
+<script src="obebe-cotizador-remote.js?v=20261112"></script>
 <script>
 (function () {
     var MAX = 10;
@@ -513,6 +514,16 @@ main,.container{max-width:1200px;margin:0 auto}
         window.OBEBE_COTIZADOR_CONFIG = cfg;
     }
 
+    function cargarConfigRemota() {
+        if (window.ObebeCotizadorRemote && ObebeCotizadorRemote.resolverConfigRemota) {
+            return ObebeCotizadorRemote.resolverConfigRemota().then(function (res) {
+                if (res && res.config) aplicarConfigRemota(res.config);
+                return cfg;
+            });
+        }
+        return Promise.resolve(cfg);
+    }
+
     function precioItemObebe(usd, nActivos) {
         if (!(usd > 0)) return 0;
         if (window.ObebeCotizadorFormula) {
@@ -545,63 +556,6 @@ main,.container{max-width:1200px;margin:0 auto}
         var iva = (cif + arancel + dta) * DIY.ivaPct;
         var totalUsd = cif + arancel + dta + iva + DIY.courierUsd;
         return round2(totalUsd * cfg.valorDolar * DIY.fxFee + DIY.gestionMxn);
-    }
-
-    function cargarConfigSupabaseRest() {
-        var dataCfg = window.OBEBE_DATA_CONFIG || {};
-        var base = String(dataCfg.supabaseUrl || '').trim().replace(/\/$/, '');
-        var key = String(dataCfg.supabaseAnonKey || '').trim();
-        if (!base || !key) return Promise.resolve(cfg);
-        var rest = base + '/rest/v1/admin_modulos_blob?module_key=eq.cotizador&select=payload&limit=1';
-        return fetch(rest, {
-            method: 'GET',
-            mode: 'cors',
-            headers: { apikey: key, Authorization: 'Bearer ' + key }
-        }).then(function (res) {
-            if (!res.ok) return cfg;
-            return res.json();
-        }).then(function (rows) {
-            if (!Array.isArray(rows) || !rows[0] || !rows[0].payload) return cfg;
-            var payload = rows[0].payload;
-            var hit = null;
-            if (Array.isArray(payload)) {
-                for (var i = 0; i < payload.length; i++) {
-                    var p = payload[i];
-                    if (p && (p.id === 'obebe-cotizador-config' || p.factorUsd != null)) {
-                        hit = p;
-                        break;
-                    }
-                }
-            }
-            if (hit) aplicarConfigRemota(hit);
-            return cfg;
-        }).catch(function () { return cfg; });
-    }
-
-    function cargarConfigNube() {
-        var dataCfg = window.OBEBE_DATA_CONFIG || {};
-        var adminCfg = window.OBEBE_ADMIN_CONFIG || {};
-        var url = String(dataCfg.adminApiUrl || adminCfg.adminApiUrl || '').trim();
-        var key = String(dataCfg.supabaseAnonKey || adminCfg.supabaseAnonKey || '').trim();
-        if (!url) return cargarConfigSupabaseRest();
-        return fetch(url, {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: 'Bearer ' + key,
-                apikey: key
-            },
-            body: JSON.stringify({ action: 'getCotizadorConfig' })
-        }).then(function (res) {
-            return res.json().catch(function () { return {}; }).then(function (data) {
-                if (data && data.ok && data.config) {
-                    aplicarConfigRemota(data.config);
-                    return cfg;
-                }
-                return cargarConfigSupabaseRest();
-            });
-        }).catch(function () { return cargarConfigSupabaseRest(); });
     }
 
     function filaHtml() {
@@ -730,7 +684,7 @@ main,.container{max-width:1200px;margin:0 auto}
         recalcular();
     });
 
-    cargarConfigNube().then(function () {
+    cargarConfigRemota().then(function () {
         cfg = normalizar(cfg);
         recalcular();
     });
@@ -738,7 +692,7 @@ main,.container{max-width:1200px;margin:0 auto}
 </script>
     <script defer src="productos-hombre.js?v=20261108b"></script>
     <script defer src="productos-mujer.js?v=20261021c"></script>
-    <script defer src="script.js?v=20261111i"></script>
+    <script defer src="script.js?v=20261111p"></script>
     <script defer src="productos.js?v=20261111h"></script>
     <script defer src="obebe-listo.js?v=20261108a"></script>
     <script>

@@ -77,4 +77,4 @@ create table if not exists public.admin_modulos_blob (
 
 alter table public.admin_modulos_blob enable row level security;
 
-comment on table public.admin_modulos_blob is 'JSON por módulo admin (apartados, entregas, sucursales) — solo Edge Function con service role';
+comment on table public.admin_modulos_blob is 'JSON por módulo admin (apartados, entregas, sucursales, cotizador) — solo Edge Function con service role';

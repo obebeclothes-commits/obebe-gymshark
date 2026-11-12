@@ -3,7 +3,6 @@
 
     var sucursalActiva = 'mercadolibre';
     var optsMount = null;
-    var editandoLineaId = null;
 
     function esc(s) {
         return String(s || '')
@@ -70,25 +69,15 @@
                 '». Usa «Agregar desde inventario» para trasladar piezas del inventario principal.</p>';
         }
         var rows = list.map(function (l) {
-            var edit = editandoLineaId === l.id;
             var sub = (l.precioUnitario || 0) * (l.cantidad || 0);
             var img = imagenLineaSucursal(l);
             var thumb = img
                 ? '<img src="' + esc(img) + '" alt="" class="admin-suc-row-thumb" loading="lazy" ' +
                 'onerror="typeof adminMayoreoImgFallback===\'function\'&&adminMayoreoImgFallback(this)">'
                 : '<span class="admin-suc-row-thumb admin-suc-row-thumb--empty"></span>';
-            var pzas = edit
-                ? '<input type="number" min="0" class="admin-suc-edit-qty" data-id="' + esc(l.id) +
-                '" value="' + (l.cantidad || 0) + '">'
-                : String(l.cantidad || 0);
-            var acciones = edit
-                ? '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact admin-suc-edit-save" data-id="' +
-                esc(l.id) + '">Guardar</button> ' +
-                '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-suc-edit-cancel">Cancelar</button> ' +
+            var acciones =
                 '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact admin-suc-quitar" data-id="' +
-                esc(l.id) + '">Quitar</button>'
-                : '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-suc-editar" data-id="' +
-                esc(l.id) + '">Editar</button> ' +
+                esc(l.id) + '">Quitar</button> ' +
                 '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact admin-suc-vender" data-id="' +
                 esc(l.id) + '" data-max="' + (l.cantidad || 0) + '">Registrar venta</button>';
             return '<tr data-linea-id="' + esc(l.id) + '">' +
@@ -96,9 +85,9 @@
                 '<div>' + ObebeAdminData.htmlRef(l.ref) + '<strong>' + esc(l.nombre) + '</strong>' +
                 '<div class="admin-muted-text">' + esc(l.talla) + ' · ' + esc(l.color) +
                 (l.tipo ? ' · ' + esc(l.tipo) : '') + '</div></div></div></td>' +
-                '<td>' + pzas + '</td>' +
+                '<td>' + String(l.cantidad || 0) + '</td>' +
                 '<td>' + fmt(l.precioUnitario) + '</td>' +
-                '<td>' + (edit ? '—' : fmt(sub)) + '</td>' +
+                '<td>' + fmt(sub) + '</td>' +
                 '<td class="admin-suc-actions">' + acciones + '</td></tr>';
         }).join('');
         return '<div class="admin-table-wrap"><table class="admin-table admin-table-compact admin-suc-table">' +
@@ -484,8 +473,8 @@
                 '<p class="admin-muted-text admin-suc-venta-hint">El stock del inventario principal ya se movió a la sucursal.</p>' +
                 '<p id="adminSucVentaError" class="admin-login-error" role="alert"></p>' +
                 '<footer class="admin-suc-modal-actions admin-suc-venta-actions">' +
-                '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminSucVentaGuardar">Registrar en Ventas</button>' +
                 '<button type="button" class="admin-btn admin-btn-danger" data-suc-dismiss="1">Cancelar</button>' +
+                '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminSucVentaGuardar">Registrar en Ventas</button>' +
                 '</footer></div></div>';
         }
 
@@ -617,7 +606,7 @@
             if (global.ObebeSucursalesStore && ObebeSucursalesStore.sincronizarConInventario) {
                 ObebeSucursalesStore.sincronizarConInventario(getFilas());
             }
-            descontarMercadoLibreDelInventario().finally(function () {
+            descontarSucursalesDelInventario().finally(function () {
                 var aviso = opts.onInventarioChanged ? opts.onInventarioChanged() : null;
                 Promise.resolve(aviso).finally(function () { pintar(root); });
             });
@@ -646,11 +635,11 @@
             return (f && f.stock) || 0;
         }
 
-        function descontarMercadoLibreDelInventario() {
+        function descontarSucursalesDelInventario() {
             if (!global.ObebeSucursalesStore || !ObebeAdminData.actualizarStockFila) {
                 return Promise.resolve();
             }
-            var lineas = ObebeSucursalesStore.listarPorSucursal('mercadolibre').filter(function (l) {
+            var lineas = ObebeSucursalesStore.getAll().filter(function (l) {
                 return !l.stockDescontado && (l.cantidad || 0) > 0;
             });
             if (!lineas.length) return Promise.resolve();
@@ -705,7 +694,6 @@
         function aplicarCantidadLinea(line, nueva) {
             function cerrar() {
                 ObebeSucursalesStore.fijarCantidad(line.id, nueva);
-                editandoLineaId = null;
                 if (nueva <= 0) refrescarTodo();
                 else pintar(root);
             }
@@ -743,52 +731,11 @@
             var tab = ev.target.closest('.admin-suc-tab');
             if (tab) {
                 sucursalActiva = tab.getAttribute('data-suc') || sucursalActiva;
-                editandoLineaId = null;
                 pintar(root);
                 return;
             }
             if (ev.target.id === 'adminSucAgregar' || ev.target.closest('#adminSucAgregar')) {
                 abrirModalAgregar(function () { refrescarTodo(); });
-                return;
-            }
-            var editar = ev.target.closest('.admin-suc-editar');
-            if (editar) {
-                editandoLineaId = editar.getAttribute('data-id');
-                pintar(root);
-                var inp = root.querySelector('.admin-suc-edit-qty');
-                if (inp) inp.focus();
-                return;
-            }
-            if (ev.target.closest('.admin-suc-edit-cancel')) {
-                editandoLineaId = null;
-                pintar(root);
-                return;
-            }
-            var guardar = ev.target.closest('.admin-suc-edit-save');
-            if (guardar) {
-                var gid = guardar.getAttribute('data-id');
-                var lineG = ObebeSucursalesStore.getById(gid);
-                var input = root.querySelector('.admin-suc-edit-qty[data-id="' + gid + '"]');
-                var nueva = parseInt(input && input.value, 10);
-                if (!lineG || isNaN(nueva) || nueva < 0) return;
-                if (nueva === (lineG.cantidad || 0)) {
-                    editandoLineaId = null;
-                    pintar(root);
-                    return;
-                }
-                var msgGuardar = nueva <= 0
-                    ? 'Se quita «' + (lineG.nombre || '') + '» de ' + nombreSucursal(lineG.sucursalId) + '.'
-                    : 'Se guarda la cantidad de «' + (lineG.nombre || '') + '» en ' + nueva + ' piezas.';
-                ObebeAdminDialog.confirm({
-                    title: nueva <= 0 ? '¿Quitar artículo?' : '¿Guardar cambios?',
-                    message: msgGuardar,
-                    confirmText: nueva <= 0 ? 'Quitar' : 'Guardar',
-                    cancelText: 'Cancelar',
-                    variant: nueva <= 0 ? 'danger' : 'primary'
-                }).then(function (ok) {
-                    if (!ok) return;
-                    aplicarCantidadLinea(lineG, nueva);
-                });
                 return;
             }
             var quitar = ev.target.closest('.admin-suc-quitar');

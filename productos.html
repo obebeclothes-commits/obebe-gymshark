@@ -43,8 +43,8 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261111j" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20261111j"></noscript>
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261113b" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="styles.css?v=20261113b"></noscript>
     <script>
     // Respaldo: si el onload del <link> no dispara, la hoja quedaria en media=print y sin aplicar.
     (function(w, d) {
@@ -677,15 +677,6 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                 height: 100%;
                 min-height: 48px !important;
             }
-            body.mobile-menu-open header {
-                height: auto !important;
-                min-height: 0 !important;
-                padding: 0.2rem 0 0.35rem !important;
-            }
-            body.mobile-menu-open header .container {
-                height: auto !important;
-                min-height: 0 !important;
-            }
             main {
                 padding-bottom: 0 !important;
                 margin-bottom: 0 !important;
@@ -760,8 +751,10 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                 gap: 0.5rem;
                 width: 100%;
                 max-width: 100%;
-                margin: 0 0 0.25rem 0;
-                padding: 0.5rem 0;
+                margin-left: 0;
+                margin-right: 0;
+                margin-bottom: 0.25rem;
+                padding: 0.5rem 20px;
                 position: sticky;
                 top: 64px;
                 z-index: 1001;
@@ -1288,11 +1281,11 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
 
     <main>
         <section class="inventory">
+            <div class="filters-search-row">
+                <button type="button" class="filters-toggle-btn" id="filtersToggleBtn" aria-label="Mostrar filtros" aria-expanded="false">Filtros</button>
+                <input type="text" class="product-search-input" id="productSearchInput" placeholder="Buscar por nombre o ref…" aria-label="Buscar por nombre o número de ref" autocomplete="off">
+            </div>
             <div class="container">
-                <div class="filters-search-row">
-                    <button type="button" class="filters-toggle-btn" id="filtersToggleBtn" aria-label="Mostrar filtros" aria-expanded="false">Filtros</button>
-                    <input type="text" class="product-search-input" id="productSearchInput" placeholder="Buscar por nombre o ref…" aria-label="Buscar por nombre o número de ref" autocomplete="off">
-                </div>
                 <div class="page-header">
                     <div class="mayoreo-page-switch" id="mayoreoPageSwitch" hidden aria-label="Ver otro nivel de mayoreo">
                         <a href="productos.html?mayoreo=1" class="mayoreo-cta mayoreo-cta-20" id="mayoreoSwitch20Link" hidden aria-label="Ver productos de mayoreo +20">
@@ -1438,7 +1431,7 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
 
     <script defer src="productos-hombre.js?v=20261110p"></script>
     <script defer src="productos-mujer.js?v=20261110p"></script>
-    <script defer src="script.js?v=20261111i"></script>
+    <script defer src="script.js?v=20261111p"></script>
     <script defer src="productos.js?v=20261111h"></script>
     <script defer src="obebe-listo.js?v=20261108a"></script>
     <script>

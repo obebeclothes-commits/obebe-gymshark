@@ -1,0 +1,5 @@
+# Config mínima para desplegar Edge Functions (proyecto yueajorzawaanubgekpm).
+# Despliegue: ver DESPLIEGAR-ADMIN-API.md o ejecutar deploy-admin-api.ps1
+
+[functions.admin-api]
+verify_jwt = false

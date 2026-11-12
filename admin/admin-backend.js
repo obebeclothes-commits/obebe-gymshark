@@ -66,6 +66,9 @@
                 } catch (e) {
                     throw new Error('Respuesta no JSON (HTTP ' + res.status + '): ' + text.slice(0, 200));
                 }
+                if (data && data.ok === false) {
+                    throw new Error((data && data.error) || 'Error en admin-api');
+                }
                 if (!res.ok && (!data || data.ok !== true)) {
                     throw new Error((data && data.error) || ('HTTP ' + res.status));
                 }

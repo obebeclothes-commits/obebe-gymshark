@@ -76,12 +76,26 @@
         return ObebeCotizadorStore.normalizar(leerForm());
     }
 
-    function urlCotizadorTienda() {
+    function urlCotizadorTienda(cfg) {
         var h = String(global.location.hostname || '').toLowerCase();
+        var base;
         if (h === 'obebe.store' || h === 'www.obebe.store') {
-            return global.location.origin + '/cotizador.html';
+            base = global.location.origin + '/cotizador.html';
+        } else {
+            base = 'https://obebe.store/cotizador.html';
         }
-        return 'https://obebe.store/cotizador.html';
+        var ts = cfg && cfg.actualizadoEn ? cfg.actualizadoEn : Date.now();
+        base = base + '?v=' + ts;
+        if (global.ObebeCotizadorRemote && ObebeCotizadorRemote.urlConPreview) {
+            return ObebeCotizadorRemote.urlConPreview(cfg || ObebeCotizadorStore.leer(), base);
+        }
+        return base;
+    }
+
+    function publicarParaTienda(cfg) {
+        if (global.ObebeCotizadorRemote && ObebeCotizadorRemote.publicarPreview) {
+            ObebeCotizadorRemote.publicarPreview(cfg || ObebeCotizadorStore.leer());
+        }
     }
 
     function wireDemo() {
@@ -155,7 +169,7 @@
             '<p class="admin-cot-eyebrow">Ventas · Configuración</p>' +
             '<h2 class="admin-cot-title">Cotizador</h2>' +
             '<p class="admin-cot-sub">Parámetros de la calculadora pública. ' +
-            '<a href="' + esc(urlCotizadorTienda()) + '" id="adminCotAbrirPagina" target="_blank" rel="noopener">Abrir página web</a></p>' +
+            '<a href="' + esc(urlCotizadorTienda(cfg)) + '" id="adminCotAbrirPagina" target="_blank" rel="noopener">Abrir página web</a></p>' +
             '</div>' +
             '<div class="admin-cot-actions" id="adminCotActions">' +
             '<button type="button" class="admin-btn admin-btn-primary admin-cot-btn" id="adminCotEdit">Editar</button>' +
@@ -180,10 +194,12 @@
         var actions = document.getElementById('adminCotActions');
         var abrir = document.getElementById('adminCotAbrirPagina');
         if (abrir) {
-            abrir.href = urlCotizadorTienda();
+            abrir.href = urlCotizadorTienda(cfg);
             abrir.addEventListener('click', function (e) {
                 e.preventDefault();
-                global.open(urlCotizadorTienda(), '_blank', 'noopener,noreferrer');
+                var live = editando ? cfgActual() : ObebeCotizadorStore.leer();
+                publicarParaTienda(live);
+                global.open(urlCotizadorTienda(live), '_blank', 'noopener,noreferrer');
             });
         }
         wireDemo();
@@ -199,33 +215,66 @@
                     pintar();
                 });
                 document.getElementById('adminCotSave').addEventListener('click', function () {
-                    if (!window.confirm('¿Seguro que quieres guardar los cambios del cotizador?')) {
-                        return;
-                    }
-                    var saved = ObebeCotizadorStore.guardar(leerForm());
-                    editando = false;
-                    var m = document.getElementById('adminCotizadorMsg');
-                    if (m) m.textContent = 'Guardando en la nube para obebe.store…';
-                    var push = global.ObebeAdminModulosCloud && ObebeAdminModulosCloud.pushCotizadorNow;
-                    var fin = function (txt) {
-                        pintar();
-                        var msg = document.getElementById('adminCotizadorMsg');
-                        if (msg) msg.textContent = txt;
-                    };
-                    if (typeof push === 'function') {
-                        push().then(function (res) {
-                            if (res && res.ok) {
-                                fin('Guardado y sincronizado con obebe.store · ' +
-                                    new Date(saved.actualizadoEn).toLocaleString('es-MX'));
-                            } else if (res && res.offline) {
-                                fin('Guardado solo en este navegador (sin sesión admin en nube). Recarga obebe.store tras desplegar admin-api.');
-                            } else {
-                                fin('Guardado local, pero falló la nube: ' + ((res && res.error) || 'error desconocido'));
+                    var dialog = global.ObebeAdminDialog;
+                    var pedir = dialog && dialog.confirm
+                        ? dialog.confirm({
+                            title: 'Guardar cotizador',
+                            message: 'Los cambios actualizarán la fórmula del cotizador en obebe.store. ¿Continuar?',
+                            confirmText: 'Guardar',
+                            confirmSuccess: true,
+                            cancelDanger: true,
+                            cancelText: 'Cancelar',
+                            variant: 'warn'
+                        })
+                        : Promise.resolve(window.confirm('¿Guardar los cambios del cotizador?'));
+                    pedir.then(function (ok) {
+                        if (!ok) return;
+                        var saved = ObebeCotizadorStore.guardar(leerForm(), { skipCloudNotify: true });
+                        publicarParaTienda(saved);
+                        editando = false;
+                        var m = document.getElementById('adminCotizadorMsg');
+                        if (m) m.textContent = 'Guardando en la nube para obebe.store…';
+                        var push = global.ObebeAdminModulosCloud && ObebeAdminModulosCloud.pushCotizadorNow;
+                        var fin = function (txt, alertOpts) {
+                            pintar();
+                            var msg = document.getElementById('adminCotizadorMsg');
+                            if (msg) msg.textContent = txt;
+                            if (alertOpts && dialog && dialog.alert) {
+                                dialog.alert(alertOpts);
                             }
-                        });
-                    } else {
-                        fin('Guardado · ' + new Date(saved.actualizadoEn).toLocaleString('es-MX'));
-                    }
+                        };
+                        if (typeof push === 'function') {
+                            push().then(function (res) {
+                                var cuando = new Date(saved.actualizadoEn).toLocaleString('es-MX');
+                                if (res && res.ok) {
+                                    fin('Guardado y sincronizado con obebe.store · ' + cuando, {
+                                        title: 'Cotizador guardado',
+                                        message: 'La tienda ya puede leer los nuevos valores. Abre el cotizador con «Abrir página web» para comprobarlo.',
+                                        variant: 'warn',
+                                        confirmText: 'Entendido'
+                                    });
+                                } else if (res && res.offline) {
+                                    fin('Guardado solo en este navegador (admin sin nube). Configura Supabase en admin-config.', {
+                                        title: 'Sin sincronización',
+                                        message: 'No hay conexión con admin-api. Los cambios no llegarán a obebe.store hasta que guardes con la nube activa.',
+                                        variant: 'danger'
+                                    });
+                                } else {
+                                    fin('Guardado local, pero falló la nube: ' + ((res && res.error) || 'error desconocido'), {
+                                        title: 'Error al sincronizar',
+                                        message: (res && res.error) || 'No se pudo subir la configuración. ¿Redesplegaste admin-api con soporte cotizador?',
+                                        variant: 'danger'
+                                    });
+                                }
+                            });
+                        } else {
+                            fin('Guardado · ' + new Date(saved.actualizadoEn).toLocaleString('es-MX'), {
+                                title: 'Guardado local',
+                                message: 'No está disponible la sincronización con la nube.',
+                                variant: 'warn'
+                            });
+                        }
+                    });
                 });
             } else {
                 actions.innerHTML = '<button type="button" class="admin-btn admin-btn-primary admin-cot-btn" id="adminCotEdit">Editar</button>';

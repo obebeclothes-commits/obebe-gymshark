@@ -195,8 +195,12 @@
         return { ok: true, nuevas: nuevas };
     }
 
-    function revertirInventarioDesdePedido(pedido) {
-        if (!pedido || !pedido.inventarioAplicado) {
+    function revertirInventarioDesdePedido(pedido, opts) {
+        opts = opts || {};
+        if (!pedido) {
+            return { ok: false, error: 'Pedido inválido.' };
+        }
+        if (!opts.forzar && !pedido.inventarioAplicado) {
             return { ok: true, omitido: true };
         }
         var k = claveCliente(pedido.clienteKey);
@@ -439,16 +443,25 @@
     var KEY_LIMPIEZA_NATY_INV_2910 = 'obebe_naty_quitar_inv_20261029_v1';
 
     function ejecutarLimpiezaProgramadaMayoreo() {
-        try {
-            if (localStorage.getItem(KEY_LIMPIEZA_NATY_INV_2910)) {
-                return { ok: true, omitido: true };
+        var chain = Promise.resolve();
+        if (global.ObebeMayoreoPedidosStore) {
+            if (ObebeMayoreoPedidosStore.revertirInventarioNatyPedidosSinVentaConfirmada) {
+                chain = chain.then(function () {
+                    return ObebeMayoreoPedidosStore.revertirInventarioNatyPedidosSinVentaConfirmada();
+                });
             }
-        } catch (e) { /* ignore */ }
-        var res = eliminarLineasPorFechaStock('naty', '2026-10-29');
-        try {
-            localStorage.setItem(KEY_LIMPIEZA_NATY_INV_2910, String(Date.now()));
-        } catch (e) { /* ignore */ }
-        return res;
+            if (ObebeMayoreoPedidosStore.quitarInventarioNatySegundoPedido2910) {
+                chain = chain.then(function () {
+                    return ObebeMayoreoPedidosStore.quitarInventarioNatySegundoPedido2910();
+                });
+            }
+        }
+        chain.then(function (r) {
+            if (r && (r.revertido || r.migracion) && global.ObebeAdminData && ObebeAdminData.cargarInventario) {
+                ObebeAdminData.cargarInventario(true);
+            }
+        }).catch(function () { /* ignore */ });
+        return { ok: true };
     }
 
     function registrarVenta(payload) {
@@ -492,7 +505,7 @@
             id: 'v_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
             fechaIso: payload.fechaIso || fechaLocalIso(),
             comprador: String(payload.comprador || '').trim(),
-            metodoPago: payload.metodoPago || 'efectivo',
+            metodoPago: normalizarMetodoPago(payload.metodoPago || 'efectivo'),
             clienteKey: clienteKey,
             total: total,
             lineas: ventaLineas,
@@ -638,6 +651,15 @@
         };
     }
 
+    function normalizarMetodoPago(mp) {
+        var n = norm(mp);
+        if (!n) return 'efectivo';
+        if (n.indexOf('tarjeta') >= 0 || n.indexOf('credito') >= 0 || n.indexOf('crédito') >= 0) return 'tarjeta';
+        if (n.indexOf('transfer') >= 0) return 'transferencia';
+        if (n === 'efectivo') return 'efectivo';
+        return 'efectivo';
+    }
+
     function actualizarVenta(ventaId, clienteKey, patch) {
         patch = patch || {};
         var k = claveCliente(clienteKey);
@@ -661,15 +683,123 @@
             v.fechaIso = f;
         }
         if (patch.metodoPago != null) {
-            var mp = norm(patch.metodoPago);
-            if (mp !== 'efectivo' && mp !== 'tarjeta' && mp !== 'transferencia') {
-                return { ok: false, error: 'Forma de pago inválida.' };
-            }
-            v.metodoPago = mp;
+            v.metodoPago = normalizarMetodoPago(patch.metodoPago);
         }
         ventas[idx] = v;
         setVentas(ventas);
         return { ok: true, venta: v };
+    }
+
+    function actualizarLineaEnVenta(ventaId, clienteKey, lineaIdx, patch) {
+        patch = patch || {};
+        var k = claveCliente(clienteKey);
+        var ventas = getVentas();
+        var idx = ventas.findIndex(function (v) {
+            return v.id === ventaId && claveCliente(v.clienteKey) === k;
+        });
+        if (idx < 0) return { ok: false, error: 'Venta no encontrada.' };
+        var v = ventas[idx];
+        var lineas = v.lineas || [];
+        var li = parseInt(lineaIdx, 10);
+        if (isNaN(li) || li < 0 || li >= lineas.length) {
+            return { ok: false, error: 'Línea de venta no encontrada.' };
+        }
+        var ln = lineas[li];
+        if (patch.nombre != null) ln.nombre = String(patch.nombre || '').trim();
+        if (patch.subtotal != null || patch.precio != null) {
+            var sub = parseFloat(String(patch.subtotal != null ? patch.subtotal : patch.precio).replace(/[^\d.-]/g, ''));
+            if (isNaN(sub) || sub < 0) return { ok: false, error: 'Precio inválido.' };
+            var qty = ln.cantidad || 1;
+            ln.subtotal = sub;
+            ln.precioUnitario = sub / qty;
+        }
+        v.total = lineas.reduce(function (acc, l) {
+            return acc + (l.subtotal != null ? l.subtotal : (l.precioUnitario || 0) * (l.cantidad || 1));
+        }, 0);
+        ventas[idx] = v;
+        setVentas(ventas);
+        return { ok: true, venta: v };
+    }
+
+    function eliminarLineaDeVenta(ventaId, clienteKey, lineaIdx) {
+        var k = claveCliente(clienteKey);
+        var ventas = getVentas();
+        var idx = ventas.findIndex(function (v) {
+            return v.id === ventaId && claveCliente(v.clienteKey) === k;
+        });
+        if (idx < 0) return { ok: false, error: 'Venta no encontrada.' };
+        var v = ventas[idx];
+        var lineas = v.lineas || [];
+        var li = parseInt(lineaIdx, 10);
+        if (isNaN(li) || li < 0 || li >= lineas.length) {
+            return { ok: false, error: 'Línea de venta no encontrada.' };
+        }
+        if (lineas.length <= 1) return eliminarVenta(ventaId, clienteKey);
+        lineas.splice(li, 1);
+        v.lineas = lineas;
+        v.total = lineas.reduce(function (acc, l) {
+            return acc + (l.subtotal != null ? l.subtotal : (l.precioUnitario || 0) * (l.cantidad || 1));
+        }, 0);
+        ventas[idx] = v;
+        setVentas(ventas);
+        setLineas(getLineas().map(function (l) {
+            recalcDisponible(l);
+            return l;
+        }));
+        return { ok: true };
+    }
+
+    function metaCompradoresKey(clienteKey) {
+        return 'obebe_mayoreo_meta_compradores_' + claveCliente(clienteKey);
+    }
+
+    function leerMetaCompradores(clienteKey) {
+        try {
+            var raw = localStorage.getItem(metaCompradoresKey(clienteKey));
+            return raw ? JSON.parse(raw) : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function guardarMetaCompradores(clienteKey, map) {
+        try {
+            localStorage.setItem(metaCompradoresKey(clienteKey), JSON.stringify(map || {}));
+        } catch (e) { /* ignore */ }
+    }
+
+    function idComprador(nombre) {
+        return 'nom:' + norm(nombre);
+    }
+
+    function metaComprador(clienteKey, nombre) {
+        var map = leerMetaCompradores(clienteKey);
+        return map[idComprador(nombre)] || {};
+    }
+
+    function actualizarContactoComprador(clienteKey, compradorId, campos) {
+        campos = campos || {};
+        var nuevoNombre = String(campos.nombre || '').trim();
+        if (!nuevoNombre) return { ok: false, error: 'Indica el nombre del cliente.' };
+        var k = claveCliente(clienteKey);
+        var ventas = getVentas();
+        ventas.forEach(function (v) {
+            if (claveCliente(v.clienteKey) !== k) return;
+            if (idComprador(v.comprador) === compradorId) {
+                v.comprador = nuevoNombre;
+            }
+        });
+        setVentas(ventas);
+        var map = leerMetaCompradores(clienteKey);
+        var meta = map[compradorId] || {};
+        meta.telefono = String(campos.telefono || '').trim();
+        meta.link = String(campos.link || '').trim();
+        meta.redPrincipal = String(campos.redPrincipal || '').trim();
+        var nuevaId = idComprador(nuevoNombre);
+        map[nuevaId] = meta;
+        if (nuevaId !== compradorId) delete map[compradorId];
+        guardarMetaCompradores(clienteKey, map);
+        return { ok: true };
     }
 
     function eliminarVenta(ventaId, clienteKey) {
@@ -700,10 +830,15 @@
         ventasForCliente: ventasForCliente,
         resumenVentas: resumenVentas,
         actualizarVenta: actualizarVenta,
+        actualizarLineaEnVenta: actualizarLineaEnVenta,
+        eliminarLineaDeVenta: eliminarLineaDeVenta,
         eliminarVenta: eliminarVenta,
+        normalizarMetodoPago: normalizarMetodoPago,
         resumenActividadVenta: resumenActividadVenta,
         calcularRankingClientes: calcularRankingClientes,
         filtrarRankingClientes: filtrarRankingClientes,
+        metaComprador: metaComprador,
+        actualizarContactoComprador: actualizarContactoComprador,
         exportBackup: exportBackup,
         claveCliente: claveCliente,
         metaCliente: metaCliente,

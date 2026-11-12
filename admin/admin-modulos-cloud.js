@@ -381,8 +381,11 @@
         return ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
             moduleKey: 'cotizador',
             payload: Store ? Store.payloadParaCloud(Store.leer()) : []
-        }).then(function () { return { ok: true }; }).catch(function (err) {
+        }).then(asegurarOk).then(function () { return { ok: true }; }).catch(function (err) {
             var msg = (err && err.message) ? String(err.message) : String(err);
+            if (msg.indexOf('moduleKey no permitido') !== -1) {
+                msg = 'La API en Supabase no acepta el módulo "cotizador". Ejecuta deploy-admin-api.ps1 (ver DESPLIEGAR-ADMIN-API.md) con tu token de Supabase.';
+            }
             if (msg.indexOf('moduleKey no permitido') === -1) {
                 console.warn('[admin-modulos-cloud] push cotizador', err);
             }

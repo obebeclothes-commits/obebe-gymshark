@@ -124,13 +124,20 @@
             link: document.getElementById('adminCliLink').value.trim(),
             redPrincipal: document.getElementById('adminCliRed').value.trim()
         };
-        ObebeAdminData.actualizarContactoCliente(editId, campos).then(function (res) {
+        var guardarP = opts.persistirCliente
+            ? Promise.resolve(opts.persistirCliente(editId, campos))
+            : ObebeAdminData.actualizarContactoCliente(editId, campos);
+        Promise.resolve(guardarP).then(function (res) {
             if (!res || !res.ok) {
                 err.textContent = (res && res.error) || 'No se pudo guardar.';
                 return;
             }
             cerrarModal();
-            clientesCache = ObebeAdminData.calcularPerfilesClientes(ObebeAdminData.getEstado().ventas);
+            if (opts.refrescarClientes) {
+                clientesCache = opts.refrescarClientes() || clientesCache;
+            } else {
+                clientesCache = ObebeAdminData.calcularPerfilesClientes(ObebeAdminData.getEstado().ventas);
+            }
             if (opts.onChanged) opts.onChanged();
             pintarKpis(clientesCache);
             pintarTabla((document.getElementById('adminSearchClientes') || {}).value || '');

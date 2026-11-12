@@ -3,6 +3,8 @@
 
     var MAX_CATALOGO = 400;
     var ORDEN_TALLAS = ['S', 'M', 'L', 'XL', 'UNI'];
+    /** Inventario activo del panel (catálogo + modal Ver). */
+    var filasInv = [];
 
     function esc(s) {
         return String(s || '')
@@ -103,6 +105,12 @@
                 return (Number(r.precioMayoreo50) || 0) > 0;
             });
         }
+        if (modo === 'early') {
+            return list.filter(function (r) {
+                if (r.soloComprasEarly) return true;
+                return global.ObebeComprasEarlyStore && ObebeComprasEarlyStore.esEarlyAccessFila(r);
+            });
+        }
         return list;
     }
 
@@ -134,24 +142,202 @@
         return ObebeAdminData.precioPedidoMayoreo(r, unidadesCarrito);
     }
 
+    function filasInvConEarly(base) {
+        base = base || [];
+        if (global.ObebeAdminData && ObebeAdminData.combinarInventarioConComprasEarly) {
+            return ObebeAdminData.combinarInventarioConComprasEarly(base);
+        }
+        return base;
+    }
+
     function imagenFila(fila, filasInv) {
+        if (!fila) return '';
+        var earlyPorRef = fila.ref && global.ObebeComprasEarlyStore &&
+            ObebeComprasEarlyStore.tieneRef(fila.ref);
+        if (fila.soloComprasEarly || earlyPorRef) {
+            var filaEarly = Object.assign({}, fila, { soloComprasEarly: true });
+            if (ObebeAdminData.urlsFotosTiendaObebe) {
+                var packEarly = ObebeAdminData.urlsFotosTiendaObebe(filaEarly);
+                if (packEarly.foto1) return packEarly.foto1;
+                if (packEarly.candidatos1 && packEarly.candidatos1.length) return packEarly.candidatos1[0];
+            }
+        }
+        if (ObebeAdminData.urlImagenFilaInventario) {
+            var uInv = ObebeAdminData.urlImagenFilaInventario(fila);
+            if (uInv) return uInv;
+        }
         if (fila.fotoUrl) return fila.fotoUrl;
         return ObebeAdminData.imagenParaLineaMayoreo({
+            ref: fila.ref,
             nombre: fila.nombre,
             talla: fila.talla,
             color: fila.color,
             tipo: fila.tipo,
             marca: fila.marca
-        }, filasInv || []);
+        }, filasInvConEarly(filasInv || []));
     }
 
-    function thumbHtml(url, alt, extraClass) {
+    function candidatosImagenFila(fila) {
+        if (!fila || !ObebeAdminData.urlsFotosTiendaObebe) return [];
+        if (!fila.soloComprasEarly && fila.ref && global.ObebeComprasEarlyStore &&
+            ObebeComprasEarlyStore.tieneRef(fila.ref)) {
+            fila = Object.assign({}, fila, { soloComprasEarly: true });
+        }
+        var urls = ObebeAdminData.urlsFotosTiendaObebe(fila);
+        return (urls.candidatos1 || []).concat(urls.candidatos2 || []);
+    }
+
+    function thumbHtml(url, alt, extraClass, candidates) {
         extraClass = extraClass || 'admin-ped-thumb';
         if (!url) {
             return '<span class="admin-mayoreo-thumb-empty ' + extraClass + '"></span>';
         }
+        var cand = (candidates || []).filter(function (u, i, a) { return u && a.indexOf(u) === i; });
+        if (!cand.length && ObebeAdminData.candidatosUrlImagenAdmin) {
+            cand = ObebeAdminData.candidatosUrlImagenAdmin(url);
+        }
+        var candAttr = cand.length ? ' data-candidates="' + esc(cand.join('|')) + '" data-candidate-step="0"' : '';
         return '<img src="' + esc(url) + '" alt="' + esc(alt || '') + '" class="' + extraClass + '" ' +
-            'loading="lazy" onerror="adminMayoreoImgFallback(this)">';
+            'loading="lazy"' + candAttr + ' onerror="adminMayoreoImgFallback(this)">';
+    }
+
+    function thumbHtmlFila(fila, alt, extraClass) {
+        var url = imagenFila(fila, filasInv);
+        return thumbHtml(url, alt, extraClass, candidatosImagenFila(fila));
+    }
+
+    function imgModalHtml(src, alt, candidates) {
+        var cand = (candidates || []).filter(function (u, i, a) { return u && a.indexOf(u) === i; }).join('|');
+        if (!src && cand) {
+            src = cand.split('|')[0] || '';
+        }
+        return '<figure class="admin-ped-fotos-fig">' +
+            (src
+                ? '<img src="' + esc(src) + '" alt="' + esc(alt || '') + '" class="admin-ped-fotos-img" ' +
+                'data-candidates="' + esc(cand) + '" data-candidate-step="0" loading="lazy" ' +
+                'onerror="adminMayoreoImgFallback(this)">'
+                : '<p class="admin-muted-text">Sin foto</p>') +
+            '</figure>';
+    }
+
+    function ensureFotosPedidoModal() {
+        var root = document.getElementById('adminPedFotosModal');
+        if (root) return root;
+        root = document.createElement('div');
+        root.id = 'adminPedFotosModal';
+        root.className = 'admin-apartado-modal-root admin-hidden';
+        root.setAttribute('aria-hidden', 'true');
+        root.innerHTML =
+            '<div class="admin-apartado-modal-backdrop" data-ped-fotos-close="1"></div>' +
+            '<div class="admin-apartado-modal admin-apartado-modal--wide" role="dialog" aria-modal="true">' +
+            '<div class="admin-apartado-modal-head">' +
+            '<h3 id="adminPedFotosTitulo">Fotos</h3>' +
+            '<button type="button" class="admin-btn admin-btn-ghost" data-ped-fotos-close="1">×</button></div>' +
+            '<div class="admin-apartado-modal-body">' +
+            '<p id="adminPedFotosSub" class="admin-muted-text"></p>' +
+            '<div id="adminPedFotosGrid" class="admin-ped-fotos-grid"></div>' +
+            '<p class="admin-muted-text admin-ped-fotos-hint admin-hidden" aria-hidden="true"></p>' +
+            '</div></div>';
+        document.body.appendChild(root);
+        root.querySelectorAll('[data-ped-fotos-close]').forEach(function (el) {
+            el.addEventListener('click', function () {
+                root.classList.add('admin-hidden');
+                root.setAttribute('aria-hidden', 'true');
+                document.body.classList.remove('admin-apartado-modal-open');
+            });
+        });
+        return root;
+    }
+
+    function filaCatalogoPorId(filaId) {
+        var base = filasInvConEarly(filasInv);
+        var hit = base.find(function (r) {
+            return ObebeAdminData.idFilaInventario(r) === filaId;
+        });
+        if (hit) return hit;
+        if (global.ObebeAdminData && ObebeAdminData.getEstado) {
+            var st = ObebeAdminData.getEstado();
+            base = filasInvConEarly(st.filas || []);
+            return base.find(function (r) {
+                return ObebeAdminData.idFilaInventario(r) === filaId;
+            }) || null;
+        }
+        return null;
+    }
+
+    function filaDesdeDatasetPedido(filaId, data) {
+        data = data || {};
+        var ref = parseInt(data.ref, 10) || 0;
+        if (!ref && !data.nombre) return null;
+        var seg = data.segmento === 'Mujer' ? 'Mujer' : 'Hombre';
+        var fila = {
+            ref: ref,
+            nombre: data.nombre || '',
+            talla: data.talla || '',
+            color: data.color || '',
+            marca: data.marca || '',
+            tipo: data.tipo || '',
+            segmento: seg,
+            stock: 1,
+            celdas: []
+        };
+        if (ref > 0 && global.ObebeComprasEarlyStore && ObebeComprasEarlyStore.tieneRef(ref)) {
+            fila.soloComprasEarly = true;
+        }
+        return fila;
+    }
+
+    function abrirFotosArticulo(filaId, dataCard) {
+        if (!global.ObebeAdminData || !ObebeAdminData.urlsFotosTiendaObebe) return;
+        var fila = filaCatalogoPorId(filaId) || filaDesdeDatasetPedido(filaId, dataCard);
+        var root = ensureFotosPedidoModal();
+        if (!fila) {
+            document.getElementById('adminPedFotosTitulo').textContent = 'Artículo';
+            document.getElementById('adminPedFotosSub').textContent = '';
+            document.getElementById('adminPedFotosGrid').innerHTML =
+                '<p class="admin-muted-text">No se encontró el artículo en el catálogo.</p>';
+            root.classList.remove('admin-hidden');
+            root.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('admin-apartado-modal-open');
+            return;
+        }
+        var urls = ObebeAdminData.urlsFotosTiendaObebe(fila);
+        if (!urls.foto1 && urls.candidatos1 && urls.candidatos1.length) urls.foto1 = urls.candidatos1[0];
+        if (!urls.foto2 && urls.candidatos2 && urls.candidatos2.length) urls.foto2 = urls.candidatos2[0];
+        var esEarly = !!(fila.soloComprasEarly || (global.ObebeComprasEarlyStore &&
+            ObebeComprasEarlyStore.esEarlyAccessFila(fila)));
+        document.getElementById('adminPedFotosTitulo').textContent = fila.nombre || 'Artículo';
+        var sub = document.getElementById('adminPedFotosSub');
+        if (sub) {
+            sub.textContent = '';
+            sub.classList.add('admin-hidden');
+            sub.setAttribute('aria-hidden', 'true');
+        }
+        var grid = '';
+        var seen = {};
+        function addFigura(cands, prefer) {
+            cands = (cands || []).slice();
+            var src = prefer || cands[0] || '';
+            if (!src && !cands.length) return;
+            var key = String(src || cands[0] || '').split('?')[0];
+            if (!key || seen[key]) return;
+            seen[key] = true;
+            grid += imgModalHtml(src || cands[0], fila.nombre, cands.length ? cands : [src]);
+        }
+        addFigura(urls.candidatos1, urls.foto1);
+        var k1 = String(urls.foto1 || '').split('?')[0];
+        var k2 = String(urls.foto2 || '').split('?')[0];
+        if (k2 && k2 !== k1) {
+            addFigura(urls.candidatos2, urls.foto2);
+        } else if (urls.candidatos2 && urls.candidatos2.length && !seen[String(urls.candidatos2[0] || '').split('?')[0]]) {
+            addFigura(urls.candidatos2, '');
+        }
+        if (!grid) grid = '<p class="admin-muted-text">Sin fotos disponibles para este artículo.</p>';
+        document.getElementById('adminPedFotosGrid').innerHTML = grid;
+        root.classList.add('admin-ped-fotos-modal-solo-img');
+        root.classList.remove('admin-hidden');
+        root.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('admin-apartado-modal-open');
     }
 
     function etiquetaEstadoPedido(estado) {
@@ -196,16 +382,14 @@
         var modoObebe = !!opts.modoObebe;
         var clienteKey = opts.clienteKey || 'naty';
         var clienteNombre = opts.clienteNombre || 'NATY';
-        var filasInv = opts.filasInv || [];
+        filasInv = opts.filasInv || [];
         var carrito = [];
         var filtroCliente = opts.filtroClienteInicial || '';
         var modoCatalogo = 'todos';
         var generoCatalogo = 'todos';
         var editingPedidoId = null;
         var expandedPedidos = {};
-        var modoCombinarPedidos = false;
-
-        function setOverlayEnvio(visible) {
+        function setOverlayEnvio(visible, texto) {
             var id = 'adminMayoreoEnvioOverlay';
             var el = document.getElementById(id);
             if (visible) {
@@ -218,16 +402,44 @@
                     el.innerHTML =
                         '<div class="admin-mayoreo-envio-box">' +
                         '<div class="admin-mayoreo-envio-spinner" aria-hidden="true"></div>' +
-                        '<p class="admin-mayoreo-envio-text">Enviando respuesta…</p>' +
+                        '<p class="admin-mayoreo-envio-text"></p>' +
                         '</div>';
                     document.body.appendChild(el);
                 }
+                var txt = el.querySelector('.admin-mayoreo-envio-text');
+                if (txt) txt.textContent = texto || 'Enviando respuesta…';
                 el.classList.remove('admin-hidden');
                 document.body.classList.add('admin-mayoreo-envio-lock');
             } else {
                 if (el) el.classList.add('admin-hidden');
                 document.body.classList.remove('admin-mayoreo-envio-lock');
             }
+        }
+
+        function cerrarRespuestaEnviadaConCarga() {
+            if (!global.ObebeAdminDialog || !ObebeAdminDialog.mientras) {
+                pintar();
+                return Promise.resolve();
+            }
+            var t0 = Date.now();
+            return ObebeAdminDialog.mientras(
+                Promise.resolve().then(function () {
+                    pintar();
+                    var wait = Math.max(0, 550 - (Date.now() - t0));
+                    return new Promise(function (resolve) { setTimeout(resolve, wait); });
+                }),
+                'Procesando respuesta…'
+            );
+        }
+
+        function minimoCargaMs(ms) {
+            var t0 = Date.now();
+            return function (val) {
+                var wait = Math.max(0, (ms || 1000) - (Date.now() - t0));
+                return new Promise(function (resolve) {
+                    setTimeout(function () { resolve(val); }, wait);
+                });
+            };
         }
 
         function unidadesCarrito() {
@@ -256,7 +468,7 @@
         }
 
         function baseOpcionesFiltro() {
-            var list = catalogoConStock(filasInv);
+            var list = catalogoConStock(filasInvConEarly(filasInv));
             list = filtrarModoMayoreo(list, getModoActivo());
             list = filtrarGenero(list, getGeneroActivo());
             return list;
@@ -315,7 +527,7 @@
 
         function filtrarCatalogo(soloContar) {
             var q = norm((document.getElementById('adminPedBuscar') || {}).value || '');
-            var list = catalogoConStock(filasInv);
+            var list = catalogoConStock(filasInvConEarly(filasInv));
             list = filtrarModoMayoreo(list, getModoActivo());
             list = filtrarGenero(list, getGeneroActivo());
 
@@ -374,6 +586,9 @@
                 '<div class="admin-ped-modo-btns">' +
                 modoBtn('todos', 'Todo') + modoBtn('20', 'Mayoreo +20') + modoBtn('50', 'Mayoreo +50') +
                 '</div>' +
+                '<div class="admin-ped-modo-btns admin-ped-modo-btns--early">' +
+                modoBtn('early', 'Early access') +
+                '</div>' +
                 '<p class="admin-ped-filtros-sub">Género</p>' +
                 '<div class="admin-ped-genero-btns">' +
                 genBtn('todos', 'Todos') + genBtn('Hombre', 'Hombre') + genBtn('Mujer', 'Mujer') +
@@ -403,9 +618,9 @@
                 '<div class="admin-panel-head" style="margin-top:0.75rem;padding-left:1rem"><h3 style="font-size:0.95rem">Carrito</h3></div>' +
                 '<div id="adminPedCarrito"></div>' +
                 '<p id="adminPedError" class="admin-login-error" role="alert"></p>' +
-                '<div class="admin-ped-form-actions" style="padding:0 1rem 1rem">' +
-                '<button type="button" class="admin-btn admin-btn-primary" id="adminPedEnviar">Enviar pedido a Obebe Clothes</button>' +
-                '<button type="button" class="admin-btn admin-btn-ghost admin-hidden" id="adminPedCancelarEdicion">Cancelar edición</button></div></div>' +
+                '<div class="admin-ped-form-actions" id="adminPedFormActions" style="padding:0 1rem 1rem">' +
+                '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact admin-hidden" id="adminPedCancelarEdicion">Cancelar edición</button>' +
+                '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminPedEnviar">Enviar pedido a Obebe Clothes</button></div></div>' +
                 panelHistorialPedidos(hist, false);
         }
 
@@ -417,26 +632,9 @@
                         (filtroCliente === (c.id || '') ? ' selected' : '') + '>' + esc(c.nombre) + '</option>';
                 }).join('');
             var list = ObebeMayoreoPedidosStore.listarTodos(filtroCliente || null);
-            var combinable = list.filter(function (p) {
-                return ObebeMayoreoPedidosStore.pedidoEsCombinable(p);
-            });
-            var barCombinar = '';
-            if (filtroCliente && combinable.length >= 2) {
-                if (modoCombinarPedidos) {
-                    barCombinar = '<div class="admin-ped-combinar-bar admin-ped-combinar-bar--activo">' +
-                        '<p class="admin-muted-text">Marca los pedidos a unir (mínimo 2). Los originales desaparecen y queda uno solo con precios recalculados.</p>' +
-                        '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminPedCombinarBtn">Combinar seleccionados</button>' +
-                        '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminPedCombinarCancelBtn">Cancelar</button></div>';
-                } else {
-                    barCombinar = '<div class="admin-ped-combinar-bar">' +
-                        '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminPedCombinarEntrarBtn">Combinar pedidos</button></div>';
-                }
-            } else if (!filtroCliente) {
-                barCombinar = '<p class="admin-muted-text admin-ped-combinar-hint">Elige un cliente arriba para combinar pedidos pendientes.</p>';
-            }
             return '<div class="admin-panel"><div class="admin-panel-head"><h3>Pedidos mayoreo</h3>' +
                 '<select id="adminPedFiltroCliente" class="admin-venta-pago-select">' + optsCli + '</select></div>' +
-                barCombinar + detalleListaPedidos(list, true) + '</div>';
+                detalleListaPedidos(list, true) + '</div>';
         }
 
         function panelHistorialPedidos(lista, obebe) {
@@ -453,12 +651,14 @@
         }
 
         function filaDesdeItemPedido(it) {
-            var hit = catalogoConStock(filasInv).find(function (r) {
+            var cat = catalogoConStock(filasInvConEarly(filasInv));
+            var hit = cat.find(function (r) {
                 return ObebeAdminData.idFilaInventario(r) === it.inventarioId;
             });
             if (hit) return hit;
-            return {
-                ref: it.ref || 0,
+            var ref = parseInt(it.ref, 10) || 0;
+            var stub = {
+                ref: ref,
                 nombre: it.nombre || '',
                 talla: it.talla || '',
                 color: it.color || '',
@@ -468,14 +668,32 @@
                 precio: it.precioRetail || 0,
                 precioMayoreo: it.precioCliente || 0,
                 mayoreo: true,
-                segmento: 'Hombre'
+                segmento: 'Hombre',
+                celdas: []
             };
+            if (ref > 0 && global.ObebeComprasEarlyStore && ObebeComprasEarlyStore.tieneRef(ref)) {
+                stub.soloComprasEarly = true;
+                stub.celdas[0] = String(ref);
+                if (ObebeAdminData.refEsEtiquetadaMujer && ObebeAdminData.refEsEtiquetadaMujer(ref)) {
+                    stub.segmento = 'Mujer';
+                } else if (ObebeAdminData.segmentoEtiquetadaRef) {
+                    var segStub = ObebeAdminData.segmentoEtiquetadaRef(ref, stub);
+                    stub.segmento = segStub === 'mujer' ? 'Mujer' : 'Hombre';
+                }
+            }
+            return stub;
+        }
+
+        function imagenDesdeItemPedido(it) {
+            if (it.imagenUrl && !/etiquetadas/i.test(it.imagenUrl)) return it.imagenUrl;
+            return imagenFila(filaDesdeItemPedido(it), filasInv);
         }
 
         function carritoDesdePedido(p) {
             return (p.items || []).map(function (it) {
                 return {
                     id: it.inventarioId,
+                    itemId: it.itemId,
                     fila: filaDesdeItemPedido(it),
                     cantidad: it.cantidad || 1,
                     imagenUrl: it.imagenUrl || ''
@@ -487,19 +705,29 @@
             var tit = document.getElementById('adminPedTituloForm');
             var btn = document.getElementById('adminPedEnviar');
             var cancel = document.getElementById('adminPedCancelarEdicion');
+            var actions = document.getElementById('adminPedFormActions');
             var aviso = document.getElementById('adminPedEdicionAviso');
             if (editingPedidoId) {
                 if (tit) tit.textContent = 'Editar pedido';
                 if (btn) btn.textContent = 'Guardar cambios y reenviar';
                 if (cancel) cancel.classList.remove('admin-hidden');
+                if (actions) actions.classList.add('admin-ped-form-actions--edit');
                 if (aviso) {
-                    aviso.textContent = 'Quita o agrega artículos en el catálogo y carrito. Al guardar, Obebe Clothes revisará de nuevo el pedido.';
+                    var ped = ObebeMayoreoPedidosStore.pedidosForCliente(clienteKey).find(function (x) {
+                        return x.id === editingPedidoId;
+                    });
+                    if (ped && ped.estado === 'revisado') {
+                        aviso.textContent = 'Los artículos que ya tenían respuesta de Obebe Clothes se conservan. Solo lo nuevo quedará pendiente de confirmar.';
+                    } else {
+                        aviso.textContent = 'Quita o agrega artículos en el catálogo y carrito. Al guardar, Obebe Clothes revisará el pedido.';
+                    }
                     aviso.classList.remove('admin-hidden');
                 }
             } else {
                 if (tit) tit.textContent = 'Nuevo pedido';
                 if (btn) btn.textContent = 'Enviar pedido a Obebe Clothes';
                 if (cancel) cancel.classList.add('admin-hidden');
+                if (actions) actions.classList.remove('admin-ped-form-actions--edit');
                 if (aviso) aviso.classList.add('admin-hidden');
             }
         }
@@ -528,17 +756,15 @@
         }
 
         function htmlItemPedido(it, p, obebe) {
-            var url = it.imagenUrl || '';
-            if (!url && it.inventarioId) {
-                url = imagenFila(filaDesdeItemPedido(it), filasInv);
-            }
+            var filaIt = filaDesdeItemPedido(it);
+            var url = imagenDesdeItemPedido(it);
             var revBlock = '';
             if (obebe && p.estado !== 'revisado' && p.estado !== 'cancelado') {
                 var siAct = it.disponibilidad === 'si' ? ' active' : '';
                 var noAct = it.disponibilidad === 'no' ? ' active' : '';
                 revBlock = '<div class="admin-ped-rev-actions">' +
-                    '<button type="button" class="admin-btn admin-btn-compact admin-ped-disp-si' + siAct + '" data-pedido-id="' + esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Sí hay</button>' +
                     '<button type="button" class="admin-btn admin-btn-compact admin-ped-disp-no' + noAct + '" data-pedido-id="' + esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">No hay</button>' +
+                    '<button type="button" class="admin-btn admin-btn-compact admin-ped-disp-si' + siAct + '" data-pedido-id="' + esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Sí hay</button>' +
                     '</div>';
             } else {
                 revBlock = tagDisponibilidad(it.disponibilidad);
@@ -559,20 +785,20 @@
                 } else {
                     accionesItem = '<span class="admin-muted-text admin-ped-espera-conf">Esperando confirmación del cliente</span>';
                 }
-            } else if (!obebe && p.estado === 'revisado' && it.disponibilidad === 'no') {
+            } else if (!obebe && p.estado === 'revisado' && !p.ventaRetailRegistradaEn && it.disponibilidad === 'no') {
                 accionesItem = '<div class="admin-ped-item-acciones-cliente">' +
                     (it.clienteConfirmoNoHay
-                        ? '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm admin-ped-quitar-item-cliente" data-pedido-id="' +
+                        ? '<button type="button" class="admin-btn admin-btn-danger admin-btn-sm admin-ped-quitar-item-cliente" data-pedido-id="' +
                         esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Quitar artículo</button>'
-                        : '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm admin-ped-conf-no-cliente" data-pedido-id="' +
+                        : '<button type="button" class="admin-btn admin-btn-warn admin-btn-sm admin-ped-conf-no-cliente" data-pedido-id="' +
                         esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Confirmo ausencia</button>' +
-                        '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm admin-ped-quitar-item-cliente" data-pedido-id="' +
+                        '<button type="button" class="admin-btn admin-btn-danger admin-btn-sm admin-ped-quitar-item-cliente" data-pedido-id="' +
                         esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Quitar artículo</button>') +
                     '</div>';
             }
             var notaTier = it.notaPrecio ? '<span class="admin-muted-text">' + esc(it.notaPrecio) + '</span>' : '';
             return '<div class="admin-ped-rev-item">' +
-                thumbHtml(url, it.nombre, 'admin-ped-rev-thumb') +
+                thumbHtml(url, it.nombre, 'admin-ped-rev-thumb', candidatosImagenFila(filaIt)) +
                 '<div class="admin-ped-rev-info"><strong class="admin-ped-rev-nombre">' + esc(it.nombre) + '</strong>' +
                 '<span class="admin-muted-text">' + esc(it.talla) + ' · ' + esc(it.color) + ' · ×' + it.cantidad + '</span>' +
                 '<span>' + fmt(it.precioCliente) + ' c/u · tienda ' + fmt(it.precioRetail) + '</span>' +
@@ -593,10 +819,13 @@
                 var confirmObebe = '';
                 if (obebe && p.estado !== 'revisado' && p.estado !== 'cancelado') {
                     var listo = ObebeMayoreoPedidosStore.todosItemsMarcados(p);
-                    confirmObebe = '<div class="admin-ped-confirm-row">' +
+                    confirmObebe = '<div class="admin-ped-acciones-pedido-obebe admin-ped-acciones-pedido-obebe--col">' +
+                        '<div class="admin-ped-acciones-par">' +
+                        '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact admin-ped-eliminar" data-pedido-id="' + esc(p.id) + '">Eliminar pedido</button>' +
                         '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact admin-ped-confirmar-revision" data-pedido-id="' + esc(p.id) + '"' +
-                        (listo ? '' : ' disabled') + '>Enviar respuesta al cliente</button>' +
-                        '<span class="admin-muted-text">Marca cada prenda antes de enviar.</span></div>';
+                        (listo ? '' : ' disabled') + '>Enviar respuesta</button>' +
+                        '</div>' +
+                        '<span class="admin-muted-text admin-ped-acciones-hint">Marca cada prenda antes de enviar.</span></div>';
                 } else if (obebe && p.estado === 'revisado') {
                     var ventaPedBtn = '';
                     if (p.ventaRetailRegistradaEn) {
@@ -607,11 +836,14 @@
                         ventaPedBtn = '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact admin-ped-venta-confirmada" data-pedido-id="' + esc(p.id) + '"' +
                             (haySi ? '' : ' disabled') + '>Venta confirmada</button>';
                     }
-                    confirmObebe = '<div class="admin-ped-confirm-row admin-ped-confirm-row--venta">' +
-                        ventaPedBtn +
+                    confirmObebe = '<div class="admin-ped-acciones-pedido-obebe">' +
                         '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-ped-reabrir-revision" data-pedido-id="' + esc(p.id) + '"' +
                         (p.ventaRetailRegistradaEn ? ' disabled title="Ya hay venta registrada"' : '') +
-                        '>Modificar respuesta</button></div>';
+                        '>Modificar respuesta</button>' +
+                        '<div class="admin-ped-acciones-par">' +
+                        '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact admin-ped-eliminar" data-pedido-id="' + esc(p.id) + '">Eliminar pedido</button>' +
+                        ventaPedBtn +
+                        '</div></div>';
                 }
                 if (!obebe) {
                     var abierto = !!expandedPedidos[p.id];
@@ -624,7 +856,12 @@
                     } else if (p.estado === 'pendiente') {
                         msgNaty = '<p class="admin-muted-text">Esperando revisión…</p>';
                     } else if (p.estado === 'en_revision') {
-                        msgNaty = '<p class="admin-muted-text">En revisión…</p>';
+                        var sinRev = (p.items || []).filter(function (it) {
+                            return it.disponibilidad !== 'si' && it.disponibilidad !== 'no';
+                        }).length;
+                        msgNaty = sinRev
+                            ? '<p class="admin-muted-text">Hay ' + sinRev + ' artículo(s) nuevo(s) por confirmar con Obebe Clothes. El resto conserva la respuesta anterior.</p>'
+                            : '<p class="admin-muted-text">En revisión…</p>';
                     }
                     if (p.pedidoCombinado && p.avisoClienteTexto) {
                         var tagNuevo = !p.clienteVioAvisoEn ? ' <span class="admin-tag admin-tag-warn">Nuevo</span>' : '';
@@ -632,13 +869,18 @@
                             esc(p.avisoClienteTexto) + tagNuevo + '</p>';
                     }
                     var editandoEste = editingPedidoId === p.id;
+                    var puedeEditar = p.estado !== 'cancelado' && !p.ventaRetailRegistradaEn;
                     var editRow = '<div class="admin-ped-edit-row">' +
-                        (p.estado !== 'cancelado'
+                        (puedeEditar
                             ? (editandoEste
                                 ? '<span class="admin-muted-text">Editando arriba en el catálogo…</span>'
                                 : '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-ped-editar" data-pedido-id="' + esc(p.id) + '">Editar artículos</button>')
-                            : '') +
-                        '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-ped-eliminar" data-pedido-id="' + esc(p.id) + '">Eliminar pedido</button>' +
+                            : (p.ventaRetailRegistradaEn
+                                ? '<span class="admin-muted-text">Venta confirmada: no se puede editar ni eliminar.</span>'
+                                : '')) +
+                        (p.ventaRetailRegistradaEn
+                            ? ''
+                            : '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact admin-ped-eliminar" data-pedido-id="' + esc(p.id) + '">Eliminar pedido</button>') +
                         '</div>';
                     return '<div class="admin-ped-card admin-ped-card--collapsible" data-pedido-id="' + esc(p.id) + '">' +
                         '<button type="button" class="admin-ped-card-toggle" data-pedido-id="' + esc(p.id) + '" aria-expanded="' + (abierto ? 'true' : 'false') + '">' +
@@ -653,13 +895,6 @@
                         '</div></div>';
                 }
                 var abiertoOb = !!expandedPedidos[p.id];
-                var chkComb = '';
-                var cardCombCls = '';
-                if (modoCombinarPedidos && ObebeMayoreoPedidosStore.pedidoEsCombinable(p)) {
-                    cardCombCls = ' admin-ped-card--pick-combinar';
-                    chkComb = '<label class="admin-ped-combinar-pick" title="Incluir al combinar">' +
-                        '<input type="checkbox" class="admin-ped-combinar-cb" data-pedido-id="' + esc(p.id) + '"></label>';
-                }
                 var bannerCombOb = '';
                 if (p.pedidoCombinado && p.avisoClienteTexto) {
                     bannerCombOb = '<p class="admin-banner info admin-ped-aviso-combinado">' + esc(p.avisoClienteTexto) +
@@ -668,19 +903,20 @@
                 }
                 var tierInfo = p.unidades ? '<span class="admin-muted-text">' +
                     esc(ObebeAdminData.etiquetaTierPedido(p.unidades)) + '</span>' : '';
-                return '<div class="admin-ped-card admin-ped-card--collapsible' + cardCombCls + '" data-pedido-id="' + esc(p.id) + '">' +
+                return '<div class="admin-ped-card admin-ped-card--collapsible" data-pedido-id="' + esc(p.id) + '">' +
                     '<button type="button" class="admin-ped-card-toggle" data-pedido-id="' + esc(p.id) + '" aria-expanded="' + (abiertoOb ? 'true' : 'false') + '">' +
                     '<span class="admin-ped-card-line1">' + head + etiquetaEstadoPedido(p.estado) + ' · ' + esc(fmtFechaPedido(p.creadoEn)) +
                     (p.pedidoCombinado ? ' · Combinado' : '') + '</span>' +
                     '<span class="admin-ped-card-line2">' + p.unidades + ' pzas. · Total ' + fmt(p.totalCliente) + '</span>' +
-                    chkComb +
                     '<span class="admin-ped-card-chevron" aria-hidden="true">' + (abiertoOb ? '▾' : '▸') + '</span></button>' +
                     '<div class="admin-ped-card-body' + (abiertoOb ? '' : ' admin-hidden') + '">' +
                     bannerCombOb + tierInfo +
                     '<div class="admin-ped-rev-list admin-ped-rev-list--obebe">' + items + '</div>' +
                     confirmObebe +
-                    '<div class="admin-ped-edit-row">' +
-                    '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-ped-eliminar" data-pedido-id="' + esc(p.id) + '">Eliminar pedido</button></div>' +
+                    (p.estado === 'cancelado'
+                        ? '<div class="admin-ped-edit-row">' +
+                        '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact admin-ped-eliminar" data-pedido-id="' + esc(p.id) + '">Eliminar pedido</button></div>'
+                        : '') +
                     '</div></div>';
             }).join('');
         }
@@ -704,6 +940,7 @@
             box.innerHTML = slice.map(function (r) {
                 var id = ObebeAdminData.idFilaInventario(r);
                 var img = imagenFila(r, filasInv);
+                var cands = candidatosImagenFila(r);
                 var pr = precioVistaItem(r, u + 1, modo);
                 var seg = r.segmento === 'Mujer' ? 'Mujer' : 'Hombre';
                 var preciosLinea = '<span class="admin-ped-precios"><s>' + fmt(pr.retail) + '</s>';
@@ -711,19 +948,26 @@
                     preciosLinea += ' · <s>' + fmt(pr.precioMayoreo20) + '</s>';
                 }
                 preciosLinea += ' → <strong>' + fmt(pr.precioCliente) + '</strong></span>';
+                var earlyTag = (r.soloComprasEarly || (global.ObebeComprasEarlyStore && ObebeComprasEarlyStore.esEarlyAccessFila(r)))
+                    ? '<span class="admin-tag admin-tag-warn">Próximo</span>' : '';
                 var imgHtml = img
-                    ? '<img src="' + esc(img) + '" alt="" class="admin-ped-thumb" loading="lazy" onerror="adminMayoreoImgFallback(this)">'
+                    ? thumbHtml(img, r.nombre, 'admin-ped-thumb', cands.length ? cands : null)
                     : '<span class="admin-mayoreo-thumb-empty admin-ped-thumb"></span>';
-                return '<button type="button" class="admin-ped-item" data-id="' + esc(id) + '">' + imgHtml +
+                var segAttr = r.segmento === 'Mujer' ? 'Mujer' : 'Hombre';
+                return '<div class="admin-ped-item" data-id="' + esc(id) + '" data-ref="' + esc(String(r.ref || '')) + '" data-nombre="' + esc(r.nombre) + '" data-talla="' + esc(r.talla) + '" data-color="' + esc(r.color) + '" data-marca="' + esc(r.marca) + '" data-tipo="' + esc(r.tipo) + '" data-segmento="' + esc(segAttr) + '" role="button" tabindex="0">' + imgHtml +
                     '<span class="admin-ped-item-info">' + ObebeAdminData.htmlRef(r.ref) +
                     '<strong>' + esc(r.nombre) + '</strong>' +
                     '<span class="admin-ped-tags"><span class="admin-tag admin-tag-muted">' + esc(seg) + '</span>' +
                     (modo === '20' ? '<span class="admin-tag admin-tag-ok">+20</span>' : '') +
                     (modo === '50' ? '<span class="admin-tag admin-tag-ok">+50</span>' : '') +
+                    earlyTag +
                     '</span>' +
                     '<span>' + esc(r.talla) + ' · ' + esc(r.color) + ' · ' + esc(r.tipo) + ' · Stock ' + r.stock + '</span>' +
                     preciosLinea +
-                    '<span class="admin-muted-text">' + esc(pr.nota) + '</span></span></button>';
+                    '<span class="admin-muted-text">' + esc(pr.nota) + '</span>' +
+                    '<span class="admin-ped-item-foot">' +
+                    '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-ped-ver">Ver</button>' +
+                    '<span class="admin-muted-text admin-ped-item-hint">Toca la tarjeta para agregar</span></span></span></div>';
             }).join('');
         }
 
@@ -748,14 +992,14 @@
                 totalC += subC;
                 var img = c.imagenUrl || imagenFila(c.fila, filasInv);
                 return '<tr><td class="admin-ped-cart-img-cell"><div class="admin-ped-cart-line">' +
-                    thumbHtml(img, c.fila.nombre, 'admin-ped-cart-thumb') +
+                    thumbHtmlFila(c.fila, c.fila.nombre, 'admin-ped-cart-thumb') +
                     '<div>' + ObebeAdminData.htmlRef(c.fila.ref) +
                     '<span class="admin-ped-cart-name">' + esc(c.fila.nombre) + '</span>' +
                     '<span class="admin-muted-text">' + esc(c.fila.talla) + ' · ' + esc(c.fila.color) + '</span></div></div></td>' +
                     '<td><input type="number" min="1" max="' + c.fila.stock + '" value="' + c.cantidad + '" class="admin-venta-num admin-ped-qty" data-idx="' + idx + '"></td>' +
                     '<td><s>' + fmt(pr.retail) + '</s><br><strong>' + fmt(pr.precioCliente) + '</strong></td>' +
                     '<td>' + fmt(subC) + '</td>' +
-                    '<td><button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-ped-quitar" data-idx="' + idx + '">Quitar</button></td></tr>';
+                    '<td><button type="button" class="admin-btn admin-btn-danger admin-btn-compact admin-ped-quitar" data-idx="' + idx + '">Quitar</button></td></tr>';
             }).join('');
             box.innerHTML = '<div class="admin-table-wrap"><table class="admin-table admin-table-compact"><thead><tr>' +
                 '<th>Artículo</th><th>Cant.</th><th>Precio u.</th><th>Subtotal</th><th></th></tr></thead><tbody>' +
@@ -766,7 +1010,7 @@
         }
 
         function agregarAlCarrito(filaId) {
-            var fila = catalogoConStock(filasInv).find(function (r) {
+            var fila = catalogoConStock(filasInvConEarly(filasInv)).find(function (r) {
                 return ObebeAdminData.idFilaInventario(r) === filaId;
             });
             if (!fila) return;
@@ -859,10 +1103,6 @@
                     if (window.matchMedia('(max-width: 900px)').matches) cerrarDrawerFiltros();
                     return;
                 }
-                if (ev.target.closest('.admin-ped-combinar-pick') || ev.target.classList.contains('admin-ped-combinar-cb')) {
-                    ev.stopPropagation();
-                    return;
-                }
                 var confNoCli = ev.target.closest('.admin-ped-conf-no-cliente');
                 if (confNoCli) {
                     var rConf = ObebeMayoreoPedidosStore.confirmarNoHayItemCliente(
@@ -881,10 +1121,10 @@
                 if (quitarCli) {
                     ObebeAdminDialog.confirm({
                         title: '¿Quitar artículo?',
-                        message: 'Se eliminará del pedido (marcado como No hay).',
+                        message: 'Se eliminará del pedido.',
                         confirmText: 'Quitar',
                         cancelText: 'Cancelar',
-                        variant: 'warn'
+                        variant: 'danger'
                     }).then(function (ok) {
                         if (!ok) return;
                         var rQ = ObebeMayoreoPedidosStore.eliminarItemPedido(
@@ -945,6 +1185,24 @@
                     cancelarEdicionPedido();
                     return;
                 }
+                var verPed = ev.target.closest('.admin-ped-ver');
+                if (verPed) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    var wrapVer = verPed.closest('.admin-ped-item');
+                    if (wrapVer) {
+                        abrirFotosArticulo(wrapVer.getAttribute('data-id'), {
+                            ref: wrapVer.getAttribute('data-ref'),
+                            nombre: wrapVer.getAttribute('data-nombre'),
+                            talla: wrapVer.getAttribute('data-talla'),
+                            color: wrapVer.getAttribute('data-color'),
+                            marca: wrapVer.getAttribute('data-marca'),
+                            tipo: wrapVer.getAttribute('data-tipo'),
+                            segmento: wrapVer.getAttribute('data-segmento')
+                        });
+                    }
+                    return;
+                }
                 var item = ev.target.closest('.admin-ped-item');
                 if (item) {
                     agregarAlCarrito(item.getAttribute('data-id'));
@@ -967,17 +1225,26 @@
                     ObebeAdminDialog.confirm({
                         title: esEdicion ? '¿Guardar y reenviar pedido?' : '¿Enviar pedido?',
                         message: esEdicion
-                            ? 'Se actualizará el pedido y Obebe Clothes lo revisará de nuevo.'
+                            ? (function () {
+                                var pedEd = ObebeMayoreoPedidosStore.pedidosForCliente(clienteKey).find(function (x) {
+                                    return x.id === editingPedidoId;
+                                });
+                                if (pedEd && pedEd.estado === 'revisado') {
+                                    return 'Se actualizará el pedido. Los artículos que ya tenían respuesta se mantienen; solo lo nuevo lo revisará Obebe Clothes.';
+                                }
+                                return 'Se actualizará el pedido y Obebe Clothes lo revisará de nuevo.';
+                            }())
                             : 'Se enviará el pedido a Obebe Clothes para revisión de disponibilidad.',
                         confirmText: esEdicion ? 'Sí, guardar' : 'Sí, enviar',
                         cancelText: 'Cancelar',
-                        variant: 'warn'
+                        variant: 'warn',
+                        cancelDanger: true
                     }).then(function (ok) {
                         if (!ok) return;
                         var u = unidadesCarrito();
                         var items = carrito.map(function (c) {
                             var pr = ObebeAdminData.precioPedidoMayoreo(c.fila, u);
-                            return {
+                            var row = {
                                 inventarioId: c.id,
                                 ref: c.fila.ref,
                                 nombre: c.fila.nombre,
@@ -992,31 +1259,46 @@
                                 imagenUrl: c.imagenUrl || imagenFila(c.fila, filasInv),
                                 disponibilidad: null
                             };
+                            if (c.itemId) row.itemId = c.itemId;
+                            return row;
                         });
-                        var r;
-                        if (editingPedidoId) {
-                            r = ObebeMayoreoPedidosStore.actualizarPedidoCliente(editingPedidoId, clienteKey, items);
-                        } else {
-                            r = ObebeMayoreoPedidosStore.registrarPedido({
+                        var enviarP = Promise.resolve().then(function () {
+                            if (editingPedidoId) {
+                                return ObebeMayoreoPedidosStore.actualizarPedidoCliente(editingPedidoId, clienteKey, items);
+                            }
+                            return ObebeMayoreoPedidosStore.registrarPedido({
                                 clienteKey: clienteKey,
                                 clienteNombre: clienteNombre,
                                 items: items
                             });
-                        }
-                        if (!r.ok) {
-                            if (err) err.textContent = r.error;
-                            return;
-                        }
-                        var fueEdicion = esEdicion;
-                        var pidAbierto = editingPedidoId;
-                        if (pidAbierto) expandedPedidos[pidAbierto] = true;
-                        editingPedidoId = null;
-                        carrito = [];
-                        ObebeAdminDialog.alert({
-                            title: fueEdicion ? 'Pedido actualizado' : 'Pedido enviado',
-                            message: 'Obebe Clothes revisará cada artículo y te avisará qué hay en stock.',
-                            confirmText: 'Perfecto'
-                        }).then(function () { pintar(); });
+                        }).then(minimoCargaMs(1000));
+                        var promEnvio = global.ObebeAdminDialog && ObebeAdminDialog.mientras
+                            ? ObebeAdminDialog.mientras(enviarP, 'Enviando pedido…')
+                            : enviarP;
+                        promEnvio.then(function (r) {
+                            if (!r.ok) {
+                                if (err) err.textContent = r.error;
+                                return;
+                            }
+                            var fueEdicion = esEdicion;
+                            var pidAbierto = editingPedidoId;
+                            if (pidAbierto) expandedPedidos[pidAbierto] = true;
+                            editingPedidoId = null;
+                            carrito = [];
+                            var msgOk = 'Obebe Clothes revisará cada artículo y te avisará qué hay en stock.';
+                            if (fueEdicion && r.pendienteRevision) {
+                                msgOk = 'Pedido guardado. Obebe Clothes solo debe confirmar los artículos nuevos; el resto mantiene la respuesta anterior.';
+                            } else if (fueEdicion) {
+                                msgOk = 'Pedido actualizado. Todos los artículos siguen con la misma respuesta de disponibilidad.';
+                            }
+                            ObebeAdminDialog.alert({
+                                title: fueEdicion ? 'Pedido actualizado' : 'Pedido enviado',
+                                message: msgOk,
+                                confirmText: 'Perfecto'
+                            }).then(function () { pintar(); });
+                        }).catch(function (e) {
+                            if (err) err.textContent = (e && e.message) || 'No se pudo enviar.';
+                        });
                     });
                 }
             };
@@ -1044,70 +1326,10 @@
             if (sel) {
                 sel.onchange = function () {
                     filtroCliente = sel.value;
-                    modoCombinarPedidos = false;
                     pintar();
                 };
             }
             container.onclick = function (ev) {
-                if (ev.target.closest('.admin-ped-combinar-pick') || ev.target.classList.contains('admin-ped-combinar-cb')) {
-                    ev.stopPropagation();
-                    return;
-                }
-                if (ev.target.id === 'adminPedCombinarEntrarBtn' || ev.target.closest('#adminPedCombinarEntrarBtn')) {
-                    modoCombinarPedidos = true;
-                    pintar();
-                    return;
-                }
-                if (ev.target.id === 'adminPedCombinarCancelBtn' || ev.target.closest('#adminPedCombinarCancelBtn')) {
-                    modoCombinarPedidos = false;
-                    pintar();
-                    return;
-                }
-                if (ev.target.id === 'adminPedCombinarBtn' || ev.target.closest('#adminPedCombinarBtn')) {
-                    var idsComb = [];
-                    container.querySelectorAll('.admin-ped-combinar-cb:checked').forEach(function (cb) {
-                        idsComb.push(cb.getAttribute('data-pedido-id'));
-                    });
-                    if (idsComb.length < 2) {
-                        ObebeAdminDialog.alert({
-                            title: 'Combinar pedidos',
-                            message: 'Marca al menos 2 pedidos de la lista.'
-                        });
-                        return;
-                    }
-                    var prev = ObebeMayoreoPedidosStore.previewCombinarPedidos(idsComb);
-                    if (!prev.ok) {
-                        ObebeAdminDialog.alert({ title: 'Combinar pedidos', message: prev.error });
-                        return;
-                    }
-                    var msgConfirm = 'Se unirán ' + prev.pedidos + ' pedidos de ' + (prev.clienteNombre || 'este cliente') +
-                        ' en uno solo (' + prev.unidades + ' piezas en total).\n\n' + prev.tier +
-                        '\n\nLos pedidos anteriores dejarán de mostrarse; en Mayoreo verás un solo pedido con los precios recalculados. El cliente recibirá aviso en su panel.';
-                    ObebeAdminDialog.confirm({
-                        title: '¿Combinar pedidos?',
-                        message: msgConfirm,
-                        confirmText: 'Sí, combinar',
-                        cancelText: 'Cancelar',
-                        variant: 'warn'
-                    }).then(function (ok) {
-                        if (!ok) return;
-                        filasInv = (ObebeAdminData.getEstado().filas || filasInv);
-                        var rComb = ObebeMayoreoPedidosStore.combinarPedidos(idsComb, filasInv);
-                        if (!rComb.ok) {
-                            ObebeAdminDialog.alert({ title: 'No se pudo', message: rComb.error });
-                            return;
-                        }
-                        modoCombinarPedidos = false;
-                        if (rComb.pedido && rComb.pedido.id) expandedPedidos[rComb.pedido.id] = true;
-                        ObebeAdminDialog.alert({
-                            title: 'Pedidos combinados',
-                            message: 'Quedó un solo pedido con ' + (rComb.pedido.unidades || prev.unidades) +
-                                ' piezas y tarifas mayoreo aplicadas. Revisa también Mayoreo → cliente.',
-                            confirmText: 'Listo'
-                        }).then(function () { pintar(); });
-                    });
-                    return;
-                }
                 var quitarOb = ev.target.closest('.admin-ped-quitar-item-obebe');
                 if (quitarOb) {
                     ObebeAdminDialog.confirm({
@@ -1169,7 +1391,8 @@
                         message: 'Podrás cambiar disponibilidad y comentarios. El inventario de NATY se ajustará al volver a enviar.',
                         confirmText: 'Modificar',
                         cancelText: 'Cancelar',
-                        variant: 'warn'
+                        variant: 'warn',
+                        cancelDanger: true
                     }).then(function (ok) {
                         if (!ok) return;
                         ObebeMayoreoPedidosStore.reabrirRevisionPedido(pidRe).then(function (rRe) {
@@ -1190,10 +1413,11 @@
                     var pidVenta = ventaConf.getAttribute('data-pedido-id');
                     ObebeAdminDialog.confirm({
                         title: '¿Confirmar compra?',
-                        message: 'Se registrará la venta en Ventas con la fecha de hoy, solo los artículos marcados Sí hay. El stock ya se descontó al enviar la respuesta.',
+                        message: 'Se registrará la venta de hoy con los artículos marcados como Sí hay.',
                         confirmText: 'Confirmar compra',
                         cancelText: 'Cancelar',
-                        variant: 'warn'
+                        variant: 'warn',
+                        cancelDanger: true
                     }).then(function (ok) {
                         if (!ok) return;
                         ObebeMayoreoPedidosStore.confirmarVentaRetailPedido(pidVenta).then(function (rV) {
@@ -1230,9 +1454,11 @@
                         variant: 'warn'
                     }).then(function (ok) {
                         if (!ok) return;
-                        setOverlayEnvio(true);
-                        ObebeMayoreoPedidosStore.confirmarRevisionPedido(pidConf).then(function (res) {
-                            setOverlayEnvio(false);
+                        var envioRespP = ObebeMayoreoPedidosStore.confirmarRevisionPedido(pidConf).then(minimoCargaMs(700));
+                        var promResp = global.ObebeAdminDialog && ObebeAdminDialog.mientras
+                            ? ObebeAdminDialog.mientras(envioRespP, 'Enviando respuesta…')
+                            : envioRespP;
+                        promResp.then(function (res) {
                             if (!res.ok) {
                                 ObebeAdminDialog.alert({ title: 'Falta revisar', message: res.error });
                                 return;
@@ -1247,9 +1473,8 @@
                                 title: 'Respuesta enviada',
                                 message: msgOk,
                                 confirmText: 'Listo'
-                            }).then(function () { pintar(); });
+                            }).then(function () { return cerrarRespuestaEnviadaConCarga(); });
                         }).catch(function (err) {
-                            setOverlayEnvio(false);
                             ObebeAdminDialog.alert({
                                 title: 'No se pudo enviar',
                                 message: String((err && err.message) || err || 'Intenta de nuevo.')
@@ -1299,9 +1524,18 @@
                 filasInv = ObebeAdminData.getEstado().filas || filasInv;
                 if (opts.onInventarioActualizado) opts.onInventarioActualizado();
                 pintar();
+            }).catch(function () { /* stock en segundo plano */ }).finally(function () {
+                if (global.ObebeAdminDialog && ObebeAdminDialog.forzarOcultarOcupado) {
+                    ObebeAdminDialog.forzarOcultarOcupado();
+                }
             });
         }
 
+        setOverlayEnvio(false);
+        if (global.ObebeAdminDialog && ObebeAdminDialog.forzarOcultarOcupado) {
+            ObebeAdminDialog.forzarOcultarOcupado();
+        }
+        document.body.classList.remove('admin-mayoreo-envio-lock');
         syncStockPedidosPendientes();
         pintar();
     }

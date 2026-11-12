@@ -992,7 +992,7 @@ function generarFiltros(productos) {
     const tallasOrdenadas = ordenarTallas(opciones.tallas);
     const tiposOrdenados = ordenarAlfabetico(opciones.tipos);
     const marcasOrdenadas = ordenarAlfabetico(opciones.marcas);
-
+    
     // Generar filtros de talla
     const tallaFilters = document.getElementById('tallaFilters');
     if (tallaFilters) {
@@ -1474,7 +1474,7 @@ function agregarAlCarrito(producto, opciones) {
     }
 
     const itemExistente = carrito.find(function (item) { return mismoProductoEnCarrito(item, producto); });
-
+    
     if (itemExistente) {
         itemExistente.cantidad += 1;
     } else {
@@ -1782,8 +1782,8 @@ function htmlEstadoVacio() {
 
 // Crea el elemento de una tarjeta de producto (extraído para reutilizarlo en la paginación)
 function crearTarjetaProducto(producto) {
-    const card = document.createElement('div');
-    card.className = 'product-card-full';
+        const card = document.createElement('div');
+        card.className = 'product-card-full';
     card.setAttribute('data-product-id', producto.id);
 
     const imagen1 = typeof obtenerRutaImagenProducto === 'function'
@@ -1809,9 +1809,9 @@ function crearTarjetaProducto(producto) {
     const imageWrap = document.createElement('div');
     imageWrap.className = 'product-image-wrap' + (agotado ? ' out-of-stock' : '');
 
-    const imageContainer = document.createElement('div');
-    imageContainer.className = 'product-image';
-    imageContainer.dataset.alt = producto.nombre;
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'product-image';
+        imageContainer.dataset.alt = producto.nombre;
     imageContainer.dataset.productId = String(producto.id || '');
     imageContainer.dataset.productCategoria = producto.categoria || 'Hombre';
     var ruta1 = imagen1 || (typeof obtenerRutaImagenProducto === 'function'
@@ -1841,30 +1841,30 @@ function crearTarjetaProducto(producto) {
 
     linkProducto.appendChild(imageWrap);
 
-    const info = document.createElement('div');
-    info.className = 'product-info';
+        const info = document.createElement('div');
+        info.className = 'product-info';
     const colorLine = producto.color ? `<p class="product-color">Color: ${producto.color}</p>` : '';
     const btnTexto = agotado ? 'Agotado' : 'Agregar al Carrito';
     const btnClase = 'add-to-cart-btn' + (agotado ? ' agotado' : '');
-    info.innerHTML = `
-        <h3 class="product-name">${producto.nombre}</h3>
-        <p class="product-size">Talla: ${producto.talla}</p>
+        info.innerHTML = `
+            <h3 class="product-name">${producto.nombre}</h3>
+            <p class="product-size">Talla: ${producto.talla}</p>
         ${colorLine}
         ${htmlPrecioProducto(producto)}
         <button type="button" class="${btnClase}" data-product-id="${producto.id}" data-product-talla="${producto.talla}" data-product-color="${(producto.color || '').replace(/"/g, '&quot;')}" ${agotado ? ' disabled' : ''}>${btnTexto}</button>
-    `;
+        `;
 
-    card.appendChild(linkProducto);
-    card.appendChild(info);
+        card.appendChild(linkProducto);
+        card.appendChild(info);
 
-    const addToCartBtn = info.querySelector('.add-to-cart-btn');
+        const addToCartBtn = info.querySelector('.add-to-cart-btn');
     if (addToCartBtn && !agotado) {
-        addToCartBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            agregarAlCarrito(producto, { button: addToCartBtn });
-        });
-    }
+            addToCartBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                agregarAlCarrito(producto, { button: addToCartBtn });
+            });
+        }
 
     return card;
 }
@@ -2301,7 +2301,7 @@ window.addEventListener('pageshow', (event) => {
         };
         if (typeof sincronizarStockDesdeSheets === 'function') {
             sincronizarStockDesdeSheets().then(refrescarDesdeCache);
-        } else {
+            } else {
             refrescarDesdeCache();
         }
     }
@@ -2348,24 +2348,24 @@ function arrancarProductosPagina() {
     var isProductsGridPage = document.getElementById('productsGrid');
 
     const iniciarPagina = () => {
-        if (isProductDetailPage) {
-            inicializarCarrito();
-            inicializarNavegacion();
+    if (isProductDetailPage) {
+        inicializarCarrito();
+        inicializarNavegacion();
             if (typeof iniciarDetalleProducto === 'function') iniciarDetalleProducto();
         } else if (isProductsGridPage) {
-            renderizarTodosLosProductos();
+        renderizarTodosLosProductos();
             inicializarFiltroGeneroNuevoStock();
-            inicializarHoverImagenes();
-            inicializarEventosFiltros();
-            inicializarFiltrosToggle();
+        inicializarHoverImagenes();
+        inicializarEventosFiltros();
+        inicializarFiltrosToggle();
             inicializarCarrito();
             inicializarNavegacion();
         } else {
             var isIndexPage = document.getElementById('inicio') || document.querySelector('section.hero');
             if (!isIndexPage) {
-                inicializarCarrito();
-                inicializarNavegacion();
-            }
+        inicializarCarrito();
+        inicializarNavegacion();
+    }
         }
     };
 

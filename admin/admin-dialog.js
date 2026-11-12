@@ -198,6 +198,20 @@
         document.body.classList.add('admin-busy-open');
     }
 
+    function forzarOcultarOcupado() {
+        if (busyHideTimer) {
+            clearTimeout(busyHideTimer);
+            busyHideTimer = null;
+        }
+        busyN = 0;
+        var root = document.getElementById('adminBusyRoot');
+        if (root) {
+            root.classList.add('admin-hidden');
+            root.setAttribute('aria-hidden', 'true');
+        }
+        document.body.classList.remove('admin-busy-open');
+    }
+
     function ocultarOcupado() {
         busyN = Math.max(0, busyN - 1);
         if (busyN > 0) return;
@@ -229,6 +243,7 @@
         confirmPassword: confirmPassword,
         mostrarOcupado: mostrarOcupado,
         ocultarOcupado: ocultarOcupado,
+        forzarOcultarOcupado: forzarOcultarOcupado,
         mientras: mientras
     };
 })(window);

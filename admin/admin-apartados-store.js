@@ -129,6 +129,31 @@
         return saveApartado(ent);
     }
 
+    function actualizarPrendasApartado(apartadoId, prendasNuevas, totalAPagar) {
+        var ap = getById(apartadoId);
+        if (!ap) return null;
+        var viejas = {};
+        (ap.prendas || []).forEach(function (p) {
+            if (p && p.id) viejas[p.id] = p;
+        });
+        ap.prendas = (prendasNuevas || []).map(function (np) {
+            var base = normalizarPrenda(np);
+            var prev = np.id && viejas[np.id] ? viejas[np.id] : null;
+            if (prev) {
+                base.id = prev.id;
+                base.entregada = prev.entregada;
+                base.entregadaEn = prev.entregadaEn;
+                base.stockRecibido = prev.stockRecibido;
+                base.stockRecibidoEn = prev.stockRecibidoEn;
+            }
+            return base;
+        }).filter(function (p) { return p.nombre; });
+        ap.totalAPagar = parseMonto(totalAPagar);
+        var todasEnt = ap.prendas.length && ap.prendas.every(function (p) { return p.entregada; });
+        ap.entregadoEn = todasEnt ? (ap.entregadoEn || Date.now()) : null;
+        return saveApartado(ap);
+    }
+
     function updatePrenda(apartadoId, prendaId, patch) {
         var ap = getById(apartadoId);
         if (!ap || !prendaId) return null;
@@ -243,6 +268,7 @@
         uid: uid,
         normalizarPrenda: normalizarPrenda,
         updatePrenda: updatePrenda,
-        getPrenda: getPrenda
+        getPrenda: getPrenda,
+        actualizarPrendasApartado: actualizarPrendasApartado
     };
 })(window);

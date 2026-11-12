@@ -27,6 +27,10 @@
         return v && v.filaSheet ? parseInt(v.filaSheet, 10) : 0;
     }
 
+    function edicionVentasLista() {
+        return !!(opts.editable && (opts.edicionMayoreo || ObebeAdminData.edicionVentasHabilitada()));
+    }
+
     function ensureModalRoot() {
         var root = document.getElementById('adminVentaRegistroModal');
         if (root) return root;
@@ -268,7 +272,14 @@
         if (btn) btn.disabled = true;
         var ajustar = !!(document.getElementById('adminVrAjustarStock') || {}).checked;
         var prom;
-        if (modalMode === 'create') {
+        if (opts.edicionMayoreo) {
+            if (modalMode === 'create') {
+                prom = Promise.resolve({ ok: false, error: 'Usa Registrar venta para agregar ventas nuevas.' });
+            } else {
+                var vEdit = findVenta(modalVentaId);
+                prom = opts.edicionMayoreo.guardarEdicion(vEdit, campos);
+            }
+        } else if (modalMode === 'create') {
             prom = ObebeAdminData.crearVentaLineaManual(campos, { ajustarStock: ajustar });
         } else {
             prom = ObebeAdminData.actualizarVentaLinea(modalVentaId, campos);
@@ -296,6 +307,22 @@
         return !!(opts.seleccionAlEditar && modoSeleccion);
     }
 
+    function esFilaEncabezadoVentas(v) {
+        var n = String(v && v.nombre || '').trim().toUpperCase();
+        if (n === 'ARTICULO' || n === 'ARTÍCULO' || n === 'NOMBRE') return true;
+        var f = String(v && v.fechaRaw || '').trim().toUpperCase();
+        if (f === 'FECHA') return true;
+        return false;
+    }
+
+    function filaVentaSeleccionable(v) {
+        var id = ventaId(v);
+        if (!id) return false;
+        if (esFilaEncabezadoVentas(v)) return false;
+        if (opts.edicionMayoreo && !(v && v.mayoreoVentaId)) return false;
+        return true;
+    }
+
     function barraSeleccion(editable) {
         if (!editable || !opts.seleccionAlEditar) return '';
         if (!modoSeleccion) {
@@ -304,6 +331,8 @@
         }
         var n = idsSeleccionados().length;
         return '<div class="admin-vr-bulk">' +
+            '<label class="admin-vr-sel-all"><input type="checkbox" id="adminVrSelAll" aria-label="Seleccionar ventas visibles"> ' +
+            'Seleccionar visibles</label>' +
             '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact" id="adminVrBorrarSel"' +
             (n ? '' : ' disabled') + '>Borrar seleccionadas (' + n + ')</button>' +
             '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminVrModoListo">Listo</button></div>';
@@ -313,23 +342,28 @@
         limite = limite || 500;
         var slice = ventas.slice(0, limite);
         var seleccionActiva = editable && puedeSeleccionar();
-        var selHead = seleccionActiva
-            ? '<th class="admin-vr-sel-col"><input type="checkbox" id="adminVrSelAll" aria-label="Seleccionar visibles"></th>'
-            : '';
+        var selHead = seleccionActiva ? '<th class="admin-vr-sel-col" aria-hidden="true"></th>' : '';
         var accHead = editable ? '<th>Opciones</th>' : '';
         var rows = slice.map(function (v) {
             var id = ventaId(v);
             var acc = '';
             var sel = '';
+            var puedeSel = filaVentaSeleccionable(v);
             if (editable && id) {
                 if (seleccionActiva) {
-                    sel = '<td class="admin-vr-sel-col"><input type="checkbox" class="admin-vr-sel" data-id="' + id + '"' +
-                        (seleccionVentas[id] ? ' checked' : '') + ' aria-label="Seleccionar"></td>';
+                    if (puedeSel) {
+                        sel = '<td class="admin-vr-sel-col"><input type="checkbox" class="admin-vr-sel" data-id="' + id + '"' +
+                            (seleccionVentas[id] ? ' checked' : '') + ' aria-label="Seleccionar venta"></td>';
+                    } else {
+                        sel = '<td class="admin-vr-sel-col"></td>';
+                    }
+                    acc = '<td class="admin-vr-acciones">—</td>';
+                } else {
+                    acc = '<td class="admin-vr-acciones">' +
+                        '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-vr-edit="' + id + '">Editar</button> ' +
+                        '<button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-vr-del="' + id + '">Borrar</button>' +
+                        '</td>';
                 }
-                acc = '<td class="admin-vr-acciones">' +
-                    '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-vr-edit="' + id + '">Editar</button> ' +
-                    '<button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-vr-del="' + id + '">Borrar</button>' +
-                    '</td>';
             } else if (editable) {
                 if (seleccionActiva) sel = '<td></td>';
                 acc = '<td>—</td>';
@@ -343,7 +377,7 @@
                 htmlPrecioVentaCelda(v) +
                 '<td>' + esc(v.talla) + '</td><td>' + esc(v.color) + '</td>' +
                 '<td>' + esc(v.segmento) + '</td><td>' + esc(v.cliente) + '</td>' +
-                '<td>' + esc(v.vendedor) + '</td><td>' + esc(ObebeAdminData.etiquetaCuentaVentas(v.cuenta)) + '</td>' +
+                '<td>' + esc(v.vendedor) + '</td><td>' + esc(opts.edicionMayoreo ? v.cuenta : ObebeAdminData.etiquetaCuentaVentas(v.cuenta)) + '</td>' +
                 '<td>' + esc(v.redSocial) + '</td><td>' + linkCortoVentas(v.linkVisible != null ? v.linkVisible : v.link) + '</td>' +
                 '<td>' + esc(v.telefono) + '</td>' + acc + '</tr>';
         }).join('');
@@ -355,7 +389,7 @@
             '<div class="admin-table-wrap admin-table-wrap--ventas-reg"><table class="admin-table admin-table-ventas"><thead><tr>' +
             selHead +
             '<th>Fecha</th><th>Ref</th><th>Artículo</th><th>Tipo</th><th>Precio</th><th>Talla</th><th>Color</th>' +
-            '<th>Cat.</th><th>Cliente</th><th>Vendedor</th><th>Quien tiene el dinero</th>' +
+            '<th>Cat.</th><th>Cliente</th><th>Vendedor</th><th>' + (opts.edicionMayoreo ? 'Método de pago' : 'Quien tiene el dinero') + '</th>' +
             '<th>Red</th><th>Link</th><th>Tel.</th>' + accHead +
             '</tr></thead><tbody>' +
             (rows || '<tr><td colspan="' + colSpan + '">Sin ventas</td></tr>') + '</tbody></table></div>';
@@ -389,7 +423,7 @@
             });
             return;
         }
-        if (!ObebeAdminData.edicionVentasHabilitada()) return;
+        if (!edicionVentasLista()) return;
         var edit = ev.target.closest('[data-vr-edit]');
         if (edit) {
             var v = findVenta(edit.getAttribute('data-vr-edit'));
@@ -401,11 +435,13 @@
             var v2 = findVenta(del.getAttribute('data-vr-del'));
             if (!v2) return;
             var nombreLinea = v2.nombre || 'venta';
-            var devolverStock = ObebeAdminData.ventaDebeDevolverStock
-                ? ObebeAdminData.ventaDebeDevolverStock(v2)
-                : /\[\[stock:\d+:-?\d+\]\]/.test(String(v2.link || ''));
+            var devolverStock = opts.edicionMayoreo
+                ? true
+                : (ObebeAdminData.ventaDebeDevolverStock
+                    ? ObebeAdminData.ventaDebeDevolverStock(v2)
+                    : /\[\[stock:\d+:-?\d+\]\]/.test(String(v2.link || '')));
             var msg = 'Se eliminará la línea: ' + nombreLinea + '.';
-            if (devolverStock) msg += ' Se devolverá 1 unidad al inventario.';
+            if (devolverStock) msg += ' Se devolverá la unidad al inventario.';
             ObebeAdminDialog.confirm({
                 title: '¿Borrar venta?',
                 message: msg,
@@ -413,6 +449,9 @@
                 cancelText: 'Cancelar'
             }).then(function (ok) {
                 if (!ok) return;
+                if (opts.edicionMayoreo && opts.edicionMayoreo.eliminarLinea) {
+                    return opts.edicionMayoreo.eliminarLinea(v2);
+                }
                 return ObebeAdminData.eliminarVentaLinea(ventaId(v2), { ajustarStock: devolverStock });
             }).then(function (res) {
                 if (!res) return;
@@ -430,6 +469,9 @@
             modoSeleccion = true;
             seleccionVentas = {};
             if (repintarTabla) repintarTabla();
+            return;
+        }
+        if (modoSeleccion && ev.target.closest('thead')) {
             return;
         }
         var listo = ev.target.closest('#adminVrModoListo');
@@ -457,10 +499,15 @@
                     chain = chain.then(function () {
                         if (fallo) return;
                         var vDel = findVenta(id);
-                        var devolver = vDel && (ObebeAdminData.ventaDebeDevolverStock
-                            ? ObebeAdminData.ventaDebeDevolverStock(vDel)
-                            : /\[\[stock:\d+:-?\d+\]\]/.test(String(vDel.link || '')));
-                        return ObebeAdminData.eliminarVentaLinea(id, { ajustarStock: !!devolver }).then(function (res) {
+                        var devolver = opts.edicionMayoreo
+                            ? true
+                            : (vDel && (ObebeAdminData.ventaDebeDevolverStock
+                                ? ObebeAdminData.ventaDebeDevolverStock(vDel)
+                                : /\[\[stock:\d+:-?\d+\]\]/.test(String(vDel.link || ''))));
+                        var delProm = (opts.edicionMayoreo && opts.edicionMayoreo.eliminarLinea && vDel)
+                            ? opts.edicionMayoreo.eliminarLinea(vDel)
+                            : ObebeAdminData.eliminarVentaLinea(id, { ajustarStock: !!devolver });
+                        return delProm.then(function (res) {
                             if (!res || res.ok === false) {
                                 fallo = (res && res.error) || 'No se pudo borrar una venta.';
                                 return;
@@ -488,9 +535,11 @@
             root.querySelectorAll('.admin-vr-sel').forEach(function (cb) {
                 var id = parseInt(cb.getAttribute('data-id'), 10);
                 if (!id) return;
+                var v = findVenta(id);
+                if (v && !filaVentaSeleccionable(v)) return;
                 seleccionVentas[id] = !!all.checked;
                 cb.checked = !!all.checked;
-                var tr = cb.closest('tr');
+                var tr = cb.closest('tbody tr');
                 if (tr) tr.classList.toggle('admin-vr-row-sel', !!all.checked);
             });
             var btnAll = root.querySelector('#adminVrBorrarSel');
@@ -505,8 +554,13 @@
         if (!cb) return;
         var id = parseInt(cb.getAttribute('data-id'), 10);
         if (!id) return;
+        var v = findVenta(id);
+        if (v && !filaVentaSeleccionable(v)) {
+            cb.checked = false;
+            return;
+        }
         seleccionVentas[id] = !!cb.checked;
-        var tr = cb.closest('tr');
+        var tr = cb.closest('tbody tr');
         if (tr) tr.classList.toggle('admin-vr-row-sel', !!cb.checked);
         var btn = root && root.querySelector('#adminVrBorrarSel');
         var n = idsSeleccionados().length;
@@ -520,7 +574,7 @@
         if (!el) return;
         mountEl = el;
         opts = options || {};
-        var editable = !!opts.editable && ObebeAdminData.edicionVentasHabilitada();
+        var editable = edicionVentasLista();
         var list = ventas || [];
 
         function pintar(lista) {

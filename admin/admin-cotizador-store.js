@@ -40,13 +40,17 @@
         }
     }
 
-    function guardar(cfg) {
+    function guardar(cfg, opts) {
+        opts = opts || {};
         var clean = normalizar(cfg);
         clean.actualizadoEn = Date.now();
         try {
             localStorage.setItem(KEY, JSON.stringify(clean));
         } catch (e) { /* ignore */ }
-        if (global.ObebeAdminModulosCloud && ObebeAdminModulosCloud.notifyCotizadorSaved) {
+        if (global.ObebeCotizadorRemote && ObebeCotizadorRemote.publicarPreview) {
+            ObebeCotizadorRemote.publicarPreview(clean);
+        }
+        if (!opts.skipCloudNotify && global.ObebeAdminModulosCloud && ObebeAdminModulosCloud.notifyCotizadorSaved) {
             ObebeAdminModulosCloud.notifyCotizadorSaved();
         }
         return clean;

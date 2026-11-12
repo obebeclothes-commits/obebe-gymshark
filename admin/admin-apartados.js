@@ -11,6 +11,7 @@
     var getFilasInv = function () { return []; };
     var inventarioPickRowEl = null;
     var inventarioPickSelected = null;
+    var editarApartadoId = null;
 
     function esc(s) {
         return String(s || '')
@@ -84,6 +85,8 @@
         p = p || {};
         var Ui = global.ObebeAdminCamposUi;
         return '<div class="admin-apartado-prenda-row" data-prenda-idx="' + idx + '">' +
+            '<input type="hidden" class="admin-ap-prenda-pid" value="' + esc(p.id || '') + '">' +
+            '<input type="hidden" class="admin-ap-prenda-entregada" value="' + (p.entregada ? '1' : '0') + '">' +
             '<input type="hidden" class="admin-ap-prenda-invid" value="' + esc(p.inventarioId || '') + '">' +
             '<input type="hidden" class="admin-ap-prenda-filasheet" value="' + esc(p.filaSheet || '') + '">' +
             '<div class="admin-field admin-ap-field-ref"><label>Ref</label>' +
@@ -135,7 +138,7 @@
             var nombre = (row.querySelector('.admin-ap-prenda-nombre') || {}).value || '';
             nombre = nombre.trim();
             if (!nombre) return;
-            out.push({
+            var item = {
                 nombre: nombre,
                 marca: global.ObebeAdminCamposUi ? global.ObebeAdminCamposUi.leerSelectOtro(
                     row.querySelector('.admin-ap-prenda-marca-select'),
@@ -154,7 +157,10 @@
                 filaSheet: parseInt((row.querySelector('.admin-ap-prenda-filasheet') || {}).value, 10) || 0,
                 precio: ObebeApartadosStore.parseMonto((row.querySelector('.admin-ap-prenda-precio') || {}).value),
                 cantidad: parseInt((row.querySelector('.admin-ap-prenda-cant') || {}).value, 10) || 1
-            });
+            };
+            var pid = ((row.querySelector('.admin-ap-prenda-pid') || {}).value || '').trim();
+            if (pid) item.id = pid;
+            out.push(item);
         });
         return out;
     }
@@ -260,7 +266,8 @@
             }
             var qty = p.cantidad > 0 ? p.cantidad : 1;
             var precioLbl = p.precio > 0 ? fmt(p.precio) + (qty > 1 ? ' ×' + qty : '') : '—';
-            return '<tr><td>' + esc(p.nombre) + '</td><td>' + esc(p.marca) + '</td>' +
+            return '<tr><td><span class="admin-ap-prenda-nombre-cell" title="' + esc(p.nombre) + '">' +
+                esc(p.nombre) + '</span></td><td>' + esc(p.marca) + '</td>' +
                 '<td>' + esc(p.color) + '</td><td>' + esc(p.talla) + '</td>' +
                 '<td>' + precioLbl + '</td>' +
                 '<td>' + etiquetaEstadoPrenda(p) + '</td>' +
@@ -304,12 +311,15 @@
         var st = ObebeApartadosStore.estadoCalculado(ap);
         var acciones = '';
         if (st === 'activo') {
-            acciones = '<button type="button" class="admin-btn admin-btn-primary admin-btn-sm" data-ap-abono="' + esc(ap.id) + '">Registrar abono</button> ';
+            acciones = '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-editar="' + esc(ap.id) +
+                '">Editar apartado</button> ';
             var pendEnt = (ap.prendas || []).some(function (p) { return prendaPuedeEntregarse(p); });
             if (pendEnt) {
-                acciones += '<button type="button" class="admin-btn admin-btn-primary admin-btn-sm" data-ap-entregar-todo="' +
+                acciones += '<button type="button" class="admin-btn admin-btn-success admin-btn-sm admin-ap-btn-entregar" data-ap-entregar-todo="' +
                     esc(ap.id) + '">Entregar prendas (bajar stock)</button> ';
             }
+            acciones += '<button type="button" class="admin-btn admin-btn-primary admin-btn-sm admin-ap-btn-abono" data-ap-abono="' +
+                esc(ap.id) + '">Registrar abono</button> ';
             acciones += '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-completar="' + esc(ap.id) + '">Marcar liquidado</button> ';
         } else if (st === 'completado') {
             acciones = '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" data-ap-desliquidar="' + esc(ap.id) + '">Desliquidar</button>';
@@ -593,6 +603,163 @@
         root.classList.add('admin-hidden');
         root.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('admin-apartado-modal-open');
+    }
+
+    function pintarTotalEditApartado() {
+        var box = document.getElementById('adminApartadoEditTotal');
+        var rows = document.getElementById('adminApartadoEditPrendasRows');
+        if (!box || !rows) return;
+        box.textContent = fmt(totalPrendasForm(rows));
+    }
+
+    function ensureEditarApartadoModal() {
+        var root = document.getElementById('adminApartadoEditarModal');
+        if (root) return root;
+        root = document.createElement('div');
+        root.id = 'adminApartadoEditarModal';
+        root.className = 'admin-apartado-modal-root admin-hidden';
+        root.setAttribute('aria-hidden', 'true');
+        root.innerHTML =
+            '<div class="admin-apartado-modal-backdrop" data-ap-edit-dismiss="1"></div>' +
+            '<div class="admin-apartado-modal admin-apartado-modal--wide" role="dialog" aria-modal="true">' +
+            '<div class="admin-apartado-modal-head">' +
+            '<h3 id="adminApartadoEditarTitulo">Editar apartado</h3>' +
+            '<button type="button" class="admin-btn admin-btn-ghost" data-ap-edit-dismiss="1">×</button></div>' +
+            '<form id="adminApartadoEditarForm" class="admin-apartado-modal-body">' +
+            '<p class="admin-muted-text">Agrega, quita o cambia prendas. El total se recalcula; los abonos no cambian.</p>' +
+            '<div class="admin-apartado-prendas-block admin-apartado-prendas-block--modal">' +
+            '<div class="admin-apartado-total-row">' +
+            '<span>Total apartado</span>' +
+            '<strong id="adminApartadoEditTotal" class="admin-apartado-total-val">' + fmt(0) + '</strong></div>' +
+            '<div id="adminApartadoEditPrendasRows" class="admin-apartado-edit-prendas-rows"></div>' +
+            '<div class="admin-apartado-add-prenda-wrap">' +
+            '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm" id="adminApartadoEditAddPrenda">+ Prenda</button></div></div>' +
+            '<p id="adminApartadoEditError" class="admin-login-error" role="alert"></p>' +
+            '<div class="admin-apartado-modal-actions">' +
+            '<button type="button" class="admin-btn admin-btn-ghost" data-ap-edit-dismiss="1">Cancelar</button>' +
+            '<button type="submit" class="admin-btn admin-btn-primary">Guardar cambios</button></div></form></div>';
+        document.body.appendChild(root);
+        root.querySelectorAll('[data-ap-edit-dismiss]').forEach(function (el) {
+            el.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                cerrarEditarApartado();
+            });
+        });
+        document.getElementById('adminApartadoEditAddPrenda').addEventListener('click', function () {
+            var box = document.getElementById('adminApartadoEditPrendasRows');
+            if (!box) return;
+            var idx = box.querySelectorAll('.admin-apartado-prenda-row').length;
+            box.insertAdjacentHTML('beforeend', htmlPrendaRow({}, idx));
+            if (global.ObebeAdminCamposUi) ObebeAdminCamposUi.bindSelectOtros(box);
+            pintarTotalEditApartado();
+        });
+        document.getElementById('adminApartadoEditPrendasRows').addEventListener('input', pintarTotalEditApartado);
+        document.getElementById('adminApartadoEditPrendasRows').addEventListener('click', function (ev) {
+            var invBtn = ev.target.closest('.admin-ap-prenda-inv');
+            if (invBtn) {
+                abrirInventarioPicker(invBtn.closest('.admin-apartado-prenda-row'));
+                return;
+            }
+            var btn = ev.target.closest('.admin-ap-prenda-quitar');
+            if (!btn) return;
+            var row = btn.closest('.admin-apartado-prenda-row');
+            var box = document.getElementById('adminApartadoEditPrendasRows');
+            if (!box) return;
+            if (box.querySelectorAll('.admin-apartado-prenda-row').length <= 1) {
+                var idx0 = row.getAttribute('data-prenda-idx') || '0';
+                row.outerHTML = htmlPrendaRow({}, idx0);
+                if (global.ObebeAdminCamposUi) ObebeAdminCamposUi.bindSelectOtros(box);
+                pintarTotalEditApartado();
+                return;
+            }
+            row.remove();
+            pintarTotalEditApartado();
+        });
+        document.getElementById('adminApartadoEditarForm').addEventListener('submit', onSubmitEditarApartado);
+        return root;
+    }
+
+    function cerrarEditarApartado() {
+        editarApartadoId = null;
+        var root = document.getElementById('adminApartadoEditarModal');
+        if (!root) return;
+        root.classList.add('admin-hidden');
+        root.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('admin-apartado-modal-open');
+    }
+
+    function abrirEditarApartado(apartadoId) {
+        var ap = ObebeApartadosStore.getById(apartadoId);
+        if (!ap || ObebeApartadosStore.estadoCalculado(ap) !== 'activo') return;
+        ensureEditarApartadoModal();
+        editarApartadoId = apartadoId;
+        var root = document.getElementById('adminApartadoEditarModal');
+        document.getElementById('adminApartadoEditarTitulo').textContent = 'Editar apartado · ' + ap.cliente;
+        var err = document.getElementById('adminApartadoEditError');
+        if (err) err.textContent = '';
+        var box = document.getElementById('adminApartadoEditPrendasRows');
+        var prendas = (ap.prendas || []).slice();
+        if (!prendas.length) prendas = [{}];
+        box.innerHTML = prendas.map(function (p, i) { return htmlPrendaRow(p, i); }).join('');
+        if (global.ObebeAdminCamposUi) ObebeAdminCamposUi.bindSelectOtros(box);
+        pintarTotalEditApartado();
+        root.classList.remove('admin-hidden');
+        root.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('admin-apartado-modal-open');
+    }
+
+    function onSubmitEditarApartado(ev) {
+        ev.preventDefault();
+        if (!editarApartadoId) return;
+        var ap = ObebeApartadosStore.getById(editarApartadoId);
+        if (!ap) return;
+        var err = document.getElementById('adminApartadoEditError');
+        if (err) err.textContent = '';
+        var rowsEl = document.getElementById('adminApartadoEditPrendasRows');
+        var prendas = leerPrendasDelForm(rowsEl);
+        var total = totalPrendasForm(rowsEl);
+        if (!prendas.length) {
+            if (err) err.textContent = 'Debe quedar al menos una prenda con nombre.';
+            return;
+        }
+        if (total <= 0) {
+            if (err) err.textContent = 'Indica el precio de cada prenda.';
+            return;
+        }
+        var sinPrecio = prendas.some(function (p) { return !(p.precio > 0); });
+        if (sinPrecio) {
+            if (err) err.textContent = 'Cada prenda debe tener precio mayor a 0.';
+            return;
+        }
+        var pagado = ObebeApartadosStore.totalPagado(ap);
+        function guardarCambios() {
+            ObebeApartadosStore.actualizarPrendasApartado(ap.id, prendas, total);
+            cerrarEditarApartado();
+            if (typeof mount._repintar === 'function') mount._repintar();
+            ObebeAdminDialog.alert({
+                title: 'Apartado actualizado',
+                message: 'Prendas y total guardados (' + fmt(total) + ').',
+                confirmText: 'Listo'
+            });
+        }
+        if (total + 0.01 < pagado) {
+            ObebeAdminDialog.confirm({
+                title: 'Total menor que abonos',
+                message: 'El nuevo total (' + fmt(total) + ') es menor que lo abonado (' + fmt(pagado) +
+                    '). ¿Guardar igual?',
+                confirmText: 'Guardar',
+                cancelText: 'Cancelar',
+                variant: 'warn'
+            }).then(function (ok) { if (ok) guardarCambios(); });
+            return;
+        }
+        ObebeAdminDialog.confirm({
+            title: '¿Guardar cambios?',
+            message: 'Se actualizarán las prendas y el total a ' + fmt(total) + '.',
+            confirmText: 'Guardar',
+            cancelText: 'Cancelar',
+            variant: 'warn'
+        }).then(function (ok) { if (ok) guardarCambios(); });
     }
 
     function abrirAbonoModal(apartadoId, opts) {
@@ -1107,6 +1274,11 @@
             if (editP) {
                 ev.preventDefault();
                 abrirEditarAbono(editP.getAttribute('data-ap-editar-pago'), editP.getAttribute('data-pago-id'));
+                return;
+            }
+            var editAp = ev.target.closest('[data-ap-editar]');
+            if (editAp) {
+                abrirEditarApartado(editAp.getAttribute('data-ap-editar'));
                 return;
             }
             var abono = ev.target.closest('[data-ap-abono]');

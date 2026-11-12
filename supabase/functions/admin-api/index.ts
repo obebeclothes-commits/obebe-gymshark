@@ -1,0 +1,1041 @@
+/**
+ * Despliegue (CLI Supabase):
+ *   supabase link --project-ref TU_REF
+ *   supabase secrets set ADMIN_SECRET=OBebeClotes.1
+ *   supabase functions deploy admin-api --no-verify-jwt
+ * URL: https://TU_REF.supabase.co/functions/v1/admin-api
+ */
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const NUM_COLUMNAS = 29;
+const COL_STOCK = 3;
+const IDX_INV_NOMBRE = 1;
+const IDX_INV_STOCK = 2;
+const IDX_INV_TALLA = 3;
+const IDX_INV_COLOR = 4;
+
+function norm(s: unknown) {
+  return String(s ?? "").trim().toLowerCase();
+}
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...cors, "Content-Type": "application/json" },
+  });
+}
+
+function padCeldas(arr: unknown[]): string[] {
+  const out: string[] = [];
+  for (let c = 0; c < NUM_COLUMNAS; c++) {
+    out.push(c < arr.length ? String(arr[c] ?? "") : "");
+  }
+  return out;
+}
+
+function checkAuth(body: Record<string, unknown>) {
+  const secret = Deno.env.get("ADMIN_SECRET") || "OBebeClotes.1";
+  if (!body || body.secret !== secret) {
+    return { ok: false, error: "No autorizado" };
+  }
+  return null;
+}
+
+function adminClient() {
+  const url = Deno.env.get("SUPABASE_URL")!;
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  return createClient(url, key);
+}
+
+async function getVentas() {
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("ventas_lineas")
+    .select("*")
+    .order("fecha_iso", { ascending: false, nullsFirst: false })
+    .order("id", { ascending: false })
+    .limit(15000);
+  if (error) throw error;
+  const ventas = (data || []).map((v) => ({
+    fechaIso: v.fecha_iso || "",
+    fechaRaw: v.fecha_raw || "",
+    nombre: v.nombre || "",
+    tipo: v.tipo || "",
+    precio: Number(v.precio) || 0,
+    talla: v.talla || "",
+    color: v.color || "",
+    segmento: v.segmento || "",
+    cliente: v.cliente || "",
+    vendedor: v.vendedor || "",
+    cuenta: v.cuenta || "",
+    redSocial: v.red_social || "",
+    link: v.link || "",
+    telefono: v.telefono || "",
+    filaSheet: v.id,
+  }));
+  return { ok: true, ventas };
+}
+
+function gastoFieldsToRow(p: Record<string, unknown>) {
+  const fechaRaw = String(p.fechaRaw ?? "");
+  const cantidad = Math.abs(parseNum(p.cantidad));
+  return {
+    fecha_raw: fechaRaw,
+    fecha_iso: parseFechaIso(fechaRaw),
+    concepto: String(p.concepto ?? "").trim(),
+    cantidad,
+    pagado_por: String(p.pagado_por ?? p.pagadoPor ?? "").trim(),
+  };
+}
+
+function gastoDbToApi(v: Record<string, unknown>) {
+  return {
+    fechaIso: (v.fecha_iso as string) || "",
+    fechaRaw: (v.fecha_raw as string) || "",
+    concepto: (v.concepto as string) || "",
+    cantidad: Number(v.cantidad) || 0,
+    pagadoPor: (v.pagado_por as string) || "",
+    id: v.id,
+  };
+}
+
+async function getGastos() {
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("gastos_operativos")
+    .select("*")
+    .order("fecha_iso", { ascending: false, nullsFirst: false })
+    .order("id", { ascending: false })
+    .limit(5000);
+  if (error) throw error;
+  return { ok: true, gastos: (data || []).map((g) => gastoDbToApi(g)) };
+}
+
+async function createGasto(body: Record<string, unknown>) {
+  const gasto = (body.gasto || {}) as Record<string, unknown>;
+  const sb = adminClient();
+  const row = gastoFieldsToRow(gasto);
+  if (!row.concepto) return { ok: false, error: "Indica un concepto." };
+  if (row.cantidad <= 0) return { ok: false, error: "La cantidad debe ser mayor a 0." };
+  const { data, error } = await sb.from("gastos_operativos").insert(row).select("*").single();
+  if (error) throw error;
+  return { ok: true, gasto: gastoDbToApi(data) };
+}
+
+async function updateGasto(body: Record<string, unknown>) {
+  const gastoId = parseInt(String(body.gastoId), 10);
+  const gasto = (body.gasto || {}) as Record<string, unknown>;
+  if (!gastoId) return { ok: false, error: "gastoId inválido." };
+  const sb = adminClient();
+  const row = gastoFieldsToRow(gasto);
+  if (!row.concepto) return { ok: false, error: "Indica un concepto." };
+  if (row.cantidad <= 0) return { ok: false, error: "La cantidad debe ser mayor a 0." };
+  const { data, error } = await sb
+    .from("gastos_operativos")
+    .update(row)
+    .eq("id", gastoId)
+    .select("*")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return { ok: false, error: "Gasto no encontrado." };
+  return { ok: true, gasto: gastoDbToApi(data) };
+}
+
+async function deleteGasto(body: Record<string, unknown>) {
+  const gastoId = parseInt(String(body.gastoId), 10);
+  if (!gastoId) return { ok: false, error: "gastoId inválido." };
+  const sb = adminClient();
+  const { error } = await sb.from("gastos_operativos").delete().eq("id", gastoId);
+  if (error) throw error;
+  return { ok: true, deleted: 1 };
+}
+
+/** Quita de ventas_lineas las filas con precio negativo (gastos mal registrados) y las copia a gastos_operativos. */
+async function limpiarVentasNegativasMigrarGastos() {
+  const sb = adminClient();
+  const { data: neg, error } = await sb.from("ventas_lineas").select("*").lt("precio", 0);
+  if (error) throw error;
+  const rows = neg || [];
+  if (!rows.length) return { ok: true, migrados: 0, eliminados: 0 };
+  for (const v of rows) {
+    const concepto = String(v.nombre || v.tipo || "Gasto operativo").trim() || "Gasto operativo";
+    const cantidad = Math.abs(Number(v.precio) || 0);
+    const pagado = String(v.cuenta || v.vendedor || v.cliente || "").trim();
+    const ins = {
+      fecha_raw: v.fecha_raw,
+      fecha_iso: v.fecha_iso,
+      concepto,
+      cantidad,
+      pagado_por: pagado || "—",
+    };
+    const { error: eG } = await sb.from("gastos_operativos").insert(ins);
+    if (eG) throw eG;
+  }
+  const ids = rows.map((v) => v.id);
+  const { error: eD } = await sb.from("ventas_lineas").delete().in("id", ids);
+  if (eD) throw eD;
+  return { ok: true, migrados: rows.length, eliminados: rows.length };
+}
+
+function parseNum(val: unknown): number {
+  let t = String(val ?? "").trim();
+  if (!t) return 0;
+  t = t.replace(/\$/g, "").replace(/\s/g, "");
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) {
+    t = t.replace(/\./g, "").replace(",", ".");
+  } else if (/^\d+,\d{1,2}$/.test(t)) {
+    t = t.replace(",", ".");
+  } else {
+    t = t.replace(/,/g, "");
+  }
+  t = t.replace(/[^\d.-]/g, "");
+  const n = parseFloat(t);
+  return isNaN(n) ? 0 : n;
+}
+
+function ventaLineToRow(v: unknown[]) {
+  const a = v as string[];
+  return ventaFieldsToRow({
+    fechaRaw: a[0] ?? "",
+    nombre: a[1] ?? "",
+    tipo: a[2] ?? "",
+    precio: a[3],
+    talla: a[4] ?? "",
+    color: a[5] ?? "",
+    segmento: a[6] ?? "",
+    cliente: a[7] ?? "",
+    vendedor: a[8] ?? "",
+    cuenta: a[9] ?? "",
+    redSocial: a[10] ?? "",
+    link: a[11] ?? "",
+    telefono: a[12] ?? "",
+  });
+}
+
+function ventaFieldsToRow(p: Record<string, unknown>) {
+  const fechaRaw = String(p.fechaRaw ?? "");
+  return {
+    fecha_raw: fechaRaw,
+    fecha_iso: parseFechaIso(fechaRaw),
+    nombre: String(p.nombre ?? ""),
+    tipo: String(p.tipo ?? ""),
+    precio: parseNum(p.precio),
+    talla: String(p.talla ?? ""),
+    color: String(p.color ?? ""),
+    segmento: String(p.segmento ?? ""),
+    cliente: String(p.cliente ?? ""),
+    vendedor: String(p.vendedor ?? ""),
+    cuenta: String(p.cuenta ?? ""),
+    red_social: String(p.redSocial ?? ""),
+    link: String(p.link ?? ""),
+    telefono: String(p.telefono ?? ""),
+  };
+}
+
+function ventaDbToApi(v: Record<string, unknown>) {
+  return {
+    fechaIso: (v.fecha_iso as string) || "",
+    fechaRaw: (v.fecha_raw as string) || "",
+    nombre: (v.nombre as string) || "",
+    tipo: (v.tipo as string) || "",
+    precio: Number(v.precio) || 0,
+    talla: (v.talla as string) || "",
+    color: (v.color as string) || "",
+    segmento: (v.segmento as string) || "",
+    cliente: (v.cliente as string) || "",
+    vendedor: (v.vendedor as string) || "",
+    cuenta: (v.cuenta as string) || "",
+    redSocial: (v.red_social as string) || "",
+    link: (v.link as string) || "",
+    telefono: (v.telefono as string) || "",
+    filaSheet: v.id,
+  };
+}
+
+function parseFechaIso(raw: string): string | null {
+  const t = String(raw || "").trim();
+  const m = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (!m) return null;
+  let y = parseInt(m[3], 10);
+  if (y < 100) y += 2000;
+  const mo = parseInt(m[2], 10);
+  const d = parseInt(m[1], 10);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+async function buscarInventarioPorVenta(
+  sb: ReturnType<typeof createClient>,
+  nombre: string,
+  talla: string,
+  color: string,
+) {
+  const nn = norm(nombre);
+  if (!nn) return null;
+  const { data, error } = await sb.from("inventario_filas").select("id, celdas").limit(5000);
+  if (error) throw error;
+  const nt = norm(talla);
+  const nc = norm(color);
+  for (const row of data || []) {
+    const c = padCeldas((row.celdas as unknown[]) || []);
+    if (norm(c[IDX_INV_NOMBRE]) !== nn) continue;
+    if (nt && norm(c[IDX_INV_TALLA]) !== nt) continue;
+    if (nc && norm(c[IDX_INV_COLOR]) !== nc) continue;
+    return { id: row.id as number, celdas: c };
+  }
+  return null;
+}
+
+async function aplicarDeltaStockInventario(
+  sb: ReturnType<typeof createClient>,
+  invId: number,
+  celdas: string[],
+  delta: number,
+) {
+  let stock = parseInt(celdas[IDX_INV_STOCK], 10);
+  if (isNaN(stock)) stock = 0;
+  if (delta < 0 && stock <= 0) return { ok: false, stock: 0 };
+  stock = Math.max(0, stock + delta);
+  celdas[IDX_INV_STOCK] = String(stock);
+  const { error } = await sb
+    .from("inventario_filas")
+    .update({ celdas, updated_at: new Date().toISOString() })
+    .eq("id", invId);
+  if (error) throw error;
+  return { ok: true, stock, row: invId };
+}
+
+function parseStockMetaDesdeLink(link: unknown): { inventarioId: number; delta: number } | null {
+  const m = String(link || "").match(/\[\[stock:(\d+):(-?\d+)\]\]/);
+  if (!m) return null;
+  const inventarioId = parseInt(m[1], 10);
+  const delta = parseInt(m[2], 10);
+  if (!inventarioId || isNaN(inventarioId) || isNaN(delta) || !delta) return null;
+  return { inventarioId, delta };
+}
+
+async function ajustarStockPorLineaVenta(
+  sb: ReturnType<typeof createClient>,
+  linea: { nombre?: string; talla?: string; color?: string; link?: string },
+  delta: number,
+) {
+  // Solo devolver/descontar si la venta registró meta [[stock:id:delta]].
+  // Evita inventarios fantasma al borrar ventas que nunca bajaron stock en DB.
+  const meta = parseStockMetaDesdeLink(linea.link);
+  if (!meta) {
+    return { ok: false, matched: false, skipped: true, reason: "sin_meta_stock" };
+  }
+  const invId = meta.inventarioId;
+  const aplicar = delta > 0 ? -meta.delta : meta.delta;
+  const { data, error } = await sb
+    .from("inventario_filas")
+    .select("id, celdas")
+    .eq("id", invId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return { ok: false, matched: false, reason: "inventario_no_encontrado" };
+  const celdas = padCeldas((data.celdas as unknown[]) || []);
+  const r = await aplicarDeltaStockInventario(sb, invId, celdas, aplicar);
+  return { ok: r.ok, matched: true, stock: r.stock, row: invId };
+}
+
+async function updateVentaLine(body: Record<string, unknown>) {
+  const ventaId = parseInt(String(body.ventaId), 10);
+  const venta = (body.venta || {}) as Record<string, unknown>;
+  if (!ventaId) return { ok: false, error: "ventaId inválido." };
+  const sb = adminClient();
+  const row = ventaFieldsToRow(venta);
+  const { data, error } = await sb
+    .from("ventas_lineas")
+    .update(row)
+    .eq("id", ventaId)
+    .select("*")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return { ok: false, error: "Venta no encontrada." };
+  return { ok: true, venta: ventaDbToApi(data) };
+}
+
+async function deleteVentaLine(body: Record<string, unknown>) {
+  const ventaId = parseInt(String(body.ventaId), 10);
+  if (!ventaId) return { ok: false, error: "ventaId inválido." };
+  const ajustarStock = body.ajustarStock !== false;
+  const sb = adminClient();
+  const { data: prev, error: e0 } = await sb
+    .from("ventas_lineas")
+    .select("*")
+    .eq("id", ventaId)
+    .maybeSingle();
+  if (e0) throw e0;
+  if (!prev) return { ok: false, error: "Venta no encontrada." };
+  const { error: e1 } = await sb.from("ventas_lineas").delete().eq("id", ventaId);
+  if (e1) throw e1;
+  let stockInfo: Record<string, unknown> | null = null;
+  if (ajustarStock) {
+    stockInfo = await ajustarStockPorLineaVenta(sb, prev, 1);
+  }
+  return { ok: true, deleted: 1, stock: stockInfo };
+}
+
+async function createVentaLine(body: Record<string, unknown>) {
+  const venta = (body.venta || {}) as Record<string, unknown>;
+  const ajustarStock = body.ajustarStock !== false;
+  const sb = adminClient();
+  const row = ventaFieldsToRow(venta);
+  const { data, error } = await sb.from("ventas_lineas").insert(row).select("*").single();
+  if (error) throw error;
+  let stockInfo: Record<string, unknown> | null = null;
+  if (ajustarStock) {
+    stockInfo = await ajustarStockPorLineaVenta(sb, row, -1);
+  }
+  return { ok: true, venta: ventaDbToApi(data), stock: stockInfo };
+}
+
+async function registrarVentaRetail(body: Record<string, unknown>) {
+  const ventas = (body.ventas || []) as unknown[][];
+  const stockUpdates = (body.stockUpdates || []) as {
+    row?: number;
+    stock: number;
+    inventarioDbId?: number;
+  }[];
+  if (!ventas.length) return { ok: false, error: "Sin líneas de venta." };
+
+  const sb = adminClient();
+  const aplicados: {
+    row: number;
+    inventarioDbId: number;
+    stock: number;
+    stockAntes: number;
+  }[] = [];
+
+  // Primero stock (si falla, no se registran ventas).
+  for (const u of stockUpdates) {
+    const stock = parseInt(String(u.stock), 10);
+    if (isNaN(stock) || stock < 0) {
+      return { ok: false, error: "Stock inválido en actualización de inventario." };
+    }
+    const dbHint = parseInt(String(u.inventarioDbId ?? ""), 10);
+    let fila: { id: number; celdas: unknown } | null = null;
+    if (dbHint && !isNaN(dbHint)) {
+      const { data, error } = await sb
+        .from("inventario_filas")
+        .select("id, celdas")
+        .eq("id", dbHint)
+        .maybeSingle();
+      if (error) throw error;
+      if (data) fila = data as { id: number; celdas: unknown };
+    }
+    if (!fila) {
+      const rowRef = parseInt(String(u.row), 10);
+      if (rowRef && !isNaN(rowRef)) fila = await inventarioFilaPorRef(rowRef);
+    }
+    if (!fila) {
+      return {
+        ok: false,
+        error:
+          "No se pudo ubicar el artículo en inventario para bajar stock (falta inventarioDbId).",
+      };
+    }
+    const dbId = fila.id as number;
+    const celdas = padCeldas((fila.celdas as unknown[]) || []);
+    const stockAntes = parseInt(celdas[IDX_INV_STOCK], 10);
+    celdas[IDX_INV_STOCK] = String(stock);
+    const { error: eUp } = await sb
+      .from("inventario_filas")
+      .update({ celdas, updated_at: new Date().toISOString() })
+      .eq("id", dbId);
+    if (eUp) throw eUp;
+    aplicados.push({
+      row: dbId,
+      inventarioDbId: dbId,
+      stock,
+      stockAntes: isNaN(stockAntes) ? 0 : stockAntes,
+    });
+  }
+
+  const rows = ventas.map(ventaLineToRow);
+  const { error: eV } = await sb.from("ventas_lineas").insert(rows);
+  if (eV) {
+    for (const a of aplicados.slice().reverse()) {
+      const { data } = await sb
+        .from("inventario_filas")
+        .select("id, celdas")
+        .eq("id", a.inventarioDbId)
+        .maybeSingle();
+      if (!data) continue;
+      const celdas = padCeldas((data.celdas as unknown[]) || []);
+      celdas[IDX_INV_STOCK] = String(a.stockAntes);
+      await sb
+        .from("inventario_filas")
+        .update({ celdas, updated_at: new Date().toISOString() })
+        .eq("id", a.inventarioDbId);
+    }
+    throw eV;
+  }
+
+  return {
+    ok: true,
+    ventas: ventas.length,
+    stockUpdates: aplicados.length,
+    stockAplicados: aplicados,
+    apiVersion: 4,
+  };
+}
+
+async function inventarioFilaPorRef(rowRef: number) {
+  const ref = parseInt(String(rowRef), 10);
+  if (!ref || isNaN(ref)) return null;
+  const sb = adminClient();
+  // Preferir legacy_sheet_row: el id numérico de Postgres a menudo coincide
+  // con otra fila distinta y actualizaba el artículo equivocado.
+  const { data: byLegacy, error: e2 } = await sb
+    .from("inventario_filas")
+    .select("id, celdas")
+    .eq("legacy_sheet_row", ref)
+    .maybeSingle();
+  if (!e2 && byLegacy) return byLegacy;
+  const { data: byId, error: e1 } = await sb
+    .from("inventario_filas")
+    .select("id, celdas")
+    .eq("id", ref)
+    .maybeSingle();
+  if (e1 || !byId) return null;
+  return byId;
+}
+
+async function actualizarStock(
+  filaSheet: number,
+  stock: number,
+  inventarioDbId?: number
+) {
+  const ref = parseInt(String(filaSheet), 10);
+  const n = parseInt(String(stock), 10);
+  const dbIdHint = parseInt(String(inventarioDbId ?? ""), 10);
+  if (isNaN(n) || n < 0) return { ok: false, error: "Fila o stock inválido." };
+  const sb = adminClient();
+  let fila: { id: number; celdas: unknown } | null = null;
+  if (dbIdHint && !isNaN(dbIdHint)) {
+    const { data, error } = await sb
+      .from("inventario_filas")
+      .select("id, celdas")
+      .eq("id", dbIdHint)
+      .maybeSingle();
+    if (!error && data) fila = data as { id: number; celdas: unknown };
+  }
+  if (!fila && ref && !isNaN(ref)) {
+    fila = await inventarioFilaPorRef(ref);
+  }
+  if (!fila) return { ok: false, error: "Fila no encontrada." };
+  const dbId = fila.id as number;
+  const celdas = padCeldas((fila.celdas as unknown[]) || []);
+  celdas[COL_STOCK - 1] = String(n);
+  const { error } = await sb
+    .from("inventario_filas")
+    .update({ celdas, updated_at: new Date().toISOString() })
+    .eq("id", dbId);
+  if (error) throw error;
+  return { ok: true, row: ref || dbId, stock: n };
+}
+
+async function updateCells(updates: { row: number; col: number; value: string }[]) {
+  const sb = adminClient();
+  let n = 0;
+  for (const u of updates) {
+    const rowRef = parseInt(String(u.row), 10);
+    const col = parseInt(String(u.col), 10);
+    if (!rowRef || col < 1 || col > NUM_COLUMNAS) continue;
+    const fila = await inventarioFilaPorRef(rowRef);
+    if (!fila) continue;
+    const dbId = fila.id as number;
+    const celdas = padCeldas((fila.celdas as unknown[]) || []);
+    celdas[col - 1] = u.value == null ? "" : String(u.value);
+    const { error } = await sb
+      .from("inventario_filas")
+      .update({ celdas, updated_at: new Date().toISOString() })
+      .eq("id", dbId);
+    if (!error) n++;
+  }
+  return { ok: true, updated: n };
+}
+
+async function appendRow(celdasIn: unknown[]) {
+  const celdas = padCeldas(celdasIn || []);
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("inventario_filas")
+    .insert({ celdas })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return { ok: true, fila: data.id };
+}
+
+async function deleteRows(filas: number[]) {
+  const sb = adminClient();
+  const ids = filas.map((r) => parseInt(String(r), 10)).filter((r) => r > 0);
+  if (!ids.length) return { ok: true, deleted: 0 };
+  const { error } = await sb.from("inventario_filas").delete().in("id", ids);
+  if (error) throw error;
+  return { ok: true, deleted: ids.length };
+}
+
+async function vaciarTabla(nombre: "inventario_filas" | "ventas_lineas") {
+  const sb = adminClient();
+  for (let n = 0; n < 80; n++) {
+    const { data, error } = await sb.from(nombre).select("id").limit(400);
+    if (error) throw error;
+    if (!data?.length) break;
+    const ids = data.map((r) => r.id);
+    const { error: e2 } = await sb.from(nombre).delete().in("id", ids);
+    if (e2) throw e2;
+  }
+}
+
+async function importInventarioReplace(filas: { celdas: unknown[] }[]) {
+  const sb = adminClient();
+  await vaciarTabla("inventario_filas");
+  const chunk = 200;
+  let inserted = 0;
+  for (let i = 0; i < filas.length; i += chunk) {
+    const slice = filas.slice(i, i + chunk).map((f, j) => ({
+      celdas: padCeldas(f.celdas || []),
+      legacy_sheet_row: f.legacy_sheet_row ?? i + j + 3,
+    }));
+    const { error } = await sb.from("inventario_filas").insert(slice);
+    if (error) throw error;
+    inserted += slice.length;
+  }
+  return { ok: true, inserted };
+}
+
+async function importVentasReplace(ventas: unknown[][]) {
+  const sb = adminClient();
+  await vaciarTabla("ventas_lineas");
+  const rows = ventas.map(ventaLineToRow);
+  const chunk = 300;
+  for (let i = 0; i < rows.length; i += chunk) {
+    const { error } = await sb.from("ventas_lineas").insert(rows.slice(i, i + chunk));
+    if (error) throw error;
+  }
+  return { ok: true, inserted: rows.length };
+}
+
+async function importInventarioAppend(filas: { celdas: unknown[] }[]) {
+  const sb = adminClient();
+  const chunk = 200;
+  let inserted = 0;
+  for (let i = 0; i < filas.length; i += chunk) {
+    const slice = filas.slice(i, i + chunk).map((f) => ({
+      celdas: padCeldas(f.celdas || []),
+      legacy_sheet_row: f.legacy_sheet_row ?? null,
+    }));
+    const { error } = await sb.from("inventario_filas").insert(slice);
+    if (error) throw error;
+    inserted += slice.length;
+  }
+  return { ok: true, inserted };
+}
+
+async function importVentasAppend(ventas: unknown[][]) {
+  const sb = adminClient();
+  const rows = ventas.map(ventaLineToRow);
+  const chunk = 300;
+  for (let i = 0; i < rows.length; i += chunk) {
+    const { error } = await sb.from("ventas_lineas").insert(rows.slice(i, i + chunk));
+    if (error) throw error;
+  }
+  return { ok: true, inserted: rows.length };
+}
+
+const SPREADSHEET_ID = "195xshQr985FH1FI4xzBhQrvrBEayAE5_manTNrfH-ko";
+const GID_INVENTARIO = 0;
+const GID_VENTAS = 915963655;
+const FILA_DATOS_INICIO = 2;
+const FILA_ENCABEZADOS_VENTAS = 1;
+
+function resolverIndicesVentas(grid: string[][]) {
+  const idx = {
+    fecha: 1,
+    nombre: 2,
+    tipo: 3,
+    precio: 4,
+    talla: 5,
+    color: 6,
+    segmento: 7,
+    cliente: 8,
+    vendedor: 9,
+    cuenta: 10,
+    redSocial: 11,
+    link: 12,
+    telefono: 13,
+  };
+  const hdr = grid[FILA_ENCABEZADOS_VENTAS] || [];
+  for (let c = 0; c < hdr.length; c++) {
+    const t = String(hdr[c] || "").trim().toUpperCase();
+    if (t === "FECHA") idx.fecha = c;
+    else if (t === "ARTICULO" || t === "ARTÍCULO" || t === "NOMBRE") idx.nombre = c;
+    else if (t === "TIPO") idx.tipo = c;
+    else if (t === "PRECIO") idx.precio = c;
+    else if (t === "TALLA") idx.talla = c;
+    else if (t === "COLOR") idx.color = c;
+    else if (t.indexOf("HOMBRE") >= 0 && t.indexOf("MUJER") >= 0) idx.segmento = c;
+    else if (t === "CLIENTE" || t.indexOf("CLIENTE") >= 0) idx.cliente = c;
+    else if (t.indexOf("VEND") >= 0) idx.vendedor = c;
+    else if (t.indexOf("CUENTA") >= 0) idx.cuenta = c;
+    else if (t.indexOf("RED") >= 0 && t.indexOf("SOCIAL") >= 0) idx.redSocial = c;
+    else if (t === "LINK" || t.indexOf("LINK") >= 0 || t.indexOf("PERFIL") >= 0) idx.link = c;
+    else if (
+      t.indexOf("TEL") >= 0 || t.indexOf("WHATS") >= 0 || t.indexOf("CEL") >= 0 ||
+      t.indexOf("NÚMERO") >= 0 || t.indexOf("NUMERO") >= 0
+    ) idx.telefono = c;
+  }
+  return idx;
+}
+
+function celdaVentas(f: string[], col: number) {
+  return col < f.length ? f[col] : "";
+}
+
+function parseCSV(texto: string): string[][] {
+  const filas: string[][] = [];
+  let fila: string[] = [];
+  let celda = "";
+  let enComillas = false;
+  for (let i = 0; i < texto.length; i++) {
+    const c = texto[i];
+    const sig = texto[i + 1];
+    if (c === '"') {
+      if (enComillas && sig === '"') {
+        celda += '"';
+        i++;
+      } else enComillas = !enComillas;
+    } else if ((c === "," || c === "\n" || c === "\r") && !enComillas) {
+      if (c === "\r" && sig === "\n") i++;
+      fila.push(celda);
+      celda = "";
+      if (c === "\n" || c === "\r") {
+        if (fila.length > 1 || (fila[0] && fila[0].trim())) filas.push(fila);
+        fila = [];
+      }
+    } else celda += c;
+  }
+  if (celda.length || fila.length) {
+    fila.push(celda);
+    if (fila.length > 1 || (fila[0] && fila[0].trim())) filas.push(fila);
+  }
+  return filas;
+}
+
+function filaInventarioVacia(celdas: string[]) {
+  for (const v of celdas) {
+    if (String(v || "").trim()) return false;
+  }
+  return true;
+}
+
+async function fetchCsvHoja(gid: number, etiqueta: string) {
+  const url =
+    `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${gid}&_=` +
+    Date.now();
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${etiqueta}: HTTP ${res.status} al descargar Sheet`);
+  const text = await res.text();
+  if (!text || text.length < 30) {
+    throw new Error(
+      `${etiqueta}: CSV vacío. El libro debe ser visible con enlace (cualquiera con el enlace).`,
+    );
+  }
+  if (text.toLowerCase().includes("<!doctype") || text.toLowerCase().includes("<html")) {
+    throw new Error(`${etiqueta}: Google devolvió HTML en lugar de CSV (permisos del Sheet).`);
+  }
+  return text;
+}
+
+async function importInventarioPayloadEnChunks(
+  payload: { celdas: unknown[]; legacy_sheet_row?: number }[],
+) {
+  const CHUNK = 60;
+  if (!payload.length) return 0;
+  await importInventarioReplace(payload.slice(0, CHUNK));
+  let i = CHUNK;
+  while (i < payload.length) {
+    await importInventarioAppend(payload.slice(i, i + CHUNK));
+    i += CHUNK;
+  }
+  return payload.length;
+}
+
+async function importVentasLinesEnChunks(ventasLines: unknown[][]) {
+  const CHUNK = 200;
+  if (!ventasLines.length) return 0;
+  await importVentasReplace(ventasLines.slice(0, CHUNK));
+  let i = CHUNK;
+  while (i < ventasLines.length) {
+    await importVentasAppend(ventasLines.slice(i, i + CHUNK));
+    i += CHUNK;
+  }
+  return ventasLines.length;
+}
+
+async function importFromGoogleRetail() {
+  const invText = await fetchCsvHoja(GID_INVENTARIO, "INVENTARIO");
+  const grid = parseCSV(invText);
+  const invPayload: { celdas: unknown[]; legacy_sheet_row: number }[] = [];
+  for (let i = FILA_DATOS_INICIO; i < grid.length; i++) {
+    const celdas = padCeldas(grid[i] || []);
+    const nombre = (celdas[1] || "").trim();
+    if (nombre.toUpperCase() === "NOMBRE") continue;
+    if (filaInventarioVacia(celdas)) continue;
+    if (!nombre && !(celdas[0] || "").trim()) continue;
+    invPayload.push({ celdas, legacy_sheet_row: i + 1 });
+  }
+  if (!invPayload.length) {
+    throw new Error("INVENTARIO: no se encontraron filas de datos en el CSV.");
+  }
+
+  const ventasLines = await parseVentasDesdeCsvGoogle();
+
+  const nInv = await importInventarioPayloadEnChunks(invPayload);
+  const nVent = await importVentasLinesEnChunks(ventasLines);
+  return { ok: true, inventario: nInv, ventas: nVent };
+}
+
+async function parseVentasDesdeCsvGoogle() {
+  const ventText = await fetchCsvHoja(GID_VENTAS, "VENTAS");
+  const vGrid = parseCSV(ventText);
+  const idx = resolverIndicesVentas(vGrid);
+  const ventasLines: unknown[][] = [];
+  for (let i = FILA_DATOS_INICIO; i < vGrid.length; i++) {
+    const f = vGrid[i] || [];
+    const nombre = String(celdaVentas(f, idx.nombre) || "").trim();
+    const fechaRaw = String(celdaVentas(f, idx.fecha) || "").trim();
+    if (!nombre && !fechaRaw) continue;
+    if (nombre.toUpperCase() === "ARTICULO" || nombre.toUpperCase() === "ARTÍCULO") continue;
+    const precio = parseNum(celdaVentas(f, idx.precio));
+    if (!nombre && precio <= 0) continue;
+    ventasLines.push([
+      fechaRaw,
+      nombre,
+      String(celdaVentas(f, idx.tipo) || "").trim(),
+      String(precio),
+      String(celdaVentas(f, idx.talla) || "").trim(),
+      String(celdaVentas(f, idx.color) || "").trim(),
+      String(celdaVentas(f, idx.segmento) || "").trim(),
+      String(celdaVentas(f, idx.cliente) || "").trim(),
+      String(celdaVentas(f, idx.vendedor) || "").trim(),
+      String(celdaVentas(f, idx.cuenta) || "").trim(),
+      String(celdaVentas(f, idx.redSocial) || "").trim(),
+      String(celdaVentas(f, idx.link) || "").trim(),
+      String(celdaVentas(f, idx.telefono) || "").trim(),
+    ]);
+  }
+  return ventasLines;
+}
+
+/** Solo VENTAS (no toca inventario_filas). */
+async function importVentasFromGoogle() {
+  const ventasLines = await parseVentasDesdeCsvGoogle();
+  const nVent = await importVentasLinesEnChunks(ventasLines);
+  return { ok: true, ventas: nVent };
+}
+
+async function getDbStats() {
+  const sb = adminClient();
+  const inv = await sb.from("inventario_filas").select("id", { count: "exact", head: true });
+  const ven = await sb.from("ventas_lineas").select("id", { count: "exact", head: true });
+  if (inv.error) throw inv.error;
+  if (ven.error) throw ven.error;
+  return {
+    ok: true,
+    inventarioFilas: inv.count ?? 0,
+    ventasLineas: ven.count ?? 0,
+  };
+}
+
+const MODULO_BLOB_KEYS = new Set(["apartados", "entregas", "sucursales", "cotizador"]);
+
+const COTIZADOR_DEFAULTS = {
+  factorUsd: 1.085,
+  valorDolar: 18.9,
+  envio: 40,
+  margen: 0.3,
+};
+
+function cotizadorDesdePayload(payload: unknown) {
+  const arr = Array.isArray(payload) ? payload : [];
+  const hit = arr.find((x) => x && typeof x === "object" &&
+    ((x as { id?: string }).id === "obebe-cotizador-config" ||
+      (x as { factorUsd?: unknown }).factorUsd != null)) as Record<string, unknown> | undefined;
+  const src = hit || {};
+  let factorUsd = Number(src.factorUsd);
+  let valorDolar = Number(src.valorDolar);
+  let envio = Number(src.envio);
+  let margen = Number(src.margen);
+  if (!Number.isFinite(factorUsd) || factorUsd <= 0) factorUsd = COTIZADOR_DEFAULTS.factorUsd;
+  if (!Number.isFinite(valorDolar) || valorDolar <= 0) valorDolar = COTIZADOR_DEFAULTS.valorDolar;
+  if (!Number.isFinite(envio) || envio < 0) envio = COTIZADOR_DEFAULTS.envio;
+  if (!Number.isFinite(margen) || margen <= 0) margen = COTIZADOR_DEFAULTS.margen;
+  if (margen > 1) margen = 0.3;
+  return {
+    factorUsd,
+    valorDolar,
+    envio,
+    margen,
+    actualizadoEn: Number(src.actualizadoEn) || 0,
+  };
+}
+
+async function getAdminModuloBlob(body: Record<string, unknown>) {
+  const moduleKey = String(body.moduleKey ?? "").trim();
+  if (!MODULO_BLOB_KEYS.has(moduleKey)) {
+    return { ok: false, error: "moduleKey no permitido." };
+  }
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("admin_modulos_blob")
+    .select("payload, updated_at")
+    .eq("module_key", moduleKey)
+    .maybeSingle();
+  if (error) throw error;
+  const payload = data?.payload;
+  return {
+    ok: true,
+    payload: Array.isArray(payload) ? payload : [],
+    updatedAt: data?.updated_at ?? null,
+  };
+}
+
+async function setAdminModuloBlob(body: Record<string, unknown>) {
+  const moduleKey = String(body.moduleKey ?? "").trim();
+  if (!MODULO_BLOB_KEYS.has(moduleKey)) {
+    return { ok: false, error: "moduleKey no permitido." };
+  }
+  const payload = body.payload;
+  if (!Array.isArray(payload)) {
+    return { ok: false, error: "payload debe ser un arreglo JSON." };
+  }
+  const sb = adminClient();
+  const { error } = await sb.from("admin_modulos_blob").upsert(
+    {
+      module_key: moduleKey,
+      payload,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "module_key" },
+  );
+  if (error) throw error;
+  return { ok: true };
+}
+
+/** Lectura pública del cotizador (sin secret admin). */
+async function getCotizadorConfig() {
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("admin_modulos_blob")
+    .select("payload, updated_at")
+    .eq("module_key", "cotizador")
+    .maybeSingle();
+  if (error) throw error;
+  const cfg = cotizadorDesdePayload(data?.payload);
+  return {
+    ok: true,
+    config: cfg,
+    updatedAt: data?.updated_at ?? null,
+  };
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: cors });
+  }
+  try {
+    const body = await req.json();
+    const action = body.action as string;
+
+    // Público: cotizador de la tienda
+    if (action === "getCotizadorConfig") {
+      return json(await getCotizadorConfig());
+    }
+
+    const auth = checkAuth(body);
+    if (auth) return json(auth, 401);
+
+    if (action === "ping") {
+      return json({ ok: true, message: "admin-api Supabase OK", apiVersion: 4 });
+    }
+
+    if (action === "getVentas") return json(await getVentas());
+    if (action === "getGastos") return json(await getGastos());
+    if (action === "createGasto") return json(await createGasto(body));
+    if (action === "updateGasto") return json(await updateGasto(body));
+    if (action === "deleteGasto") return json(await deleteGasto(body));
+    if (action === "limpiarVentasNegativasMigrarGastos") {
+      return json(await limpiarVentasNegativasMigrarGastos());
+    }
+    if (action === "getDbStats") return json(await getDbStats());
+    if (action === "getAdminModuloBlob") {
+      return json(await getAdminModuloBlob(body));
+    }
+    if (action === "setAdminModuloBlob") {
+      return json(await setAdminModuloBlob(body));
+    }
+    if (action === "importFromGoogleRetail") {
+      return json(await importFromGoogleRetail());
+    }
+    if (action === "importVentasFromGoogle") {
+      return json(await importVentasFromGoogle());
+    }
+
+    if (action === "registrarVentaRetail") {
+      return json(await registrarVentaRetail(body));
+    }
+    if (action === "updateVentaLine") {
+      return json(await updateVentaLine(body));
+    }
+    if (action === "deleteVentaLine") {
+      return json(await deleteVentaLine(body));
+    }
+    if (action === "createVentaLine") {
+      return json(await createVentaLine(body));
+    }
+    if (action === "actualizarStock") {
+      return json(
+        await actualizarStock(body.filaSheet, body.stock, body.inventarioDbId)
+      );
+    }
+    if (action === "updateCells") {
+      return json(await updateCells(body.updates || []));
+    }
+    if (action === "appendRow") {
+      return json(await appendRow(body.celdas || []));
+    }
+    if (action === "deleteRows") {
+      return json(await deleteRows(body.filas || []));
+    }
+    if (action === "importInventarioReplace") {
+      return json(await importInventarioReplace(body.filas || []));
+    }
+    if (action === "importVentasReplace") {
+      return json(await importVentasReplace(body.ventas || []));
+    }
+    if (action === "importInventarioAppend") {
+      return json(await importInventarioAppend(body.filas || []));
+    }
+    if (action === "importVentasAppend") {
+      return json(await importVentasAppend(body.ventas || []));
+    }
+
+    return json({ ok: false, error: "Acción desconocida" }, 400);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[admin-api]", msg, err);
+    return json({ ok: false, error: msg }, 500);
+  }
+});

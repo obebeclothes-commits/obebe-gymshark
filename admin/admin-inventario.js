@@ -13,8 +13,23 @@
         nuevasFilas: [],
         encabezadosFila2: [],
         msg: '',
-        msgOk: false
+        msgOk: false,
+        soloLectura: false,
+        mayoreoInventario: null,
+        columnasOcultas: []
     };
+
+    function columnasVistaGrid() {
+        var cols = ObebeAdminData.columnasVistaInventario
+            ? ObebeAdminData.columnasVistaInventario()
+            : [];
+        if (state.columnasOcultas && state.columnasOcultas.length) {
+            cols = cols.filter(function (c) {
+                return state.columnasOcultas.indexOf(c) < 0;
+            });
+        }
+        return cols;
+    }
 
     function cfg() {
         return global.OBEBE_ADMIN_CONFIG || { appsScriptUrl: '', inventarioSecret: '' };
@@ -82,6 +97,12 @@
         return f._localId || ('sheet-' + f.filaSheet);
     }
 
+    function otroIdInventario(k, colIdx) {
+        var slug = String(k).replace(/[^a-zA-Z0-9_-]/g, '_');
+        if (slug.length > 96) slug = slug.slice(0, 96);
+        return 'invotro_' + slug + '_' + colIdx;
+    }
+
     function hayCambiosPendientes() {
         if (state.nuevasFilas.length > 0) return true;
         var i;
@@ -138,6 +159,200 @@
         return ObebeAdminData.apiAdminScript(action, payload);
     }
 
+    function otroValorCamposUi() {
+        return global.ObebeAdminCamposUi ? global.ObebeAdminCamposUi.OTRO : '__otro__';
+    }
+
+    var TALLAS_INVENTARIO = [
+        { v: 'XS', label: 'XS' },
+        { v: 'S', label: 'S' },
+        { v: 'M', label: 'M' },
+        { v: 'L', label: 'L' },
+        { v: 'XL', label: 'XL' },
+        { v: '__otro__', label: 'OTRA' }
+    ];
+
+    function mayusInv(s) {
+        return String(s || '').trim().toUpperCase();
+    }
+
+    function valoresUnicosColumna(colIdx) {
+        var map = {};
+        function add(arr) {
+            (arr || []).forEach(function (f) {
+                if (!f || !f.celdas) return;
+                var v = mayusInv(f.celdas[colIdx]);
+                if (v) map[v] = v;
+            });
+        }
+        add(state.filas);
+        add(state.nuevasFilas);
+        return Object.keys(map).sort(function (a, b) { return a.localeCompare(b, 'es'); });
+    }
+
+    function listaConPresetYPreset(preset, colIdx, etiquetaOtro) {
+        var OTRO = otroValorCamposUi();
+        var map = {};
+        (preset || []).forEach(function (o) {
+            if (!o || o.v === OTRO) return;
+            var up = mayusInv(o.label || o.v);
+            if (up) map[up] = { v: up, label: up };
+        });
+        valoresUnicosColumna(colIdx).forEach(function (v) {
+            map[v] = { v: v, label: v };
+        });
+        var arr = Object.keys(map).sort(function (a, b) { return a.localeCompare(b, 'es'); }).map(function (k) {
+            return map[k];
+        });
+        arr.push({ v: OTRO, label: etiquetaOtro || 'OTRO' });
+        return arr;
+    }
+
+    function filasParaCatalogoInventario() {
+        return (state.filas || []).concat(state.nuevasFilas || []);
+    }
+
+    function listaColoresInventario() {
+        var Ui = global.ObebeAdminCamposUi;
+        if (Ui && Ui.listaColoresCatalogo) return Ui.listaColoresCatalogo(filasParaCatalogoInventario());
+        var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : { color: 4 };
+        return listaConPresetYPreset([], idx.color != null ? idx.color : 4, 'OTRO');
+    }
+
+    function listaTiposInventario() {
+        var Ui = global.ObebeAdminCamposUi;
+        if (Ui && Ui.listaTiposCatalogo) return Ui.listaTiposCatalogo(filasParaCatalogoInventario());
+        var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : { tipo: 5 };
+        return listaConPresetYPreset([], idx.tipo != null ? idx.tipo : 5, 'OTRO');
+    }
+
+    function listaMarcasInventario() {
+        var Ui = global.ObebeAdminCamposUi;
+        if (Ui && Ui.listaMarcasCatalogo) return Ui.listaMarcasCatalogo(filasParaCatalogoInventario());
+        var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : { marca: 6 };
+        var preset = global.ObebeAdminCamposUi ? global.ObebeAdminCamposUi.MARCAS_APARTADO : [];
+        return listaConPresetYPreset(preset, idx.marca != null ? idx.marca : 6, 'OTRO');
+    }
+
+    function listaTallasInventario() {
+        var Ui = global.ObebeAdminCamposUi;
+        if (Ui && Ui.listaTallasCatalogo) return Ui.listaTallasCatalogo();
+        var OTRO = otroValorCamposUi();
+        return TALLAS_INVENTARIO.map(function (o) {
+            if (o.v === '__otro__') return { v: OTRO, label: 'OTRA' };
+            return o;
+        });
+    }
+
+    function idxInventarioCols() {
+        return ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
+    }
+
+    function esColumnaMayusculas(colIdx) {
+        var idx = idxInventarioCols();
+        return colIdx === idx.nombre || colIdx === idx.talla || colIdx === idx.color ||
+            colIdx === idx.tipo || colIdx === idx.marca;
+    }
+
+    function recalcularTotalFila(f) {
+        if (!f || !f.celdas) return;
+        var idx = idxInventarioCols();
+        var colStock = idx.stock != null ? idx.stock : 2;
+        var colPrecio = idx.precio != null ? idx.precio : 7;
+        var colTotal = idx.total != null ? idx.total : 8;
+        var qty = parseInt(f.celdas[colStock], 10) || 0;
+        var precio = parseNumInventario(f.celdas[colPrecio]);
+        var t = qty * precio;
+        f.celdas[colTotal] = t > 0 ? String(Math.round(t * 100) / 100) : '';
+    }
+
+    function siguienteRefInventario() {
+        var idx = idxInventarioCols();
+        var col = idx.imagen != null ? idx.imagen : 0;
+        var max = 0;
+        function scan(arr) {
+            (arr || []).forEach(function (f) {
+                var r = parseInt(f.celdas[col], 10);
+                if (isNaN(r)) r = parseInt(f.ref, 10) || 0;
+                if (r > max) max = r;
+            });
+        }
+        scan(state.filas);
+        scan(state.nuevasFilas);
+        return max + 1;
+    }
+
+    function renderCeldaSelectInventario(f, colIdx, lista) {
+        var Ui = global.ObebeAdminCamposUi;
+        var k = keyFila(f);
+        var val = f.celdas[colIdx] == null ? '' : String(f.celdas[colIdx]);
+        var otroId = otroIdInventario(k, colIdx);
+        if (!Ui) {
+            return '<td><input type="text" class="admin-inv-cell" data-key="' + esc(k) + '" data-col="' + colIdx +
+                '" value="' + esc(mayusInv(val)) + '"></td>';
+        }
+        var valNorm = Ui.normalizarValorColumnaInventario
+            ? Ui.normalizarValorColumnaInventario(colIdx, val)
+            : mayusInv(val);
+        var res = Ui.resolverValorEnLista(valNorm, lista);
+        var opts = '<option value="">—</option>' + lista.map(function (o) {
+            return '<option value="' + esc(o.v) + '"' + (res.select === o.v ? ' selected' : '') + '>' + esc(o.label) + '</option>';
+        }).join('');
+        var otroHidden = res.showOtro ? '' : ' admin-hidden';
+        var swapHide = res.showOtro ? ' admin-select-otro-swap-hidden' : '';
+        return '<td class="admin-inv-select-td"><div class="admin-select-otro-slot">' +
+            '<select class="admin-inv-cell-select admin-campo-select-otro' + swapHide + '" data-key="' + esc(k) +
+            '" data-col="' + colIdx + '" data-otro-for="' + esc(otroId) + '">' + opts + '</select>' +
+            '<input type="text" class="admin-inv-cell-otro admin-campo-otro-input ' + esc(otroId) + otroHidden +
+            '" data-key="' + esc(k) +             '" data-col="' + colIdx + '" data-inv-otro-for="' + esc(otroId) + '" value="' + esc(mayusInv(res.otro)) +
+            '" placeholder="Especificar…"></div></td>';
+    }
+
+    function leerValorSelectInventario(selectEl) {
+        var Ui = global.ObebeAdminCamposUi;
+        if (!selectEl) return '';
+        var otroCls = selectEl.getAttribute('data-otro-for');
+        var row = selectEl.closest('tr');
+        var otro = null;
+        if (otroCls && row) {
+            otro = row.querySelector('[data-inv-otro-for="' + otroCls + '"]');
+            if (!otro && typeof CSS !== 'undefined' && CSS.escape) {
+                try {
+                    otro = row.querySelector('.' + CSS.escape(otroCls));
+                } catch (e) { /* ignore */ }
+            }
+        }
+        if (Ui) {
+            var col = parseInt(selectEl.getAttribute('data-col'), 10);
+            var raw = Ui.leerSelectOtro(selectEl, otro);
+            return Ui.normalizarValorColumnaInventario
+                ? Ui.normalizarValorColumnaInventario(col, raw)
+                : mayusInv(raw);
+        }
+        return mayusInv(selectEl.value);
+    }
+
+    function aplicarCambioCelda(container, f, col, valor) {
+        if (!f) return;
+        if (esColumnaMayusculas(col)) valor = mayusInv(valor);
+        f.celdas[col] = valor;
+        if (!f._dirty) f._dirty = {};
+        f._dirty[col] = true;
+        syncDerived(f);
+        var idx = idxInventarioCols();
+        var colTotal = idx.total != null ? idx.total : 8;
+        if (col === idx.stock || col === idx.precio) {
+            if (!f._dirty) f._dirty = {};
+            f._dirty[colTotal] = true;
+        }
+        if (col === idx.stock || col === idx.precio || col === colTotal) {
+            var td = container.querySelector('[data-inv-total-for="' + keyFila(f) + '"] .admin-inv-total');
+            if (td) {
+                td.textContent = valorCeldaMostrar(f, colTotal, f.celdas[colTotal]);
+            }
+        }
+    }
+
     function tiposDisponibles() {
         var map = {};
         function tomar(f) {
@@ -162,15 +377,21 @@
             : '<span class="admin-inv-modo">Solo vista</span>';
 
         var acciones = '';
-        if (state.modoEdicion) {
-            acciones =
-                '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminInvAddRow">+ Fila</button>' +
-                '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact" id="adminInvDelRows">Eliminar</button>' +
-                '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminInvCancel">Cancelar</button>' +
-                '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminInvSave">Guardar</button>';
-        } else {
-            acciones =
-                '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminInvEdit">Editar</button>';
+        var puedeEditar = !state.soloLectura || !!state.mayoreoInventario;
+        if (puedeEditar) {
+            if (state.modoEdicion) {
+                if (!state.mayoreoInventario) {
+                    acciones +=
+                        '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminInvAddRow">+ Fila</button>' +
+                        '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact" id="adminInvDelRows">Eliminar</button>';
+                }
+                acciones +=
+                    '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminInvCancel">Cancelar</button>' +
+                    '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminInvSave">Guardar</button>';
+            } else {
+                acciones +=
+                    '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminInvEdit">Editar</button>';
+            }
         }
 
         function btnGenero(valor, etiqueta) {
@@ -194,9 +415,19 @@
             btnGenero('Hombre', 'Hombre') +
             btnGenero('Mujer', 'Mujer') +
             '</div>' +
-            '<label class="admin-inv-tipo">Tipo' +
-            '<select id="adminInvTipo" aria-label="Filtrar por tipo">' + optsTipo + '</select></label>' +
-            '<div class="admin-inv-toolbar-actions">' + acciones + '</div></div>' +
+            (function () {
+                var tipoLbl =
+                    '<label class="admin-inv-tipo">Tipo' +
+                    '<select id="adminInvTipo" aria-label="Filtrar por tipo">' + optsTipo + '</select></label>';
+                var editTipo = '';
+                var accRest = acciones;
+                if (state.mayoreoInventario && puedeEditar && !state.modoEdicion && acciones) {
+                    editTipo = '<span class="admin-inv-edit-tipo">' + acciones + '</span>';
+                    accRest = '';
+                }
+                return tipoLbl + editTipo +
+                    '<div class="admin-inv-toolbar-actions">' + accRest + '</div>';
+            })() + '</div>' +
             '<p id="adminInvStockCount" class="admin-muted-text admin-inv-stock-count">' + esc(textoExistencia()) + '</p>' +
             (state.msg ? '<div class="admin-banner ' + (state.msgOk ? 'info' : '') + '">' + esc(state.msg) + '</div>' : '');
     }
@@ -310,22 +541,44 @@
     }
 
     function renderCeldaInventario(f, colIdx, edit) {
+        var idx = idxInventarioCols();
         var val = (f.celdas[colIdx] == null ? '' : String(f.celdas[colIdx]));
         var mostrar = valorCeldaMostrar(f, colIdx, val);
+        if (esColumnaMayusculas(colIdx) && !esVacioONa(mostrar)) {
+            mostrar = mayusInv(mostrar);
+        }
         if (colIdx === colFotoInventario()) {
             return '<td class="admin-inv-thumb-cell">' + renderCeldaThumb(f) + '</td>';
         }
         if (edit) {
+            var colTotal = idx.total != null ? idx.total : 8;
+            if (colIdx === colTotal) {
+                recalcularTotalFila(f);
+                var totalMostrar = valorCeldaMostrar(f, colIdx, f.celdas[colIdx]);
+                return '<td class="admin-inv-total-td" data-inv-total-for="' + esc(keyFila(f)) + '">' +
+                    '<span class="admin-inv-readonly admin-inv-total">' + esc(totalMostrar) + '</span></td>';
+            }
+            if (colIdx === (idx.talla != null ? idx.talla : 3)) {
+                return renderCeldaSelectInventario(f, colIdx, listaTallasInventario());
+            }
+            if (colIdx === (idx.color != null ? idx.color : 4)) {
+                return renderCeldaSelectInventario(f, colIdx, listaColoresInventario());
+            }
+            if (colIdx === (idx.tipo != null ? idx.tipo : 5)) {
+                return renderCeldaSelectInventario(f, colIdx, listaTiposInventario());
+            }
+            if (colIdx === (idx.marca != null ? idx.marca : 6)) {
+                return renderCeldaSelectInventario(f, colIdx, listaMarcasInventario());
+            }
             var inputVal = esVacioONa(val) ? mostrar : val;
+            if (esColumnaMayusculas(colIdx)) inputVal = mayusInv(inputVal);
             return '<td><input type="text" class="admin-inv-cell" data-key="' + esc(keyFila(f)) + '" data-col="' + colIdx + '" value="' + esc(inputVal) + '"></td>';
         }
         return '<td><span class="admin-inv-readonly">' + esc(mostrar) + '</span></td>';
     }
 
     function renderGrid() {
-        var colsVista = ObebeAdminData.columnasVistaInventario
-            ? ObebeAdminData.columnasVistaInventario()
-            : [];
+        var colsVista = columnasVistaGrid();
         var enc = ObebeAdminData.encabezadosInventarioActuales
             ? ObebeAdminData.encabezadosInventarioActuales()
             : (state.encabezadosFila2 || []);
@@ -353,10 +606,11 @@
         var headSheet = '<tr class="admin-inv-head-sheet">' + (pick ? '<th class="admin-inv-sel admin-inv-sticky-corner"></th>' : '') +
             '<th class="admin-inv-row admin-inv-sticky-corner2">2</th>' + thSheet + '</tr>';
 
-        var tbody = vis.map(function (f) {
+        var tbody = vis.map(function (f, visIdx) {
             var k = keyFila(f);
             var checked = state.seleccion[k] ? ' checked' : '';
-            var rowNum = f.filaSheet || 'nueva';
+            var rowNum = f.filaSheet;
+            if (!rowNum || rowNum === 'nueva') rowNum = visIdx + 2;
             var cells = '';
             for (i = 0; i < colsVista.length; i++) {
                 cells += renderCeldaInventario(f, colsVista[i], edit);
@@ -379,6 +633,9 @@
         if (!mount) return;
         mount.innerHTML = renderGrid();
         bindGridEvents(container, onReload);
+        if (global.ObebeAdminCamposUi && state.modoEdicion) {
+            global.ObebeAdminCamposUi.bindSelectOtros(container);
+        }
         actualizarConteoExistencia(container);
     }
 
@@ -390,7 +647,7 @@
             '<div id="adminInvToolbarMount">' + renderToolbar() + '</div>' +
             '<div id="adminInvGridMount">' + renderGrid() + '</div>';
         bindEvents(container, onReload);
-        mountSeccionAgotados(container, onReload);
+        if (!state.soloLectura) mountSeccionAgotados(container, onReload);
     }
 
     function bindGridEvents(container, onReload) {
@@ -401,11 +658,36 @@
                     var col = parseInt(input.getAttribute('data-col'), 10);
                     var f = findFila(k);
                     if (!f) return;
-                    f.celdas[col] = input.value;
-                    if (!f._dirty) f._dirty = {};
-                    f._dirty[col] = true;
-                    syncDerived(f);
+                    aplicarCambioCelda(container, f, col, input.value);
                 });
+            });
+            container.querySelectorAll('.admin-inv-cell-select').forEach(function (sel) {
+                sel.addEventListener('change', function () {
+                    if (global.ObebeAdminCamposUi) {
+                        global.ObebeAdminCamposUi.toggleOtroInput(sel);
+                        if (sel.value === (global.ObebeAdminCamposUi.OTRO || '__otro__')) {
+                            global.ObebeAdminCamposUi.enfocarInputOtro(sel);
+                        }
+                    }
+                    var k = sel.getAttribute('data-key');
+                    var col = parseInt(sel.getAttribute('data-col'), 10);
+                    var f = findFila(k);
+                    if (!f) return;
+                    aplicarCambioCelda(container, f, col, leerValorSelectInventario(sel));
+                });
+            });
+            function onOtroTallaChange(inp) {
+                var k = inp.getAttribute('data-key');
+                var col = parseInt(inp.getAttribute('data-col'), 10);
+                var row = inp.closest('tr');
+                var sel = row ? row.querySelector('.admin-inv-cell-select[data-col="' + col + '"]') : null;
+                var f = findFila(k);
+                if (!f || !sel) return;
+                aplicarCambioCelda(container, f, col, leerValorSelectInventario(sel));
+            }
+            container.querySelectorAll('.admin-inv-cell-otro').forEach(function (inp) {
+                inp.addEventListener('input', function () { onOtroTallaChange(inp); });
+                inp.addEventListener('change', function () { onOtroTallaChange(inp); });
             });
         }
         if (state.modoEdicion) {
@@ -478,16 +760,19 @@
                     var numCols = ObebeAdminData.INVENTARIO_NUM_COLS || 25;
                     var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
                     var colStock = idx.stock != null ? idx.stock : 2;
+                    var colRef = idx.imagen != null ? idx.imagen : 0;
+                    var nextRef = siguienteRefInventario();
                     var i;
                     for (i = 0; i < numCols; i++) vacia.push('');
                     vacia[colStock] = '1';
+                    vacia[colRef] = String(nextRef);
                     var localId = 'new-' + Date.now();
                     state.nuevasFilas.push({
                         _localId: localId,
                         celdas: vacia,
                         nombre: '',
                         stock: 1,
-                        ref: 0,
+                        ref: nextRef,
                         filaSheet: 0,
                         _isNew: true,
                         _dirty: {}
@@ -518,15 +803,79 @@
 
     function syncDerived(f) {
         var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
-        f.nombre = (f.celdas[idx.nombre != null ? idx.nombre : 1] || '').trim();
+        var colNombre = idx.nombre != null ? idx.nombre : 1;
+        var colTalla = idx.talla != null ? idx.talla : 3;
+        var colColor = idx.color != null ? idx.color : 4;
+        var colTipo = idx.tipo != null ? idx.tipo : 5;
+        var colMarca = idx.marca != null ? idx.marca : 6;
+        var Ui = global.ObebeAdminCamposUi;
+        if (Ui && Ui.normalizarValorColumnaInventario) {
+            f.celdas[colNombre] = Ui.normalizarValorColumnaInventario(colNombre, f.celdas[colNombre]);
+            f.celdas[colTalla] = Ui.normalizarValorColumnaInventario(colTalla, f.celdas[colTalla]);
+            f.celdas[colColor] = Ui.normalizarValorColumnaInventario(colColor, f.celdas[colColor]);
+            f.celdas[colTipo] = Ui.normalizarValorColumnaInventario(colTipo, f.celdas[colTipo]);
+            f.celdas[colMarca] = Ui.normalizarValorColumnaInventario(colMarca, f.celdas[colMarca]);
+        } else {
+            f.celdas[colNombre] = mayusInv(f.celdas[colNombre]);
+            f.celdas[colTalla] = mayusInv(f.celdas[colTalla]);
+            f.celdas[colColor] = mayusInv(f.celdas[colColor]);
+            f.celdas[colTipo] = mayusInv(f.celdas[colTipo]);
+            f.celdas[colMarca] = mayusInv(f.celdas[colMarca]);
+        }
+        f.nombre = String(f.celdas[colNombre] || '').trim();
+        f.talla = String(f.celdas[colTalla] || '').trim();
+        f.color = String(f.celdas[colColor] || '').trim();
+        f.tipo = String(f.celdas[colTipo] || '').trim();
         f.stock = parseInt(f.celdas[idx.stock != null ? idx.stock : 2], 10) || 0;
         f.ref = parseInt(f.celdas[idx.imagen != null ? idx.imagen : 0], 10) || 0;
-        f.marca = (f.celdas[idx.marca != null ? idx.marca : 6] || '').trim();
+        f.marca = String(f.celdas[colMarca] || '').trim();
         f.fotoUrl = (f.celdas[colFotoInventario()] || '').trim();
         if (ObebeAdminData.normalizarMarca) f.marca = ObebeAdminData.normalizarMarca(f.marca);
+        f.marca = mayusInv(f.marca);
+        f.celdas[colMarca] = f.marca;
+        recalcularTotalFila(f);
+    }
+
+    function guardarMayoreoInventario(onReload, container) {
+        var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : { precio: 7 };
+        var colPrecio = idx.precio != null ? idx.precio : 7;
+        var snap = state.snapshot || [];
+        var cambios = 0;
+        var idxFull = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
+        var colMargen = idxFull.margen != null ? idxFull.margen : 14;
+        var colCostoBruto = idxFull.costoBruto != null ? idxFull.costoBruto : 11;
+        var colCostoNeto = idxFull.costoNeto != null ? idxFull.costoNeto : 12;
+        state.filas.forEach(function (f) {
+            if (!f.mayoreoLineaId) return;
+            var ant = snap.find(function (s) { return s._localId === f._localId; });
+            var valNuevo = parseNumInventario(f.celdas[colPrecio]);
+            var valAnt = ant ? parseNumInventario(ant.celdas[colPrecio]) : valNuevo;
+            if (Math.abs(valNuevo - valAnt) >= 0.01) {
+                ObebeMayoreoStore.updateLinea(f.mayoreoLineaId, { precioVentaPlaneado: valNuevo });
+                cambios++;
+            }
+            var bruto = parseNumInventario(f.celdas[colCostoBruto]);
+            var neto = parseNumInventario(f.celdas[colCostoNeto]);
+            var refM = valNuevo > 0 ? valNuevo : neto;
+            if (refM > 0 && bruto >= 0 && global.ObebeAdminMayoreoVentas &&
+                ObebeAdminMayoreoVentas.margenRegla3) {
+                f.celdas[colMargen] = ObebeAdminMayoreoVentas.margenRegla3(bruto, refM);
+            }
+        });
+        state.modoEdicion = false;
+        state.snapshot = null;
+        state.msg = cambios
+            ? 'Precios de venta actualizados (' + cambios + ').'
+            : 'No había cambios en precios.';
+        state.msgOk = true;
+        refreshUi(container, onReload);
+        if (onReload) onReload();
     }
 
     function guardar(onReload, container) {
+        if (state.mayoreoInventario) {
+            return guardarMayoreoInventario(onReload, container);
+        }
         state.msg = 'Guardando…';
         state.msgOk = true;
         refreshUi(container, onReload);
@@ -627,7 +976,11 @@
         });
     }
 
-    function mount(container, filas, onReload, encabezadosFila2) {
+    function mount(container, filas, onReload, encabezadosFila2, opts) {
+        opts = opts || {};
+        state.soloLectura = !!opts.soloLectura;
+        state.mayoreoInventario = opts.mayoreoInventario || null;
+        state.columnasOcultas = (opts.columnasOcultas || []).slice();
         state.filas = clonarFilas(filas);
         state.encabezadosFila2 = ObebeAdminData.combinarEncabezadosInventario
             ? ObebeAdminData.combinarEncabezadosInventario(encabezadosFila2 || [])
@@ -646,7 +999,7 @@
             '<div id="adminInvGridMount">' + renderGrid() + '</div></div></div>' +
             '<div id="adminInvAgotadosMount" class="admin-inv-agotados-wrap"></div>';
         bindEvents(container, onReload);
-        mountSeccionAgotados(container, onReload);
+        if (!state.soloLectura) mountSeccionAgotados(container, onReload);
     }
 
     global.ObebeAdminInventario = { mount: mount };

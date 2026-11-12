@@ -3,6 +3,9 @@
 Thumbs.db
 desktop.ini
 
+# Supabase CLI local
+supabase/.temp/
+
 # IDE / Editor
 .vscode/
 .idea/

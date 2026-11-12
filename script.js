@@ -615,8 +615,8 @@ function renderizarCarruselOfertas() {
 
     carousel.appendChild(crearTarjetaVerMasCarrusel({
         href: 'ofertas-semanales.html',
-        archivoImagen: 'secciones/NEW-1.png',
-        imagenFallback: 'secciones/NEW-1.png',
+        archivoImagen: 'secciones/OFERTAS.jpg',
+        imagenFallback: 'secciones/OFERTAS.jpg',
         titulo: 'OFERTAS SEMANALES',
         subtitulo: 'Ver todas las ofertas',
         estiloTitulo: 'nuevo-drop',
@@ -1309,6 +1309,7 @@ function sincronizarOverlaysMenuCerrados() {
     var mobileMenuBtn = document.getElementById('mobileMenuBtn');
     var menuAbierto = !!(mobileNav && mobileNav.classList.contains('active'));
     if (!menuAbierto) {
+        restaurarBotonMenuSandwichEnHeader();
         if (mobileMenuBtn) mobileMenuBtn.classList.remove('active');
         if (mobileNav) mobileNav.classList.remove('active');
         document.body.classList.remove('mobile-menu-open');
@@ -1325,10 +1326,32 @@ function sincronizarOverlaysMenuCerrados() {
     }
 }
 
+function anclarBotonMenuSandwichEnBody() {
+    var btn = document.getElementById('mobileMenuBtn');
+    if (!btn || btn.dataset.obebeEnBody === '1') return;
+    window.__obebeMenuBtnSlot = { parent: btn.parentNode, next: btn.nextSibling };
+    document.body.appendChild(btn);
+    btn.dataset.obebeEnBody = '1';
+}
+
+function restaurarBotonMenuSandwichEnHeader() {
+    var btn = document.getElementById('mobileMenuBtn');
+    var slot = window.__obebeMenuBtnSlot;
+    if (!btn || btn.dataset.obebeEnBody !== '1' || !slot || !slot.parent) return;
+    if (slot.next && slot.next.parentNode === slot.parent) {
+        slot.parent.insertBefore(btn, slot.next);
+    } else {
+        slot.parent.appendChild(btn);
+    }
+    btn.dataset.obebeEnBody = '0';
+    delete window.__obebeMenuBtnSlot;
+}
+
 function cerrarMenuMovilGlobal() {
     var mobileMenuBtn = document.getElementById('mobileMenuBtn');
     var mobileNav = document.getElementById('mobileNav');
     var homeMenuOverlay = document.getElementById('homeMenuOverlay');
+    restaurarBotonMenuSandwichEnHeader();
     if (mobileMenuBtn) mobileMenuBtn.classList.remove('active');
     if (mobileNav) mobileNav.classList.remove('active');
     document.body.classList.remove('mobile-menu-open');
@@ -1364,6 +1387,9 @@ function abrirMenuMovilGlobal() {
     mobileMenuBtn.classList.add('active');
     mobileNav.classList.add('active');
     document.body.classList.add('mobile-menu-open');
+    if (usaMenuMovilConOverlay()) {
+        anclarBotonMenuSandwichEnBody();
+    }
     if (usaMenuMovilConOverlay() && homeMenuOverlay) {
         homeMenuOverlay.hidden = false;
         homeMenuOverlay.classList.add('is-open');
@@ -2162,6 +2188,7 @@ function filtrarBusquedaHome(term) {
     var soloRef = /^\d+$/.test(term);
     return catalogoProductosHome().filter(function (p) {
         if (!p) return false;
+        if (!esProductoVisibleBusquedaHome(p)) return false;
         if (soloRef) return String(p.id) === term;
         if (p.nombre && p.nombre.toLowerCase().includes(term)) return true;
         if (/^\d+$/.test(term) && String(p.id).indexOf(term) !== -1) return true;
