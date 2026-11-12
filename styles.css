@@ -2714,12 +2714,22 @@ section.inventory > .filters-search-row {
         padding-top: 0;
     }
 
-    .page-home #inventario.inventory {
-        padding-top: 2.5rem !important;
-        padding-bottom: 2rem;
+    .page-home section.hero {
+        margin-bottom: 0.35rem;
     }
 
-    .page-home #inventario .nuevo-stock-block {
+    .page-home #inventario.inventory {
+        padding-top: 1.15rem !important;
+        padding-bottom: 2rem;
+        margin-top: 0 !important;
+    }
+
+    .page-home #inventario > .container {
+        padding-top: 0;
+    }
+
+    .page-home #inventario .nuevo-stock-block,
+    .page-home #inventario .home-stock-cotizador-row {
         margin-top: 0 !important;
         margin-bottom: 1.25rem;
     }
@@ -4266,8 +4276,8 @@ footer {
         height: clamp(120px, 32vw, 168px);
     }
 
-    .nuevo-stock-cta.home-tile-card--nuevo-foto .home-tile-photo-wrap img {
-        object-position: center center;
+    .page-home #inventario .nuevo-stock-cta.home-tile-card--nuevo-foto .home-tile-photo-wrap img {
+        object-position: center 35%;
     }
 
     .home-tile-card-caption--nuevo-stock {
@@ -4449,7 +4459,7 @@ footer {
     }
 
     .page-home #inventario.inventory {
-        padding-top: 2.5rem !important;
+        padding-top: 1.15rem !important;
     }
 
     section.inventory.inventory-catalog {
@@ -4946,14 +4956,17 @@ body.mobile-menu-open .header-left .desktop-nav button {
         object-position: center 38%;
     }
 
-    header > .page-home-mobile-nav #homeMenuImg2,
     header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb--pos2-hombre,
+    header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb:not(.home-menu-thumb--pos2-mujer) {
+        object-position: center 8%;
+    }
+
     header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb--pos2-mujer {
-        object-position: center top;
+        object-position: center 12%;
     }
 
     header > .page-home-mobile-nav .home-menu-images {
-        margin-top: 1rem;
+        margin-top: 0.35rem;
     }
 
     header > .page-home-mobile-nav .home-menu-actions {
