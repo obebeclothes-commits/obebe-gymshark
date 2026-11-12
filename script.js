@@ -1714,7 +1714,11 @@ function aplicarFiltroGeneroMenuMovil(nuevoGenero) {
         img1.classList.remove('home-menu-thumb--pos-hombre', 'home-menu-thumb--pos-mujer');
         img1.classList.add(genero === 'Mujer' ? 'home-menu-thumb--pos-mujer' : 'home-menu-thumb--pos-hombre');
     }
-    if (img2) img2.alt = 'Mayoreo hasta 40% off';
+    if (img2) {
+        img2.alt = 'Mayoreo hasta 40% off';
+        img2.classList.remove('home-menu-thumb--pos2-hombre', 'home-menu-thumb--pos2-mujer');
+        img2.classList.add(genero === 'Mujer' ? 'home-menu-thumb--pos2-mujer' : 'home-menu-thumb--pos2-hombre');
+    }
 
     if (linkNuevo) linkNuevo.href = urlCatalogoMenuHome({ categoria: genero, nuevoStock: true });
     if (linkTodos) linkTodos.href = urlCatalogoMenuHome({ categoria: genero });

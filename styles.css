@@ -2709,8 +2709,19 @@ section.inventory > .filters-search-row {
         box-sizing: border-box;
     }
 
-    section.inventory {
+    /* Catálogo (productos / ofertas): sin padding arriba — el home #inventario NO lleva esta clase */
+    section.inventory.inventory-catalog {
         padding-top: 0;
+    }
+
+    .page-home #inventario.inventory {
+        padding-top: 2.5rem !important;
+        padding-bottom: 2rem;
+    }
+
+    .page-home #inventario .nuevo-stock-block {
+        margin-top: 0 !important;
+        margin-bottom: 1.25rem;
     }
 
     section.inventory > .filters-search-row {
@@ -4252,7 +4263,11 @@ footer {
     }
 
     .nuevo-stock-cta.home-tile-card--nuevo-foto .home-tile-photo-wrap {
-        height: 100px;
+        height: clamp(120px, 32vw, 168px);
+    }
+
+    .nuevo-stock-cta.home-tile-card--nuevo-foto .home-tile-photo-wrap img {
+        object-position: center center;
     }
 
     .home-tile-card-caption--nuevo-stock {
@@ -4433,8 +4448,12 @@ footer {
         font-size: 1.08rem;
     }
 
-    .inventory {
-        padding: 2.5rem 0;
+    .page-home #inventario.inventory {
+        padding-top: 2.5rem !important;
+    }
+
+    section.inventory.inventory-catalog {
+        padding-top: 0 !important;
     }
 
     .products-carousel-wrapper {
@@ -4927,12 +4946,14 @@ body.mobile-menu-open .header-left .desktop-nav button {
         object-position: center 38%;
     }
 
-    header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb--pos2-hombre {
+    header > .page-home-mobile-nav #homeMenuImg2,
+    header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb--pos2-hombre,
+    header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb--pos2-mujer {
         object-position: center top;
     }
 
-    header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb--pos2-mujer {
-        object-position: center 12%;
+    header > .page-home-mobile-nav .home-menu-images {
+        margin-top: 1rem;
     }
 
     header > .page-home-mobile-nav .home-menu-actions {
