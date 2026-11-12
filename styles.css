@@ -4277,7 +4277,11 @@ footer {
     }
 
     .page-home #inventario .nuevo-stock-cta.home-tile-card--nuevo-foto .home-tile-photo-wrap img {
-        object-position: center 35%;
+        object-position: center top;
+    }
+
+    .page-home #inventario .home-cotizador-tile .home-tile-photo-wrap img {
+        object-position: center top;
     }
 
     .home-tile-card-caption--nuevo-stock {
