@@ -4953,16 +4953,19 @@ body.mobile-menu-open .header-left .desktop-nav button {
     }
 
     header > .page-home-mobile-nav #homeMenuImg1.home-menu-thumb--pos-hombre {
-        object-position: center 6%;
+        object-position: center 22%;
     }
 
     header > .page-home-mobile-nav #homeMenuImg1.home-menu-thumb--pos-mujer {
         object-position: center 38%;
     }
 
-    header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb--pos2-hombre,
-    header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb:not(.home-menu-thumb--pos2-mujer) {
-        object-position: center 8%;
+    header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb--pos2-hombre {
+        object-position: center top;
+    }
+
+    header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb:not(.home-menu-thumb--pos2-hombre):not(.home-menu-thumb--pos2-mujer) {
+        object-position: center top;
     }
 
     header > .page-home-mobile-nav #homeMenuImg2.home-menu-thumb--pos2-mujer {
