@@ -1600,6 +1600,28 @@ html[data-admin-theme="light"] .admin-banner.info {
     max-height: min(70vh, 640px);
 }
 
+.admin-inv-scroll--mayoreo {
+    overflow-x: auto;
+}
+
+.admin-inv-scroll--mayoreo .admin-inv-grid th.admin-inv-col-articulo,
+.admin-inv-scroll--mayoreo .admin-inv-grid td.admin-inv-col-articulo {
+    min-width: 12rem;
+    max-width: 22rem;
+}
+
+.admin-inv-scroll--mayoreo .admin-inv-col-articulo .admin-inv-readonly,
+.admin-inv-scroll--mayoreo .admin-inv-col-articulo .admin-inv-cell {
+    display: block;
+    width: 100%;
+    min-width: 10rem;
+    max-width: 20rem;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 0.35rem 0.4rem;
+    box-sizing: border-box;
+}
+
 .admin-inv-grid th,
 .admin-inv-grid td {
     padding: 0;
@@ -2756,6 +2778,61 @@ body.admin-ped-filtros-open {
 }
 
 @media (min-width: 901px) {
+    .admin-ped-rev-list--naty {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.55rem;
+        align-items: stretch;
+    }
+
+    .admin-ped-rev-list--naty .admin-ped-rev-item {
+        flex-direction: column;
+        height: 100%;
+        padding: 0.45rem;
+        gap: 0.4rem;
+        align-items: stretch;
+    }
+
+    .admin-ped-rev-list--naty .admin-ped-rev-thumb {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1;
+        max-height: 120px;
+        object-fit: contain;
+        align-self: center;
+    }
+
+    .admin-ped-rev-list--naty .admin-ped-rev-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        font-size: 0.72rem;
+        gap: 0.15rem;
+    }
+
+    .admin-ped-rev-list--naty .admin-ped-rev-nombre {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+        line-height: 1.3;
+        min-height: calc(1.3em * 2);
+        font-weight: 600;
+    }
+
+    .admin-ped-rev-list--naty .admin-ped-item-acciones-cliente {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        margin-top: auto;
+    }
+
+    .admin-ped-rev-list--naty .admin-ped-item-acciones-cliente .admin-btn-sm {
+        width: 100%;
+        justify-content: center;
+    }
+
     .admin-ped-rev-list--obebe {
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -3160,6 +3237,22 @@ body.admin-ped-filtros-open {
     min-width: 0;
 }
 
+.admin-ped-catalogo--mayoreo .admin-ped-item-info {
+    flex: 1;
+    overflow-x: auto;
+}
+
+.admin-ped-catalogo--mayoreo .admin-ped-item-info strong {
+    white-space: nowrap;
+}
+
+.admin-venta-retail--mayoreo .admin-ped-cart-name {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    max-width: 14rem;
+}
+
 .admin-ped-item-foot {
     display: flex;
     flex-wrap: wrap;
@@ -3187,8 +3280,11 @@ body.admin-ped-filtros-open {
     margin: 0;
 }
 
-.admin-ped-fotos-fig figcaption {
-    display: none;
+.admin-ped-fotos-cap {
+    margin: 0 0 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--admin-muted);
 }
 
 .admin-ped-fotos-modal-solo-img #adminPedFotosSub,

@@ -62,7 +62,9 @@
                 celdas: (f.celdas || []).slice(),
                 _dirty: {},
                 _localId: f._localId,
-                _isNew: f._isNew
+                _isNew: f._isNew,
+                mayoreoLineaId: f.mayoreoLineaId,
+                precioVentaPlaneado: f.precioVentaPlaneado
             };
         });
     }
@@ -254,6 +256,15 @@
             colIdx === idx.tipo || colIdx === idx.marca;
     }
 
+    function colIdxArticuloInventario() {
+        var idx = idxInventarioCols();
+        return idx.nombre != null ? idx.nombre : 1;
+    }
+
+    function esColumnaArticulo(colIdx) {
+        return colIdx === colIdxArticuloInventario();
+    }
+
     function recalcularTotalFila(f) {
         if (!f || !f.celdas) return;
         var idx = idxInventarioCols();
@@ -385,8 +396,11 @@
                         '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminInvAddRow">+ Fila</button>' +
                         '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact" id="adminInvDelRows">Eliminar</button>';
                 }
+                var cancelClass = state.mayoreoInventario
+                    ? 'admin-btn admin-btn-danger admin-btn-compact'
+                    : 'admin-btn admin-btn-ghost admin-btn-compact';
                 acciones +=
-                    '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminInvCancel">Cancelar</button>' +
+                    '<button type="button" class="' + cancelClass + '" id="adminInvCancel">Cancelar</button>' +
                     '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminInvSave">Guardar</button>';
             } else {
                 acciones +=
@@ -572,9 +586,11 @@
             }
             var inputVal = esVacioONa(val) ? mostrar : val;
             if (esColumnaMayusculas(colIdx)) inputVal = mayusInv(inputVal);
-            return '<td><input type="text" class="admin-inv-cell" data-key="' + esc(keyFila(f)) + '" data-col="' + colIdx + '" value="' + esc(inputVal) + '"></td>';
+            var tdArt = (state.mayoreoInventario && esColumnaArticulo(colIdx)) ? ' class="admin-inv-col-articulo"' : '';
+            return '<td' + tdArt + '><input type="text" class="admin-inv-cell" data-key="' + esc(keyFila(f)) + '" data-col="' + colIdx + '" value="' + esc(inputVal) + '"></td>';
         }
-        return '<td><span class="admin-inv-readonly">' + esc(mostrar) + '</span></td>';
+        var tdArtRead = (state.mayoreoInventario && esColumnaArticulo(colIdx)) ? ' class="admin-inv-col-articulo"' : '';
+        return '<td' + tdArtRead + '><span class="admin-inv-readonly">' + esc(mostrar) + '</span></td>';
     }
 
     function renderGrid() {
@@ -594,11 +610,12 @@
         var i;
         for (i = 0; i < colsVista.length; i++) {
             var c = colsVista[i];
-            thLetters += '<th class="admin-inv-th-letter" title="Columna ' + esc(ObebeAdminData.colLetter(c)) + '">' +
+            var thArt = (state.mayoreoInventario && esColumnaArticulo(c)) ? ' admin-inv-col-articulo' : '';
+            thLetters += '<th class="admin-inv-th-letter' + thArt + '" title="Columna ' + esc(ObebeAdminData.colLetter(c)) + '">' +
                 esc(ObebeAdminData.colLetter(c)) + '</th>';
             var titulo = (enc[c] || '').trim();
             if (/^(no\.?\s*)?imagen|^ref$|^#$/i.test(titulo) || titulo.toLowerCase() === 'no imagen') titulo = 'Ref';
-            thSheet += '<th class="admin-inv-th-title" title="' + esc(titulo) + '">' + esc(titulo) + '</th>';
+            thSheet += '<th class="admin-inv-th-title' + thArt + '" title="' + esc(titulo) + '">' + esc(titulo) + '</th>';
         }
         var selHead = pick ? '<th class="admin-inv-sel admin-inv-sticky-corner">✓</th>' : '';
         var headLetters = '<tr class="admin-inv-head-letters">' + selHead +
@@ -623,7 +640,9 @@
         }).join('');
 
         var colSpan = colsVista.length + 1 + (pick ? 1 : 0);
-        return '<div class="admin-inv-scroll' + (edit ? ' admin-inv-scroll--edit' : '') + '">' +
+        var scrollCls = 'admin-inv-scroll' + (edit ? ' admin-inv-scroll--edit' : '') +
+            (state.mayoreoInventario ? ' admin-inv-scroll--mayoreo' : '');
+        return '<div class="' + scrollCls + '">' +
             '<table class="admin-table admin-inv-grid' + (edit ? ' admin-inv-grid--edit' : '') + '"><thead>' + headLetters + headSheet +
             '</thead><tbody>' + (tbody || '<tr><td colspan="' + colSpan + '">Sin filas</td></tr>') + '</tbody></table></div>';
     }
@@ -730,7 +749,6 @@
                 refreshUi(container, onReload);
             });
         }
-
         var btnCancel = container.querySelector('#adminInvCancel');
         if (btnCancel) {
             btnCancel.addEventListener('click', function () {
@@ -738,13 +756,20 @@
                     cancelarEdicionInv(container, onReload);
                     return;
                 }
-                ObebeAdminDialog.confirm({
+                var dlgSalir = state.mayoreoInventario ? {
+                    title: '¿Salir sin guardar?',
+                    message: 'Hay cambios sin guardar en el inventario. Si sales, se perderán.',
+                    confirmText: 'Sí, salir',
+                    cancelText: 'Seguir editando',
+                    variant: 'danger'
+                } : {
                     title: '¿Salir sin guardar?',
                     message: 'Hay cambios sin guardar en el inventario. Si sales, se perderán.',
                     confirmText: 'Sí, salir',
                     cancelText: 'Seguir editando',
                     variant: 'warn'
-                }).then(function (ok) {
+                };
+                ObebeAdminDialog.confirm(dlgSalir).then(function (ok) {
                     if (ok) cancelarEdicionInv(container, onReload);
                 });
             });
@@ -782,7 +807,23 @@
                 });
             }
             var saveBtn = container.querySelector('#adminInvSave');
-            if (saveBtn) saveBtn.addEventListener('click', function () { guardar(onReload, container); });
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function () {
+                    if (state.mayoreoInventario) {
+                        ObebeAdminDialog.confirm({
+                            title: '¿Guardar cambios?',
+                            message: 'Se guardarán los precios en tu inventario Naty.',
+                            confirmText: 'Sí, guardar',
+                            cancelText: 'Cancelar',
+                            variant: 'warn'
+                        }).then(function (ok) {
+                            if (ok) guardar(onReload, container);
+                        });
+                        return;
+                    }
+                    guardar(onReload, container);
+                });
+            }
         }
         var delBtn = container.querySelector('#adminInvDelRows');
         if (delBtn) {
@@ -836,22 +877,38 @@
         recalcularTotalFila(f);
     }
 
+    function volcarInputsInventarioDesdeDom(container) {
+        if (!container || !state.modoEdicion) return;
+        container.querySelectorAll('.admin-inv-cell').forEach(function (input) {
+            var k = input.getAttribute('data-key');
+            var col = parseInt(input.getAttribute('data-col'), 10);
+            if (isNaN(col)) return;
+            var f = findFila(k);
+            if (!f) return;
+            aplicarCambioCelda(container, f, col, input.value);
+        });
+    }
+
     function guardarMayoreoInventario(onReload, container) {
+        volcarInputsInventarioDesdeDom(container);
         var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : { precio: 7 };
         var colPrecio = idx.precio != null ? idx.precio : 7;
         var snap = state.snapshot || [];
         var cambios = 0;
         var idxFull = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
         var colMargen = idxFull.margen != null ? idxFull.margen : 14;
-        var colCostoBruto = idxFull.costoBruto != null ? idxFull.costoBruto : 11;
+        var colCostoBruto = idxFull.costoBruto != null ? idx.costoBruto : 11;
         var colCostoNeto = idxFull.costoNeto != null ? idxFull.costoNeto : 12;
         state.filas.forEach(function (f) {
             if (!f.mayoreoLineaId) return;
             var ant = snap.find(function (s) { return s._localId === f._localId; });
             var valNuevo = parseNumInventario(f.celdas[colPrecio]);
-            var valAnt = ant ? parseNumInventario(ant.celdas[colPrecio]) : valNuevo;
-            if (Math.abs(valNuevo - valAnt) >= 0.01) {
+            var valAnt = ant ? parseNumInventario(ant.celdas[colPrecio]) : 0;
+            var dirtyPrecio = f._dirty && f._dirty[colPrecio];
+            if (dirtyPrecio || Math.abs(valNuevo - valAnt) >= 0.01) {
                 ObebeMayoreoStore.updateLinea(f.mayoreoLineaId, { precioVentaPlaneado: valNuevo });
+                f.precio = valNuevo;
+                f.precioVentaPlaneado = valNuevo;
                 cambios++;
             }
             var bruto = parseNumInventario(f.celdas[colCostoBruto]);
@@ -865,9 +922,9 @@
         state.modoEdicion = false;
         state.snapshot = null;
         state.msg = cambios
-            ? 'Precios de venta actualizados (' + cambios + ').'
+            ? 'Precios de venta guardados en inventario Naty (' + cambios + '). No afectan Supabase Obebe.'
             : 'No había cambios en precios.';
-        state.msgOk = true;
+        state.msgOk = cambios > 0;
         refreshUi(container, onReload);
         if (onReload) onReload();
     }

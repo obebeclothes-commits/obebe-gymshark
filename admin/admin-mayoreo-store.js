@@ -109,7 +109,8 @@
             marca: r.marca || '',
             precioMayoreo: r.precioMayoreo || 0,
             precioRetail: r.precioRetail || 0,
-            precioVentaPlaneado: r.precioVentaPlaneado || r.precioRetail || 0,
+            precioVentaPlaneado: r.precioVentaNatyManual ? (r.precioVentaPlaneado || 0) : 0,
+            precioVentaNatyManual: !!r.precioVentaNatyManual,
             imagenUrl: imagenUrl || r.imagenUrl || '',
             filaSheet: r.filaSheet || 0,
             fechaStockIso: r.fechaStockIso || FECHA_STOCK_LEGACY,
@@ -168,7 +169,8 @@
                     marca: it.marca || '',
                     precioMayoreo: it.precioCliente || 0,
                     precioRetail: it.precioRetail || 0,
-                    precioVentaPlaneado: it.precioRetail || it.precioCliente || 0,
+                    precioVentaPlaneado: 0,
+                    precioVentaNatyManual: false,
                     imagenUrl: it.imagenUrl || '',
                     filaSheet: 0,
                     fechaStockIso: fecha,
@@ -328,6 +330,7 @@
         if (patch.precioVentaPlaneado != null) {
             var n = parseFloat(String(patch.precioVentaPlaneado).replace(/[^\d.-]/g, ''));
             l.precioVentaPlaneado = isNaN(n) ? 0 : n;
+            l.precioVentaNatyManual = true;
         }
         if (patch.imagenUrl != null) l.imagenUrl = patch.imagenUrl;
         if (patch.fechaStockIso != null) l.fechaStockIso = patch.fechaStockIso;
@@ -491,13 +494,21 @@
             if (isNaN(precio) || precio < 0) return { ok: false, error: 'Precio inválido.' };
             var sub = precio * qty;
             total += sub;
+            var precioOrigU = parseFloat(String(it.precioOriginal != null ? it.precioOriginal : precio).replace(/[^\d.-]/g, ''));
+            if (isNaN(precioOrigU) || precioOrigU < 0) precioOrigU = precio;
             ventaLineas.push({
                 lineaId: linea.id,
                 nombre: linea.nombreMostrar || linea.nombreSheet,
                 cantidad: qty,
                 precioUnitario: precio,
+                precioOriginal: precioOrigU,
                 subtotal: sub,
-                imagenUrl: linea.imagenUrl || ''
+                imagenUrl: linea.imagenUrl || '',
+                talla: String(it.talla != null ? it.talla : linea.talla || '').trim(),
+                color: String(it.color != null ? it.color : linea.color || '').trim(),
+                tipo: String(it.tipo != null ? it.tipo : linea.tipo || '').trim(),
+                marca: String(it.marca != null ? it.marca : linea.marca || '').trim(),
+                segmento: String(it.segmento != null ? it.segmento : '').trim()
             });
         }
 
@@ -706,6 +717,11 @@
         }
         var ln = lineas[li];
         if (patch.nombre != null) ln.nombre = String(patch.nombre || '').trim();
+        if (patch.tipo != null) ln.tipo = String(patch.tipo || '').trim();
+        if (patch.talla != null) ln.talla = String(patch.talla || '').trim();
+        if (patch.color != null) ln.color = String(patch.color || '').trim();
+        if (patch.marca != null) ln.marca = String(patch.marca || '').trim();
+        if (patch.segmento != null) ln.segmento = String(patch.segmento || '').trim();
         if (patch.subtotal != null || patch.precio != null) {
             var sub = parseFloat(String(patch.subtotal != null ? patch.subtotal : patch.precio).replace(/[^\d.-]/g, ''));
             if (isNaN(sub) || sub < 0) return { ok: false, error: 'Precio inválido.' };

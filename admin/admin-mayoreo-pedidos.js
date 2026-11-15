@@ -211,12 +211,23 @@
         if (!src && cand) {
             src = cand.split('|')[0] || '';
         }
-        return '<figure class="admin-ped-fotos-fig">' +
-            (src
-                ? '<img src="' + esc(src) + '" alt="' + esc(alt || '') + '" class="admin-ped-fotos-img" ' +
-                'data-candidates="' + esc(cand) + '" data-candidate-step="0" loading="lazy" ' +
-                'onerror="adminMayoreoImgFallback(this)">'
-                : '<p class="admin-muted-text">Sin foto</p>') +
+        return (src
+            ? '<img src="' + esc(src) + '" alt="' + esc(alt || '') + '" class="admin-ped-fotos-img" ' +
+            'data-candidates="' + esc(cand) + '" data-candidate-step="0" loading="lazy" ' +
+            'onerror="adminMayoreoImgFallback(this)">'
+            : '<p class="admin-muted-text">Sin foto</p>');
+    }
+
+    function slotFotoPedidoModal(etiqueta, candidatos, prefer) {
+        candidatos = (candidatos || []).filter(function (u, i, a) { return u && a.indexOf(u) === i; });
+        if (!prefer && candidatos.length) prefer = candidatos[0];
+        if (!prefer && !candidatos.length) return '';
+        var alt = (etiqueta || 'Foto') + '';
+        var cap = (etiqueta && String(etiqueta).trim())
+            ? '<figcaption class="admin-ped-fotos-cap">' + esc(etiqueta) + '</figcaption>'
+            : '';
+        return '<figure class="admin-ped-fotos-fig">' + cap +
+            imgModalHtml(prefer, alt, candidatos.length ? candidatos : (prefer ? [prefer] : [])) +
             '</figure>';
     }
 
@@ -281,15 +292,30 @@
             stock: 1,
             celdas: []
         };
+        if (ref > 0) {
+            fila.celdas[0] = String(ref);
+        }
         if (ref > 0 && global.ObebeComprasEarlyStore && ObebeComprasEarlyStore.tieneRef(ref)) {
             fila.soloComprasEarly = true;
         }
         return fila;
     }
 
+    function normPathFoto(u) {
+        return String(u || '').replace(/\?.*$/, '').toLowerCase();
+    }
+
+    function prepararFilaFotosPedido(fila) {
+        if (!fila) return fila;
+        if (!fila.soloComprasEarly && fila.ref && global.ObebeComprasEarlyStore &&
+            ObebeComprasEarlyStore.tieneRef(fila.ref)) {
+            return Object.assign({}, fila, { soloComprasEarly: true });
+        }
+        return fila;
+    }
+
     function abrirFotosArticulo(filaId, dataCard) {
-        if (!global.ObebeAdminData || !ObebeAdminData.urlsFotosTiendaObebe) return;
-        var fila = filaCatalogoPorId(filaId) || filaDesdeDatasetPedido(filaId, dataCard);
+        var fila = prepararFilaFotosPedido(filaCatalogoPorId(filaId) || filaDesdeDatasetPedido(filaId, dataCard));
         var root = ensureFotosPedidoModal();
         if (!fila) {
             document.getElementById('adminPedFotosTitulo').textContent = 'Artículo';
@@ -301,9 +327,41 @@
             document.body.classList.add('admin-apartado-modal-open');
             return;
         }
-        var urls = ObebeAdminData.urlsFotosTiendaObebe(fila);
+        var urls = { foto1: '', foto2: '', candidatos1: [], candidatos2: [] };
+        if (global.ObebeAdminData && ObebeAdminData.urlsFotosTiendaObebe) {
+            urls = ObebeAdminData.urlsFotosTiendaObebe(fila) || urls;
+        }
         if (!urls.foto1 && urls.candidatos1 && urls.candidatos1.length) urls.foto1 = urls.candidatos1[0];
         if (!urls.foto2 && urls.candidatos2 && urls.candidatos2.length) urls.foto2 = urls.candidatos2[0];
+        if (!urls.foto1 && !urls.candidatos1.length) {
+            var fallback = imagenFila(fila, filasInv);
+            if (fallback) {
+                urls.foto1 = fallback;
+                urls.candidatos1 = candidatosImagenFila(fila).concat([fallback]);
+            }
+        }
+        if ((!urls.candidatos2 || !urls.candidatos2.length) &&
+            ObebeAdminData.candidatosSegundaFotoDesdeUrl) {
+            var segundaDesde1 = ObebeAdminData.candidatosSegundaFotoDesdeUrl(urls.foto1);
+            if (!segundaDesde1.length && urls.candidatos1 && urls.candidatos1.length) {
+                for (var ci = 0; ci < urls.candidatos1.length; ci++) {
+                    var ext2 = ObebeAdminData.candidatosSegundaFotoDesdeUrl(urls.candidatos1[ci]);
+                    if (ext2.length) {
+                        segundaDesde1 = ext2;
+                        break;
+                    }
+                }
+            }
+            if (segundaDesde1.length) {
+                urls.candidatos2 = segundaDesde1;
+                if (!urls.foto2) urls.foto2 = segundaDesde1[0];
+            }
+        }
+        if ((!urls.candidatos2 || !urls.candidatos2.length) && ObebeAdminData.urlsFotosComprasEtiquetadas) {
+            var packEt = ObebeAdminData.urlsFotosComprasEtiquetadas(fila) || {};
+            urls.candidatos2 = (packEt.candidatos2 || []).slice();
+            if (!urls.foto2 && packEt.foto2) urls.foto2 = packEt.foto2;
+        }
         var esEarly = !!(fila.soloComprasEarly || (global.ObebeComprasEarlyStore &&
             ObebeComprasEarlyStore.esEarlyAccessFila(fila)));
         document.getElementById('adminPedFotosTitulo').textContent = fila.nombre || 'Artículo';
@@ -313,24 +371,10 @@
             sub.classList.add('admin-hidden');
             sub.setAttribute('aria-hidden', 'true');
         }
-        var grid = '';
-        var seen = {};
-        function addFigura(cands, prefer) {
-            cands = (cands || []).slice();
-            var src = prefer || cands[0] || '';
-            if (!src && !cands.length) return;
-            var key = String(src || cands[0] || '').split('?')[0];
-            if (!key || seen[key]) return;
-            seen[key] = true;
-            grid += imgModalHtml(src || cands[0], fila.nombre, cands.length ? cands : [src]);
-        }
-        addFigura(urls.candidatos1, urls.foto1);
-        var k1 = String(urls.foto1 || '').split('?')[0];
-        var k2 = String(urls.foto2 || '').split('?')[0];
-        if (k2 && k2 !== k1) {
-            addFigura(urls.candidatos2, urls.foto2);
-        } else if (urls.candidatos2 && urls.candidatos2.length && !seen[String(urls.candidatos2[0] || '').split('?')[0]]) {
-            addFigura(urls.candidatos2, '');
+        var grid = slotFotoPedidoModal('', urls.candidatos1, urls.foto1);
+        var tieneSegunda = (urls.candidatos2 && urls.candidatos2.length) || urls.foto2;
+        if (tieneSegunda) {
+            grid += slotFotoPedidoModal('', urls.candidatos2, urls.foto2);
         }
         if (!grid) grid = '<p class="admin-muted-text">Sin fotos disponibles para este artículo.</p>';
         document.getElementById('adminPedFotosGrid').innerHTML = grid;
@@ -345,6 +389,7 @@
         var label = estado || 'pendiente';
         if (estado === 'revisado') cls = 'admin-tag-ok';
         else if (estado === 'en_revision') cls = 'admin-tag-muted';
+        else if (estado === 'combinado') cls = 'admin-tag-muted';
         else if (estado === 'cancelado') cls = 'admin-tag-danger';
         if (estado === 'en_revision') label = 'En revisión';
         if (estado === 'revisado') label = 'Respuesta enviada';
@@ -360,6 +405,7 @@
     function textoEstadoPedido(estado) {
         if (estado === 'revisado') return 'Respuesta enviada';
         if (estado === 'en_revision') return 'En revisión';
+        if (estado === 'combinado') return 'Combinado';
         if (estado === 'cancelado') return 'Cancelado';
         if (estado === 'pendiente') return 'Pendiente';
         return estado || 'Pendiente';
@@ -696,7 +742,11 @@
                     itemId: it.itemId,
                     fila: filaDesdeItemPedido(it),
                     cantidad: it.cantidad || 1,
-                    imagenUrl: it.imagenUrl || ''
+                    imagenUrl: it.imagenUrl || '',
+                    disponibilidad: it.disponibilidad,
+                    comentarioObebe: it.comentarioObebe,
+                    clienteConfirmoNoHay: it.clienteConfirmoNoHay,
+                    stockObebeAplicado: it.stockObebeAplicado
                 };
             });
         }
@@ -797,9 +847,15 @@
                     '</div>';
             }
             var notaTier = it.notaPrecio ? '<span class="admin-muted-text">' + esc(it.notaPrecio) + '</span>' : '';
+            var refNum = parseInt(it.ref, 10) || (filaIt && filaIt.ref) || 0;
+            if (!refNum && ObebeAdminData.refParaArticulo) {
+                refNum = ObebeAdminData.refParaArticulo(it) || ObebeAdminData.refParaArticulo(filaIt) || 0;
+            }
+            var refLinea = refNum ? ObebeAdminData.htmlRef(refNum) : '';
             return '<div class="admin-ped-rev-item">' +
                 thumbHtml(url, it.nombre, 'admin-ped-rev-thumb', candidatosImagenFila(filaIt)) +
-                '<div class="admin-ped-rev-info"><strong class="admin-ped-rev-nombre">' + esc(it.nombre) + '</strong>' +
+                '<div class="admin-ped-rev-info">' + refLinea +
+                '<strong class="admin-ped-rev-nombre">' + esc(it.nombre) + '</strong>' +
                 '<span class="admin-muted-text">' + esc(it.talla) + ' · ' + esc(it.color) + ' · ×' + it.cantidad + '</span>' +
                 '<span>' + fmt(it.precioCliente) + ' c/u · tienda ' + fmt(it.precioRetail) + '</span>' +
                 notaTier + revBlock + comBlock + accionesItem + '</div></div>';
@@ -853,6 +909,8 @@
                         var noHay = (p.items || []).filter(function (it) { return it.disponibilidad === 'no'; }).length;
                         msgNaty = '<p class="admin-ped-resumen-rev"><strong>Obebe Clothes:</strong> ' +
                             hay + ' con stock · ' + noHay + ' sin stock</p>';
+                    } else if (p.estado === 'combinado') {
+                        msgNaty = '<p class="admin-banner warn">Este pedido se fusionó con otro. Aquí ves los artículos que enviaste en este lote.</p>';
                     } else if (p.estado === 'pendiente') {
                         msgNaty = '<p class="admin-muted-text">Esperando revisión…</p>';
                     } else if (p.estado === 'en_revision') {
@@ -890,7 +948,7 @@
                         '<span class="admin-ped-card-chevron" aria-hidden="true">' + (abierto ? '▾' : '▸') + '</span></button>' +
                         '<div class="admin-ped-card-body' + (abierto ? '' : ' admin-hidden') + '">' +
                         msgNaty +
-                        '<div class="admin-ped-rev-list">' + items + '</div>' +
+                        '<div class="admin-ped-rev-list admin-ped-rev-list--naty">' + items + '</div>' +
                         editRow +
                         '</div></div>';
                 }
@@ -919,6 +977,23 @@
                         : '') +
                     '</div></div>';
             }).join('');
+        }
+
+        function preservarScrollPedidos(fn) {
+            var winY = window.scrollY || window.pageYOffset || 0;
+            var root = document.querySelector('.admin-content');
+            var rootY = root ? root.scrollTop : 0;
+            var cat = document.getElementById('adminPedCatalogo');
+            var catY = cat ? cat.scrollTop : 0;
+            var carritoBox = document.getElementById('adminPedCarrito');
+            var carY = carritoBox ? carritoBox.scrollTop : 0;
+            fn();
+            requestAnimationFrame(function () {
+                window.scrollTo(0, winY);
+                if (root) root.scrollTop = rootY;
+                if (cat) cat.scrollTop = catY;
+                if (carritoBox) carritoBox.scrollTop = carY;
+            });
         }
 
         function pintarCatalogo() {
@@ -972,6 +1047,12 @@
         }
 
         function pintarCarrito() {
+            preservarScrollPedidos(function () {
+                pintarCarritoInner();
+            });
+        }
+
+        function pintarCarritoInner() {
             var box = document.getElementById('adminPedCarrito');
             if (!box) return;
             var u = unidadesCarrito();
@@ -1189,6 +1270,7 @@
                 if (verPed) {
                     ev.preventDefault();
                     ev.stopPropagation();
+                    if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
                     var wrapVer = verPed.closest('.admin-ped-item');
                     if (wrapVer) {
                         abrirFotosArticulo(wrapVer.getAttribute('data-id'), {
@@ -1204,12 +1286,13 @@
                     return;
                 }
                 var item = ev.target.closest('.admin-ped-item');
-                if (item) {
+                if (item && !ev.target.closest('.admin-ped-ver')) {
                     agregarAlCarrito(item.getAttribute('data-id'));
                     return;
                 }
                 var quitar = ev.target.closest('.admin-ped-quitar');
                 if (quitar) {
+                    ev.preventDefault();
                     carrito.splice(parseInt(quitar.getAttribute('data-idx'), 10), 1);
                     pintarCarrito();
                     return;
@@ -1256,10 +1339,15 @@
                                 precioRetail: pr.retail,
                                 precioCliente: pr.precioCliente,
                                 notaPrecio: pr.nota,
-                                imagenUrl: c.imagenUrl || imagenFila(c.fila, filasInv),
-                                disponibilidad: null
+                                imagenUrl: c.imagenUrl || imagenFila(c.fila, filasInv)
                             };
                             if (c.itemId) row.itemId = c.itemId;
+                            if (c.disponibilidad === 'si' || c.disponibilidad === 'no') {
+                                row.disponibilidad = c.disponibilidad;
+                                if (c.comentarioObebe) row.comentarioObebe = c.comentarioObebe;
+                                row.clienteConfirmoNoHay = !!c.clienteConfirmoNoHay;
+                                row.stockObebeAplicado = !!c.stockObebeAplicado;
+                            }
                             return row;
                         });
                         var enviarP = Promise.resolve().then(function () {
@@ -1280,6 +1368,17 @@
                                 if (err) err.textContent = r.error;
                                 return;
                             }
+                            var recargarInv = function () {
+                                if (!r.stockObebeRestaurado || !global.ObebeAdminData ||
+                                    !ObebeAdminData.cargarInventario) {
+                                    return Promise.resolve();
+                                }
+                                return ObebeAdminData.cargarInventario(true).then(function (inv) {
+                                    filasInv = (inv && inv.filas) || filasInv;
+                                    if (opts.filasInv !== undefined) opts.filasInv = filasInv;
+                                });
+                            };
+                            return recargarInv().then(function () {
                             var fueEdicion = esEdicion;
                             var pidAbierto = editingPedidoId;
                             if (pidAbierto) expandedPedidos[pidAbierto] = true;
@@ -1296,6 +1395,7 @@
                                 message: msgOk,
                                 confirmText: 'Perfecto'
                             }).then(function () { pintar(); });
+                            });
                         }).catch(function (e) {
                             if (err) err.textContent = (e && e.message) || 'No se pudo enviar.';
                         });

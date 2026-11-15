@@ -455,6 +455,16 @@
             if (!soloMayoreo && (d.lineasMayoreo || []).length) {
                 importarMayoreoSheetAlStore(null);
             }
+            if (!soloMayoreo && ObebeAdminData.revertirOfertaSemanalMenosDiezAutoUnaVez) {
+                ObebeAdminData.revertirOfertaSemanalMenosDiezAutoUnaVez().then(function (r) {
+                    if (r && r.aplicados > 0) {
+                        return ObebeAdminData.cargarTodo(true).then(function (fresh) {
+                            datosCache = fresh;
+                            if (vistaActual) renderModulo(vistaActual);
+                        });
+                    }
+                }).catch(function () { /* ignore */ });
+            }
             return d;
         }).catch(function (err) {
             if (soloMayoreo) {
@@ -573,7 +583,8 @@
     }
 
     function ventasLineasNatyCache() {
-        return ObebeAdminMayoreoVentas.ventasMayoreoLineasRetail(clienteMayoreoKey());
+        var filasInv = datosCache && datosCache.filas ? datosCache.filas : [];
+        return ObebeAdminMayoreoVentas.ventasMayoreoLineasRetail(clienteMayoreoKey(), filasInv);
     }
 
     function opcionesEdicionVentasMayoreo() {
@@ -776,6 +787,22 @@
         }
         function onReloadInvMayoreo() {
             enriquecerInventarioNatyEnFondo();
+            filasInv = datosCache ? (datosCache.filas || []) : [];
+            filas = ObebeAdminMayoreoVentas.filasInventarioDesdeMayoreoCliente(key, filasInv);
+            var mount = document.getElementById('adminInvMount');
+            if (mount && global.ObebeAdminInventario) {
+                ObebeAdminInventario.mount(
+                    mount,
+                    filas,
+                    onReloadInvMayoreo,
+                    datosCache.encabezadosFila2 || [],
+                    {
+                        soloLectura: false,
+                        mayoreoInventario: { clienteKey: key },
+                        columnasOcultas: ObebeAdminMayoreoVentas.COLS_INV_OCULTAS_MAYOREO
+                    }
+                );
+            }
             return Promise.resolve();
         }
         pintarInv();
@@ -880,15 +907,12 @@
                 if (vistaActual === 'inventario') pintarInv();
             });
         }
+        pintarInv();
         ObebeAdminData.aplicarBajaStockMayoreoCollegiateHoodie().then(function (r) {
-            if (r && r.aplicados > 0) {
-                return cargarDatos(true).then(function (d) {
-                    datosCache = d;
-                });
+            if (r && r.aplicados > 0 && vistaActual === 'inventario') {
+                return onReloadInventario();
             }
-        }).catch(function () { /* ignore */ }).then(function () {
-            pintarInv();
-        });
+        }).catch(function () { /* ignore */ });
     }
 
     function renderSucursales() {
@@ -1328,6 +1352,9 @@
         try {
             if (window.ObebeMayoreoPedidosStore && ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017) {
                 ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017();
+            }
+            if (window.ObebeMayoreoPedidosStore && ObebeMayoreoPedidosStore.asegurarPedidoNatySegundo20261029) {
+                ObebeMayoreoPedidosStore.asegurarPedidoNatySegundo20261029();
             }
             if (window.ObebeMayoreoStore && ObebeMayoreoStore.ejecutarLimpiezaProgramadaMayoreo) {
                 ObebeMayoreoStore.ejecutarLimpiezaProgramadaMayoreo();

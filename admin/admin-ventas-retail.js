@@ -28,9 +28,12 @@
             : (r.precio || 0);
     }
 
-    function htmlPrecioCatalogo(r) {
+    function htmlPrecioCatalogo(r, sinRetailObebe, resolverPrecio) {
+        var vigente = typeof resolverPrecio === 'function' ? resolverPrecio(r) : precioVentaFila(r);
+        if (sinRetailObebe) {
+            return '<span class="admin-ped-precios"><strong>' + fmt(vigente) + '</strong></span>';
+        }
         var retail = r.precio || 0;
-        var vigente = precioVentaFila(r);
         if (ObebeAdminData.esOfertaSemanalFila && ObebeAdminData.esOfertaSemanalFila(r) && retail > vigente) {
             return '<span class="admin-ped-precio-oferta">' +
                 '<strong>' + fmt(vigente) + '</strong>' +
@@ -199,6 +202,13 @@
         var descuentoManualPct = '';
         var tarjetaClientePagaComision = false;
 
+        function precioUnitarioCatalogo(r) {
+            if (cfgMayoreo && global.ObebeAdminMayoreoVentas && ObebeAdminMayoreoVentas.precioVentaNatyDesdeFila) {
+                return ObebeAdminMayoreoVentas.precioVentaNatyDesdeFila(r);
+            }
+            return precioVentaFila(r);
+        }
+
         function piezasCarrito() {
             return carrito.reduce(function (s, c) { return s + (c.cantidad || 1); }, 0);
         }
@@ -210,6 +220,7 @@
         }
 
         function pctDescuentoEfectivo() {
+            if (cfgMayoreo) return 0;
             if (descuentoManual) {
                 var p = parseFloat(String(descuentoManualPct).replace(',', '.'));
                 if (isNaN(p) || p <= 0) return 0;
@@ -237,6 +248,25 @@
         }
 
         function carritoParaVenta() {
+            if (cfgMayoreo) {
+                return carrito.map(function (c) {
+                    var precio = c.precioUnitario != null ? c.precioUnitario : 0;
+                    var cat = c.precioCatalogo != null ? c.precioCatalogo : 0;
+                    var retail = c.precioRetailObebe != null ? c.precioRetailObebe : 0;
+                    var precioOrig = precio;
+                    if (cat > 0 && Math.abs(cat - precio) >= 0.01) precioOrig = cat;
+                    else if (retail > 0 && Math.abs(retail - precio) >= 0.01) precioOrig = retail;
+                    else if (cat > 0) precioOrig = cat;
+                    else if (retail > 0) precioOrig = retail;
+                    return {
+                        fila: c.fila,
+                        cantidad: c.cantidad,
+                        precioUnitario: precio,
+                        precioOriginal: precioOrig,
+                        imagenUrl: c.imagenUrl
+                    };
+                });
+            }
             var pct = pctDescuentoEfectivo();
             var factorDesc = pct > 0 ? (1 - pct / 100) : 1;
             var cuenta = cuentaActivaRetail();
@@ -281,6 +311,10 @@
         }
 
         function htmlBloqueDescuento(subtotal) {
+            if (cfgMayoreo) {
+                return '<p class="admin-venta-desc-total" style="padding:0 1rem 0.75rem;margin:0">Total <strong>' +
+                    fmt(subtotal) + '</strong></p>';
+            }
             var pct = pctDescuentoEfectivo();
             var descMonto = Math.round(subtotal * pct) / 100;
             var total = subtotal - descMonto;
@@ -456,6 +490,7 @@
         function pintarCatalogo() {
             var box = document.getElementById('adminVentaRetailCatalogo');
             if (!box) return;
+            box.className = 'admin-ped-catalogo' + (cfgMayoreo ? ' admin-ped-catalogo--mayoreo' : '');
             var list = filtrarCatalogo(false);
             var cnt = document.getElementById('adminVentaRetailContador');
             if (cnt) {
@@ -478,7 +513,7 @@
                     '<strong>' + esc(r.nombre) + '</strong>' +
                     '<span class="admin-ped-tags"><span class="admin-tag admin-tag-muted">' + esc(seg) + '</span></span>' +
                     '<span>' + esc(r.talla) + ' · ' + esc(r.color) + ' · ' + esc(r.tipo) + ' · Stock ' + stockVentaDisponible(r) + '</span>' +
-                    htmlPrecioCatalogo(r) + '</span></button>';
+                    htmlPrecioCatalogo(r, !!cfgMayoreo, cfgMayoreo ? precioUnitarioCatalogo : null) + '</span></button>';
             }).join('');
         }
 
@@ -508,7 +543,8 @@
                     '<td><input type="number" min="1" max="' + stockVentaDisponible(c.fila) + '" value="' + c.cantidad + '" class="admin-venta-num admin-venta-retail-qty" data-idx="' + idx + '"></td>' +
                     '<td><input type="number" min="0" step="1" class="admin-venta-num admin-venta-retail-precio" data-idx="' + idx + '" value="' + (c.precioUnitario || 0) + '"></td>' +
                     '<td>' + fmt(sub) + '</td>' +
-                    '<td><button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-venta-retail-quitar" data-idx="' + idx + '">Quitar</button></td></tr>';
+                    '<td><button type="button" class="admin-btn ' + (cfgMayoreo ? 'admin-btn-danger' : 'admin-btn-ghost') +
+                    ' admin-btn-compact admin-venta-retail-quitar" data-idx="' + idx + '">Quitar</button></td></tr>';
             }).join('');
             box.innerHTML = '<div class="admin-table-wrap"><table class="admin-table admin-table-compact"><thead><tr>' +
                 '<th>Artículo</th><th>Cant.</th><th>Precio u.</th><th>Subtotal</th><th></th></tr></thead><tbody>' +
@@ -596,7 +632,7 @@
                 '<div class="admin-field"><label>Link <span class="admin-label-opt">(opcional)</span></label><input type="text" id="adminVentaRetailLinkNuevo" placeholder="https://…"></div>' +
                 camposPagoVendedorRetail('adminVentaRetailCuentaNuevo', 'adminVentaRetailVendedorNuevo', !!cfgMayoreo) +
                 '<div id="adminVrTarjetaSlotNuevo"></div></div>';
-            var btnConfirm = 'Vender y descontar stock';
+            var btnConfirm = cfgMayoreo ? 'Vender' : 'Vender y descontar stock';
             return '<div class="admin-panel"><div class="admin-panel-head"><h3>' + tituloReg + '</h3></div>' +
                 '<div class="admin-venta-retail-cliente">' +
                 '<p class="admin-ped-filtros-sub">Tipo de cliente</p>' +
@@ -687,6 +723,9 @@
         }
 
         container.innerHTML = buildShell();
+        if (cfgMayoreo) {
+            container.classList.add('admin-venta-retail--mayoreo');
+        }
         if (global.ObebeAdminCamposUi) global.ObebeAdminCamposUi.bindSelectOtros(container);
         actualizarPanelCliente();
         actualizarPanelTarjetaComision();
@@ -762,8 +801,9 @@
                     carrito.push({
                         fila: f,
                         cantidad: 1,
-                        precioUnitario: precioVentaFila(f),
-                        precioCatalogo: precioVentaFila(f),
+                        precioUnitario: precioUnitarioCatalogo(f),
+                        precioCatalogo: precioUnitarioCatalogo(f),
+                        precioRetailObebe: f.precioRetailObebe != null ? f.precioRetailObebe : 0,
                         imagenUrl: imagenFila(f)
                     });
                 }
@@ -785,11 +825,82 @@
                     if (err) err.textContent = 'Agrega artículos al carrito.';
                     return;
                 }
+                function limpiarCarritoPostVenta() {
+                    carrito = [];
+                    descuentoManual = false;
+                    descuentoManualPct = '';
+                    tarjetaClientePagaComision = false;
+                    filasInv = getFilasInv();
+                    pintarCarrito();
+                    rebuildFiltrosPanel();
+                }
+                function ejecutarVentaRegistro() {
+                    var metaVenta = leerMetaVenta();
+                    var carritoVendido = carritoParaVenta().map(function (c) {
+                        return {
+                            fila: c.fila,
+                            cantidad: c.cantidad,
+                            precioUnitario: c.precioUnitario,
+                            precioOriginal: c.precioOriginal,
+                            imagenUrl: c.imagenUrl || imagenFila(c.fila)
+                        };
+                    });
+                    if (cfgMayoreo && global.ObebeMayoreoStore) {
+                        var items = carritoVendido.map(function (c) {
+                            var fid = c.fila && c.fila.mayoreoLineaId;
+                            if (!fid) return null;
+                                return {
+                                    lineaId: fid,
+                                    cantidad: c.cantidad,
+                                    precioUnitario: c.precioUnitario,
+                                    precioOriginal: c.precioOriginal != null ? c.precioOriginal : c.precioCatalogo,
+                                    talla: c.fila && c.fila.talla,
+                                    color: c.fila && c.fila.color,
+                                    tipo: c.fila && c.fila.tipo,
+                                    marca: c.fila && c.fila.marca,
+                                    segmento: c.fila && c.fila.segmento
+                                };
+                        }).filter(Boolean);
+                        var rMay = ObebeMayoreoStore.registrarVenta({
+                            clienteKey: cfgMayoreo.clienteKey,
+                            comprador: metaVenta.cliente,
+                            metodoPago: metodoPagoDesdeEtiquetaNaty(metaVenta.cuenta || 'Efectivo'),
+                            items: items
+                        });
+                        if (!rMay.ok) {
+                            if (err) err.textContent = rMay.error || 'Error';
+                            return Promise.resolve();
+                        }
+                        limpiarCarritoPostVenta();
+                        if (opts.onVentaRegistrada) opts.onVentaRegistrada(rMay);
+                        return Promise.resolve();
+                    }
+                    return ObebeAdminData.registrarVentaRetail(carritoVendido, metaVenta).then(function (res) {
+                        if (!res.ok) {
+                            if (err) err.textContent = res.error || 'Error';
+                            return;
+                        }
+                        limpiarCarritoPostVenta();
+                        var msgOk = res.soloLocal
+                            ? 'Guardado en este navegador. Google Sheets y la tienda web no se actualizaron. Configura appsScriptUrl para sincronizar.'
+                            : 'Stock bajado en inventario y venta registrada.';
+                        ObebeAdminDialog.alert({
+                            title: 'Venta registrada',
+                            message: msgOk,
+                            confirmText: 'Listo'
+                        });
+                        if (opts.onVentaRegistrada) opts.onVentaRegistrada(res);
+                    });
+                }
+                if (cfgMayoreo) {
+                    ejecutarVentaRegistro().catch(function (e) {
+                        if (err) err.textContent = e.message || String(e);
+                    });
+                    return;
+                }
                 var pctDesc = pctDescuentoEfectivo();
                 var msgVenta = 'Puedes registrar la venta ahora o programar la entrega y registrarla cuando se confirme.';
-                if (pctDesc > 0) {
-                    msgVenta += ' Descuento aplicado: ' + pctDesc + '%.';
-                }
+                if (pctDesc > 0) msgVenta += ' Descuento aplicado: ' + pctDesc + '%.';
                 var cuentaV = meta.cuenta || cuentaActivaRetail();
                 if (esCuentaTarjeta(cuentaV)) {
                     msgVenta += tarjetaClientePagaComision
@@ -805,6 +916,11 @@
                     cancelDanger: true
                 }).then(function (ok) {
                     if (!ok) return;
+                    if (!global.ObebeAdminEntregas || !ObebeAdminEntregas.abrirModalPostVenta) {
+                        return ejecutarVentaRegistro().catch(function (e) {
+                            if (err) err.textContent = e.message || String(e);
+                        });
+                    }
                     var metaVenta = leerMetaVenta();
                     var carritoVendido = carritoParaVenta().map(function (c) {
                         return {
@@ -815,67 +931,6 @@
                             imagenUrl: c.imagenUrl || imagenFila(c.fila)
                         };
                     });
-                    function limpiarCarrito() {
-                        carrito = [];
-                        descuentoManual = false;
-                        descuentoManualPct = '';
-                        tarjetaClientePagaComision = false;
-                        filasInv = getFilasInv();
-                        pintarCarrito();
-                        rebuildFiltrosPanel();
-                    }
-                    function registrarAhora() {
-                        if (cfgMayoreo && global.ObebeMayoreoStore) {
-                            var items = carritoVendido.map(function (c) {
-                                var fid = c.fila && c.fila.mayoreoLineaId;
-                                if (!fid) return null;
-                                return {
-                                    lineaId: fid,
-                                    cantidad: c.cantidad,
-                                    precioUnitario: c.precioUnitario
-                                };
-                            }).filter(Boolean);
-                            var rMay = ObebeMayoreoStore.registrarVenta({
-                                clienteKey: cfgMayoreo.clienteKey,
-                                comprador: metaVenta.cliente,
-                                metodoPago: metodoPagoDesdeEtiquetaNaty(metaVenta.cuenta || 'Efectivo'),
-                                items: items
-                            });
-                            if (!rMay.ok) {
-                                if (err) err.textContent = rMay.error || 'Error';
-                                return;
-                            }
-                            limpiarCarrito();
-                            ObebeAdminDialog.alert({
-                                title: 'Venta registrada',
-                                message: 'Venta guardada y stock actualizado en tu inventario mayoreo.',
-                                confirmText: 'Listo'
-                            });
-                            if (opts.onVentaRegistrada) opts.onVentaRegistrada(rMay);
-                            return;
-                        }
-                        return ObebeAdminData.registrarVentaRetail(carritoVendido, metaVenta).then(function (res) {
-                            if (!res.ok) {
-                                if (err) err.textContent = res.error || 'Error';
-                                return;
-                            }
-                            limpiarCarrito();
-                            var msgOk = res.soloLocal
-                                ? 'Guardado en este navegador. Google Sheets y la tienda web no se actualizaron. Configura appsScriptUrl para sincronizar.'
-                                : 'Stock bajado en inventario y venta registrada.';
-                            ObebeAdminDialog.alert({
-                                title: 'Venta registrada',
-                                message: msgOk,
-                                confirmText: 'Listo'
-                            });
-                            if (opts.onVentaRegistrada) opts.onVentaRegistrada(res);
-                        });
-                    }
-                    if (cfgMayoreo || !global.ObebeAdminEntregas || !ObebeAdminEntregas.abrirModalPostVenta) {
-                        return registrarAhora().catch(function (e) {
-                            if (err) err.textContent = e.message || String(e);
-                        });
-                    }
                     return ObebeAdminDialog.confirm({
                         title: '¿Programar entrega?',
                         message: 'Si programas la entrega, el stock se aparta y la venta se registra al completar.',
@@ -884,15 +939,18 @@
                         variant: 'warn',
                         cancelDanger: true
                     }).then(function (siEntrega) {
-                        // Escape/backdrop: cancelar todo. false = no programar → registrar venta.
                         if (siEntrega == null) return;
-                        if (!siEntrega) return registrarAhora();
+                        if (!siEntrega) {
+                            return ejecutarVentaRegistro().catch(function (e) {
+                                if (err) err.textContent = e.message || String(e);
+                            });
+                        }
                         return ObebeAdminEntregas.abrirModalPostVenta({
                             meta: metaVenta,
                             carrito: carritoVendido,
                             reservarSinVenta: true,
                             onGuardada: function () {
-                                limpiarCarrito();
+                                limpiarCarritoPostVenta();
                                 ObebeAdminDialog.alert({
                                     title: 'Entrega programada',
                                     message: 'El stock quedó apartado. La venta se registra cuando confirmes la entrega.',
@@ -902,7 +960,7 @@
                             }
                         }).then(function (entrega) {
                             if (entrega && entrega.id) return;
-                            return registrarAhora().catch(function (e) {
+                            return ejecutarVentaRegistro().catch(function (e) {
                                 if (err) err.textContent = e.message || String(e);
                             });
                         });

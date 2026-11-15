@@ -4,6 +4,8 @@
     var KEY = 'obebe_mayoreo_pedidos_v1';
     var PEDIDO_NATY_LEGACY_ID = 'mp-naty-pedido-20261017';
     var FECHA_PEDIDO_NATY_LEGACY = '2026-10-17';
+    var PEDIDO_NATY_2_ID = 'mp-naty-pedido-20261029';
+    var FECHA_PEDIDO_NATY_2 = '2026-10-29';
     var KEY_LEGACY_NATY_VENTA_MARCADA = 'obebe_mayoreo_naty_1710_venta_marcada_v1';
 
     function leerJson(key, fallback) {
@@ -84,9 +86,14 @@
 
     function pedidosForCliente(clienteKey) {
         asegurarPedidoNatyLegacy20261017();
+        asegurarPedidoNatySegundo20261029();
         var k = claveCliente(clienteKey);
         return getPedidos()
-            .filter(function (p) { return claveCliente(p.clienteKey) === k && esPedidoVisibleLista(p); })
+            .filter(function (p) {
+                if (claveCliente(p.clienteKey) !== k) return false;
+                if (p.estado === 'combinado') return true;
+                return esPedidoVisibleLista(p);
+            })
             .sort(function (a, b) { return (b.creadoEn || 0) - (a.creadoEn || 0); });
     }
 
@@ -396,58 +403,78 @@
         return p;
     }
 
+    function claveContenidoItemPedido(it) {
+        return [
+            String(parseInt(it.ref, 10) || 0),
+            norm(it.nombre),
+            norm(it.talla),
+            norm(it.color),
+            norm(it.marca)
+        ].join('::');
+    }
+
+    function pedidoTeniaRespuestasObebe(items) {
+        return (items || []).some(function (it) {
+            return it.disponibilidad === 'si' || it.disponibilidad === 'no';
+        });
+    }
+
     /** Conserva Sí hay / No hay (y comentarios) en líneas que ya existían; solo líneas nuevas quedan sin revisar. */
     function fusionarItemsTrasEdicionCliente(prevItems, nextItems) {
         var byId = {};
         var byInv = {};
+        var byClave = {};
         (prevItems || []).forEach(function (it) {
             if (it.itemId) byId[it.itemId] = it;
             if (it.inventarioId) byInv[it.inventarioId] = it;
+            var ck = claveContenidoItemPedido(it);
+            if (ck && ck !== '0::::') byClave[ck] = it;
         });
         return (nextItems || []).map(function (it) {
             var prev = (it.itemId && byId[it.itemId]) ||
-                (it.inventarioId && byInv[it.inventarioId]) || null;
+                (it.inventarioId && byInv[it.inventarioId]) ||
+                byClave[claveContenidoItemPedido(it)] || null;
             if (!prev) {
                 it.disponibilidad = null;
-                it.comentarioObebe = '';
+                it.comentarioObebe = it.comentarioObebe || '';
                 it.clienteConfirmoNoHay = false;
                 it.stockObebeAplicado = false;
                 return it;
             }
             it.itemId = prev.itemId;
+            if (!it.inventarioId && prev.inventarioId) it.inventarioId = prev.inventarioId;
             if (prev.disponibilidad === 'si' || prev.disponibilidad === 'no') {
                 it.disponibilidad = prev.disponibilidad;
                 it.comentarioObebe = prev.comentarioObebe || '';
                 it.clienteConfirmoNoHay = !!prev.clienteConfirmoNoHay;
                 it.stockObebeAplicado = !!prev.stockObebeAplicado;
             } else {
-                it.disponibilidad = null;
-                it.comentarioObebe = prev.comentarioObebe || '';
-                it.clienteConfirmoNoHay = false;
-                it.stockObebeAplicado = false;
+                if (it.disponibilidad !== 'si' && it.disponibilidad !== 'no') it.disponibilidad = null;
+                it.comentarioObebe = (it.comentarioObebe || prev.comentarioObebe) || '';
+                it.clienteConfirmoNoHay = !!prev.clienteConfirmoNoHay;
+                it.stockObebeAplicado = !!prev.stockObebeAplicado;
             }
             return it;
         });
     }
 
-    function actualizarPedidoCliente(pedidoId, clienteKey, items) {
-        var hit = findPedido(pedidoId);
-        if (hit.idx < 0) return { ok: false, error: 'Pedido no encontrado.' };
-        var p = hit.pedido;
-        if (claveCliente(p.clienteKey) !== claveCliente(clienteKey)) {
-            return { ok: false, error: 'No puedes editar este pedido.' };
-        }
-        if (p.estado === 'cancelado') {
-            return { ok: false, error: 'Este pedido está cancelado.' };
-        }
-        if (p.ventaRetailRegistradaEn) {
-            return { ok: false, error: 'Ya confirmaste la venta; no puedes editar el pedido.' };
-        }
-        var prevItems = (p.items || []).slice();
-        var estabaRevisado = p.estado === 'revisado';
-        items = normalizarItems(items || []);
-        if (!items.length) return { ok: false, error: 'Agrega al menos un artículo.' };
-        if (estabaRevisado) {
+    function itemsQuitadosAlEditarPedido(prevItems, nextItems) {
+        var aun = {};
+        (nextItems || []).forEach(function (it) {
+            if (it.itemId) aun[it.itemId] = true;
+            if (it.inventarioId) aun['inv:' + it.inventarioId] = true;
+        });
+        return (prevItems || []).filter(function (it) {
+            if (it.itemId && aun[it.itemId]) return false;
+            if (it.inventarioId && aun['inv:' + it.inventarioId]) return false;
+            return true;
+        });
+    }
+
+    function aplicarActualizacionPedidoCliente(hit, p, prevItems, items, opts) {
+        opts = opts || {};
+        var conservarMarcas = !!(opts.conservarMarcas);
+        if (conservarMarcas) {
             items = fusionarItemsTrasEdicionCliente(prevItems, items);
         } else {
             items.forEach(function (it) {
@@ -457,12 +484,12 @@
                 it.stockObebeAplicado = false;
             });
         }
-        p.items = items;
+        p.items = normalizarItems(items);
         recalcTotalesPedido(p);
         if (todosItemsMarcados(p)) {
             p.estado = 'revisado';
             if (!p.revisadoEn) p.revisadoEn = Date.now();
-        } else if (estabaRevisado || p.estado === 'en_revision') {
+        } else if (conservarMarcas || p.estado === 'en_revision') {
             p.estado = 'en_revision';
         } else {
             p.estado = 'pendiente';
@@ -471,7 +498,54 @@
         hit.todos[hit.idx] = p;
         setPedidos(hit.todos);
         bajarEarlyAccessPorItemsPedido(items);
-        return { ok: true, pedido: p, pendienteRevision: !todosItemsMarcados(p) };
+        return {
+            ok: true,
+            pedido: p,
+            pendienteRevision: !todosItemsMarcados(p)
+        };
+    }
+
+    function actualizarPedidoCliente(pedidoId, clienteKey, items) {
+        var hit = findPedido(pedidoId);
+        if (hit.idx < 0) return Promise.resolve({ ok: false, error: 'Pedido no encontrado.' });
+        var p = hit.pedido;
+        if (claveCliente(p.clienteKey) !== claveCliente(clienteKey)) {
+            return Promise.resolve({ ok: false, error: 'No puedes editar este pedido.' });
+        }
+        if (p.estado === 'cancelado') {
+            return Promise.resolve({ ok: false, error: 'Este pedido está cancelado.' });
+        }
+        if (p.ventaRetailRegistradaEn) {
+            return Promise.resolve({ ok: false, error: 'Ya confirmaste la venta; no puedes editar el pedido.' });
+        }
+        var prevItems = (p.items || []).slice();
+        var conservarMarcas = p.estado === 'revisado' || p.estado === 'en_revision' ||
+            pedidoTeniaRespuestasObebe(prevItems);
+        if (!items || !items.length) return Promise.resolve({ ok: false, error: 'Agrega al menos un artículo.' });
+
+        var quitados = itemsQuitadosAlEditarPedido(prevItems, items);
+        var restaurarStock = quitados.filter(function (it) {
+            if (it.disponibilidad !== 'si') return false;
+            return !!(it.stockObebeAplicado || p.stockInventarioObebeAplicado);
+        });
+
+        function finalizar(resStock) {
+            var out = aplicarActualizacionPedidoCliente(hit, p, prevItems, items, { conservarMarcas: conservarMarcas });
+            if (resStock && resStock.count > 0) {
+                out.stockObebeRestaurado = resStock.count;
+            }
+            return out;
+        }
+
+        if (restaurarStock.length && global.ObebeAdminData &&
+            ObebeAdminData.revertirStockItemsPedidoMayoreo) {
+            return ObebeAdminData.revertirStockItemsPedidoMayoreo(restaurarStock, { silent: true })
+                .then(finalizar)
+                .catch(function (e) {
+                    return { ok: false, error: (e && e.message) || 'No se pudo devolver stock en inventario Obebe.' };
+                });
+        }
+        return Promise.resolve(finalizar({ ok: true, omitido: true }));
     }
 
     function timestampLocal(y, m, d) {
@@ -552,6 +626,62 @@
         else todos.unshift(pedido);
         setPedidos(todos);
         marcarVentaConfirmadaPedidoLegacyNaty1710();
+        return { ok: true, pedido: pedido, items: items.length };
+    }
+
+    /** 2.º pedido Naty (29/10/2026, ~19 pzas.) si se perdió del listado pero sigue en inventario mayoreo. */
+    function asegurarPedidoNatySegundo20261029() {
+        var STORE = global.ObebeMayoreoStore;
+        if (!STORE || !STORE.getLineasForCliente) {
+            return { ok: true, omitido: true, razon: 'sin-store' };
+        }
+        var todos = getPedidos();
+        var enFecha = todos.filter(function (p) {
+            return claveCliente(p.clienteKey) === 'naty' &&
+                fechaLocalIsoDesdeMs(p.creadoEn) === FECHA_PEDIDO_NATY_2;
+        });
+        if (enFecha.length > 0) return { ok: true, omitido: true, yaExiste: enFecha.length };
+        var lineas = STORE.getLineasForCliente('naty').filter(function (l) {
+            return String(l.fechaStockIso || '') === FECHA_PEDIDO_NATY_2;
+        });
+        if (!lineas.length) {
+            return { ok: true, omitido: true, sinLineas: true };
+        }
+        var items = lineas.map(function (l) {
+            return itemDesdeLineaInventarioNaty(l);
+        });
+        var unidades = 0;
+        var totalRetail = 0;
+        var totalCliente = 0;
+        items.forEach(function (it) {
+            var q = it.cantidad || 1;
+            unidades += q;
+            totalRetail += (it.precioRetail || 0) * q;
+            totalCliente += (it.precioCliente || 0) * q;
+        });
+        var ts = timestampLocal(2026, 10, 29);
+        var idx = todos.findIndex(function (p) { return p.id === PEDIDO_NATY_2_ID; });
+        var existing = idx >= 0 ? todos[idx] : null;
+        var pedido = {
+            id: PEDIDO_NATY_2_ID,
+            clienteKey: 'naty',
+            clienteNombre: 'NATY',
+            creadoEn: ts,
+            estado: 'revisado',
+            revisadoEn: ts,
+            unidades: unidades,
+            totalRetail: totalRetail,
+            totalCliente: totalCliente,
+            items: normalizarItems(items),
+            inventarioAplicado: !!(existing && existing.inventarioAplicado),
+            inventarioAplicadoEn: existing && existing.inventarioAplicadoEn,
+            stockInventarioObebeAplicado: !!(existing && existing.stockInventarioObebeAplicado),
+            ventaRetailRegistradaEn: existing ? existing.ventaRetailRegistradaEn : null,
+            legacyDesdeInventario: true
+        };
+        if (idx >= 0) todos[idx] = pedido;
+        else todos.unshift(pedido);
+        setPedidos(todos);
         return { ok: true, pedido: pedido, items: items.length };
     }
 
@@ -921,10 +1051,10 @@
                 });
             }
         }
-        if (hit.pedido.id === PEDIDO_NATY_LEGACY_ID) {
+        if (hit.pedido.id === PEDIDO_NATY_LEGACY_ID || hit.pedido.id === PEDIDO_NATY_2_ID) {
             return Promise.resolve({
                 ok: false,
-                error: 'Este pedido histórico (17/10/2026) se regenera desde el inventario NATY. Quita artículos en Inventario mayoreo si ya no aplican.'
+                error: 'Este pedido histórico se regenera desde el inventario NATY. Quita artículos en Inventario mayoreo si ya no aplican.'
             });
         }
         var p = hit.pedido;
@@ -974,6 +1104,7 @@
         eliminarItemPedido: eliminarItemPedido,
         marcarClienteVioAvisoPedido: marcarClienteVioAvisoPedido,
         asegurarPedidoNatyLegacy20261017: asegurarPedidoNatyLegacy20261017,
+        asegurarPedidoNatySegundo20261029: asegurarPedidoNatySegundo20261029,
         quitarInventarioNatySegundoPedido2910: quitarInventarioNatySegundoPedido2910,
         revertirInventarioNatyPedidosSinVentaConfirmada: revertirInventarioNatyPedidosSinVentaConfirmada,
         pedidosNatyEnFechaCreado: pedidosNatyEnFechaCreado,

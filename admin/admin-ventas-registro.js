@@ -396,12 +396,14 @@
     }
 
     function htmlPrecioVentaCelda(v) {
-        var cobrado = ObebeAdminData.formatoMoney(v.precio);
+        var cobradoN = Number(v.precio) || 0;
+        var cobrado = ObebeAdminData.formatoMoney(cobradoN);
         var orig = Number(v.precioOriginal) || 0;
-        var dif = orig > 0 && Math.abs(orig - Number(v.precio || 0)) >= 0.5;
+        var dif = orig > 0 && Math.abs(orig - cobradoN) >= 0.01;
         if (!dif) return '<td>' + cobrado + '</td>';
-        return '<td><button type="button" class="admin-venta-precio-btn" data-precio="' + esc(String(v.precio)) +
-            '" data-orig="' + esc(String(orig)) + '" title="Ver precio original">' + cobrado + '</button></td>';
+        var titulo = opts.edicionMayoreo ? 'Ver precio de referencia' : 'Ver precio original';
+        return '<td><button type="button" class="admin-venta-precio-btn" data-precio="' + esc(String(cobradoN)) +
+            '" data-orig="' + esc(String(orig)) + '" title="' + esc(titulo) + '">' + cobrado + '</button></td>';
     }
 
     function findVenta(id) {
@@ -413,11 +415,14 @@
     function onTableClick(ev) {
         var precioBtn = ev.target.closest('.admin-venta-precio-btn');
         if (precioBtn) {
+            ev.preventDefault();
+            ev.stopPropagation();
             var origN = parseFloat(precioBtn.getAttribute('data-orig'));
             var cobN = parseFloat(precioBtn.getAttribute('data-precio'));
+            var lblOrig = opts.edicionMayoreo ? 'Precio de referencia' : 'Precio original';
             ObebeAdminDialog.alert({
                 title: 'Precio de la venta',
-                message: 'Precio original: ' + ObebeAdminData.formatoMoney(origN) +
+                message: lblOrig + ': ' + ObebeAdminData.formatoMoney(origN) +
                     '\nPrecio registrado: ' + ObebeAdminData.formatoMoney(cobN),
                 confirmText: 'Entendido'
             });

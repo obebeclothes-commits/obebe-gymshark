@@ -199,6 +199,31 @@
         return String(Math.round(n * 100) / 100);
     }
 
+    function parsePrecioMayoreo(v) {
+        var n = parseFloat(String(v == null ? '' : v).replace(/[^\d.-]/g, ''));
+        return isNaN(n) ? 0 : n;
+    }
+
+    /** Precio retail en inventario Obebe (referencia en columna M del panel Naty). */
+    function valorRetailInventarioObebe(hit) {
+        if (!hit) return 0;
+        var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
+        var iPrecio = idx.precio != null ? idx.precio : 7;
+        if (hit.precio != null && String(hit.precio).trim() !== '') {
+            return parsePrecioMayoreo(hit.precio);
+        }
+        if (hit.celdas && hit.celdas[iPreco] != null && String(hit.celdas[iPrecio]).trim() !== '') {
+            return parsePrecioMayoreo(hit.celdas[iPrecio]);
+        }
+        return 0;
+    }
+
+    /** Precio que Naty captura en su inventario (H); vacío/0 si ella no lo guardó aún. */
+    function precioVentaNatyDesdeLinea(l) {
+        if (!l || !l.precioVentaNatyManual) return 0;
+        return parsePrecioMayoreo(l.precioVentaPlaneado);
+    }
+
     function filasInventarioDesdeMayoreoCliente(clienteKey, filasInv) {
         var numCols = ObebeAdminData.INVENTARIO_NUM_COLS || 25;
         var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
@@ -221,13 +246,8 @@
             var stock = l.cantidadDisponible != null ? l.cantidadDisponible : (l.cantidad || 0);
             var costoBruto = l.precioMayoreo != null ? l.precioMayoreo : (row.precioMayoreo || 0);
             var hitObebe = buscarFilaObebeParaMayoreo(row, filasInv);
-            var costoNeto = row.precioRetail || 0;
-            if (!costoNeto && hitObebe) {
-                costoNeto = hitObebe.precio || (hitObebe.celdas && idx.precio != null
-                    ? parseFloat(String(hitObebe.celdas[idx.precio] || '').replace(/[^\d.-]/g, '')) || 0
-                    : 0);
-            }
-            var precioRetailNaty = 0;
+            var precioRetailNaty = precioVentaNatyDesdeLinea(l);
+            var costoNeto = valorRetailInventarioObebe(hitObebe);
             var ref = ObebeAdminData.refParaArticulo
                 ? (ObebeAdminData.refParaArticulo(row) || 0)
                 : 0;
@@ -249,8 +269,8 @@
             } else {
                 segmento = inferirSegmentoMayoreo(row);
             }
-            var valorLinea = 0;
-            var refMargen = costoNeto;
+            var valorLinea = precioRetailNaty > 0 && stock > 0 ? precioRetailNaty * stock : 0;
+            var refMargen = precioRetailNaty > 0 ? precioRetailNaty : costoNeto;
             var margen = margenRegla3(costoBruto, refMargen);
             var celdas = [];
             var c;
@@ -262,8 +282,8 @@
             celdas[iColor] = row.color || '';
             celdas[iTipo] = row.tipo || '';
             celdas[iMarca] = row.marca || '';
-            celdas[iPrecio] = '';
-            celdas[iTotal] = valorLinea > 0 ? String(valorLinea) : '';
+            celdas[iPrecio] = precioRetailNaty > 0 ? formatoCeldaPrecioInv(precioRetailNaty) : '';
+            celdas[iTotal] = valorLinea > 0 ? formatoCeldaPrecioInv(valorLinea) : '';
             celdas[iCostoBruto] = formatoCeldaPrecioInv(costoBruto);
             celdas[iCostoNeto] = formatoCeldaPrecioInv(costoNeto);
             celdas[iMargen] = margen;
@@ -278,6 +298,7 @@
                 tipo: row.tipo || '',
                 marca: row.marca || '',
                 precio: precioRetailNaty,
+                precioVentaPlaneado: precioRetailNaty,
                 valorLinea: valorLinea,
                 segmento: segmento,
                 ubicacion: '',
@@ -345,7 +366,11 @@
         if (!r1.ok) return Promise.resolve(r1);
         var r2 = ObebeMayoreoStore.actualizarLineaEnVenta(ventaId, clienteKey, li, {
             nombre: campos.nombre,
-            precio: campos.precio
+            precio: campos.precio,
+            tipo: campos.tipo,
+            talla: campos.talla,
+            color: campos.color,
+            segmento: campos.segmento
         });
         if (!r2.ok) return Promise.resolve(r2);
         if (campos.cliente && ObebeMayoreoStore.actualizarContactoComprador && ventaObj.cliente) {
@@ -376,7 +401,58 @@
         );
     }
 
-    function ventasMayoreoLineasRetail(clienteKey) {
+    function detalleArticuloLineaVenta(l, clienteKey) {
+        var talla = String(l.talla || '').trim();
+        var color = String(l.color || '').trim();
+        var tipo = String(l.tipo || '').trim();
+        var marca = String(l.marca || '').trim();
+        var segmento = String(l.segmento || '').trim();
+        if (l.lineaId) {
+            var hit = ObebeMayoreoStore.getLineasForCliente(clienteKey).find(function (x) {
+                return x.id === l.lineaId;
+            });
+            if (hit) {
+                if (!talla) talla = String(hit.talla || '').trim();
+                if (!color) color = String(hit.color || '').trim();
+                if (!tipo) tipo = String(hit.tipo || '').trim();
+                if (!marca) marca = String(hit.marca || '').trim();
+            }
+        }
+        if (!segmento) {
+            segmento = inferirSegmentoMayoreo({ tipo: tipo, nombre: l.nombre || '' });
+        }
+        return { talla: talla, color: color, tipo: tipo, marca: marca, segmento: segmento };
+    }
+
+    function precioOriginalSubtotalLineaVenta(l, clienteKey, filasInv) {
+        var qty = l.cantidad || 1;
+        var unit = parsePrecioMayoreo(l.precioUnitario);
+        var sub = l.subtotal != null ? parsePrecioMayoreo(l.subtotal) : unit * qty;
+        var origU = l.precioOriginal != null ? parsePrecioMayoreo(l.precioOriginal) : 0;
+        if (origU > 0) {
+            var origSub = origU * qty;
+            if (Math.abs(origSub - sub) >= 0.01) return origSub;
+        }
+        var retailU = 0;
+        if (l.lineaId) {
+            var hitLinea = ObebeMayoreoStore.getLineasForCliente(clienteKey).find(function (x) {
+                return x.id === l.lineaId;
+            });
+            if (hitLinea) {
+                var row = ObebeMayoreoStore.lineaToMayoreoRow(hitLinea);
+                var hitObebe = buscarFilaObebeParaMayoreo(row, filasInv || []);
+                retailU = valorRetailInventarioObebe(hitObebe);
+            }
+        }
+        if (retailU > 0 && Math.abs(retailU * qty - sub) >= 0.01) return retailU * qty;
+        if (origU > 0) return origU * qty;
+        return 0;
+    }
+
+    function ventasMayoreoLineasRetail(clienteKey, filasInv) {
+        if (!filasInv && global.ObebeAdminData && ObebeAdminData.getEstado) {
+            filasInv = ObebeAdminData.getEstado().filas || [];
+        }
         var ventas = ventasOrdenRecientesMayoreo(ObebeMayoreoStore.resumenVentas(clienteKey).ventas || []);
         var out = [];
         ventas.forEach(function (v) {
@@ -391,16 +467,19 @@
                 var qty = l.cantidad || 1;
                 var unit = l.precioUnitario || 0;
                 var sub = l.subtotal != null ? l.subtotal : unit * qty;
+                var det = detalleArticuloLineaVenta(l, clienteKey);
+                var precioOrigSub = precioOriginalSubtotalLineaVenta(l, clienteKey, filasInv);
                 out.push({
                     filaSheet: idLineaVentaMayoreo(v.id, li, 0),
                     fechaIso: v.fechaIso,
                     fechaRaw: fechaRaw,
                     nombre: l.nombre || '',
-                    tipo: '',
+                    tipo: det.tipo,
                     precio: sub,
-                    talla: '',
-                    color: '',
-                    segmento: 'Hombre',
+                    precioOriginal: precioOrigSub,
+                    talla: det.talla,
+                    color: det.color,
+                    segmento: det.segmento || 'Hombre',
                     cliente: v.comprador || '',
                     vendedor: 'NATY',
                     cuenta: cuentaLbl,
@@ -501,9 +580,8 @@
                 if (!ref && hit && hit.ref) ref = hit.ref;
                 var img = imagenUrlParaLineaMayoreo(l, row, filasInv);
                 var seg = hit && hit.segmento ? hit.segmento : inferirSegmentoMayoreo(row);
-                var precioVenta = l.precioVentaPlaneado > 0
-                    ? l.precioVentaPlaneado
-                    : (row.precioVentaPlaneado > 0 ? row.precioVentaPlaneado : (row.precioRetail || 0));
+                var precioNaty = precioVentaNatyDesdeLinea(l);
+                var retailObebe = valorRetailInventarioObebe(hit);
                 return {
                     ref: ref,
                     nombre: row.nombre,
@@ -512,7 +590,11 @@
                     marca: row.marca,
                     tipo: row.tipo,
                     stock: l.cantidadDisponible,
-                    precio: precioVenta,
+                    precio: precioNaty,
+                    precioVentaPlaneado: precioNaty,
+                    precioVentaNatyManual: !!l.precioVentaNatyManual,
+                    precioRetailObebe: retailObebe,
+                    precioMayoreo: parsePrecioMayoreo(l.precioMayoreo) || parsePrecioMayoreo(row.precioMayoreo),
                     segmento: seg,
                     fotoUrl: img,
                     imagenUrl: img,
@@ -544,7 +626,9 @@
                 v.comprador,
                 v.metodoPago,
                 v.fechaIso,
-                (v.lineas || []).map(function (l) { return l.nombre; }).join(' ')
+                (v.lineas || []).map(function (l) {
+                    return [l.nombre, l.tipo, l.talla, l.color, l.marca].join(' ');
+                }).join(' ')
             ].join(' ').toLowerCase();
             return blob.indexOf(q) >= 0;
         });
@@ -577,6 +661,18 @@
         opts = opts || {};
         var clienteKey = opts.clienteKey || 'naty';
         container.addEventListener('click', function (ev) {
+            var precioBtn = ev.target.closest('.admin-venta-precio-btn');
+            if (precioBtn) {
+                var origN = parseFloat(precioBtn.getAttribute('data-orig'));
+                var cobN = parseFloat(precioBtn.getAttribute('data-precio'));
+                ObebeAdminDialog.alert({
+                    title: 'Precio de la venta',
+                    message: 'Precio original: ' + fmtMoney(origN) +
+                        '\nPrecio registrado: ' + fmtMoney(cobN),
+                    confirmText: 'Entendido'
+                });
+                return;
+            }
             var lapiz = ev.target.closest('.admin-venta-hist-lapiz');
             if (lapiz) {
                 abrirEdicionHistorialCampo(lapiz.getAttribute('data-venta-id'), lapiz.getAttribute('data-field'));
@@ -743,12 +839,25 @@
             '</div></div></td>';
     }
 
+    function htmlPrecioLineaHistorialMayoreo(l) {
+        var qty = l.cantidad || 1;
+        var unit = l.precioUnitario || 0;
+        var sub = l.subtotal != null ? l.subtotal : unit * qty;
+        var origU = l.precioOriginal != null ? parseFloat(l.precioOriginal) : unit;
+        if (isNaN(origU)) origU = unit;
+        var origSub = origU * qty;
+        var dif = origSub > 0 && Math.abs(origSub - sub) >= 0.5;
+        if (!dif) return '(' + fmtMoney(sub) + ')';
+        return '(<button type="button" class="admin-venta-precio-btn" data-precio="' + esc(String(sub)) +
+            '" data-orig="' + esc(String(origSub)) + '" title="Ver precio original">' + fmtMoney(sub) + '</button>)';
+    }
+
     function panelHistorial(ventas, clienteKey, filasInv, titulo, sinLimite, soloTabla) {
         titulo = titulo || 'Historial';
         var lista = sinLimite ? (ventas || []) : (ventas || []).slice(0, 50);
         var rows = lista.map(function (v) {
             var arts = (v.lineas || []).map(function (l) {
-                return esc(l.nombre) + ' ×' + l.cantidad + ' (' + fmtMoney(l.subtotal) + ')';
+                return esc(l.nombre) + ' ×' + l.cantidad + ' ' + htmlPrecioLineaHistorialMayoreo(l);
             }).join('<br>');
             var fotos = stripFotosHistorial(v, clienteKey, filasInv);
             var fechaVal = esc(v.fechaIso || '');
@@ -841,6 +950,16 @@
         mountUltimasVentas: mountUltimasVentas,
         resumenUiVentasMayoreo: resumenUiVentasMayoreo,
         filasRetailDesdeInventarioMayoreo: filasRetailDesdeInventarioMayoreo,
+        valorRetailInventarioObebe: valorRetailInventarioObebe,
+        precioVentaNatyDesdeLinea: precioVentaNatyDesdeLinea,
+        precioVentaNatyDesdeFila: function (r) {
+            if (!r) return 0;
+            if (!r.precioVentaNatyManual) return 0;
+            return precioVentaNatyDesdeLinea({
+                precioVentaPlaneado: r.precioVentaPlaneado,
+                precioVentaNatyManual: true
+            });
+        },
         filasInventarioDesdeMayoreoCliente: filasInventarioDesdeMayoreoCliente,
         COLS_INV_OCULTAS_MAYOREO: COLS_INV_OCULTAS_MAYOREO,
         margenRegla3: margenRegla3,
