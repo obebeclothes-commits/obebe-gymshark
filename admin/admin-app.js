@@ -393,9 +393,8 @@
         ObebeAdminData.cargarInventario(false).then(function (inv) {
             if (!datosCache) datosCache = baseDatosMayoreoCliente(inv);
             else datosCache.filas = inv.filas || [];
-            if (vistaActual === 'mayoreo' || vistaActual === 'ventas_mayoreo' ||
-                vistaActual === 'registrar_venta_mayoreo' || vistaActual === 'dashboard_mayoreo' ||
-                vistaActual === 'pedidos_mayoreo') {
+            if (vistaActual === 'ventas_mayoreo' || vistaActual === 'registrar_venta_mayoreo' ||
+                vistaActual === 'dashboard_mayoreo' || vistaActual === 'pedidos_mayoreo') {
                 renderModulo(vistaActual);
             }
         }).catch(function () { /* fotos opcionales */ });
@@ -786,7 +785,6 @@
             );
         }
         function onReloadInvMayoreo() {
-            enriquecerInventarioNatyEnFondo();
             filasInv = datosCache ? (datosCache.filas || []) : [];
             filas = ObebeAdminMayoreoVentas.filasInventarioDesdeMayoreoCliente(key, filasInv);
             var mount = document.getElementById('adminInvMount');
@@ -809,8 +807,14 @@
     }
 
     function renderDashboard() {
+        if (!datosCache || !datosCache.resumen) {
+            elContent.innerHTML = '<div class="admin-loading">Cargando dashboard…</div>';
+            return;
+        }
         var r = datosCache.resumen;
         var sv = datosCache.resumenVentas || {};
+        if (!r.porMarca) r.porMarca = {};
+        if (!r.porSegmento) r.porSegmento = { Hombre: 0, Mujer: 0 };
         var marcasOrden = Object.keys(r.porMarca).map(function (k) {
             return { key: k, val: r.porMarca[k] };
         }).sort(function (a, b) { return b.val - a.val; });
@@ -1382,7 +1386,10 @@
         if (ObebeAdminAuth.esMayoreoCliente(user)) {
             datosCache = baseDatosMayoreoCliente({ filas: [] });
             irModulo(inicio);
-            cargarDatos(false).then(function () {
+            var syncMay = (window.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.syncMayoreoNaty)
+                ? ObebeAdminMayoreoCloud.syncMayoreoNaty()
+                : Promise.resolve({ ok: false });
+            Promise.all([cargarDatos(false), syncMay]).then(function () {
                 renderModulo(vistaActual);
             }).catch(function () {
                 renderModulo(vistaActual);
@@ -1396,6 +1403,9 @@
                 if (ObebeAdminModulosCloud.syncCotizador) {
                     ObebeAdminModulosCloud.syncCotizador().catch(function () { /* ignore */ });
                 }
+            }
+            if (window.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.syncMayoreoNaty) {
+                ObebeAdminMayoreoCloud.syncMayoreoNaty().catch(function () { /* ignore */ });
             }
             irModulo(inicio);
             if (!d || !(d.filas || []).length) {

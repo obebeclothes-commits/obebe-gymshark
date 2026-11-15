@@ -859,7 +859,13 @@ async function getDbStats() {
   };
 }
 
-const MODULO_BLOB_KEYS = new Set(["apartados", "entregas", "sucursales", "cotizador"]);
+const MODULO_BLOB_KEYS = new Set([
+  "apartados",
+  "entregas",
+  "sucursales",
+  "cotizador",
+  "mayoreo_naty",
+]);
 
 const COTIZADOR_DEFAULTS = {
   factorUsd: 1.085,

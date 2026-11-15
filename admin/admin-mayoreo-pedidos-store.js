@@ -65,6 +65,9 @@
 
     function setPedidos(arr) {
         guardarJson(KEY, arr || []);
+        if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
+            ObebeAdminMayoreoCloud.notifyMayoreoNatySaved();
+        }
     }
 
     function findPedido(pedidoId) {
@@ -99,6 +102,7 @@
 
     function listarTodos(filtroClienteKey) {
         asegurarPedidoNatyLegacy20261017();
+        asegurarPedidoNatySegundo20261029();
         var list = getPedidos().filter(esPedidoVisibleLista).slice().sort(function (a, b) {
             return (b.creadoEn || 0) - (a.creadoEn || 0);
         });
@@ -570,6 +574,70 @@
         };
     }
 
+    function fechaStockLineaNaty(l) {
+        var f = String((l && l.fechaStockIso) || '').trim();
+        if (!f) return '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(f)) return f;
+        var m = f.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (m) {
+            return m[3] + '-' + (m[2].length < 2 ? '0' : '') + m[2] +
+                '-' + (m[1].length < 2 ? '0' : '') + m[1];
+        }
+        return f;
+    }
+
+    /** Líneas del 2.º lote Naty (29/10/2026); incluye ids de pedido si la fecha se migró mal. */
+    function lineasInventarioPedidoNaty2910(STORE) {
+        var todas = STORE.getLineasForCliente('naty');
+        var porFecha = todas.filter(function (l) {
+            return fechaStockLineaNaty(l) === FECHA_PEDIDO_NATY_2;
+        });
+        if (porFecha.length) return porFecha;
+        return todas.filter(function (l) {
+            if (fechaStockLineaNaty(l) === FECHA_PEDIDO_NATY_LEGACY) return false;
+            var id = String(l.id || '');
+            return id.indexOf('::ped::') >= 0;
+        });
+    }
+
+    function conservarPedidoNaty2DesdeHistorial(todos) {
+        var idx = todos.findIndex(function (p) { return p.id === PEDIDO_NATY_2_ID; });
+        if (idx >= 0 && (todos[idx].items || []).length) {
+            return { ok: true, pedido: todos[idx], conservado: true };
+        }
+        var candidatos = pedidosNatyEnFechaCreado(FECHA_PEDIDO_NATY_2).filter(function (p) {
+            return p.id !== PEDIDO_NATY_LEGACY_ID && (p.items || []).length >= 5;
+        });
+        if (!candidatos.length) return null;
+        candidatos.sort(function (a, b) {
+            return (b.items || []).length - (a.items || []).length;
+        });
+        var src = candidatos[0];
+        var prevByInv = {};
+        (src.items || []).forEach(function (it) {
+            if (it.inventarioId) prevByInv[it.inventarioId] = it.itemId;
+        });
+        var items = (src.items || []).map(function (it) {
+            var copy = Object.assign({}, it);
+            if (it.inventarioId && prevByInv[it.inventarioId]) {
+                copy.itemId = prevByInv[it.inventarioId];
+            }
+            return copy;
+        });
+        var pedido = Object.assign({}, src, {
+            id: PEDIDO_NATY_2_ID,
+            clienteKey: 'naty',
+            clienteNombre: 'NATY',
+            creadoEn: src.creadoEn || timestampLocal(2026, 10, 29),
+            items: normalizarItems(items),
+            legacyDesdeInventario: true
+        });
+        if (idx >= 0) todos[idx] = pedido;
+        else todos.unshift(pedido);
+        setPedidos(todos);
+        return { ok: true, pedido: pedido, restauradoDesde: src.id, items: items.length };
+    }
+
     /** Pedido histórico NATY (17/10/2026) reconstruido desde inventario local con esa fecha. */
     function asegurarPedidoNatyLegacy20261017() {
         var STORE = global.ObebeMayoreoStore;
@@ -629,26 +697,30 @@
         return { ok: true, pedido: pedido, items: items.length };
     }
 
-    /** 2.º pedido Naty (29/10/2026, ~19 pzas.) si se perdió del listado pero sigue en inventario mayoreo. */
+    /** 2.º pedido Naty (29/10/2026, ~18 pzas.) reconstruido desde inventario o historial local. */
     function asegurarPedidoNatySegundo20261029() {
         var STORE = global.ObebeMayoreoStore;
         if (!STORE || !STORE.getLineasForCliente) {
             return { ok: true, omitido: true, razon: 'sin-store' };
         }
-        var todos = getPedidos();
-        var enFecha = todos.filter(function (p) {
-            return claveCliente(p.clienteKey) === 'naty' &&
-                fechaLocalIsoDesdeMs(p.creadoEn) === FECHA_PEDIDO_NATY_2;
-        });
-        if (enFecha.length > 0) return { ok: true, omitido: true, yaExiste: enFecha.length };
-        var lineas = STORE.getLineasForCliente('naty').filter(function (l) {
-            return String(l.fechaStockIso || '') === FECHA_PEDIDO_NATY_2;
-        });
+        var todos = leerJson(KEY, []);
+        if (!Array.isArray(todos)) todos = [];
+        var lineas = lineasInventarioPedidoNaty2910(STORE);
         if (!lineas.length) {
+            var conservado = conservarPedidoNaty2DesdeHistorial(todos);
+            if (conservado) return conservado;
             return { ok: true, omitido: true, sinLineas: true };
         }
+        var idx = todos.findIndex(function (p) { return p.id === PEDIDO_NATY_2_ID; });
+        var existing = idx >= 0 ? todos[idx] : null;
+        var prevByInv = {};
+        if (existing && existing.items) {
+            existing.items.forEach(function (it) {
+                if (it.inventarioId) prevByInv[it.inventarioId] = it.itemId;
+            });
+        }
         var items = lineas.map(function (l) {
-            return itemDesdeLineaInventarioNaty(l);
+            return itemDesdeLineaInventarioNaty(l, prevByInv[l.id]);
         });
         var unidades = 0;
         var totalRetail = 0;
@@ -660,15 +732,13 @@
             totalCliente += (it.precioCliente || 0) * q;
         });
         var ts = timestampLocal(2026, 10, 29);
-        var idx = todos.findIndex(function (p) { return p.id === PEDIDO_NATY_2_ID; });
-        var existing = idx >= 0 ? todos[idx] : null;
         var pedido = {
             id: PEDIDO_NATY_2_ID,
             clienteKey: 'naty',
             clienteNombre: 'NATY',
             creadoEn: ts,
             estado: 'revisado',
-            revisadoEn: ts,
+            revisadoEn: (existing && existing.revisadoEn) || ts,
             unidades: unidades,
             totalRetail: totalRetail,
             totalCliente: totalCliente,
@@ -679,6 +749,13 @@
             ventaRetailRegistradaEn: existing ? existing.ventaRetailRegistradaEn : null,
             legacyDesdeInventario: true
         };
+        (existing && existing.items || []).forEach(function (itPrev) {
+            if (!itPrev.itemId || itPrev.disponibilidad == null) return;
+            var hit = pedido.items.find(function (it) {
+                return it.inventarioId && it.inventarioId === itPrev.inventarioId;
+            });
+            if (hit) hit.disponibilidad = itPrev.disponibilidad;
+        });
         if (idx >= 0) todos[idx] = pedido;
         else todos.unshift(pedido);
         setPedidos(todos);

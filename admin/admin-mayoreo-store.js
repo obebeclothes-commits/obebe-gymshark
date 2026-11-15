@@ -68,6 +68,9 @@
 
     function setLineas(arr) {
         guardarJson(KEY_LINEAS, arr || []);
+        if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
+            ObebeAdminMayoreoCloud.notifyMayoreoNatySaved();
+        }
     }
 
     function getVentas() {
@@ -76,6 +79,9 @@
 
     function setVentas(arr) {
         guardarJson(KEY_VENTAS, arr || []);
+        if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
+            ObebeAdminMayoreoCloud.notifyMayoreoNatySaved();
+        }
     }
 
     function cantidadVendidaLinea(lineaId) {
@@ -192,6 +198,9 @@
                 todos[pi].inventarioAplicado = true;
                 todos[pi].inventarioAplicadoEn = Date.now();
                 guardarJson('obebe_mayoreo_pedidos_v1', todos);
+                if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
+                    ObebeAdminMayoreoCloud.notifyMayoreoNatySaved();
+                }
             }
         }
         return { ok: true, nuevas: nuevas };
@@ -231,6 +240,9 @@
                 todos[pi].inventarioAplicado = false;
                 todos[pi].inventarioAplicadoEn = null;
                 guardarJson('obebe_mayoreo_pedidos_v1', todos);
+                if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
+                    ObebeAdminMayoreoCloud.notifyMayoreoNatySaved();
+                }
             }
         }
         return { ok: true };
@@ -274,6 +286,9 @@
 
     function setMetaMap(map) {
         guardarJson(KEY_META, map || {});
+        if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
+            ObebeAdminMayoreoCloud.notifyMayoreoNatySaved();
+        }
     }
 
     function registrarMetaImportStock(lineas) {
@@ -336,7 +351,7 @@
         if (patch.fechaStockIso != null) l.fechaStockIso = patch.fechaStockIso;
         recalcDisponible(l);
         lista[idx] = l;
-        setLineas(lista);
+        if (!setLineas(lista)) return null;
         return l;
     }
 
@@ -781,6 +796,10 @@
     function guardarMetaCompradores(clienteKey, map) {
         try {
             localStorage.setItem(metaCompradoresKey(clienteKey), JSON.stringify(map || {}));
+            if (claveCliente(clienteKey) === 'naty' && global.ObebeAdminMayoreoCloud &&
+                ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
+                ObebeAdminMayoreoCloud.notifyMayoreoNatySaved();
+            }
         } catch (e) { /* ignore */ }
     }
 

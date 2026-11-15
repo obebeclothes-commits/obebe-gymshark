@@ -386,6 +386,9 @@
         var modo = state.modoEdicion
             ? '<span class="admin-inv-modo admin-inv-modo-edit">Editando</span>'
             : '<span class="admin-inv-modo">Solo vista</span>';
+        if (state.mayoreoInventario && state.modoEdicion) {
+            modo += '<span class="admin-inv-modo-hint admin-muted-text">Solo puedes cambiar la columna H (tu precio de venta).</span>';
+        }
 
         var acciones = '';
         var puedeEditar = !state.soloLectura || !!state.mayoreoInventario;
@@ -554,6 +557,11 @@
         return '<span class="admin-mayoreo-thumb-empty admin-inv-thumb"></span>';
     }
 
+    function colPrecioInventario() {
+        var idx = idxInventarioCols();
+        return idx.precio != null ? idx.precio : 7;
+    }
+
     function renderCeldaInventario(f, colIdx, edit) {
         var idx = idxInventarioCols();
         var val = (f.celdas[colIdx] == null ? '' : String(f.celdas[colIdx]));
@@ -564,7 +572,11 @@
         if (colIdx === colFotoInventario()) {
             return '<td class="admin-inv-thumb-cell">' + renderCeldaThumb(f) + '</td>';
         }
-        if (edit) {
+        var editCell = edit;
+        if (editCell && state.mayoreoInventario && colIdx !== colPrecioInventario()) {
+            editCell = false;
+        }
+        if (editCell) {
             var colTotal = idx.total != null ? idx.total : 8;
             if (colIdx === colTotal) {
                 recalcularTotalFila(f);
@@ -603,7 +615,7 @@
         }
         var vis = filasVisibles();
         var edit = state.modoEdicion;
-        var pick = edit;
+        var pick = edit && !state.mayoreoInventario;
 
         var thLetters = '';
         var thSheet = '';
@@ -672,13 +684,15 @@
     function bindGridEvents(container, onReload) {
         if (state.modoEdicion) {
             container.querySelectorAll('.admin-inv-cell').forEach(function (input) {
-                input.addEventListener('change', function () {
-                    var k = input.getAttribute('data-key');
-                    var col = parseInt(input.getAttribute('data-col'), 10);
+                function volcar(inputEl) {
+                    var k = inputEl.getAttribute('data-key');
+                    var col = parseInt(inputEl.getAttribute('data-col'), 10);
                     var f = findFila(k);
                     if (!f) return;
-                    aplicarCambioCelda(container, f, col, input.value);
-                });
+                    aplicarCambioCelda(container, f, col, inputEl.value);
+                }
+                input.addEventListener('input', function () { volcar(input); });
+                input.addEventListener('change', function () { volcar(input); });
             });
             container.querySelectorAll('.admin-inv-cell-select').forEach(function (sel) {
                 sel.addEventListener('change', function () {
@@ -895,18 +909,27 @@
         var colPrecio = idx.precio != null ? idx.precio : 7;
         var snap = state.snapshot || [];
         var cambios = 0;
+        var sinLinea = 0;
+        var fallosStore = 0;
         var idxFull = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
         var colMargen = idxFull.margen != null ? idxFull.margen : 14;
-        var colCostoBruto = idxFull.costoBruto != null ? idx.costoBruto : 11;
+        var colCostoBruto = idxFull.costoBruto != null ? idxFull.costoBruto : 11;
         var colCostoNeto = idxFull.costoNeto != null ? idxFull.costoNeto : 12;
         state.filas.forEach(function (f) {
-            if (!f.mayoreoLineaId) return;
+            if (!f.mayoreoLineaId) {
+                sinLinea++;
+                return;
+            }
             var ant = snap.find(function (s) { return s._localId === f._localId; });
             var valNuevo = parseNumInventario(f.celdas[colPrecio]);
             var valAnt = ant ? parseNumInventario(ant.celdas[colPrecio]) : 0;
             var dirtyPrecio = f._dirty && f._dirty[colPrecio];
             if (dirtyPrecio || Math.abs(valNuevo - valAnt) >= 0.01) {
-                ObebeMayoreoStore.updateLinea(f.mayoreoLineaId, { precioVentaPlaneado: valNuevo });
+                var ok = ObebeMayoreoStore.updateLinea(f.mayoreoLineaId, { precioVentaPlaneado: valNuevo });
+                if (!ok) {
+                    fallosStore++;
+                    return;
+                }
                 f.precio = valNuevo;
                 f.precioVentaPlaneado = valNuevo;
                 cambios++;
@@ -921,12 +944,21 @@
         });
         state.modoEdicion = false;
         state.snapshot = null;
-        state.msg = cambios
-            ? 'Precios de venta guardados en inventario Naty (' + cambios + '). No afectan Supabase Obebe.'
-            : 'No había cambios en precios.';
-        state.msgOk = cambios > 0;
+        if (fallosStore) {
+            state.msg = 'No se pudieron guardar ' + fallosStore + ' precio(s). Comprueba espacio del navegador o recarga.';
+            state.msgOk = false;
+        } else if (cambios) {
+            state.msg = 'Precios de venta guardados en inventario Naty (' + cambios + '). Solo columna H · no afectan Supabase Obebe.';
+            state.msgOk = true;
+        } else if (sinLinea) {
+            state.msg = 'No se encontraron líneas de mayoreo para guardar. Recarga la página (Ctrl+F5).';
+            state.msgOk = false;
+        } else {
+            state.msg = 'No había cambios en la columna H (precio de venta).';
+            state.msgOk = false;
+        }
         refreshUi(container, onReload);
-        if (onReload) onReload();
+        if (onReload && cambios > 0 && !fallosStore) onReload();
     }
 
     function guardar(onReload, container) {
