@@ -90,6 +90,7 @@
     function pedidosForCliente(clienteKey) {
         asegurarPedidoNatyLegacy20261017();
         asegurarPedidoNatySegundo20261029();
+        purgarDuplicadosNatyPedido2910();
         var k = claveCliente(clienteKey);
         return getPedidos()
             .filter(function (p) {
@@ -103,6 +104,7 @@
     function listarTodos(filtroClienteKey) {
         asegurarPedidoNatyLegacy20261017();
         asegurarPedidoNatySegundo20261029();
+        purgarDuplicadosNatyPedido2910();
         var list = getPedidos().filter(esPedidoVisibleLista).slice().sort(function (a, b) {
             return (b.creadoEn || 0) - (a.creadoEn || 0);
         });
@@ -600,10 +602,88 @@
         });
     }
 
+    function itemDesdeSeedNaty2910(row, itemIdPrevio) {
+        return {
+            itemId: itemIdPrevio || uid('li-'),
+            ref: row.ref || '',
+            nombre: row.nombre || '',
+            talla: row.talla || '',
+            color: row.color || '',
+            marca: row.marca || '',
+            tipo: row.tipo || '',
+            cantidad: Math.max(1, parseInt(row.cantidad, 10) || 1),
+            precioRetail: row.precioRetail || 0,
+            precioCliente: row.precioCliente || 0,
+            imagenUrl: row.imagenUrl || '',
+            disponibilidad: 'si'
+        };
+    }
+
+    /** Restaura el 2.º pedido cuando no hay inventario ni historial (p. ej. tras limpieza 29/10). */
+    function aplicarSeedPedidoNaty2(todos, existing, idx) {
+        var seedSrc = global.ObebeMayoreoPedidosNatySeed;
+        if (!seedSrc || !Array.isArray(seedSrc.ITEMS_PEDIDO_NATY_20261029)) return null;
+        var prevByClave = {};
+        if (existing && existing.items) {
+            existing.items.forEach(function (it) {
+                var ck = claveContenidoItemPedido(it);
+                if (ck && ck !== '0::::') prevByClave[ck] = it;
+            });
+        }
+        var items = seedSrc.ITEMS_PEDIDO_NATY_20261029.map(function (row) {
+            var stub = itemDesdeSeedNaty2910(row);
+            var prev = prevByClave[claveContenidoItemPedido(stub)];
+            if (prev) {
+                stub.itemId = prev.itemId;
+                if (prev.disponibilidad === 'si' || prev.disponibilidad === 'no') {
+                    stub.disponibilidad = prev.disponibilidad;
+                }
+                if (prev.comentarioObebe) stub.comentarioObebe = prev.comentarioObebe;
+            }
+            return stub;
+        });
+        items = normalizarItems(items);
+        var unidades = 0;
+        var totalRetail = 0;
+        var totalCliente = 0;
+        items.forEach(function (it) {
+            var q = it.cantidad || 1;
+            unidades += q;
+            totalRetail += (it.precioRetail || 0) * q;
+            totalCliente += (it.precioCliente || 0) * q;
+        });
+        var ts = timestampLocal(2026, 10, 29);
+        var pedido = {
+            id: PEDIDO_NATY_2_ID,
+            clienteKey: 'naty',
+            clienteNombre: 'NATY',
+            creadoEn: (existing && existing.creadoEn) || ts,
+            estado: 'revisado',
+            revisadoEn: (existing && existing.revisadoEn) || ts,
+            unidades: unidades,
+            totalRetail: totalRetail,
+            totalCliente: totalCliente,
+            items: items,
+            inventarioAplicado: !!(existing && existing.inventarioAplicado),
+            inventarioAplicadoEn: existing && existing.inventarioAplicadoEn,
+            stockInventarioObebeAplicado: !!(existing && existing.stockInventarioObebeAplicado),
+            ventaRetailRegistradaEn: existing ? existing.ventaRetailRegistradaEn : null,
+            legacyDesdeInventario: true,
+            seedNaty2910: true
+        };
+        if (idx >= 0) todos[idx] = pedido;
+        else todos.unshift(pedido);
+        setPedidos(todos);
+        purgarDuplicadosNatyPedido2910();
+        return { ok: true, pedido: pedido, items: items.length, desdeSeed: true };
+    }
+
     function conservarPedidoNaty2DesdeHistorial(todos) {
         var idx = todos.findIndex(function (p) { return p.id === PEDIDO_NATY_2_ID; });
         if (idx >= 0 && (todos[idx].items || []).length) {
-            return { ok: true, pedido: todos[idx], conservado: true };
+            purgarDuplicadosNatyPedido2910();
+            var refrescado = findPedido(PEDIDO_NATY_2_ID).pedido;
+            return { ok: true, pedido: refrescado || todos[idx], conservado: true };
         }
         var candidatos = pedidosNatyEnFechaCreado(FECHA_PEDIDO_NATY_2).filter(function (p) {
             return p.id !== PEDIDO_NATY_LEGACY_ID && (p.items || []).length >= 1;
@@ -634,7 +714,11 @@
         });
         if (idx >= 0) todos[idx] = pedido;
         else todos.unshift(pedido);
+        if (src.id !== PEDIDO_NATY_2_ID) {
+            todos = todos.filter(function (p) { return p.id !== src.id; });
+        }
         setPedidos(todos);
+        purgarDuplicadosNatyPedido2910();
         return { ok: true, pedido: pedido, restauradoDesde: src.id, items: items.length };
     }
 
@@ -715,6 +799,8 @@
             if (nItemsExist > 0) {
                 return { ok: true, pedido: existing, conservadoSinInventario: true };
             }
+            var desdeSeed = aplicarSeedPedidoNaty2(todos, existing, idx);
+            if (desdeSeed) return desdeSeed;
             return { ok: true, omitido: true, sinLineas: true };
         }
         if (nItemsExist > lineas.length && existing) {
@@ -771,6 +857,7 @@
         if (idx >= 0) todos[idx] = pedido;
         else todos.unshift(pedido);
         setPedidos(todos);
+        purgarDuplicadosNatyPedido2910();
         return { ok: true, pedido: pedido, items: items.length };
     }
 
@@ -1040,6 +1127,43 @@
             .sort(function (a, b) { return (a.creadoEn || 0) - (b.creadoEn || 0); });
     }
 
+    function contarUnidadesPedido(p) {
+        if (!p) return 0;
+        var u = parseInt(p.unidades, 10);
+        if (!isNaN(u) && u > 0) return u;
+        return (p.items || []).reduce(function (s, it) {
+            return s + (it.cantidad || 1);
+        }, 0);
+    }
+
+    /** Deja un solo pedido del 29/10 (mp-naty-pedido-20261029); quita copias del mismo lote. */
+    function purgarDuplicadosNatyPedido2910() {
+        var todos = leerJson(KEY, []);
+        if (!Array.isArray(todos) || !todos.length) return { ok: true, omitido: true };
+        var idxCanon = todos.findIndex(function (p) { return p.id === PEDIDO_NATY_2_ID; });
+        var canon = idxCanon >= 0 ? todos[idxCanon] : null;
+        var uCanon = contarUnidadesPedido(canon);
+        if (!canon || uCanon < 1) return { ok: true, omitido: true, sinCanon: true };
+        var removed = 0;
+        var out = todos.filter(function (p) {
+            if (p.id === PEDIDO_NATY_2_ID || p.id === PEDIDO_NATY_LEGACY_ID) return true;
+            if (p.estado === 'combinado') return true;
+            if (claveCliente(p.clienteKey) !== 'naty') return true;
+            if (fechaLocalIsoDesdeMs(p.creadoEn) !== FECHA_PEDIDO_NATY_2) return true;
+            var u = contarUnidadesPedido(p);
+            if (u >= 12 && u <= 25 && Math.abs(u - uCanon) <= 3) {
+                removed += 1;
+                return false;
+            }
+            return true;
+        });
+        if (removed > 0) {
+            setPedidos(out);
+            return { ok: true, removed: removed };
+        }
+        return { ok: true, removed: 0 };
+    }
+
     /**
      * Pedidos con respuesta enviada pero sin venta retail: quitar líneas del inventario mayoreo Naty
      * (el stock Obebe debe seguir descontado hasta venta confirmada o reabrir revisión).
@@ -1194,6 +1318,7 @@
         marcarClienteVioAvisoPedido: marcarClienteVioAvisoPedido,
         asegurarPedidoNatyLegacy20261017: asegurarPedidoNatyLegacy20261017,
         asegurarPedidoNatySegundo20261029: asegurarPedidoNatySegundo20261029,
+        purgarDuplicadosNatyPedido2910: purgarDuplicadosNatyPedido2910,
         quitarInventarioNatySegundoPedido2910: quitarInventarioNatySegundoPedido2910,
         revertirInventarioNatyPedidosSinVentaConfirmada: revertirInventarioNatyPedidosSinVentaConfirmada,
         pedidosNatyEnFechaCreado: pedidosNatyEnFechaCreado,

@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style id="obebe-antifouc">html.obebe-pending{background:#f8f9fa}html.obebe-pending body{visibility:hidden!important}</style>
+    <script>document.documentElement.classList.add('obebe-pending');</script>
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
     <script src="obebe-analytics.js?v=20261116"></script>
     <title>Obebe - GymShark Collection</title>
@@ -2277,18 +2279,7 @@ footer {
 }
 
     </style>
-    <script>
-    // Respaldo: si el onload del <link> no dispara, la hoja quedaria en media=print y sin aplicar.
-    (function(w, d) {
-        function activarCss() {
-            var l = d.getElementById('cssPrincipal');
-            if (l && l.media !== 'all') l.media = 'all';
-        }
-        d.addEventListener('DOMContentLoaded', activarCss);
-        w.addEventListener('load', activarCss);
-        setTimeout(activarCss, 3000);
-    })(window, document);
-    </script>
+    <script src="obebe-pantalla-lista.js?v=20261317d"></script>
     <link rel="preload" as="image" type="image/webp" href="PORTADA1-movil.webp?v=20260734" media="(max-width: 768px)">
     <link rel="preload" as="image" type="image/webp" href="PORTADA1.webp?v=20260734" media="(min-width: 769px)">
     <style>

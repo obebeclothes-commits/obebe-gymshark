@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style id="obebe-antifouc">html.obebe-pending{background:#f8f9fa}html.obebe-pending body{visibility:hidden!important}</style>
+    <script>document.documentElement.classList.add('obebe-pending');</script>
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
     <script src="obebe-analytics.js?v=20261116"></script>
     <title>Ofertas semanales - Obebe GymShark Collection</title>
@@ -46,20 +48,9 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261115g" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20261115g"></noscript>
-    <script>
-    // Respaldo: si el onload del <link> no dispara, la hoja quedaria en media=print y sin aplicar.
-    (function(w, d) {
-        function activarCss() {
-            var l = d.getElementById('cssPrincipal');
-            if (l && l.media !== 'all') l.media = 'all';
-        }
-        d.addEventListener('DOMContentLoaded', activarCss);
-        w.addEventListener('load', activarCss);
-        setTimeout(activarCss, 3000);
-    })(window, document);
-    </script>
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261115g" media="print" onload="this.media='all';window.__obebeActivarCss&amp;&amp;window.__obebeActivarCss()">
+    <noscript><link rel="stylesheet" href="styles.css?v=20261115g"><style>html.obebe-pending body{visibility:visible!important}</style></noscript>
+    <script src="obebe-pantalla-lista.js?v=20261317d"></script>
     <style>
         /* En desktop: texto de la barra promocional un poco a la derecha */
         @media (min-width: 769px) {

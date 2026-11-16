@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style id="obebe-antifouc">html.obebe-pending{background:#f8f9fa}html.obebe-pending body{visibility:hidden!important}</style>
+    <script>document.documentElement.classList.add('obebe-pending');</script>
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
     <script src="obebe-analytics.js?v=20261116"></script>
     <title>Cotizador - Obebe Clothes</title>
@@ -27,19 +29,9 @@ main,.container{max-width:1200px;margin:0 auto}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261115g" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="styles.css?v=20261115g"></noscript>
-    <script>
-    (function(w, d) {
-        function activarCss() {
-            var l = d.getElementById('cssPrincipal');
-            if (l && l.media !== 'all') l.media = 'all';
-        }
-        d.addEventListener('DOMContentLoaded', activarCss);
-        w.addEventListener('load', activarCss);
-        setTimeout(activarCss, 3000);
-    })(window, document);
-    </script>
+    <link id="cssPrincipal" rel="stylesheet" href="styles.css?v=20261115g" media="print" onload="this.media='all';window.__obebeActivarCss&amp;&amp;window.__obebeActivarCss()">
+    <noscript><link rel="stylesheet" href="styles.css?v=20261115g"><style>html.obebe-pending body{visibility:visible!important}</style></noscript>
+    <script src="obebe-pantalla-lista.js?v=20261317d"></script>
     <style>
         @media (min-width: 769px) {
             .promo-bar .promo-messages { transform: translateX(2rem); }

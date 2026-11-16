@@ -42,14 +42,69 @@
             item.importadoEn || item.ventaRetailRegistradaEn || 0;
     }
 
+    function cuentaItemsPedido(p) {
+        return (p && p.items && p.items.length) ? p.items.length : 0;
+    }
+
+    var PEDIDO_NATY_2_ID = 'mp-naty-pedido-20261029';
+    var PEDIDO_NATY_LEGACY_ID = 'mp-naty-pedido-20261017';
+    var FECHA_PEDIDO_NATY_2 = '2026-10-29';
+
+    function normClienteKey(s) {
+        return String(s || '').trim().toLowerCase() || 'naty';
+    }
+
+    function unidadesPedidoPack(p) {
+        if (!p) return 0;
+        var u = parseInt(p.unidades, 10);
+        if (!isNaN(u) && u > 0) return u;
+        return (p.items || []).reduce(function (s, it) {
+            return s + (it.cantidad || 1);
+        }, 0);
+    }
+
+    function fechaPedidoIsoMs(ms) {
+        var d = new Date(ms || 0);
+        if (isNaN(d.getTime())) return '';
+        var y = d.getFullYear();
+        var m = d.getMonth() + 1;
+        var day = d.getDate();
+        return y + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
+    }
+
+    /** Misma regla que en pedidos-store: un solo lote 29/10 en el pack de sync. */
+    function pedidosSinDuplicadoNaty2910(pedidos) {
+        pedidos = Array.isArray(pedidos) ? pedidos.slice() : [];
+        var idxCanon = pedidos.findIndex(function (p) { return p.id === PEDIDO_NATY_2_ID; });
+        var canon = idxCanon >= 0 ? pedidos[idxCanon] : null;
+        var uCanon = unidadesPedidoPack(canon);
+        if (!canon || uCanon < 1) return pedidos;
+        return pedidos.filter(function (p) {
+            if (p.id === PEDIDO_NATY_2_ID || p.id === PEDIDO_NATY_LEGACY_ID) return true;
+            if (p.estado === 'combinado') return true;
+            if (normClienteKey(p.clienteKey) !== 'naty') return true;
+            if (fechaPedidoIsoMs(p.creadoEn) !== FECHA_PEDIDO_NATY_2) return true;
+            var u = unidadesPedidoPack(p);
+            return !(u >= 12 && u <= 25 && Math.abs(u - uCanon) <= 3);
+        });
+    }
+
+    function elegirPedidoMayoreo(prev, next) {
+        if (!prev) return next;
+        if (!next) return prev;
+        var nPrev = cuentaItemsPedido(prev);
+        var nNext = cuentaItemsPedido(next);
+        if (nNext > nPrev) return next;
+        if (nPrev > nNext) return prev;
+        return tsItem(next) >= tsItem(prev) ? next : prev;
+    }
+
     function fusionarPorId(localArr, cloudArr) {
         var map = Object.create(null);
         function poner(item) {
             if (!item || !item.id) return;
             var prev = map[item.id];
-            if (!prev || tsItem(item) >= tsItem(prev)) {
-                map[item.id] = item;
-            }
+            map[item.id] = elegirPedidoMayoreo(prev, item);
         }
         (localArr || []).forEach(poner);
         (cloudArr || []).forEach(poner);
@@ -118,7 +173,7 @@
             clienteKey: 'naty',
             lineas: fusionarPorId(local.lineas, cloud.lineas),
             ventas: fusionarPorId(local.ventas, cloud.ventas),
-            pedidos: fusionarPorId(local.pedidos, cloud.pedidos),
+            pedidos: pedidosSinDuplicadoNaty2910(fusionarPorId(local.pedidos, cloud.pedidos)),
             meta: fusionarObj(local.meta, cloud.meta),
             metaCompradores: fusionarObj(local.metaCompradores, cloud.metaCompradores),
             actualizadoEn: Math.max(local.actualizadoEn || 0, cloud.actualizadoEn || 0, Date.now())
@@ -154,10 +209,13 @@
                     if (ObebeMayoreoPedidosStore.asegurarPedidoNatySegundo20261029) {
                         ObebeMayoreoPedidosStore.asegurarPedidoNatySegundo20261029();
                     }
+                    if (ObebeMayoreoPedidosStore.purgarDuplicadosNatyPedido2910) {
+                        ObebeMayoreoPedidosStore.purgarDuplicadosNatyPedido2910();
+                    }
                 }
                 return global.ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
                     moduleKey: MODULE_KEY,
-                    payload: payloadParaCloud(merged)
+                    payload: payloadParaCloud(packDesdeLocal())
                 });
             })
             .then(function () { return { ok: true }; })
