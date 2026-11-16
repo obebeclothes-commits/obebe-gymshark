@@ -17,6 +17,14 @@
         return String(s || '').trim().toLowerCase();
     }
 
+    /** Safari: clics en texto interno no siempre devuelven Element con .closest. */
+    function eventTargetEl(ev) {
+        var t = ev && ev.target;
+        if (!t) return null;
+        if (t.nodeType === 1) return t;
+        return t.parentElement || null;
+    }
+
     function fmt(n) {
         return ObebeAdminData.formatoMoney(n || 0);
     }
@@ -1006,7 +1014,11 @@
                     (list.length > MAX_CATALOGO ? ' (mostrando ' + MAX_CATALOGO + ')' : '');
             }
             if (!list.length) {
-                box.innerHTML = '<p class="admin-muted-text">Sin resultados. Prueba otro filtro o pulsa <strong>Actualizar</strong>.</p>';
+                var modoVac = getModoActivo();
+                var msgVac = modoVac === 'early'
+                    ? 'No hay artículos en Early access todavía. Espera unos segundos (sincroniza con Obebe) o vuelve a abrir Pedidos.'
+                    : 'Sin resultados. Prueba otro filtro o pulsa <strong>Actualizar</strong>.';
+                box.innerHTML = '<p class="admin-muted-text">' + msgVac + '</p>';
                 return;
             }
             var slice = list.slice(0, MAX_CATALOGO);
@@ -1147,7 +1159,9 @@
             }
 
             container.onclick = function (ev) {
-                var modoBtn = ev.target.closest('.admin-ped-modo-btn');
+                var fromEv = eventTargetEl(ev);
+                if (!fromEv) return;
+                var modoBtn = fromEv.closest('.admin-ped-modo-btn');
                 if (modoBtn) {
                     modoCatalogo = modoBtn.getAttribute('data-modo');
                     container.querySelectorAll('.admin-ped-modo-btn').forEach(function (b) {
@@ -1158,7 +1172,7 @@
                     if (window.matchMedia('(max-width: 900px)').matches) cerrarDrawerFiltros();
                     return;
                 }
-                var genBtn = ev.target.closest('.admin-ped-genero-btn');
+                var genBtn = fromEv.closest('.admin-ped-genero-btn');
                 if (genBtn) {
                     generoCatalogo = genBtn.getAttribute('data-genero');
                     container.querySelectorAll('.admin-ped-genero-btn').forEach(function (b) {
@@ -1169,7 +1183,7 @@
                     if (window.matchMedia('(max-width: 900px)').matches) cerrarDrawerFiltros();
                     return;
                 }
-                if (ev.target.id === 'adminPedLimpiarFiltros' || ev.target.closest('#adminPedLimpiarFiltros')) {
+                if (fromEv.id === 'adminPedLimpiarFiltros' || fromEv.closest('#adminPedLimpiarFiltros')) {
                     modoCatalogo = 'todos';
                     generoCatalogo = 'todos';
                     container.querySelectorAll('.admin-ped-modo-btn').forEach(function (b) {
@@ -1184,7 +1198,7 @@
                     if (window.matchMedia('(max-width: 900px)').matches) cerrarDrawerFiltros();
                     return;
                 }
-                var confNoCli = ev.target.closest('.admin-ped-conf-no-cliente');
+                var confNoCli = fromEv.closest('.admin-ped-conf-no-cliente');
                 if (confNoCli) {
                     var rConf = ObebeMayoreoPedidosStore.confirmarNoHayItemCliente(
                         confNoCli.getAttribute('data-pedido-id'),
@@ -1198,7 +1212,7 @@
                     pintarHistorial();
                     return;
                 }
-                var quitarCli = ev.target.closest('.admin-ped-quitar-item-cliente');
+                var quitarCli = fromEv.closest('.admin-ped-quitar-item-cliente');
                 if (quitarCli) {
                     ObebeAdminDialog.confirm({
                         title: '¿Quitar artículo?',
@@ -1223,7 +1237,7 @@
                     });
                     return;
                 }
-                var togglePed = ev.target.closest('.admin-ped-card-toggle');
+                var togglePed = fromEv.closest('.admin-ped-card-toggle');
                 if (togglePed) {
                     var pid = togglePed.getAttribute('data-pedido-id');
                     expandedPedidos[pid] = !expandedPedidos[pid];
@@ -1233,12 +1247,12 @@
                     pintarHistorial();
                     return;
                 }
-                var editPed = ev.target.closest('.admin-ped-editar');
+                var editPed = fromEv.closest('.admin-ped-editar');
                 if (editPed) {
                     iniciarEdicionPedido(editPed.getAttribute('data-pedido-id'));
                     return;
                 }
-                var delPed = ev.target.closest('.admin-ped-eliminar');
+                var delPed = fromEv.closest('.admin-ped-eliminar');
                 if (delPed) {
                     var delId = delPed.getAttribute('data-pedido-id');
                     ObebeAdminDialog.confirm({
@@ -1262,11 +1276,11 @@
                     });
                     return;
                 }
-                if (ev.target.id === 'adminPedCancelarEdicion' || ev.target.closest('#adminPedCancelarEdicion')) {
+                if (fromEv.id === 'adminPedCancelarEdicion' || fromEv.closest('#adminPedCancelarEdicion')) {
                     cancelarEdicionPedido();
                     return;
                 }
-                var verPed = ev.target.closest('.admin-ped-ver');
+                var verPed = fromEv.closest('.admin-ped-ver');
                 if (verPed) {
                     ev.preventDefault();
                     ev.stopPropagation();
@@ -1285,19 +1299,19 @@
                     }
                     return;
                 }
-                var item = ev.target.closest('.admin-ped-item');
-                if (item && !ev.target.closest('.admin-ped-ver')) {
+                var item = fromEv.closest('.admin-ped-item');
+                if (item && !fromEv.closest('.admin-ped-ver')) {
                     agregarAlCarrito(item.getAttribute('data-id'));
                     return;
                 }
-                var quitar = ev.target.closest('.admin-ped-quitar');
+                var quitar = fromEv.closest('.admin-ped-quitar');
                 if (quitar) {
                     ev.preventDefault();
                     carrito.splice(parseInt(quitar.getAttribute('data-idx'), 10), 1);
                     pintarCarrito();
                     return;
                 }
-                if (ev.target.id === 'adminPedEnviar' || ev.target.closest('#adminPedEnviar')) {
+                if (fromEv.id === 'adminPedEnviar' || fromEv.closest('#adminPedEnviar')) {
                     var err = document.getElementById('adminPedError');
                     if (err) err.textContent = '';
                     if (!carrito.length) {
@@ -1430,7 +1444,9 @@
                 };
             }
             container.onclick = function (ev) {
-                var quitarOb = ev.target.closest('.admin-ped-quitar-item-obebe');
+                var fromOb = eventTargetEl(ev);
+                if (!fromOb) return;
+                var quitarOb = fromOb.closest('.admin-ped-quitar-item-obebe');
                 if (quitarOb) {
                     ObebeAdminDialog.confirm({
                         title: '¿Quitar artículo?',
@@ -1456,14 +1472,14 @@
                     });
                     return;
                 }
-                var togglePed = ev.target.closest('.admin-ped-card-toggle');
+                var togglePed = fromOb.closest('.admin-ped-card-toggle');
                 if (togglePed) {
                     var pidT = togglePed.getAttribute('data-pedido-id');
                     expandedPedidos[pidT] = !expandedPedidos[pidT];
                     pintar();
                     return;
                 }
-                var si = ev.target.closest('.admin-ped-disp-si');
+                var si = fromOb.closest('.admin-ped-disp-si');
                 if (si) {
                     ObebeMayoreoPedidosStore.marcarItemDisponibilidad(
                         si.getAttribute('data-pedido-id'),

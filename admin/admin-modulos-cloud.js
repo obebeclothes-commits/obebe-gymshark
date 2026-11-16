@@ -196,6 +196,49 @@
         }).then(asegurarOk);
     }
 
+    function sincronizarEarlyRefsDesdeCompras(compras) {
+        if (!global.ObebeComprasEarlyStore) return;
+        var refs = [];
+        (compras || []).forEach(function (c) {
+            if (!c || !c.earlyAccess || c.enTienda) return;
+            refs = refs.concat(ObebeComprasEarlyStore.refsDesdeFilas([c]));
+        });
+        if (refs.length) ObebeComprasEarlyStore.marcarRefs(refs);
+    }
+
+    /** NATY (mayoreo): baja compras/early desde la nube sin subir cambios vacíos. */
+    function syncComprasParaMayoreoCliente() {
+        if (!canSync()) return Promise.resolve({ ok: false, offline: true });
+        return leerEntregasCloud().then(function (cloud) {
+            var cloudCompras = comprasMasRecientes(cloud);
+            if (!Array.isArray(cloudCompras)) cloudCompras = [];
+            var local = leerLocal(KEYS.compras);
+            var merged;
+            var earlyCloud = cloudCompras.filter(function (c) {
+                return c && c.earlyAccess && !c.enTienda;
+            });
+            var earlyLocal = local.filter(function (c) {
+                return c && c.earlyAccess && !c.enTienda;
+            });
+            if (earlyCloud.length && earlyLocal.length < earlyCloud.length) {
+                merged = fusionarPorId([], cloudCompras);
+            } else if (cloudCompras.length && !local.length) {
+                merged = cloudCompras.slice();
+            } else {
+                merged = fusionarPorId(local, cloudCompras);
+            }
+            guardarLocal(KEYS.compras, merged);
+            sincronizarEarlyRefsDesdeCompras(merged);
+            try {
+                document.dispatchEvent(new CustomEvent('obebe-compras-early-access'));
+            } catch (e) { /* ignore */ }
+            return { ok: true, compras: merged.length, early: earlyCloud.length };
+        }).catch(function (err) {
+            console.warn('[admin-modulos-cloud] sync compras mayoreo', err);
+            return { ok: false, error: (err && err.message) || String(err) };
+        });
+    }
+
     function syncEntregasYSucursales() {
         if (!canSync()) return Promise.resolve(false);
         return leerEntregasCloud().then(function (cloud) {
@@ -408,6 +451,7 @@
         syncEntregas: syncEntregasYSucursales,
         syncSucursales: syncEntregasYSucursales,
         syncCompras: syncEntregasYSucursales,
+        syncComprasParaMayoreoCliente: syncComprasParaMayoreoCliente,
         syncCotizador: syncCotizador,
         pushCotizadorNow: pushCotizadorNow,
         notifyApartadosSaved: function () { programarPush('apartados', KEYS.apartados); },

@@ -1296,15 +1296,23 @@
                                 : (datosCache.filas || [])
                         });
                     };
-                    if (!(datosCache.filas || []).length) {
-                        elContent.innerHTML = '<div class="admin-loading">Cargando catálogo de tienda…</div>';
-                        ObebeAdminData.cargarInventario(false).then(function (inv) {
-                            datosCache.filas = inv.filas || [];
+                    var syncEarlyPed = (window.ObebeAdminModulosCloud &&
+                        ObebeAdminModulosCloud.syncComprasParaMayoreoCliente)
+                        ? ObebeAdminModulosCloud.syncComprasParaMayoreoCliente()
+                        : Promise.resolve({ ok: false });
+                    var listoPed = function () {
+                        if (!(datosCache.filas || []).length) {
+                            elContent.innerHTML = '<div class="admin-loading">Cargando catálogo de tienda…</div>';
+                            ObebeAdminData.cargarInventario(false).then(function (inv) {
+                                datosCache.filas = inv.filas || [];
+                                cargarPedNaty();
+                            }).catch(function () { cargarPedNaty(); });
+                        } else {
                             cargarPedNaty();
-                        }).catch(function () { cargarPedNaty(); });
-                    } else {
-                        cargarPedNaty();
-                    }
+                        }
+                    };
+                    elContent.innerHTML = '<div class="admin-loading">Cargando catálogo…</div>';
+                    syncEarlyPed.then(listoPed).catch(listoPed);
                 } else {
                     var dmPed = datosMayoreoParaVista();
                     ObebeAdminMayoreoPedidos.mount(elContent, {
@@ -1389,7 +1397,11 @@
             var syncMay = (window.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.syncMayoreoNaty)
                 ? ObebeAdminMayoreoCloud.syncMayoreoNaty()
                 : Promise.resolve({ ok: false });
-            Promise.all([cargarDatos(false), syncMay]).then(function () {
+            var syncEarly = (window.ObebeAdminModulosCloud &&
+                ObebeAdminModulosCloud.syncComprasParaMayoreoCliente)
+                ? ObebeAdminModulosCloud.syncComprasParaMayoreoCliente()
+                : Promise.resolve({ ok: false });
+            Promise.all([cargarDatos(false), syncMay, syncEarly]).then(function () {
                 renderModulo(vistaActual);
             }).catch(function () {
                 renderModulo(vistaActual);
@@ -1582,6 +1594,9 @@
         if (vistaActual === 'compras' && window.ObebeAdminCompras) {
             var comprasMount = document.getElementById('adminComprasMount');
             if (comprasMount) ObebeAdminCompras.mount(comprasMount);
+        }
+        if (vistaActual === 'pedidos_mayoreo' && ObebeAdminAuth.esMayoreoCliente(userActual)) {
+            renderModulo('pedidos_mayoreo');
         }
     });
 

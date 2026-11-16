@@ -1858,6 +1858,7 @@
             if (!row || !row.ref || refsInv[String(row.ref)]) return;
             if (refEsEtiquetadaMujer(row.ref)) row.segmento = 'Mujer';
             row.soloComprasEarly = true;
+            if (!row.stock || row.stock <= 0) row.stock = 1;
             if (row.fotoUrl && /etiquetadas/i.test(row.fotoUrl)) row.fotoUrl = '';
             filasInv.push(row);
         });
