@@ -206,33 +206,54 @@
         if (refs.length) ObebeComprasEarlyStore.marcarRefs(refs);
     }
 
-    /** NATY (mayoreo): baja compras/early desde la nube sin subir cambios vacíos. */
+    /** Escribe filas early en localStorage compras (NATY / catálogo pedidos). */
+    function aplicarComprasEarlyEnLocal(comprasEarly) {
+        comprasEarly = Array.isArray(comprasEarly) ? comprasEarly : [];
+        if (!comprasEarly.length) return { ok: true, early: 0 };
+        var local = leerLocal(KEYS.compras);
+        var sinEarly = local.filter(function (c) {
+            return !(c && c.earlyAccess && !c.enTienda);
+        });
+        var merged = fusionarPorId(sinEarly, comprasEarly);
+        guardarLocal(KEYS.compras, merged);
+        if (comprasEarly.length) {
+            var ts = Math.max.apply(null, comprasEarly.map(function (c) {
+                return Number(c.actualizadoEn) || 0;
+            }).concat([Date.now()]));
+            guardarTsCompras(ts);
+        }
+        sincronizarEarlyRefsDesdeCompras(merged);
+        try {
+            document.dispatchEvent(new CustomEvent('obebe-compras-early-access'));
+        } catch (e) { /* ignore */ }
+        return { ok: true, early: comprasEarly.length, compras: merged.length };
+    }
+
+    /** NATY (mayoreo): siempre prioriza compras de la nube (evita caché local vieja en otra PC). */
     function syncComprasParaMayoreoCliente() {
         if (!canSync()) return Promise.resolve({ ok: false, offline: true });
         return leerEntregasCloud().then(function (cloud) {
-            var cloudCompras = comprasMasRecientes(cloud);
-            if (!Array.isArray(cloudCompras)) cloudCompras = [];
-            var local = leerLocal(KEYS.compras);
-            var merged;
+            var cloudCompras = Array.isArray(cloud.compras) ? cloud.compras : [];
             var earlyCloud = cloudCompras.filter(function (c) {
                 return c && c.earlyAccess && !c.enTienda;
             });
-            var earlyLocal = local.filter(function (c) {
-                return c && c.earlyAccess && !c.enTienda;
-            });
-            if (earlyCloud.length && earlyLocal.length < earlyCloud.length) {
-                merged = fusionarPorId([], cloudCompras);
-            } else if (cloudCompras.length && !local.length) {
-                merged = cloudCompras.slice();
+            if (cloud.comprasActualizadoEn) {
+                guardarTsCompras(cloud.comprasActualizadoEn);
+            }
+            var merged;
+            if (earlyCloud.length) {
+                merged = fusionarPorId(leerLocal(KEYS.compras), cloudCompras);
+            } else if (cloudCompras.length) {
+                merged = fusionarPorId(leerLocal(KEYS.compras), cloudCompras);
             } else {
-                merged = fusionarPorId(local, cloudCompras);
+                return { ok: true, compras: 0, early: 0, vacio: true };
             }
             guardarLocal(KEYS.compras, merged);
             sincronizarEarlyRefsDesdeCompras(merged);
             try {
                 document.dispatchEvent(new CustomEvent('obebe-compras-early-access'));
             } catch (e) { /* ignore */ }
-            return { ok: true, compras: merged.length, early: earlyCloud.length };
+            return { ok: true, compras: merged.length, early: earlyCloud.length, fuente: 'entregas' };
         }).catch(function (err) {
             console.warn('[admin-modulos-cloud] sync compras mayoreo', err);
             return { ok: false, error: (err && err.message) || String(err) };
@@ -255,7 +276,15 @@
             guardarLocal(KEYS.sucursales, lineas);
             guardarLocal(KEYS.compras, compras);
             return guardarEntregasCloud(entregas, lineas, compras, borradas);
-        }).then(function () { return true; }).catch(function (err) {
+        }).then(function () {
+            if (global.ObebeAdminMayoreoCloud &&
+                ObebeAdminMayoreoCloud.publicarComprasEarlyParaNaty) {
+                return ObebeAdminMayoreoCloud.publicarComprasEarlyParaNaty().then(function () {
+                    return true;
+                });
+            }
+            return true;
+        }).catch(function (err) {
             console.warn('[admin-modulos-cloud] sync entregas/sucursales', err);
             return false;
         });
@@ -373,7 +402,12 @@
                     borradas
                 );
                 var lineas = fusionarPorId(leerLocal(KEYS.sucursales), cloud.lineas);
-                return guardarEntregasCloud(entregas, lineas, compras, borradas);
+                return guardarEntregasCloud(entregas, lineas, compras, borradas).then(function () {
+                    if (global.ObebeAdminMayoreoCloud &&
+                        ObebeAdminMayoreoCloud.publicarComprasEarlyParaNaty) {
+                        return ObebeAdminMayoreoCloud.publicarComprasEarlyParaNaty();
+                    }
+                });
             }).catch(function (err) {
                 console.warn('[admin-modulos-cloud] push compras', err);
             });
@@ -452,6 +486,7 @@
         syncSucursales: syncEntregasYSucursales,
         syncCompras: syncEntregasYSucursales,
         syncComprasParaMayoreoCliente: syncComprasParaMayoreoCliente,
+        aplicarComprasEarlyEnLocal: aplicarComprasEarlyEnLocal,
         syncCotizador: syncCotizador,
         pushCotizadorNow: pushCotizadorNow,
         notifyApartadosSaved: function () { programarPush('apartados', KEYS.apartados); },

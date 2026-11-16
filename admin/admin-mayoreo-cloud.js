@@ -127,7 +127,25 @@
         return out;
     }
 
+    function comprasEarlyDesdeStore() {
+        var Store = global.ObebeComprasStore;
+        if (!Store || !Store.getAll) return [];
+        return Store.getAll().filter(function (c) {
+            return c && c.earlyAccess && !c.enTienda;
+        });
+    }
+
+    function elegirComprasEarly(localE, cloudE, cloudEn, localEn) {
+        localE = Array.isArray(localE) ? localE : [];
+        cloudE = Array.isArray(cloudE) ? cloudE : [];
+        if (cloudE.length > localE.length) return { list: cloudE, en: cloudEn || Date.now() };
+        if (localE.length > cloudE.length) return { list: localE, en: localEn || 0 };
+        if ((cloudEn || 0) >= (localEn || 0)) return { list: cloudE, en: cloudEn || 0 };
+        return { list: localE, en: localEn || 0 };
+    }
+
     function packDesdeLocal() {
+        var early = comprasEarlyDesdeStore();
         return {
             id: PACK_ID,
             clienteKey: 'naty',
@@ -136,6 +154,8 @@
             pedidos: leerJson(KEY_PEDIDOS, []),
             meta: leerJson(KEY_META, {}),
             metaCompradores: leerJson(KEY_META_COMPR, {}),
+            comprasEarly: early,
+            comprasEarlyEn: early.length ? Date.now() : 0,
             actualizadoEn: Date.now()
         };
     }
@@ -155,6 +175,8 @@
             meta: hit.meta && typeof hit.meta === 'object' ? hit.meta : {},
             metaCompradores: hit.metaCompradores && typeof hit.metaCompradores === 'object'
                 ? hit.metaCompradores : {},
+            comprasEarly: Array.isArray(hit.comprasEarly) ? hit.comprasEarly : [],
+            comprasEarlyEn: Number(hit.comprasEarlyEn) || 0,
             actualizadoEn: Number(hit.actualizadoEn) || 0
         };
     }
@@ -168,6 +190,12 @@
     function fusionarPacks(local, cloud) {
         if (!cloud) return local;
         if (!local) return cloud;
+        var pickEarly = elegirComprasEarly(
+            local.comprasEarly,
+            cloud.comprasEarly,
+            cloud.comprasEarlyEn,
+            local.comprasEarlyEn
+        );
         return {
             id: PACK_ID,
             clienteKey: 'naty',
@@ -176,6 +204,8 @@
             pedidos: pedidosSinDuplicadoNaty2910(fusionarPorId(local.pedidos, cloud.pedidos)),
             meta: fusionarObj(local.meta, cloud.meta),
             metaCompradores: fusionarObj(local.metaCompradores, cloud.metaCompradores),
+            comprasEarly: pickEarly.list,
+            comprasEarlyEn: pickEarly.en,
             actualizadoEn: Math.max(local.actualizadoEn || 0, cloud.actualizadoEn || 0, Date.now())
         };
     }
@@ -189,18 +219,67 @@
             guardarJson(KEY_PEDIDOS, pack.pedidos || []);
             guardarJson(KEY_META, pack.meta || {});
             guardarJson(KEY_META_COMPR, pack.metaCompradores || {});
+            if (global.ObebeAdminModulosCloud &&
+                ObebeAdminModulosCloud.aplicarComprasEarlyEnLocal &&
+                pack.comprasEarly && pack.comprasEarly.length) {
+                ObebeAdminModulosCloud.aplicarComprasEarlyEnLocal(pack.comprasEarly);
+            }
         } finally {
             aplicandoRemoto -= 1;
         }
     }
 
-    function syncMayoreoNaty() {
-        if (!canSync()) return Promise.resolve({ ok: false, offline: true });
+    function packParaSubirSinBorrarEarly(cloudPack) {
         var local = packDesdeLocal();
+        if (cloudPack && Array.isArray(cloudPack.comprasEarly) && cloudPack.comprasEarly.length) {
+            var pick = elegirComprasEarly(
+                local.comprasEarly,
+                cloudPack.comprasEarly,
+                cloudPack.comprasEarlyEn,
+                local.comprasEarlyEn
+            );
+            if (pick.list.length >= (local.comprasEarly || []).length) {
+                local.comprasEarly = pick.list;
+                local.comprasEarlyEn = pick.en;
+            }
+        } else if (!local.comprasEarly || !local.comprasEarly.length) {
+            delete local.comprasEarly;
+            local.comprasEarlyEn = 0;
+        }
+        return local;
+    }
+
+    function publicarComprasEarlyParaNaty() {
+        if (!canSync()) return Promise.resolve({ ok: false, offline: true });
+        var early = comprasEarlyDesdeStore();
+        if (!early.length) return Promise.resolve({ ok: true, early: 0, omitido: true });
         return global.ObebeAdminBackend.callAdminApi('getAdminModuloBlob', { moduleKey: MODULE_KEY })
             .then(function (res) {
                 var cloud = packDesdePayload(res && res.payload);
-                var merged = fusionarPacks(local, cloud);
+                var local = packDesdeLocal();
+                var merged = cloud ? fusionarPacks(local, cloud) : local;
+                merged.comprasEarly = early;
+                merged.comprasEarlyEn = Date.now();
+                return global.ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
+                    moduleKey: MODULE_KEY,
+                    payload: payloadParaCloud(merged)
+                });
+            })
+            .then(function () { return { ok: true, early: early.length }; })
+            .catch(function (err) {
+                console.warn('[admin-mayoreo-cloud] publicar early', err);
+                return { ok: false, error: (err && err.message) || String(err) };
+            });
+    }
+
+    function syncMayoreoNaty() {
+        if (!canSync()) return Promise.resolve({ ok: false, offline: true });
+        var local = packDesdeLocal();
+        var cloudPackRef = null;
+        return global.ObebeAdminBackend.callAdminApi('getAdminModuloBlob', { moduleKey: MODULE_KEY })
+            .then(function (res) {
+                cloudPackRef = packDesdePayload(res && res.payload);
+                var merged = fusionarPacks(local, cloudPackRef);
                 aplicarPackLocal(merged);
                 if (global.ObebeMayoreoPedidosStore) {
                     if (ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017) {
@@ -215,7 +294,7 @@
                 }
                 return global.ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
                     moduleKey: MODULE_KEY,
-                    payload: payloadParaCloud(packDesdeLocal())
+                    payload: payloadParaCloud(packParaSubirSinBorrarEarly(cloudPackRef))
                 });
             })
             .then(function () { return { ok: true }; })
@@ -233,10 +312,15 @@
 
     function pushMayoreoNatyNow() {
         if (!canSync()) return Promise.resolve({ ok: false, offline: true });
-        return global.ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
-            moduleKey: MODULE_KEY,
-            payload: payloadParaCloud(packDesdeLocal())
-        }).then(function () { return { ok: true }; }).catch(function (err) {
+        return global.ObebeAdminBackend.callAdminApi('getAdminModuloBlob', { moduleKey: MODULE_KEY })
+            .then(function (res) {
+                var cloud = packDesdePayload(res && res.payload);
+                return global.ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
+                    moduleKey: MODULE_KEY,
+                    payload: payloadParaCloud(packParaSubirSinBorrarEarly(cloud))
+                });
+            })
+            .then(function () { return { ok: true }; }).catch(function (err) {
             console.warn('[admin-mayoreo-cloud] push', err);
             return { ok: false, error: (err && err.message) || String(err) };
         });
@@ -257,6 +341,7 @@
         canSync: canSync,
         syncMayoreoNaty: syncMayoreoNaty,
         pushMayoreoNatyNow: pushMayoreoNatyNow,
-        notifyMayoreoNatySaved: notifyMayoreoNatySaved
+        notifyMayoreoNatySaved: notifyMayoreoNatySaved,
+        publicarComprasEarlyParaNaty: publicarComprasEarlyParaNaty
     };
 })(window);

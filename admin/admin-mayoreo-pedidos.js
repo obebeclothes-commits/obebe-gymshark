@@ -1167,8 +1167,36 @@
                     container.querySelectorAll('.admin-ped-modo-btn').forEach(function (b) {
                         b.classList.toggle('active', b === modoBtn);
                     });
-                    rebuildFiltrosPanel();
-                    pintarCatalogo();
+                    function pintarTrasModo() {
+                        rebuildFiltrosPanel();
+                        pintarCatalogo();
+                    }
+                    if (modoCatalogo === 'early') {
+                        var box = document.getElementById('adminPedCatalogo');
+                        if (box) {
+                            box.innerHTML = '<p class="admin-muted-text">Sincronizando Early access desde Obebe…</p>';
+                        }
+                        var chain = Promise.resolve();
+                        if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.syncMayoreoNaty) {
+                            chain = chain.then(function () {
+                                return ObebeAdminMayoreoCloud.syncMayoreoNaty();
+                            });
+                        }
+                        if (global.ObebeAdminModulosCloud &&
+                            ObebeAdminModulosCloud.syncComprasParaMayoreoCliente) {
+                            chain = chain.then(function () {
+                                return ObebeAdminModulosCloud.syncComprasParaMayoreoCliente();
+                            });
+                        }
+                        chain.then(function () {
+                            if (global.ObebeAdminData && ObebeAdminData.combinarInventarioConComprasEarly) {
+                                filasInv = ObebeAdminData.combinarInventarioConComprasEarly(filasInv || []);
+                            }
+                            pintarTrasModo();
+                        }).catch(pintarTrasModo);
+                    } else {
+                        pintarTrasModo();
+                    }
                     if (window.matchMedia('(max-width: 900px)').matches) cerrarDrawerFiltros();
                     return;
                 }
