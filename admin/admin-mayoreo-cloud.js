@@ -123,6 +123,7 @@
         Object.keys(localO || {}).forEach(function (k) {
             var loc = localO[k];
             var rem = out[k];
+            if (k === 'ventasEliminadas' || k === 'ventasEliminadasHuellas') return;
             if (!rem || typeof loc !== 'object' || typeof rem !== 'object') {
                 out[k] = loc;
                 return;
@@ -132,6 +133,66 @@
             out[k] = tLoc >= tRem ? loc : rem;
         });
         return out;
+    }
+
+    function fusionarVentasEliminadas(localMap, cloudMap) {
+        var out = Object.assign({}, cloudMap || {});
+        Object.keys(localMap || {}).forEach(function (id) {
+            var tL = Number(localMap[id]) || 0;
+            var tC = Number(out[id]) || 0;
+            out[id] = Math.max(tL, tC);
+        });
+        return out;
+    }
+
+    function huellaVentaPack(v) {
+        if (!v) return '';
+        var l0 = (v.lineas && v.lineas[0]) || {};
+        function norm(s) { return String(s || '').trim().toLowerCase(); }
+        return [
+            norm(v.clienteKey || 'naty'),
+            String(v.fechaIso || ''),
+            norm(v.comprador),
+            norm(l0.nombre),
+            norm(l0.talla),
+            String(l0.cantidad || 1)
+        ].join('::');
+    }
+
+    function ventaBorradaEnMeta(v, ventasEliminadas, huellasElim) {
+        if (!v) return true;
+        var tDel = Number((ventasEliminadas || {})[v.id]) || 0;
+        if (tDel && tsVentaMayoreo(v) <= tDel) return true;
+        var hu = huellaVentaPack(v);
+        if (hu && huellasElim && huellasElim[hu]) {
+            var tH = Number(huellasElim[hu]) || 0;
+            if (tH && tsVentaMayoreo(v) <= tH) return true;
+        }
+        return false;
+    }
+
+    function tsVentaMayoreo(v) {
+        if (!v) return 0;
+        return Number(v.actualizadoEn || v.editadoEn || v.creadoEn || 0);
+    }
+
+    function fusionarVentasMayoreo(localVentas, cloudVentas, ventasEliminadas, huellasElim) {
+        ventasEliminadas = ventasEliminadas || {};
+        huellasElim = huellasElim || {};
+        var map = Object.create(null);
+        function poner(v) {
+            if (!v || !v.id) return;
+            if (ventaBorradaEnMeta(v, ventasEliminadas, huellasElim)) return;
+            var prev = map[v.id];
+            if (!prev) {
+                map[v.id] = v;
+                return;
+            }
+            map[v.id] = tsVentaMayoreo(v) >= tsVentaMayoreo(prev) ? v : prev;
+        }
+        (localVentas || []).forEach(poner);
+        (cloudVentas || []).forEach(poner);
+        return Object.keys(map).map(function (id) { return map[id]; });
     }
 
     function comprasEarlyDesdeStore() {
@@ -206,13 +267,24 @@
             cloud.comprasEarlyEn,
             local.comprasEarlyEn
         );
+        var metaFus = fusionarObj(local.meta, cloud.meta);
+        var ventasElim = fusionarVentasEliminadas(
+            (local.meta && local.meta.ventasEliminadas) || null,
+            (cloud.meta && cloud.meta.ventasEliminadas) || null
+        );
+        var huellasElim = fusionarVentasEliminadas(
+            (local.meta && local.meta.ventasEliminadasHuellas) || null,
+            (cloud.meta && cloud.meta.ventasEliminadasHuellas) || null
+        );
+        metaFus.ventasEliminadas = ventasElim;
+        metaFus.ventasEliminadasHuellas = huellasElim;
         return {
             id: PACK_ID,
             clienteKey: 'naty',
             lineas: fusionarPorId(local.lineas, cloud.lineas),
-            ventas: fusionarPorId(local.ventas, cloud.ventas),
+            ventas: fusionarVentasMayoreo(local.ventas, cloud.ventas, ventasElim, huellasElim),
             pedidos: pedidosSinDuplicadoNaty2910(fusionarPorId(local.pedidos, cloud.pedidos)),
-            meta: fusionarObj(local.meta, cloud.meta),
+            meta: metaFus,
             metaCompradores: fusionarObj(local.metaCompradores, cloud.metaCompradores),
             comprasEarly: pickEarly.list,
             comprasEarlyEn: pickEarly.en,

@@ -86,6 +86,36 @@
         return ok;
     }
 
+    function huellaVentaMayoreo(v) {
+        if (!v) return '';
+        var l0 = (v.lineas && v.lineas[0]) || {};
+        return [
+            claveCliente(v.clienteKey),
+            String(v.fechaIso || ''),
+            norm(v.comprador),
+            norm(l0.nombre),
+            norm(l0.talla),
+            String(l0.cantidad || 1)
+        ].join('::');
+    }
+
+    /** Evita que la nube vuelva a meter ventas ya borradas al sincronizar. */
+    function marcarVentaEliminadaEnMeta(venta) {
+        if (!venta || !venta.id) return;
+        var meta = leerJson(KEY_META, {});
+        if (!meta.ventasEliminadas || typeof meta.ventasEliminadas !== 'object') {
+            meta.ventasEliminadas = {};
+        }
+        if (!meta.ventasEliminadasHuellas || typeof meta.ventasEliminadasHuellas !== 'object') {
+            meta.ventasEliminadasHuellas = {};
+        }
+        var ts = Date.now();
+        meta.ventasEliminadas[venta.id] = ts;
+        var hu = huellaVentaMayoreo(venta);
+        if (hu) meta.ventasEliminadasHuellas[hu] = ts;
+        guardarJson(KEY_META, meta);
+    }
+
     function cantidadVendidaLinea(lineaId) {
         var total = 0;
         getVentas().forEach(function (v) {
@@ -846,6 +876,7 @@
             return v.id === ventaId && claveCliente(v.clienteKey) === k;
         });
         if (idx < 0) return { ok: false, error: 'Venta no encontrada.' };
+        marcarVentaEliminadaEnMeta(ventas[idx]);
         ventas.splice(idx, 1);
         setVentas(ventas);
         setLineas(getLineas().map(function (l) {

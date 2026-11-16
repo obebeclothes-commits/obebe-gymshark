@@ -1228,6 +1228,12 @@
                 img.dataset.fb2 = '';
                 return;
             }
+            if (img.classList && img.classList.contains('admin-ped-fotos-img')) {
+                var fig = img.closest ? img.closest('.admin-ped-fotos-fig') : null;
+                if (fig && fig.parentNode) fig.parentNode.removeChild(fig);
+                else if (img.parentNode) img.parentNode.removeChild(img);
+                return;
+            }
             img.style.opacity = '0.35';
         };
     }

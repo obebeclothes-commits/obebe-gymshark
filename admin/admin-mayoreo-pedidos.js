@@ -323,6 +323,50 @@
         return String(u || '').replace(/\?.*$/, '').toLowerCase();
     }
 
+    /** Prueba URLs en orden; devuelve la primera que carga (evita ? por .1 inexistente). */
+    function primeraUrlImagenValida(urls) {
+        urls = (urls || []).filter(function (u, i, a) { return u && a.indexOf(u) === i; });
+        return new Promise(function (resolve) {
+            if (!urls.length) {
+                resolve('');
+                return;
+            }
+            var paso = 0;
+            function intentar() {
+                if (paso >= urls.length) {
+                    resolve('');
+                    return;
+                }
+                var probe = new Image();
+                probe.onload = function () { resolve(urls[paso]); };
+                probe.onerror = function () {
+                    paso += 1;
+                    intentar();
+                };
+                probe.src = urls[paso];
+            }
+            intentar();
+        });
+    }
+
+    function candidatosSegundaParaModal(fila, urls) {
+        urls = urls || {};
+        var list = (urls.candidatos2 || []).slice();
+        if (urls.foto2 && list.indexOf(urls.foto2) < 0) list.unshift(urls.foto2);
+        if (global.ObebeAdminData && ObebeAdminData.urlsFotosComprasEtiquetadas) {
+            var packEt = ObebeAdminData.urlsFotosComprasEtiquetadas(fila) || {};
+            (packEt.candidatos2 || []).forEach(function (u) {
+                if (u && list.indexOf(u) < 0) list.push(u);
+            });
+            if (packEt.foto2 && list.indexOf(packEt.foto2) < 0) list.push(packEt.foto2);
+        }
+        var base1 = normPathFoto(urls.foto1);
+        return list.filter(function (u, i, a) {
+            if (!u || a.indexOf(u) !== i) return false;
+            return normPathFoto(u) !== base1;
+        });
+    }
+
     function prepararFilaFotosPedido(fila) {
         if (!fila) return fila;
         if (!fila.soloComprasEarly && fila.ref && global.ObebeComprasEarlyStore &&
@@ -358,30 +402,6 @@
                 urls.candidatos1 = candidatosImagenFila(fila).concat([fallback]);
             }
         }
-        if ((!urls.candidatos2 || !urls.candidatos2.length) &&
-            ObebeAdminData.candidatosSegundaFotoDesdeUrl) {
-            var segundaDesde1 = ObebeAdminData.candidatosSegundaFotoDesdeUrl(urls.foto1);
-            if (!segundaDesde1.length && urls.candidatos1 && urls.candidatos1.length) {
-                for (var ci = 0; ci < urls.candidatos1.length; ci++) {
-                    var ext2 = ObebeAdminData.candidatosSegundaFotoDesdeUrl(urls.candidatos1[ci]);
-                    if (ext2.length) {
-                        segundaDesde1 = ext2;
-                        break;
-                    }
-                }
-            }
-            if (segundaDesde1.length) {
-                urls.candidatos2 = segundaDesde1;
-                if (!urls.foto2) urls.foto2 = segundaDesde1[0];
-            }
-        }
-        if ((!urls.candidatos2 || !urls.candidatos2.length) && ObebeAdminData.urlsFotosComprasEtiquetadas) {
-            var packEt = ObebeAdminData.urlsFotosComprasEtiquetadas(fila) || {};
-            urls.candidatos2 = (packEt.candidatos2 || []).slice();
-            if (!urls.foto2 && packEt.foto2) urls.foto2 = packEt.foto2;
-        }
-        var esEarly = !!(fila.soloComprasEarly || (global.ObebeComprasEarlyStore &&
-            ObebeComprasEarlyStore.esEarlyAccessFila(fila)));
         document.getElementById('adminPedFotosTitulo').textContent = fila.nombre || 'Artículo';
         var sub = document.getElementById('adminPedFotosSub');
         if (sub) {
@@ -390,12 +410,17 @@
             sub.setAttribute('aria-hidden', 'true');
         }
         var grid = slotFotoPedidoModal('', urls.candidatos1, urls.foto1);
-        var tieneSegunda = (urls.candidatos2 && urls.candidatos2.length) || urls.foto2;
-        if (tieneSegunda) {
-            grid += slotFotoPedidoModal('', urls.candidatos2, urls.foto2);
-        }
         if (!grid) grid = '<p class="admin-muted-text">Sin fotos disponibles para este artículo.</p>';
-        document.getElementById('adminPedFotosGrid').innerHTML = grid;
+        var gridEl = document.getElementById('adminPedFotosGrid');
+        gridEl.innerHTML = grid;
+        var listaSegunda = candidatosSegundaParaModal(fila, urls);
+        if (listaSegunda.length) {
+            primeraUrlImagenValida(listaSegunda).then(function (okUrl) {
+                if (!okUrl || root.classList.contains('admin-hidden')) return;
+                if (!document.getElementById('adminPedFotosGrid')) return;
+                gridEl.insertAdjacentHTML('beforeend', slotFotoPedidoModal('', listaSegunda, okUrl));
+            });
+        }
         root.classList.add('admin-ped-fotos-modal-solo-img');
         root.classList.remove('admin-hidden');
         root.setAttribute('aria-hidden', 'false');
