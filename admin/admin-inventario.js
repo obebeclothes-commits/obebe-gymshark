@@ -76,8 +76,17 @@
         return o;
     }
 
+    function filasInventarioBase() {
+        var filas = state.filas || [];
+        if (ObebeAdminData.filtrarFilasSinApartadasMayoreo) {
+            filas = ObebeAdminData.filtrarFilasSinApartadasMayoreo(filas);
+        }
+        return filas;
+    }
+
     function filasVisibles() {
-        var activas = ObebeAdminData.filtrarFilas(state.filas, state.filtro, optsFiltro({ soloStock: true }));
+        var base = filasInventarioBase();
+        var activas = ObebeAdminData.filtrarFilas(base, state.filtro, optsFiltro({ soloStock: true }));
         var nuevas = ObebeAdminData.filtrarFilas(state.nuevasFilas, state.filtro, optsFiltro({}));
         return activas.concat(nuevas);
     }
@@ -532,7 +541,7 @@
     }
 
     function textoExistencia() {
-        var n = ObebeAdminData.filtrarFilas(state.filas, state.filtro, optsFiltro({ soloStock: true })).length;
+        var n = ObebeAdminData.filtrarFilas(filasInventarioBase(), state.filtro, optsFiltro({ soloStock: true })).length;
         var nuevas = ObebeAdminData.filtrarFilas(state.nuevasFilas, state.filtro, optsFiltro({})).length;
         var etiqueta = '';
         if (state.filtroGenero) etiqueta += ' · ' + state.filtroGenero;

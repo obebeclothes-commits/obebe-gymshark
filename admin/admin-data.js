@@ -1847,8 +1847,33 @@
         return ids.filter(function (v, i, a) { return a.indexOf(v) === i; });
     }
 
+    function refDeFilaInventario(f) {
+        if (!f) return 0;
+        var col = idxInventario().imagen != null ? idxInventario().imagen : 0;
+        var r = parseInt(f.ref, 10);
+        if (!isNaN(r) && r > 0) return r;
+        return parseInt(f.celdas && f.celdas[col], 10) || 0;
+    }
+
+    function filaSheetInventario(f) {
+        if (!f) return 0;
+        return parseInt(f.filaSheet, 10) || parseInt(f.inventarioDbId, 10) || 0;
+    }
+
+    function filtrarFilasSinApartadasMayoreo(filasInv) {
+        filasInv = filasInv || [];
+        var ped = global.ObebeMayoreoPedidosStore;
+        if (!ped || !ped.refApartadaEnMayoreo) return filasInv;
+        var col = idxInventario().imagen != null ? idxInventario().imagen : 0;
+        return filasInv.filter(function (f) {
+            var ref = refDeFilaInventario(f);
+            if (!ref || isNaN(ref)) return true;
+            return !ped.refApartadaEnMayoreo(ref);
+        });
+    }
+
     function combinarInventarioConComprasEarly(filasInv) {
-        filasInv = (filasInv || []).slice();
+        filasInv = filtrarFilasSinApartadasMayoreo((filasInv || []).slice());
         var Store = global.ObebeComprasStore;
         if (!Store || !Store.getAll) return filasInv;
         var apartadas = global.ObebeMayoreoPedidosStore &&
@@ -3086,7 +3111,12 @@
         }
         if (it.ref) {
             var ref = parseInt(it.ref, 10);
-            var candidatos = estado.filas.filter(function (f) { return f.ref === ref; });
+            var candidatos = estado.filas.filter(function (f) { return refDeFilaInventario(f) === ref; });
+            if (candidatos.length >= 1) {
+                candidatos.sort(function (a, b) {
+                    return filaSheetInventario(a) - filaSheetInventario(b);
+                });
+            }
             if (candidatos.length === 1) return candidatos[0];
             if (candidatos.length > 1) {
                 var nt = norm(it.talla);
@@ -3095,6 +3125,7 @@
                     return (!nt || norm(f.talla) === nt) && (!nc || norm(f.color) === nc);
                 });
                 if (exact) return exact;
+                return candidatos[0];
             }
             if (!candidatos.length && global.ObebeComprasStore && ObebeComprasStore.getAll) {
                 var idxRef = idxInventario().imagen != null ? idxInventario().imagen : 0;
@@ -3115,12 +3146,19 @@
     function calcularUpdatesStockPedidoMayoreo(pedido, signo) {
         signo = signo < 0 ? -1 : 1;
         var porFila = {};
+        var vistosRef = {};
         (pedido.items || []).forEach(function (it) {
             if (it.disponibilidad !== 'si') return;
+            var ref = parseInt(it.ref, 10);
+            if (!isNaN(ref) && ref > 0) {
+                var rk = 'ref:' + ref;
+                if (vistosRef[rk]) return;
+                vistosRef[rk] = true;
+            }
             var qty = it.cantidad || 1;
             var f = resolverFilaInventarioDesdeItemPedido(it);
-            if (!f || !f.filaSheet) return;
-            var row = f.filaSheet;
+            var row = filaSheetInventario(f);
+            if (!f || !row) return;
             if (porFila[row] == null) porFila[row] = f.stock || 0;
             porFila[row] = Math.max(0, porFila[row] + signo * qty);
         });
@@ -3221,6 +3259,108 @@
         });
     }
 
+    function restaurarComprasDesdeFilaInventario(f) {
+        if (!f || !global.ObebeComprasStore) return false;
+        var col = idxInventario().imagen != null ? idxInventario().imagen : 0;
+        var ref = f.ref || parseInt(f.celdas && f.celdas[col], 10);
+        if (!ref || isNaN(ref)) return false;
+        var celdas = (f.celdas && f.celdas.length) ? f.celdas.slice() : [];
+        if (!celdas.length) return false;
+        var todas = ObebeComprasStore.getAll();
+        var dirty = false;
+        var hit = false;
+        todas.forEach(function (c) {
+            var r = parseInt(c.celdas && c.celdas[col], 10);
+            if (r !== ref) return;
+            hit = true;
+            c.earlyAccess = false;
+            c.earlyAccessEn = null;
+            c.earlyAccessSuspendidoPorPedido = true;
+            c.mayoreoPublicarPendiente = false;
+            c.mayoreoPublicarPendienteEn = null;
+            c.enTienda = false;
+            dirty = true;
+        });
+        if (!hit) {
+            todas.push({
+                id: 'com-rest-' + ref + '-' + Date.now().toString(36),
+                celdas: celdas,
+                earlyAccessSuspendidoPorPedido: true,
+                mayoreoPublicarPendiente: false,
+                enTienda: false
+            });
+            dirty = true;
+        }
+        if (dirty) ObebeComprasStore.reemplazar(todas);
+        return dirty;
+    }
+
+    /** Filas duplicadas por ref en apartado mayoreo (p. ej. 321 doble por error de sync). */
+    function repararInventarioObebeApartadosPedidoMayoreo() {
+        var ped = global.ObebeMayoreoPedidosStore;
+        if (!ped || !ped.refsApartadasMayoreo) {
+            return Promise.resolve({ ok: true, omitido: true });
+        }
+        var refs = {};
+        ped.refsApartadasMayoreo().forEach(function (r) {
+            if (r > 0) refs[String(r)] = true;
+        });
+        var col = idxInventario().imagen != null ? idxInventario().imagen : 0;
+        var porRef = {};
+        (estado.filas || []).forEach(function (f) {
+            var ref = refDeFilaInventario(f);
+            if (!ref || isNaN(ref) || !refs[String(ref)]) return;
+            var k = String(ref);
+            porRef[k] = porRef[k] || [];
+            porRef[k].push(f);
+        });
+        var duplicadas = [];
+        Object.keys(porRef).forEach(function (k) {
+            var list = porRef[k];
+            if (list.length <= 1) return;
+            list.sort(function (a, b) {
+                return (a.filaSheet || 0) - (b.filaSheet || 0);
+            });
+            var i;
+            for (i = 1; i < list.length; i++) duplicadas.push(list[i]);
+        });
+        if (!duplicadas.length) {
+            return Promise.resolve({ ok: true, borradas: 0 });
+        }
+        var sheetRows = duplicadas
+            .map(function (f) { return f.filaSheet; })
+            .filter(function (n) { return n > 0; });
+        var quitarIds = {};
+        duplicadas.forEach(function (f) {
+            var ref = f.ref || parseInt(f.celdas && f.celdas[col], 10);
+            var row = f.filaSheet || idFilaInventario(f);
+            quitarIds[row + '::' + ref] = true;
+        });
+        estado.filas = (estado.filas || []).filter(function (f) {
+            var ref = f.ref || parseInt(f.celdas && f.celdas[col], 10);
+            var row = f.filaSheet || idFilaInventario(f);
+            if (!ref || !quitarIds[row + '::' + ref]) return true;
+            return false;
+        });
+        sincronizarHistoricoInventario(estado.filas);
+        if (!sheetRows.length || !global.ObebeAdminBackend || !ObebeAdminBackend.callAdminApi) {
+            return Promise.resolve({ ok: true, borradas: 0, local: duplicadas.length });
+        }
+        return ObebeAdminBackend.callAdminApi('deleteRows', { filas: sheetRows })
+            .then(function (res) {
+                if (res && res.ok === false) {
+                    throw new Error(res.error || 'No se pudo borrar fila duplicada');
+                }
+                return cargarInventario(true).then(function () {
+                    return { ok: true, borradas: sheetRows.length };
+                });
+            })
+            .catch(function (err) {
+                console.warn('[admin-data] reparar duplicados inventario mayoreo', err);
+                return { ok: false, error: (err && err.message) || String(err) };
+            });
+    }
+
     function aplicarStockPendientePedidosMayoreo() {
         var todos = leerPedidosMayoreoLocal();
         var pend = todos.filter(function (p) {
@@ -3238,6 +3378,66 @@
         return chain.then(function () {
             return { ok: true, aplicados: aplicados, pendientes: pend.length };
         });
+    }
+
+    function mapaRefsSiHayMayoreoActivos() {
+        var refs = {};
+        leerPedidosMayoreoLocal().forEach(function (p) {
+            if (!p || p.estado === 'cancelado' || p.estado === 'combinado') return;
+            if (p.ventaRetailRegistradaEn) return;
+            (p.items || []).forEach(function (it) {
+                if (it.disponibilidad !== 'si') return;
+                var r = parseInt(it.ref, 10);
+                if (!isNaN(r) && r > 0) refs[String(r)] = true;
+            });
+        });
+        return refs;
+    }
+
+    /** Si la respuesta fue Sí hay pero el stock sigue >0 (legacy/duplicado), forzar 0 en inventario. */
+    function asegurarStockCeroRefsSiHayMayoreo(opts) {
+        opts = opts || {};
+        var refs = mapaRefsSiHayMayoreoActivos();
+        var keys = Object.keys(refs);
+        if (!keys.length) {
+            return Promise.resolve({ ok: true, corregidos: 0 });
+        }
+        var porFila = {};
+        (estado.filas || []).forEach(function (f) {
+            var ref = refDeFilaInventario(f);
+            if (!refs[String(ref)]) return;
+            var row = filaSheetInventario(f);
+            if (!row || !f.stock || f.stock <= 0) return;
+            porFila[row] = 0;
+        });
+        var updates = Object.keys(porFila).map(function (k) {
+            return { row: parseInt(k, 10), stock: porFila[k] };
+        });
+        if (!updates.length) {
+            return Promise.resolve({ ok: true, corregidos: 0 });
+        }
+        return aplicarUpdatesStockSecuencial(updates, opts).then(function (res) {
+            sincronizarHistoricoInventario(estado.filas);
+            return Object.assign({ ok: true, corregidos: updates.length }, res);
+        });
+    }
+
+    function sincronizarInventarioConPedidosMayoreo(opts) {
+        opts = opts || {};
+        return repararInventarioObebeApartadosPedidoMayoreo()
+            .then(function () { return aplicarStockPendientePedidosMayoreo(); })
+            .then(function () { return asegurarStockCeroRefsSiHayMayoreo(opts); })
+            .then(function (r) {
+                if (global.ObebeComprasStore && ObebeComprasStore.getAll &&
+                    global.ObebeMayoreoPedidosStore && ObebeMayoreoPedidosStore.sincronizarFilasComprasConPedidos) {
+                    var compras = ObebeComprasStore.getAll();
+                    if (compras.length) {
+                        var sync = ObebeMayoreoPedidosStore.sincronizarFilasComprasConPedidos(compras);
+                        if (sync && sync.dirty) ObebeComprasStore.reemplazar(compras);
+                    }
+                }
+                return r || { ok: true };
+            });
     }
 
     function itemPedidoNecesitaInventarioObebe(it) {
@@ -4016,6 +4216,13 @@
     function cargarTodo(forzar) {
         forzar = !!forzar;
         return cargarInventario(forzar).then(function (inv) {
+            var syncInv = global.ObebeMayoreoPedidosStore
+                ? sincronizarInventarioConPedidosMayoreo({ silent: true }).then(function () {
+                    return paqueteInventarioDesdeEstado();
+                }).catch(function () { return inv; })
+                : Promise.resolve(inv);
+            return syncInv;
+        }).then(function (inv) {
             var base = {
                 filas: inv.filas,
                 resumen: inv.resumen,
@@ -5012,6 +5219,11 @@
         filaInventarioDesdeComprasCeldas: filaInventarioDesdeComprasCeldas,
         idsBorrarInventarioPorRefs: idsBorrarInventarioPorRefs,
         combinarInventarioConComprasEarly: combinarInventarioConComprasEarly,
+        filtrarFilasSinApartadasMayoreo: filtrarFilasSinApartadasMayoreo,
+        repararInventarioObebeApartadosPedidoMayoreo: repararInventarioObebeApartadosPedidoMayoreo,
+        sincronizarInventarioConPedidosMayoreo: sincronizarInventarioConPedidosMayoreo,
+        asegurarStockCeroRefsSiHayMayoreo: asegurarStockCeroRefsSiHayMayoreo,
+        refDeFilaInventario: refDeFilaInventario,
         columnasVistaInventario: columnasVistaInventario,
         idxInventario: idxInventario,
         combinarEncabezadosInventario: combinarEncabezadosInventario,

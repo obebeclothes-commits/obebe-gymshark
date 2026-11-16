@@ -104,9 +104,78 @@
         return p.estado === 'pendiente' || p.estado === 'en_revision';
     }
 
+    function tsPedidoMayoreoLocal(p) {
+        if (!p) return 0;
+        return Math.max(
+            Number(p.pedidoActualizadoEn || 0),
+            Number(p.clienteEditadoEn || 0),
+            Number(p.obebeEditadoEn || 0),
+            Number(p.revisadoEn || 0),
+            Number(p.creadoEn || 0)
+        );
+    }
+
+    function elegirMejorPedidoNaty2910(a, b) {
+        if (!a) return b;
+        if (!b) return a;
+        var ta = tsPedidoMayoreoLocal(a);
+        var tb = tsPedidoMayoreoLocal(b);
+        if (tb > ta) return b;
+        if (ta > tb) return a;
+        var ua = contarUnidadesPedido(a);
+        var ub = contarUnidadesPedido(b);
+        if (ub > ua) return b;
+        if (ua > ub) return a;
+        var ca = (a.items || []).length;
+        var cb = (b.items || []).length;
+        return cb > ca ? b : a;
+    }
+
+    /** Varios pedidos del 29/10 → uno solo (el más completo / reciente) con id canónico. */
+    function unificarPedidosNaty2910EnCanon() {
+        var todos = leerJson(KEY, []);
+        if (!Array.isArray(todos) || !todos.length) return { ok: true, omitido: true };
+        var candidatos = todos.filter(function (p) {
+            if (claveCliente(p.clienteKey) !== 'naty') return false;
+            if (p.estado === 'combinado') return false;
+            if (p.id === PEDIDO_NATY_LEGACY_ID) return false;
+            if (p.id === PEDIDO_NATY_2_ID) return true;
+            return fechaLocalIsoDesdeMs(p.creadoEn) === FECHA_PEDIDO_NATY_2;
+        });
+        if (candidatos.length < 2 && candidatos.length === 1 && candidatos[0].id === PEDIDO_NATY_2_ID) {
+            return { ok: true, omitido: true, unico: true };
+        }
+        if (!candidatos.length) return { ok: true, omitido: true };
+        var mejor = candidatos[0];
+        var i;
+        for (i = 1; i < candidatos.length; i++) {
+            mejor = elegirMejorPedidoNaty2910(mejor, candidatos[i]);
+        }
+        var prevCanon = todos.find(function (p) { return p.id === PEDIDO_NATY_2_ID; }) || null;
+        if (prevCanon && prevCanon.id !== mejor.id) {
+            mejor = elegirMejorPedidoNaty2910(prevCanon, mejor);
+        }
+        var fusion = Object.assign({}, mejor);
+        fusion.id = PEDIDO_NATY_2_ID;
+        fusion.clienteKey = 'naty';
+        fusion.clienteNombre = fusion.clienteNombre || 'NATY';
+        if (!fusion.creadoEn) fusion.creadoEn = timestampLocal(2026, 10, 29);
+        fusion.items = normalizarItems(fusion.items || []);
+        recalcTotalesPedido(fusion);
+        var quitar = {};
+        candidatos.forEach(function (p) {
+            if (p.id !== PEDIDO_NATY_2_ID) quitar[p.id] = true;
+        });
+        var idx = todos.findIndex(function (p) { return p.id === PEDIDO_NATY_2_ID; });
+        if (idx >= 0) todos[idx] = fusion;
+        else todos.unshift(fusion);
+        todos = todos.filter(function (p) { return !quitar[p.id]; });
+        setPedidos(todos);
+        return { ok: true, items: (fusion.items || []).length, unidades: fusion.unidades };
+    }
+
     function asegurarPedidosNatySiFaltan() {
         var todos = leerJson(KEY, []);
-        var kNaty = claveCliente('naty');
         var tiene2910 = (todos || []).some(function (p) {
             return p.id === PEDIDO_NATY_2_ID && (p.items || []).length;
         });
@@ -115,12 +184,9 @@
         });
         if (!tiene1710) asegurarPedidoNatyLegacy20261017();
         if (!tiene2910) asegurarPedidoNatySegundo20261029();
-        purgarDuplicadosNatyPedido2910();
     }
 
     function pedidosForCliente(clienteKey) {
-        if (claveCliente(clienteKey) === 'naty') asegurarPedidosNatySiFaltan();
-        else purgarDuplicadosNatyPedido2910();
         var k = claveCliente(clienteKey);
         return getPedidos()
             .filter(function (p) {
@@ -132,7 +198,6 @@
     }
 
     function listarTodos(filtroClienteKey) {
-        asegurarPedidosNatySiFaltan();
         var list = getPedidos().filter(esPedidoVisibleLista).slice().sort(function (a, b) {
             return (b.creadoEn || 0) - (a.creadoEn || 0);
         });
@@ -369,15 +434,24 @@
         return map;
     }
 
+    function refBloqueadaPedidoMayoreo(info) {
+        if (!info) return false;
+        if (info.disponibilidad === 'no') return false;
+        return true;
+    }
+
     function refApartadaEnMayoreo(ref) {
         var r = parseInt(ref, 10);
         if (isNaN(r) || r < 1) return false;
-        return !!mapaRefsPedidosMayoreoActivos()[String(r)];
+        return refBloqueadaPedidoMayoreo(mapaRefsPedidosMayoreoActivos()[String(r)]);
     }
 
     function refsApartadasMayoreo() {
         var map = mapaRefsPedidosMayoreoActivos();
-        return Object.keys(map).map(function (k) { return parseInt(k, 10); }).filter(function (n) {
+        return Object.keys(map).map(function (k) {
+            if (!refBloqueadaPedidoMayoreo(map[k])) return null;
+            return parseInt(k, 10);
+        }).filter(function (n) {
             return !isNaN(n) && n > 0;
         });
     }
@@ -395,26 +469,21 @@
             var r = parseInt(f.celdas && f.celdas[col], 10);
             if (isNaN(r) || r < 1) return;
             var info = map[String(r)];
-            if (info) {
+            if (refBloqueadaPedidoMayoreo(info)) {
                 quitarEarly.push(r);
-                if (info.disponibilidad === 'si') {
-                    if (f.earlyAccess || f.earlyAccessSuspendidoPorPedido || !f.mayoreoPublicarPendiente) {
-                        f.earlyAccess = false;
-                        f.earlyAccessEn = null;
-                        f.earlyAccessSuspendidoPorPedido = false;
-                        f.mayoreoPublicarPendiente = true;
-                        f.mayoreoPublicarPendienteEn = f.mayoreoPublicarPendienteEn || Date.now();
-                        dirty = true;
-                    }
-                } else {
-                    if (f.earlyAccess || f.mayoreoPublicarPendiente || !f.earlyAccessSuspendidoPorPedido) {
-                        f.earlyAccess = false;
-                        f.earlyAccessEn = null;
-                        f.earlyAccessSuspendidoPorPedido = true;
-                        f.mayoreoPublicarPendiente = false;
-                        f.mayoreoPublicarPendienteEn = null;
-                        dirty = true;
-                    }
+                if (
+                    f.earlyAccess ||
+                    f.mayoreoPublicarPendiente ||
+                    !f.earlyAccessSuspendidoPorPedido ||
+                    f.enTienda
+                ) {
+                    f.earlyAccess = false;
+                    f.earlyAccessEn = null;
+                    f.earlyAccessSuspendidoPorPedido = true;
+                    f.mayoreoPublicarPendiente = false;
+                    f.mayoreoPublicarPendienteEn = null;
+                    f.enTienda = false;
+                    dirty = true;
                 }
             } else if (global.ObebeComprasEarlyStore && ObebeComprasEarlyStore.tieneRef(r)) {
                 if (!f.earlyAccess || f.earlyAccessSuspendidoPorPedido || f.mayoreoPublicarPendiente) {
@@ -441,7 +510,7 @@
         return !isNaN(r) && r > 0 ? r : 0;
     }
 
-    /** Sí hay en mayoreo: sacar de early access (tabla 2) y marcar para publicar en inventario Obebe. */
+    /** Sí hay en mayoreo: quitar early; inventario Obebe solo al confirmar venta retail. */
     function aplicarSiHayEarlyAccessDesdeItem(it) {
         var ref = refDesdeItemPedido(it);
         if (!ref) return { ok: true, ref: 0 };
@@ -456,9 +525,9 @@
             if (r !== ref) return;
             f.earlyAccess = false;
             f.earlyAccessEn = null;
-            f.earlyAccessSuspendidoPorPedido = false;
-            f.mayoreoPublicarPendiente = true;
-            f.mayoreoPublicarPendienteEn = Date.now();
+            f.earlyAccessSuspendidoPorPedido = true;
+            f.mayoreoPublicarPendiente = false;
+            f.mayoreoPublicarPendienteEn = null;
             dirty = true;
         });
         if (dirty) ObebeComprasStore.reemplazar(filas);
@@ -584,33 +653,31 @@
         tocarPedido(p, 'obebe');
         hit.todos[hit.idx] = p;
         setPedidos(hit.todos);
-        var fresh = findPedido(pedidoId).pedido || p;
-        var chainPub = Promise.resolve({ ok: true, publicados: 0 });
-        if (global.ObebeAdminData && ObebeAdminData.asegurarInventarioPedidoMayoreoSiHay) {
-            chainPub = ObebeAdminData.asegurarInventarioPedidoMayoreoSiHay(fresh);
-        }
-        return chainPub.then(function (pubRes) {
-            if (pubRes && pubRes.ok === false) {
-                return pubRes;
-            }
-            var despuesPub = findPedido(pedidoId).pedido || fresh;
-            if (global.ObebeAdminData && global.ObebeAdminData.descontarStockPedidoMayoreo) {
-                var optsStock = { silent: true };
-                if (despuesPub.stockInventarioObebeAplicado) optsStock.soloItemsNuevos = true;
-                return ObebeAdminData.descontarStockPedidoMayoreo(despuesPub, optsStock).then(function (sr) {
-                    return {
-                        ok: true,
-                        pedido: findPedido(pedidoId).pedido || despuesPub,
-                        stockObebe: sr,
-                        inventarioPublicado: pubRes && pubRes.publicados
-                    };
+        var despuesPub = findPedido(pedidoId).pedido || p;
+        if (global.ObebeAdminData && global.ObebeAdminData.descontarStockPedidoMayoreo) {
+            var optsStock = { silent: true };
+            if (despuesPub.stockInventarioObebeAplicado) optsStock.soloItemsNuevos = true;
+            return ObebeAdminData.descontarStockPedidoMayoreo(despuesPub, optsStock).then(function (sr) {
+                var fin = {
+                    ok: true,
+                    pedido: findPedido(pedidoId).pedido || despuesPub,
+                    stockObebe: sr,
+                    inventarioPublicado: 0
+                };
+                if (!global.ObebeAdminData || !ObebeAdminData.sincronizarInventarioConPedidosMayoreo) {
+                    return fin;
+                }
+                return ObebeAdminData.sincronizarInventarioConPedidosMayoreo({ silent: true }).then(function () {
+                    return fin;
+                }).catch(function () {
+                    return fin;
                 });
-            }
-            return {
-                ok: true,
-                pedido: despuesPub,
-                inventarioPublicado: pubRes && pubRes.publicados
-            };
+            });
+        }
+        return Promise.resolve({
+            ok: true,
+            pedido: despuesPub,
+            inventarioPublicado: 0
         });
     }
 
@@ -694,6 +761,31 @@
             norm(it.color),
             norm(it.marca)
         ].join('::');
+    }
+
+    /** Quita líneas repetidas (misma ref / inventario) en un pedido. */
+    function deduplicarItemsPedido(items) {
+        var out = [];
+        var porClave = Object.create(null);
+        (items || []).forEach(function (it) {
+            var ck = it.inventarioId ? 'inv:' + it.inventarioId : claveContenidoItemPedido(it);
+            if (!ck || ck === '0::::') {
+                out.push(Object.assign({}, it));
+                return;
+            }
+            if (porClave[ck]) {
+                var prev = porClave[ck];
+                prev.cantidad = Math.max(
+                    parseInt(prev.cantidad, 10) || 1,
+                    parseInt(it.cantidad, 10) || 1
+                );
+                return;
+            }
+            var copy = Object.assign({}, it);
+            porClave[ck] = copy;
+            out.push(copy);
+        });
+        return out;
     }
 
     function pedidoTeniaRespuestasObebe(items) {
@@ -1088,6 +1180,19 @@
         var idx = todos.findIndex(function (p) { return p.id === PEDIDO_NATY_2_ID; });
         var existing = idx >= 0 ? todos[idx] : null;
         var nItemsExist = existing && existing.items ? existing.items.length : 0;
+        if (existing && nItemsExist > 0) {
+            recalcTotalesPedido(existing);
+            todos[idx] = existing;
+            setPedidos(todos);
+            purgarDuplicadosNatyPedido2910();
+            return {
+                ok: true,
+                pedido: existing,
+                conservadoPedidoExistente: true,
+                items: nItemsExist,
+                unidades: existing.unidades
+            };
+        }
         var lineas = lineasInventarioPedidoNaty2910(STORE);
         if (existing && debeConservarPedidoNaty2910Existente(existing, lineas)) {
             recalcTotalesPedido(existing);
@@ -1458,18 +1563,39 @@
             if (p.estado === 'combinado') return true;
             if (claveCliente(p.clienteKey) !== 'naty') return true;
             if (fechaLocalIsoDesdeMs(p.creadoEn) !== FECHA_PEDIDO_NATY_2) return true;
-            var u = contarUnidadesPedido(p);
-            if (u >= 12 && u <= 25 && Math.abs(u - uCanon) <= 3) {
-                removed += 1;
-                return false;
-            }
-            return true;
+            removed += 1;
+            return false;
         });
         if (removed > 0) {
             setPedidos(out);
             return { ok: true, removed: removed };
         }
         return { ok: true, removed: 0 };
+    }
+
+    /** Un solo pedido 29/10, sin líneas duplicadas (repara local; no reconstruye desde inventario). */
+    function repararPedidosNatyDuplicados() {
+        unificarPedidosNaty2910EnCanon();
+        purgarDuplicadosNatyPedido2910();
+        var hit = findPedido(PEDIDO_NATY_2_ID);
+        if (hit.idx < 0) return { ok: true, omitido: true };
+        var p = hit.pedido;
+        var antes = (p.items || []).length;
+        p.items = normalizarItems(deduplicarItemsPedido(p.items));
+        recalcTotalesPedido(p);
+        hit.todos[hit.idx] = p;
+        setPedidos(hit.todos);
+        if (global.ObebeComprasStore && ObebeComprasStore.getAll) {
+            try {
+                sincronizarFilasComprasConPedidos(ObebeComprasStore.getAll());
+            } catch (e) { /* ignore */ }
+        }
+        return {
+            ok: true,
+            itemsAntes: antes,
+            itemsDespues: (p.items || []).length,
+            unidades: p.unidades
+        };
     }
 
     /**
@@ -1632,6 +1758,9 @@
         revertirInventarioNatyPedidosSinVentaConfirmada: revertirInventarioNatyPedidosSinVentaConfirmada,
         pedidosNatyEnFechaCreado: pedidosNatyEnFechaCreado,
         asegurarPedidosNatySiFaltan: asegurarPedidosNatySiFaltan,
+        repararPedidosNatyDuplicados: repararPedidosNatyDuplicados,
+        deduplicarItemsPedido: deduplicarItemsPedido,
+        unificarPedidosNaty2910EnCanon: unificarPedidosNaty2910EnCanon,
         refApartadaEnMayoreo: refApartadaEnMayoreo,
         refsApartadasMayoreo: refsApartadasMayoreo,
         sincronizarFilasComprasConPedidos: sincronizarFilasComprasConPedidos,

@@ -316,6 +316,10 @@
     function aplicarPackLocal(pack) {
         if (!pack) return;
         aplicandoRemoto += 1;
+        var pedidosAntes = '';
+        try {
+            pedidosAntes = localStorage.getItem(KEY_PEDIDOS) || '';
+        } catch (e) { /* ignore */ }
         try {
             guardarJson(KEY_LINEAS, pack.lineas || []);
             guardarJson(KEY_VENTAS, pack.ventas || []);
@@ -327,10 +331,14 @@
                 pack.comprasEarly && pack.comprasEarly.length) {
                 ObebeAdminModulosCloud.aplicarComprasEarlyEnLocal(pack.comprasEarly);
             }
-            if (typeof document !== 'undefined') {
+            var pedidosDespues = '';
+            try {
+                pedidosDespues = localStorage.getItem(KEY_PEDIDOS) || '';
+            } catch (e2) { /* ignore */ }
+            if (typeof document !== 'undefined' && pedidosAntes !== pedidosDespues) {
                 try {
                     document.dispatchEvent(new CustomEvent('obebe-mayoreo-pedidos-sync'));
-                } catch (e) { /* ignore */ }
+                } catch (e3) { /* ignore */ }
             }
         } finally {
             aplicandoRemoto -= 1;
@@ -402,10 +410,7 @@
                     cloudPackRef = cloud;
                     merged = fusionarPacks(local, cloudPackRef);
                     aplicarPackLocal(merged);
-                    if (global.ObebeMayoreoPedidosStore && ObebeMayoreoPedidosStore.asegurarPedidosNatySiFaltan) {
-                        ObebeMayoreoPedidosStore.asegurarPedidosNatySiFaltan();
-                        merged = fusionarPacks(packDesdeLocal(), cloudPackRef);
-                    }
+                    merged = fusionarPacks(packDesdeLocal(), cloudPackRef);
                     return leerPackNubeMayoreo();
                 })
                 .then(function (cloudOtraVez) {

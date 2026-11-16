@@ -1375,11 +1375,20 @@
 
     function mantenimientoMayoreoLocal() {
         try {
-            if (window.ObebeMayoreoPedidosStore && ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017) {
-                ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017();
-            }
-            if (window.ObebeMayoreoPedidosStore && ObebeMayoreoPedidosStore.asegurarPedidoNatySegundo20261029) {
-                ObebeMayoreoPedidosStore.asegurarPedidoNatySegundo20261029();
+            if (window.ObebeMayoreoPedidosStore) {
+                var reparoHecho = false;
+                try {
+                    reparoHecho = !!localStorage.getItem('obebe_reparo_pedidos_v20261319d');
+                } catch (e) { /* ignore */ }
+                if (!reparoHecho && ObebeMayoreoPedidosStore.repararPedidosNatyDuplicados) {
+                    ObebeMayoreoPedidosStore.repararPedidosNatyDuplicados();
+                    try {
+                        localStorage.setItem('obebe_reparo_pedidos_v20261319d', String(Date.now()));
+                    } catch (e2) { /* ignore */ }
+                }
+                if (ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017) {
+                    ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017();
+                }
             }
             if (window.ObebeMayoreoStore && ObebeMayoreoStore.ejecutarLimpiezaProgramadaMayoreo) {
                 ObebeMayoreoStore.ejecutarLimpiezaProgramadaMayoreo();
