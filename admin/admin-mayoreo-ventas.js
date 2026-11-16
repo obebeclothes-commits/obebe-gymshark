@@ -204,16 +204,20 @@
         return isNaN(n) ? 0 : n;
     }
 
-    /** Precio retail en inventario Obebe (referencia en columna M del panel Naty). */
+    /** Precio retail tienda Obebe (columna H del inventario principal). */
     function valorRetailInventarioObebe(hit) {
         if (!hit) return 0;
         var idx = ObebeAdminData.idxInventario ? ObebeAdminData.idxInventario() : {};
         var iPrecio = idx.precio != null ? idx.precio : 7;
-        if (hit.precio != null && String(hit.precio).trim() !== '') {
-            return parsePrecioMayoreo(hit.precio);
+        if (hit.celdas && hit.celdas.length > iPrecio) {
+            var raw = hit.celdas[iPrecio];
+            if (raw != null && String(raw).trim() !== '') {
+                var desdeCelda = parsePrecioMayoreo(raw);
+                if (desdeCelda > 0) return desdeCelda;
+            }
         }
-        if (hit.celdas && hit.celdas[iPreco] != null && String(hit.celdas[iPrecio]).trim() !== '') {
-            return parsePrecioMayoreo(hit.celdas[iPrecio]);
+        if (!hit.mayoreoLineaId && hit.precio != null && String(hit.precio).trim() !== '') {
+            return parsePrecioMayoreo(hit.precio);
         }
         return 0;
     }
@@ -428,11 +432,6 @@
         var qty = l.cantidad || 1;
         var unit = parsePrecioMayoreo(l.precioUnitario);
         var sub = l.subtotal != null ? parsePrecioMayoreo(l.subtotal) : unit * qty;
-        var origU = l.precioOriginal != null ? parsePrecioMayoreo(l.precioOriginal) : 0;
-        if (origU > 0) {
-            var origSub = origU * qty;
-            if (Math.abs(origSub - sub) >= 0.01) return origSub;
-        }
         var retailU = 0;
         if (l.lineaId) {
             var hitLinea = ObebeMayoreoStore.getLineasForCliente(clienteKey).find(function (x) {
@@ -442,9 +441,17 @@
                 var row = ObebeMayoreoStore.lineaToMayoreoRow(hitLinea);
                 var hitObebe = buscarFilaObebeParaMayoreo(row, filasInv || []);
                 retailU = valorRetailInventarioObebe(hitObebe);
+                if (!retailU && hitLinea.precioRetail != null) {
+                    retailU = parsePrecioMayoreo(hitLinea.precioRetail);
+                }
             }
         }
         if (retailU > 0 && Math.abs(retailU * qty - sub) >= 0.01) return retailU * qty;
+        var origU = l.precioOriginal != null ? parsePrecioMayoreo(l.precioOriginal) : 0;
+        if (origU > 0) {
+            var origSub = origU * qty;
+            if (Math.abs(origSub - sub) >= 0.01) return origSub;
+        }
         if (origU > 0) return origU * qty;
         return 0;
     }
@@ -582,6 +589,9 @@
                 var seg = hit && hit.segmento ? hit.segmento : inferirSegmentoMayoreo(row);
                 var precioNaty = precioVentaNatyDesdeLinea(l);
                 var retailObebe = valorRetailInventarioObebe(hit);
+                if (!retailObebe && l.precioRetail != null) {
+                    retailObebe = parsePrecioMayoreo(l.precioRetail);
+                }
                 return {
                     ref: ref,
                     nombre: row.nombre,
