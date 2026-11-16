@@ -11,6 +11,13 @@
 
     var pushTimer = null;
     var aplicandoRemoto = 0;
+    var colaNubeMayoreo = Promise.resolve();
+
+    function enColaNubeMayoreo(fn) {
+        var ejecutar = colaNubeMayoreo.then(function () { return fn(); });
+        colaNubeMayoreo = ejecutar.catch(function () { return null; });
+        return ejecutar;
+    }
 
     function canSync() {
         return !!(global.ObebeAdminModulosCloud && ObebeAdminModulosCloud.canSync &&
@@ -145,8 +152,7 @@
     }
 
     function packDesdeLocal() {
-        var early = comprasEarlyDesdeStore();
-        return {
+        var pack = {
             id: PACK_ID,
             clienteKey: 'naty',
             lineas: leerJson(KEY_LINEAS, []),
@@ -154,10 +160,14 @@
             pedidos: leerJson(KEY_PEDIDOS, []),
             meta: leerJson(KEY_META, {}),
             metaCompradores: leerJson(KEY_META_COMPR, {}),
-            comprasEarly: early,
-            comprasEarlyEn: early.length ? Date.now() : 0,
             actualizadoEn: Date.now()
         };
+        var early = comprasEarlyDesdeStore();
+        if (early.length) {
+            pack.comprasEarly = early;
+            pack.comprasEarlyEn = Date.now();
+        }
+        return pack;
     }
 
     function packDesdePayload(arr) {
@@ -229,98 +239,129 @@
         }
     }
 
-    function packParaSubirSinBorrarEarly(cloudPack) {
-        var local = packDesdeLocal();
-        if (cloudPack && Array.isArray(cloudPack.comprasEarly) && cloudPack.comprasEarly.length) {
-            var pick = elegirComprasEarly(
-                local.comprasEarly,
-                cloudPack.comprasEarly,
-                cloudPack.comprasEarlyEn,
-                local.comprasEarlyEn
-            );
-            if (pick.list.length >= (local.comprasEarly || []).length) {
-                local.comprasEarly = pick.list;
-                local.comprasEarlyEn = pick.en;
-            }
-        } else if (!local.comprasEarly || !local.comprasEarly.length) {
-            delete local.comprasEarly;
-            local.comprasEarlyEn = 0;
+  function preservarEarlyEnPackSubida(merged, cloudSnap) {
+        merged = Object.assign({}, merged || {});
+        var pick = elegirComprasEarly(
+            merged.comprasEarly,
+            cloudSnap && cloudSnap.comprasEarly,
+            cloudSnap && cloudSnap.comprasEarlyEn,
+            merged.comprasEarlyEn
+        );
+        var earlyOb = comprasEarlyDesdeStore();
+        if (earlyOb.length) {
+            merged.comprasEarly = earlyOb;
+            merged.comprasEarlyEn = Date.now();
+        } else if (pick.list.length) {
+            merged.comprasEarly = pick.list;
+            merged.comprasEarlyEn = pick.en;
+        } else {
+            delete merged.comprasEarly;
+            delete merged.comprasEarlyEn;
         }
-        return local;
+        return merged;
+    }
+
+    function leerPackNubeMayoreo() {
+        return global.ObebeAdminBackend.callAdminApi('getAdminModuloBlob', { moduleKey: MODULE_KEY })
+            .then(function (res) { return packDesdePayload(res && res.payload); });
+    }
+
+    function subirPackMayoreoNaty(pack) {
+        return global.ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
+            moduleKey: MODULE_KEY,
+            payload: payloadParaCloud(pack)
+        });
     }
 
     function publicarComprasEarlyParaNaty() {
         if (!canSync()) return Promise.resolve({ ok: false, offline: true });
         var early = comprasEarlyDesdeStore();
         if (!early.length) return Promise.resolve({ ok: true, early: 0, omitido: true });
-        return global.ObebeAdminBackend.callAdminApi('getAdminModuloBlob', { moduleKey: MODULE_KEY })
-            .then(function (res) {
-                var cloud = packDesdePayload(res && res.payload);
+        return enColaNubeMayoreo(function () {
+            return leerPackNubeMayoreo().then(function (cloud) {
                 var local = packDesdeLocal();
                 var merged = cloud ? fusionarPacks(local, cloud) : local;
                 merged.comprasEarly = early;
                 merged.comprasEarlyEn = Date.now();
-                return global.ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
-                    moduleKey: MODULE_KEY,
-                    payload: payloadParaCloud(merged)
+                return subirPackMayoreoNaty(merged).then(function () {
+                    return { ok: true, early: early.length };
                 });
-            })
-            .then(function () { return { ok: true, early: early.length }; })
-            .catch(function (err) {
-                console.warn('[admin-mayoreo-cloud] publicar early', err);
-                return { ok: false, error: (err && err.message) || String(err) };
             });
+        }).catch(function (err) {
+            console.warn('[admin-mayoreo-cloud] publicar early', err);
+            return { ok: false, error: (err && err.message) || String(err) };
+        });
     }
 
     function syncMayoreoNaty() {
         if (!canSync()) return Promise.resolve({ ok: false, offline: true });
+        return enColaNubeMayoreo(function () {
+            var local = packDesdeLocal();
+            var cloudPackRef = null;
+            var merged = null;
+            return leerPackNubeMayoreo()
+                .then(function (cloud) {
+                    cloudPackRef = cloud;
+                    merged = fusionarPacks(local, cloudPackRef);
+                    aplicarPackLocal(merged);
+                    if (global.ObebeMayoreoPedidosStore) {
+                        if (ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017) {
+                            ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017();
+                        }
+                        if (ObebeMayoreoPedidosStore.asegurarPedidoNatySegundo20261029) {
+                            ObebeMayoreoPedidosStore.asegurarPedidoNatySegundo20261029();
+                        }
+                        if (ObebeMayoreoPedidosStore.purgarDuplicadosNatyPedido2910) {
+                            ObebeMayoreoPedidosStore.purgarDuplicadosNatyPedido2910();
+                        }
+                        merged = fusionarPacks(packDesdeLocal(), cloudPackRef);
+                    }
+                    return leerPackNubeMayoreo();
+                })
+                .then(function (cloudOtraVez) {
+                    var aSubir = preservarEarlyEnPackSubida(merged, cloudOtraVez || cloudPackRef);
+                    return subirPackMayoreoNaty(aSubir);
+                })
+                .then(function () { return { ok: true }; });
+        }).catch(function (err) {
+            var msg = (err && err.message) ? String(err.message) : String(err);
+            if (msg.indexOf('moduleKey no permitido') !== -1) {
+                msg = 'La API de Supabase no acepta mayoreo_naty. Ejecuta deploy-admin-api.ps1 (ver DESPLIEGAR-ADMIN-API.md).';
+            }
+            if (msg.indexOf('moduleKey no permitido') === -1) {
+                console.warn('[admin-mayoreo-cloud] sync', err);
+            }
+            return { ok: false, error: msg };
+        });
+    }
+
+    /** Solo descarga mayoreo_naty (early, pedidos) sin subir — no bloquea la UI ni pisa la nube. */
+    function pullMayoreoNatyDesdeNube() {
+        if (!canSync()) return Promise.resolve({ ok: false, offline: true });
         var local = packDesdeLocal();
-        var cloudPackRef = null;
-        return global.ObebeAdminBackend.callAdminApi('getAdminModuloBlob', { moduleKey: MODULE_KEY })
-            .then(function (res) {
-                cloudPackRef = packDesdePayload(res && res.payload);
-                var merged = fusionarPacks(local, cloudPackRef);
+        return leerPackNubeMayoreo()
+            .then(function (cloud) {
+                if (!cloud) return { ok: true, vacio: true };
+                var merged = fusionarPacks(local, cloud);
                 aplicarPackLocal(merged);
-                if (global.ObebeMayoreoPedidosStore) {
-                    if (ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017) {
-                        ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017();
-                    }
-                    if (ObebeMayoreoPedidosStore.asegurarPedidoNatySegundo20261029) {
-                        ObebeMayoreoPedidosStore.asegurarPedidoNatySegundo20261029();
-                    }
-                    if (ObebeMayoreoPedidosStore.purgarDuplicadosNatyPedido2910) {
-                        ObebeMayoreoPedidosStore.purgarDuplicadosNatyPedido2910();
-                    }
-                }
-                return global.ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
-                    moduleKey: MODULE_KEY,
-                    payload: payloadParaCloud(packParaSubirSinBorrarEarly(cloudPackRef))
-                });
+                return { ok: true };
             })
-            .then(function () { return { ok: true }; })
             .catch(function (err) {
-                var msg = (err && err.message) ? String(err.message) : String(err);
-                if (msg.indexOf('moduleKey no permitido') !== -1) {
-                    msg = 'La API de Supabase no acepta mayoreo_naty. Ejecuta deploy-admin-api.ps1 (ver DESPLIEGAR-ADMIN-API.md).';
-                }
-                if (msg.indexOf('moduleKey no permitido') === -1) {
-                    console.warn('[admin-mayoreo-cloud] sync', err);
-                }
-                return { ok: false, error: msg };
+                console.warn('[admin-mayoreo-cloud] pull', err);
+                return { ok: false, error: (err && err.message) || String(err) };
             });
     }
 
     function pushMayoreoNatyNow() {
         if (!canSync()) return Promise.resolve({ ok: false, offline: true });
-        return global.ObebeAdminBackend.callAdminApi('getAdminModuloBlob', { moduleKey: MODULE_KEY })
-            .then(function (res) {
-                var cloud = packDesdePayload(res && res.payload);
-                return global.ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
-                    moduleKey: MODULE_KEY,
-                    payload: payloadParaCloud(packParaSubirSinBorrarEarly(cloud))
-                });
-            })
-            .then(function () { return { ok: true }; }).catch(function (err) {
+        return enColaNubeMayoreo(function () {
+            var local = packDesdeLocal();
+            return leerPackNubeMayoreo().then(function (cloud) {
+                var merged = fusionarPacks(local, cloud);
+                var aSubir = preservarEarlyEnPackSubida(merged, cloud);
+                return subirPackMayoreoNaty(aSubir).then(function () { return { ok: true }; });
+            });
+        }).catch(function (err) {
             console.warn('[admin-mayoreo-cloud] push', err);
             return { ok: false, error: (err && err.message) || String(err) };
         });
@@ -340,6 +381,7 @@
         MODULE_KEY: MODULE_KEY,
         canSync: canSync,
         syncMayoreoNaty: syncMayoreoNaty,
+        pullMayoreoNatyDesdeNube: pullMayoreoNatyDesdeNube,
         pushMayoreoNatyNow: pushMayoreoNatyNow,
         notifyMayoreoNatySaved: notifyMayoreoNatySaved,
         publicarComprasEarlyParaNaty: publicarComprasEarlyParaNaty

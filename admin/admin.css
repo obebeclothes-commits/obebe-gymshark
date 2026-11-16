@@ -3198,8 +3198,12 @@ body.admin-ped-filtros-open {
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 0.5rem;
     padding: 0 1rem 1rem;
-    max-height: min(65vh, 720px);
+    max-height: min(70vh, 780px);
     overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
 }
 
 .admin-ped-item {
@@ -3678,7 +3682,6 @@ body.admin-ped-filtros-open {
 
 body.admin-busy-open {
     overflow: hidden;
-    touch-action: none;
 }
 
 body.admin-suc-modal-open {

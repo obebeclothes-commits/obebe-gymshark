@@ -5,6 +5,16 @@
     var ORDEN_TALLAS = ['S', 'M', 'L', 'XL', 'UNI'];
     /** Inventario activo del panel (catálogo + modal Ver). */
     var filasInv = [];
+    var catalogoMontado = null;
+
+    function promesaConTiempo(promise, ms) {
+        return Promise.race([
+            Promise.resolve(promise),
+            new Promise(function (resolve) {
+                setTimeout(function () { resolve({ ok: false, timeout: true }); }, ms);
+            })
+        ]);
+    }
 
     function esc(s) {
         return String(s || '')
@@ -1139,6 +1149,8 @@
         }
 
         function bindNaty() {
+            document.body.classList.remove('admin-ped-filtros-open', 'admin-busy-open', 'admin-dialog-open');
+            cerrarDrawerFiltros();
             rebuildFiltrosPanel();
             pintarCatalogo();
             pintarCarrito();
@@ -1172,20 +1184,25 @@
                         pintarCatalogo();
                     }
                     if (modoCatalogo === 'early') {
-                        var box = document.getElementById('adminPedCatalogo');
-                        if (box) {
-                            box.innerHTML = '<p class="admin-muted-text">Sincronizando Early access desde Obebe…</p>';
+                        pintarTrasModo();
+                        var cntEarly = document.getElementById('adminPedContador');
+                        if (cntEarly) {
+                            cntEarly.textContent = (cntEarly.textContent || '') + ' · Actualizando Early…';
                         }
                         var chain = Promise.resolve();
-                        if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.syncMayoreoNaty) {
+                        var cloud = global.ObebeAdminMayoreoCloud;
+                        if (cloud && cloud.pullMayoreoNatyDesdeNube) {
                             chain = chain.then(function () {
-                                return ObebeAdminMayoreoCloud.syncMayoreoNaty();
+                                return promesaConTiempo(cloud.pullMayoreoNatyDesdeNube(), 12000);
                             });
                         }
                         if (global.ObebeAdminModulosCloud &&
                             ObebeAdminModulosCloud.syncComprasParaMayoreoCliente) {
                             chain = chain.then(function () {
-                                return ObebeAdminModulosCloud.syncComprasParaMayoreoCliente();
+                                return promesaConTiempo(
+                                    ObebeAdminModulosCloud.syncComprasParaMayoreoCliente(),
+                                    12000
+                                );
                             });
                         }
                         chain.then(function () {
@@ -1680,9 +1697,26 @@
             ObebeAdminDialog.forzarOcultarOcupado();
         }
         document.body.classList.remove('admin-mayoreo-envio-lock');
+        catalogoMontado = {
+            actualizar: function (nuevasFilas) {
+                if (Array.isArray(nuevasFilas) && nuevasFilas.length) filasInv = nuevasFilas;
+                if (global.ObebeAdminData && ObebeAdminData.combinarInventarioConComprasEarly) {
+                    filasInv = ObebeAdminData.combinarInventarioConComprasEarly(filasInv || []);
+                }
+                if (document.getElementById('adminPedCatalogo')) {
+                    rebuildFiltrosPanel();
+                    pintarCatalogo();
+                }
+            }
+        };
         syncStockPedidosPendientes();
         pintar();
     }
 
-    global.ObebeAdminMayoreoPedidos = { mount: mount };
+    global.ObebeAdminMayoreoPedidos = {
+        mount: mount,
+        refrescarCatalogoDesdeCache: function (filas) {
+            if (catalogoMontado) catalogoMontado.actualizar(filas);
+        }
+    };
 })(window);

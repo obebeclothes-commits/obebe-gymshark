@@ -1311,8 +1311,16 @@
                             cargarPedNaty();
                         }
                     };
-                    elContent.innerHTML = '<div class="admin-loading">Cargando catálogo…</div>';
-                    syncEarlyPed.then(listoPed).catch(listoPed);
+                    listoPed();
+                    syncEarlyPed.then(function () {
+                        if (vistaActual !== 'pedidos_mayoreo') return;
+                        if (ObebeAdminData.combinarInventarioConComprasEarly) {
+                            datosCache.filas = ObebeAdminData.combinarInventarioConComprasEarly(datosCache.filas || []);
+                        }
+                        if (ObebeAdminMayoreoPedidos.refrescarCatalogoDesdeCache) {
+                            ObebeAdminMayoreoPedidos.refrescarCatalogoDesdeCache(datosCache.filas || []);
+                        }
+                    }).catch(function () { /* catálogo ya visible */ });
                 } else {
                     var dmPed = datosMayoreoParaVista();
                     ObebeAdminMayoreoPedidos.mount(elContent, {
@@ -1596,7 +1604,14 @@
             if (comprasMount) ObebeAdminCompras.mount(comprasMount);
         }
         if (vistaActual === 'pedidos_mayoreo' && ObebeAdminAuth.esMayoreoCliente(userActual)) {
-            renderModulo('pedidos_mayoreo');
+            if (datosCache && ObebeAdminData.combinarInventarioConComprasEarly) {
+                datosCache.filas = ObebeAdminData.combinarInventarioConComprasEarly(datosCache.filas || []);
+            }
+            if (ObebeAdminMayoreoPedidos.refrescarCatalogoDesdeCache && datosCache) {
+                ObebeAdminMayoreoPedidos.refrescarCatalogoDesdeCache(datosCache.filas || []);
+            } else {
+                renderModulo('pedidos_mayoreo');
+            }
         }
     });
 
