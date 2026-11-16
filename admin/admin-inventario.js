@@ -925,8 +925,8 @@
             var valAnt = ant ? parseNumInventario(ant.celdas[colPrecio]) : 0;
             var dirtyPrecio = f._dirty && f._dirty[colPrecio];
             if (dirtyPrecio || Math.abs(valNuevo - valAnt) >= 0.01) {
-                var ok = ObebeMayoreoStore.updateLinea(f.mayoreoLineaId, { precioVentaPlaneado: valNuevo });
-                if (!ok) {
+                var lineaOk = ObebeMayoreoStore.updateLinea(f.mayoreoLineaId, { precioVentaPlaneado: valNuevo });
+                if (!lineaOk) {
                     fallosStore++;
                     return;
                 }

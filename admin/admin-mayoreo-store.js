@@ -67,10 +67,11 @@
     }
 
     function setLineas(arr) {
-        guardarJson(KEY_LINEAS, arr || []);
-        if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
+        var ok = guardarJson(KEY_LINEAS, arr || []);
+        if (ok && global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
             ObebeAdminMayoreoCloud.notifyMayoreoNatySaved();
         }
+        return ok;
     }
 
     function getVentas() {
@@ -78,10 +79,11 @@
     }
 
     function setVentas(arr) {
-        guardarJson(KEY_VENTAS, arr || []);
-        if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
+        var ok = guardarJson(KEY_VENTAS, arr || []);
+        if (ok && global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
             ObebeAdminMayoreoCloud.notifyMayoreoNatySaved();
         }
+        return ok;
     }
 
     function cantidadVendidaLinea(lineaId) {
