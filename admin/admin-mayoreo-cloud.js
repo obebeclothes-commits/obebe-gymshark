@@ -121,6 +121,9 @@
         var tNext = tsPedidoMayoreo(next);
         if (tNext > tPrev) return next;
         if (tPrev > tNext) return prev;
+        var uNext = unidadesPedidoPack(next);
+        var uPrev = unidadesPedidoPack(prev);
+        if (uNext !== uPrev) return uNext > uPrev ? next : prev;
         return cuentaItemsPedido(next) >= cuentaItemsPedido(prev) ? next : prev;
     }
 
@@ -399,16 +402,8 @@
                     cloudPackRef = cloud;
                     merged = fusionarPacks(local, cloudPackRef);
                     aplicarPackLocal(merged);
-                    if (global.ObebeMayoreoPedidosStore) {
-                        if (ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017) {
-                            ObebeMayoreoPedidosStore.asegurarPedidoNatyLegacy20261017();
-                        }
-                        if (ObebeMayoreoPedidosStore.asegurarPedidoNatySegundo20261029) {
-                            ObebeMayoreoPedidosStore.asegurarPedidoNatySegundo20261029();
-                        }
-                        if (ObebeMayoreoPedidosStore.purgarDuplicadosNatyPedido2910) {
-                            ObebeMayoreoPedidosStore.purgarDuplicadosNatyPedido2910();
-                        }
+                    if (global.ObebeMayoreoPedidosStore && ObebeMayoreoPedidosStore.asegurarPedidosNatySiFaltan) {
+                        ObebeMayoreoPedidosStore.asegurarPedidosNatySiFaltan();
                         merged = fusionarPacks(packDesdeLocal(), cloudPackRef);
                     }
                     return leerPackNubeMayoreo();

@@ -1389,20 +1389,8 @@
         }
     }
 
-    function mostrarApp(user) {
+    function iniciarAppTrasLogin(user) {
         mantenimientoMayoreoLocal();
-        userActual = user;
-        elLogin.classList.add('admin-hidden');
-        elApp.classList.remove('admin-hidden');
-        var nombreUser = user.nombre || user.usuario;
-        elUserChip.textContent = nombreUser;
-        var chipSide = document.getElementById('adminUserChipSidebar');
-        if (chipSide) {
-            chipSide.textContent = nombreUser;
-            chipSide.classList.toggle('admin-hidden', !nombreUser || nombreUser === 'OBEBE');
-        }
-        actualizarMarcaPanel(user);
-        renderNav();
         var inicio = ObebeAdminAuth.esMayoreoCliente(user) ? 'dashboard_mayoreo' : 'dashboard';
         if (ObebeAdminAuth.esMayoreoCliente(user)) {
             datosCache = baseDatosMayoreoCliente({ filas: [] });
@@ -1445,6 +1433,27 @@
             elContent.insertAdjacentHTML('afterbegin',
                 '<div class="admin-banner">' + esc((err && err.message) || 'No se pudieron cargar los datos.') +
                 ' · Verifica conexión y recarga la página.</div>');
+        });
+    }
+
+    function mostrarApp(user) {
+        userActual = user;
+        elLogin.classList.add('admin-hidden');
+        elApp.classList.remove('admin-hidden');
+        var nombreUser = user.nombre || user.usuario;
+        elUserChip.textContent = nombreUser;
+        var chipSide = document.getElementById('adminUserChipSidebar');
+        if (chipSide) {
+            chipSide.textContent = nombreUser;
+            chipSide.classList.toggle('admin-hidden', !nombreUser || nombreUser === 'OBEBE');
+        }
+        actualizarMarcaPanel(user);
+        renderNav();
+        var pullInicial = (window.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.pullMayoreoNatyDesdeNube)
+            ? ObebeAdminMayoreoCloud.pullMayoreoNatyDesdeNube()
+            : Promise.resolve({ ok: false });
+        pullInicial.finally(function () {
+            iniciarAppTrasLogin(user);
         });
     }
 

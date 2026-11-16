@@ -104,10 +104,23 @@
         return p.estado === 'pendiente' || p.estado === 'en_revision';
     }
 
-    function pedidosForCliente(clienteKey) {
-        asegurarPedidoNatyLegacy20261017();
-        asegurarPedidoNatySegundo20261029();
+    function asegurarPedidosNatySiFaltan() {
+        var todos = leerJson(KEY, []);
+        var kNaty = claveCliente('naty');
+        var tiene2910 = (todos || []).some(function (p) {
+            return p.id === PEDIDO_NATY_2_ID && (p.items || []).length;
+        });
+        var tiene1710 = (todos || []).some(function (p) {
+            return p.id === PEDIDO_NATY_LEGACY_ID && (p.items || []).length;
+        });
+        if (!tiene1710) asegurarPedidoNatyLegacy20261017();
+        if (!tiene2910) asegurarPedidoNatySegundo20261029();
         purgarDuplicadosNatyPedido2910();
+    }
+
+    function pedidosForCliente(clienteKey) {
+        if (claveCliente(clienteKey) === 'naty') asegurarPedidosNatySiFaltan();
+        else purgarDuplicadosNatyPedido2910();
         var k = claveCliente(clienteKey);
         return getPedidos()
             .filter(function (p) {
@@ -119,9 +132,7 @@
     }
 
     function listarTodos(filtroClienteKey) {
-        asegurarPedidoNatyLegacy20261017();
-        asegurarPedidoNatySegundo20261029();
-        purgarDuplicadosNatyPedido2910();
+        asegurarPedidosNatySiFaltan();
         var list = getPedidos().filter(esPedidoVisibleLista).slice().sort(function (a, b) {
             return (b.creadoEn || 0) - (a.creadoEn || 0);
         });
@@ -1048,6 +1059,24 @@
         return { ok: true, pedido: pedido, items: items.length };
     }
 
+  function pedidoNaty2910TieneEdicionCliente(existing) {
+        if (!existing) return false;
+        var tsSeed = timestampLocal(2026, 10, 29);
+        if (existing.clienteEditadoEn && existing.clienteEditadoEn > tsSeed) return true;
+        if (existing.pedidoActualizadoEn && existing.pedidoActualizadoEn > tsSeed + 3600000) return true;
+        if (existing.estado === 'pendiente' || existing.estado === 'en_revision') return true;
+        return false;
+    }
+
+    function debeConservarPedidoNaty2910Existente(existing, lineas) {
+        if (!existing || !(existing.items || []).length) return false;
+        var nItems = existing.items.length;
+        var nLineas = (lineas || []).length;
+        if (pedidoNaty2910TieneEdicionCliente(existing)) return true;
+        if (nLineas > 0 && nItems >= nLineas) return true;
+        return false;
+    }
+
     /** 2.º pedido Naty (29/10/2026, ~18 pzas.) reconstruido desde inventario o historial local. */
     function asegurarPedidoNatySegundo20261029() {
         var STORE = global.ObebeMayoreoStore;
@@ -1060,6 +1089,19 @@
         var existing = idx >= 0 ? todos[idx] : null;
         var nItemsExist = existing && existing.items ? existing.items.length : 0;
         var lineas = lineasInventarioPedidoNaty2910(STORE);
+        if (existing && debeConservarPedidoNaty2910Existente(existing, lineas)) {
+            recalcTotalesPedido(existing);
+            todos[idx] = existing;
+            setPedidos(todos);
+            purgarDuplicadosNatyPedido2910();
+            return {
+                ok: true,
+                pedido: existing,
+                conservadoEdicion: true,
+                items: nItemsExist,
+                lineasInventario: lineas.length
+            };
+        }
         if (!lineas.length) {
             var conservado = conservarPedidoNaty2DesdeHistorial(todos);
             if (conservado) return conservado;
@@ -1589,6 +1631,7 @@
         quitarInventarioNatySegundoPedido2910: quitarInventarioNatySegundoPedido2910,
         revertirInventarioNatyPedidosSinVentaConfirmada: revertirInventarioNatyPedidosSinVentaConfirmada,
         pedidosNatyEnFechaCreado: pedidosNatyEnFechaCreado,
+        asegurarPedidosNatySiFaltan: asegurarPedidosNatySiFaltan,
         refApartadaEnMayoreo: refApartadaEnMayoreo,
         refsApartadasMayoreo: refsApartadasMayoreo,
         sincronizarFilasComprasConPedidos: sincronizarFilasComprasConPedidos,

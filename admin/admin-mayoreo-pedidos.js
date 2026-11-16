@@ -1460,11 +1460,17 @@
                             } else if (fueEdicion) {
                                 msgOk = 'Pedido actualizado. Todos los artículos siguen con la misma respuesta de disponibilidad.';
                             }
-                            ObebeAdminDialog.alert({
-                                title: fueEdicion ? 'Pedido actualizado' : 'Pedido enviado',
-                                message: msgOk,
-                                confirmText: 'Perfecto'
-                            }).then(function () { pintar(); });
+                            var subirNube = (global.ObebeAdminMayoreoCloud &&
+                                ObebeAdminMayoreoCloud.pushMayoreoNatyNow)
+                                ? ObebeAdminMayoreoCloud.pushMayoreoNatyNow()
+                                : Promise.resolve({ ok: false });
+                            return subirNube.finally(function () {
+                                ObebeAdminDialog.alert({
+                                    title: fueEdicion ? 'Pedido actualizado' : 'Pedido enviado',
+                                    message: msgOk,
+                                    confirmText: 'Perfecto'
+                                }).then(function () { pintarHistorial(); });
+                            });
                             });
                         }).catch(function (e) {
                             if (err) err.textContent = (e && e.message) || 'No se pudo enviar.';
