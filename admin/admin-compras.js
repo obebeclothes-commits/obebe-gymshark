@@ -194,6 +194,12 @@
     }
 
     function prepararFilasParaVista() {
+        if (global.ObebeMayoreoPedidosStore && ObebeMayoreoPedidosStore.sincronizarFilasComprasConPedidos) {
+            var sync = ObebeMayoreoPedidosStore.sincronizarFilasComprasConPedidos(filas);
+            if (sync && sync.dirty && global.ObebeComprasStore) {
+                filas = ObebeComprasStore.getAll();
+            }
+        }
         var dirtyFoto = false;
         filas.forEach(function (f) {
             var idx = idxCols();
@@ -386,23 +392,56 @@
         } catch (e) { /* ignore */ }
     }
 
+    function refApartadaEnPedidoMayoreo(ref) {
+        if (!ref) return false;
+        if (global.ObebeMayoreoPedidosStore && ObebeMayoreoPedidosStore.refApartadaEnMayoreo) {
+            return ObebeMayoreoPedidosStore.refApartadaEnMayoreo(ref);
+        }
+        return false;
+    }
+
+    function esFilaTabla1Nuevas(f) {
+        if (f.earlyAccess || f.enTienda) return false;
+        if (f.earlyAccessSuspendidoPorPedido || f.mayoreoPublicarPendiente) return false;
+        var ref = refNumeroFila(f);
+        if (refApartadaEnPedidoMayoreo(ref)) return false;
+        if (global.ObebeComprasEarlyStore && ObebeComprasEarlyStore.tieneRef(ref)) return false;
+        return true;
+    }
+
+    function esFilaTabla2Early(f) {
+        if (!f.earlyAccess || f.enTienda || f.mayoreoPublicarPendiente) return false;
+        var ref = refNumeroFila(f);
+        if (refApartadaEnPedidoMayoreo(ref)) return false;
+        return true;
+    }
+
+    function filtrarCandidatasSubirInventario(lista) {
+        return (lista || []).filter(function (f) {
+            var ref = refNumeroFila(f);
+            return !refApartadaEnPedidoMayoreo(ref) && !f.mayoreoPublicarPendiente &&
+                !f.earlyAccessSuspendidoPorPedido;
+        });
+    }
+
     function visibles() {
         return filas.filter(function (f) {
             if (f.enTienda) return false;
             if (f.earlyAccess) return coincideFiltroCompras(f, filtroEarly);
+            if (!esFilaTabla1Nuevas(f)) return false;
             return coincideFiltroCompras(f, filtroPendiente);
         });
     }
 
     function filasPendientesConfirmar() {
         return filas.filter(function (f) {
-            return !f.earlyAccess && !f.enTienda && coincideFiltroCompras(f, filtroPendiente);
+            return esFilaTabla1Nuevas(f) && coincideFiltroCompras(f, filtroPendiente);
         });
     }
 
     function filasEarlyConfirmadas() {
         return filas.filter(function (f) {
-            return f.earlyAccess && !f.enTienda && coincideFiltroCompras(f, filtroEarly);
+            return esFilaTabla2Early(f) && coincideFiltroCompras(f, filtroEarly);
         });
     }
 
@@ -952,7 +991,9 @@
     }
 
     function filasSinEarlyAccess() {
-        return filas.filter(function (f) { return !f.earlyAccess && !f.enTienda; });
+        return filas.filter(function (f) {
+            return esFilaTabla1Nuevas(f);
+        });
     }
 
     function refsDesdeLista(list) {
@@ -1183,16 +1224,16 @@
 
     function subirPendientesAInventario(root) {
         if (subiendo || !global.ObebeAdminDialog || !global.ObebeAdminBackend) return;
-        var candidatas = filasPendientesConfirmar();
+        var candidatas = filtrarCandidatasSubirInventario(filasPendientesConfirmar());
         if (!candidatas.length) {
-            aviso = 'La tabla 1 no tiene filas pendientes para subir (sin early access).';
+            aviso = 'La tabla 1 no tiene filas pendientes para subir (sin early access ni pedido mayoreo abierto).';
             pintar(root);
             return;
         }
         var n = candidatas.length;
         ObebeAdminDialog.confirm({
             title: '¿Subir tabla 1 a inventario?',
-            message: 'Se publican ' + n + ' artículo(s) de nuevas compras. Salen de Compras al terminar. No pasan por early access de Naty.',
+            message: 'Se publican ' + n + ' artículo(s) de nuevas compras. No se incluyen refs en pedido mayoreo de Naty. Salen de Compras al terminar.',
             confirmText: 'Sí, subir',
             cancelText: 'Cancelar',
             variant: 'ok',
@@ -1220,16 +1261,18 @@
 
     function subirEarlyAInventario(root) {
         if (subiendo || !global.ObebeAdminDialog || !global.ObebeAdminBackend) return;
-        var candidatas = filas.filter(function (f) { return f.earlyAccess && !f.enTienda; });
+        var candidatas = filtrarCandidatasSubirInventario(filas.filter(function (f) {
+            return esFilaTabla2Early(f);
+        }));
         if (!candidatas.length) {
-            aviso = 'La tabla 2 no tiene filas en early access para subir.';
+            aviso = 'La tabla 2 no tiene filas en early access para subir (o están en pedido mayoreo).';
             pintar(root);
             return;
         }
         var n = candidatas.length;
         ObebeAdminDialog.confirm({
             title: '¿Subir tabla 2 a inventario?',
-            message: 'Se publican solo los ' + n + ' artículo(s) de early access confirmado. Salen de Compras al terminar.',
+            message: 'Se publican ' + n + ' artículo(s) de early access. No se suben los apartados en pedido mayoreo. Salen de Compras al terminar.',
             confirmText: 'Sí, subir',
             cancelText: 'Cancelar',
             variant: 'ok',

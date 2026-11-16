@@ -1201,7 +1201,12 @@
                     vendedor: (userActual && userActual.nombre) ? userActual.nombre : 'OBEBE',
                     clientes: datosCache.clientes || [],
                     filas: datosCache.filas || [],
-                    getFilas: function () { return datosCache.filas || []; },
+                    getFilas: function () {
+                        var f = datosCache.filas || [];
+                        return ObebeAdminData.combinarInventarioConComprasEarly
+                            ? ObebeAdminData.combinarInventarioConComprasEarly(f)
+                            : f;
+                    },
                     onInventarioActualizado: function () {
                         return ObebeAdminData.cargarInventario(true).then(function (inv) {
                             datosCache.filas = inv.filas || datosCache.filas;

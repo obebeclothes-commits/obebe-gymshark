@@ -238,8 +238,46 @@
         return '<span class="admin-tag admin-tag-muted">Sin vínculo inv.</span>';
     }
 
+    function esEarlyFilaApartado(r) {
+        if (!r) return false;
+        if (r.soloComprasEarly) return true;
+        return !!(global.ObebeComprasEarlyStore && ObebeComprasEarlyStore.esEarlyAccessFila(r));
+    }
+
+    function stockVistaApartado(r) {
+        if (!r) return 0;
+        if (global.ObebeAdminData && ObebeAdminData.stockDisponibleConEntregas) {
+            var d = ObebeAdminData.stockDisponibleConEntregas(r);
+            if (d > 0) return d;
+        }
+        if (r.celdas && ObebeAdminData.idxInventario) {
+            var idx = ObebeAdminData.idxInventario();
+            var col = idx.stock != null ? idx.stock : 2;
+            var n = parseInt(r.celdas[col], 10);
+            if (!isNaN(n)) return Math.max(0, n);
+        }
+        return Math.max(0, r.stock || 0);
+    }
+
+    /** Inventario + Early; oculta stock 0 salvo Early access. */
+    function filasPickerApartados() {
+        var base = getFilasInv().slice();
+        if (global.ObebeAdminData && ObebeAdminData.combinarInventarioConComprasEarly) {
+            base = ObebeAdminData.combinarInventarioConComprasEarly(base);
+        }
+        return base.filter(function (r) {
+            if (esEarlyFilaApartado(r)) return true;
+            return stockVistaApartado(r) > 0;
+        });
+    }
+
     function thumbInvHtml(r) {
-        var url = ObebeAdminData.urlImagenFilaInventario(r);
+        var url = '';
+        if (esEarlyFilaApartado(r) && ObebeAdminData.urlsFotosTiendaObebe) {
+            var pack = ObebeAdminData.urlsFotosTiendaObebe(r);
+            url = pack.foto1 || (pack.candidatos1 && pack.candidatos1[0]) || '';
+        }
+        if (!url) url = ObebeAdminData.urlImagenFilaInventario(r);
         if (!url) {
             return '<span class="admin-ap-inv-pick-thumb admin-ap-inv-pick-thumb--empty" aria-hidden="true"></span>';
         }
@@ -399,7 +437,7 @@
         var box = document.getElementById('adminApartadoInvLista');
         if (!box) return;
         var q = String((document.getElementById('adminApartadoInvBuscar') || {}).value || '').trim().toLowerCase();
-        var list = getFilasInv().slice();
+        var list = filasPickerApartados();
         if (q) {
             list = list.filter(function (r) {
                 var blob = [r.nombre, r.marca, r.color, r.talla, r.tipo, String(r.ref || '')].join(' ').toLowerCase();
@@ -407,12 +445,15 @@
             });
         }
         list.sort(function (a, b) {
+            var ea = esEarlyFilaApartado(a) ? 0 : 1;
+            var eb = esEarlyFilaApartado(b) ? 0 : 1;
+            if (ea !== eb) return ea - eb;
             return String(a.nombre).localeCompare(String(b.nombre), 'es');
         });
         var cnt = document.getElementById('adminApartadoInvContador');
         if (cnt) {
-            var total = getFilasInv().length;
-            cnt.textContent = list.length + ' artículo(s)' + (list.length < total ? ' (filtrados de ' + total + ')' : ' en inventario');
+            var total = filasPickerApartados().length;
+            cnt.textContent = list.length + ' artículo(s)' + (list.length < total ? ' (filtrados de ' + total + ')' : ' con stock o Early');
         }
         if (!list.length) {
             box.innerHTML = '<p class="admin-muted-text">Sin resultados.</p>';
@@ -421,11 +462,18 @@
         box.innerHTML = list.map(function (r) {
             var id = ObebeAdminData.idFilaInventario(r);
             var sel = inventarioPickSelected && inventarioPickSelected.invId === id ? ' is-selected' : '';
+            var stk = stockVistaApartado(r);
+            var early = esEarlyFilaApartado(r)
+                ? ' <span class="admin-tag admin-tag-warn">Early</span>' : '';
+            var stockLbl = esEarlyFilaApartado(r) && stk <= 0
+                ? 'Próximo (compras)'
+                : ('Stock ' + stk);
             return '<button type="button" class="admin-ap-inv-pick' + sel + '" data-inv-id="' + esc(id) + '" data-fila="' +
                 esc(r.filaSheet) + '">' + thumbInvHtml(r) +
                 '<span class="admin-ap-inv-pick-text">' + ObebeAdminData.htmlRef(r.ref) +
                 '<strong>' + esc(r.nombre) + '</strong> · ' + esc(r.marca) +
-                ' · ' + esc(r.talla) + ' · ' + esc(r.color) + ' · Stock ' + (r.stock || 0) + '</span></button>';
+                ' · ' + esc(r.talla) + ' · ' + esc(r.color) + early +
+                ' · ' + esc(stockLbl) + '</span></button>';
         }).join('');
         var btnOk = document.getElementById('adminApartadoInvConfirm');
         if (btnOk) btnOk.disabled = !inventarioPickSelected;
@@ -477,7 +525,7 @@
     }
 
     function filaInvPorPickId(invId, filaSheet) {
-        var list = getFilasInv();
+        var list = filasPickerApartados();
         var hit = list.find(function (r) { return ObebeAdminData.idFilaInventario(r) === invId; });
         if (hit) return hit;
         if (filaSheet) {
@@ -997,6 +1045,15 @@
             var raw = opts.getFilas ? opts.getFilas() : (opts.filas || []);
             return Array.isArray(raw) ? raw : [];
         };
+        if (!mount._hookEarlyApart) {
+            mount._hookEarlyApart = true;
+            document.addEventListener('obebe-compras-early-access', function () {
+                var root = document.getElementById('adminApartadoInvModal');
+                if (root && !root.classList.contains('admin-hidden')) {
+                    pintarListaInventarioPicker();
+                }
+            });
+        }
         tipoCliente = clientesLista.length ? 'existente' : 'nuevo';
         clienteSeleccionadoId = '';
 

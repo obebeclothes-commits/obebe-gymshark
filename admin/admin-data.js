@@ -1851,8 +1851,17 @@
         filasInv = (filasInv || []).slice();
         var Store = global.ObebeComprasStore;
         if (!Store || !Store.getAll) return filasInv;
+        var apartadas = global.ObebeMayoreoPedidosStore &&
+            ObebeMayoreoPedidosStore.refApartadaEnMayoreo
+            ? function (r) { return ObebeMayoreoPedidosStore.refApartadaEnMayoreo(r); }
+            : function () { return false; };
         var compras = Store.getAll().filter(function (f) {
-            return f.earlyAccess && !f.enTienda;
+            if (!f.earlyAccess || f.enTienda || f.mayoreoPublicarPendiente) return false;
+            if (f.earlyAccessSuspendidoPorPedido) return false;
+            var idxRef = idxInventario().imagen != null ? idxInventario().imagen : 0;
+            var r = parseInt(f.celdas && f.celdas[idxRef], 10);
+            if (apartadas(r)) return false;
+            return true;
         });
         if (!compras.length) return filasInv;
         var refsInv = {};
@@ -3087,6 +3096,18 @@
                 });
                 if (exact) return exact;
             }
+            if (!candidatos.length && global.ObebeComprasStore && ObebeComprasStore.getAll) {
+                var idxRef = idxInventario().imagen != null ? idxInventario().imagen : 0;
+                var comprasHit = ObebeComprasStore.getAll().find(function (c) {
+                    if (c.enTienda) return false;
+                    var r = parseInt(c.celdas && c.celdas[idxRef], 10);
+                    return r === ref;
+                });
+                if (comprasHit && comprasHit.celdas) {
+                    var stub = filaInventarioDesdeComprasCeldas(comprasHit.celdas);
+                    if (stub) return stub;
+                }
+            }
         }
         return buscarFilaInventarioPorVenta(it.nombre, it.talla, it.color);
     }
@@ -3216,6 +3237,105 @@
         });
         return chain.then(function () {
             return { ok: true, aplicados: aplicados, pendientes: pend.length };
+        });
+    }
+
+    function itemPedidoNecesitaInventarioObebe(it) {
+        if (!it || it.disponibilidad !== 'si') return false;
+        var f = resolverFilaInventarioDesdeItemPedido(it);
+        if (f && (f.filaSheet > 0 || f.inventarioDbId > 0)) return false;
+        var ref = parseInt(it.ref, 10);
+        return !isNaN(ref) && ref > 0;
+    }
+
+    function celdasInventarioDesdeFilaCompras(celdasSrc) {
+        var celdas = (celdasSrc || []).slice();
+        var i;
+        for (i = celdas.length; i < 29; i++) celdas.push('');
+        var foto = String(celdas[9] || '');
+        if (foto.indexOf('compras/') === 0) celdas[9] = '';
+        return celdas;
+    }
+
+    function importarFilasInventarioCompras(payload) {
+        if (!payload.length) return Promise.resolve({ ok: true });
+        if (!global.ObebeAdminBackend || !ObebeAdminBackend.callAdminApi) {
+            return Promise.resolve({ ok: false, error: 'Backend no disponible para subir al inventario.' });
+        }
+        return ObebeAdminBackend.callAdminApi('importInventarioAppend', { filas: payload }).catch(function (err) {
+            if (!/desconocida/i.test(String(err && err.message || ''))) throw err;
+            return payload.reduce(function (cadena, fila) {
+                return cadena.then(function () {
+                    return ObebeAdminBackend.callAdminApi('appendRow', { celdas: fila.celdas }).then(function (res) {
+                        if (!res || res.ok === false) {
+                            throw new Error((res && res.error) || 'No se pudo subir al inventario');
+                        }
+                    });
+                });
+            }, Promise.resolve());
+        }).then(function (res) {
+            if (res && res.ok === false) {
+                throw new Error(res.error || 'No se pudo subir al inventario');
+            }
+            return { ok: true };
+        });
+    }
+
+    /**
+     * Artículos early / Compras marcados Sí hay: publicar en inventario Obebe al enviar respuesta,
+     * para que Ventas y el descuento de stock encuentren la fila.
+     */
+    function asegurarInventarioPedidoMayoreoSiHay(pedido) {
+        pedido = pedido || {};
+        var items = (pedido.items || []).filter(itemPedidoNecesitaInventarioObebe);
+        if (!items.length) return Promise.resolve({ ok: true, publicados: 0 });
+        var Store = global.ObebeComprasStore;
+        if (!Store || !Store.getAll) {
+            return Promise.resolve({ ok: true, publicados: 0, omitido: true });
+        }
+        var idxRef = idxInventario().imagen != null ? idxInventario().imagen : 0;
+        var refsNec = {};
+        items.forEach(function (it) {
+            var r = parseInt(it.ref, 10);
+            if (!isNaN(r) && r > 0) refsNec[String(r)] = true;
+        });
+        var todas = Store.getAll();
+        var idsTomar = {};
+        var payload = [];
+        var refsPub = [];
+        todas.forEach(function (f) {
+            if (f.enTienda) return;
+            var r = parseInt(f.celdas && f.celdas[idxRef], 10);
+            if (isNaN(r) || !refsNec[String(r)]) return;
+            if (!f.mayoreoPublicarPendiente && !f.earlyAccess && !f.earlyAccessSuspendidoPorPedido) {
+                var ya = estado.filas.some(function (inv) {
+                    return inv.ref === r && inv.filaSheet > 0;
+                });
+                if (ya) return;
+            }
+            idsTomar[f.id] = true;
+            refsPub.push(r);
+            payload.push({ celdas: celdasInventarioDesdeFilaCompras(f.celdas) });
+        });
+        if (!payload.length) {
+            return Promise.resolve({ ok: true, publicados: 0 });
+        }
+        return importarFilasInventarioCompras(payload).then(function () {
+            var rest = todas.filter(function (f) { return !idsTomar[f.id]; });
+            Store.reemplazar(rest);
+            if (global.ObebeComprasEarlyStore && refsPub.length) {
+                ObebeComprasEarlyStore.quitarRefs(refsPub);
+            }
+            if (typeof document !== 'undefined') {
+                try {
+                    document.dispatchEvent(new CustomEvent('obebe-compras-a-inventario'));
+                } catch (e) { /* ignore */ }
+            }
+            return cargarInventario(true).then(function () {
+                return { ok: true, publicados: payload.length };
+            });
+        }).catch(function (err) {
+            return { ok: false, error: (err && err.message) || 'No se pudo publicar en inventario Obebe.' };
         });
     }
 
@@ -4794,6 +4914,7 @@
         revertirStockItemsPedidoMayoreo: revertirStockItemsPedidoMayoreo,
         aplicarStockPendientePedidosMayoreo: aplicarStockPendientePedidosMayoreo,
         registrarVentasDesdePedidoMayoreo: registrarVentasDesdePedidoMayoreo,
+        asegurarInventarioPedidoMayoreoSiHay: asegurarInventarioPedidoMayoreoSiHay,
         ventasNecesitanSincronizarIds: ventasNecesitanSincronizarIds,
         sincronizarVentasParaEdicion: sincronizarVentasParaEdicion,
         cargarGastos: cargarGastos,

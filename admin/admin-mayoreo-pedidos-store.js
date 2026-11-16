@@ -39,12 +39,29 @@
         return (prefix || 'mp-') + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
     }
 
+    function tocarPedido(p, origen) {
+        if (!p) return p;
+        var t = Date.now();
+        p.pedidoActualizadoEn = t;
+        if (origen === 'cliente') p.clienteEditadoEn = t;
+        else if (origen === 'obebe') p.obebeEditadoEn = t;
+        return p;
+    }
+
     function migrarPedido(p) {
         if (!p) return p;
         p.items = normalizarItems(p.items);
         if (p.estado === 'confirmado' && !p.revisadoEn && todosItemsMarcados(p)) {
             p.estado = 'revisado';
             p.revisadoEn = p.revisadoEn || Date.now();
+        }
+        if (!p.pedidoActualizadoEn) {
+            p.pedidoActualizadoEn = Math.max(
+                Number(p.clienteEditadoEn || 0),
+                Number(p.obebeEditadoEn || 0),
+                Number(p.revisadoEn || 0),
+                Number(p.creadoEn || 0)
+            );
         }
         return p;
     }
@@ -120,8 +137,53 @@
             var copy = Object.assign({}, it);
             if (!copy.itemId) copy.itemId = uid('li-');
             if (copy.disponibilidad == null) copy.disponibilidad = null;
+            var cq = Math.max(1, parseInt(copy.cantidad, 10) || 1);
+            copy.cantidad = cq;
+            if (!copy.cantidadSolicitada) copy.cantidadSolicitada = cq;
             return copy;
         });
+    }
+
+    function stockInventarioItem(it, filasInv) {
+        filasInv = filasInv || [];
+        if (!it || !global.ObebeAdminData || !it.inventarioId) return 0;
+        var id = it.inventarioId;
+        var i;
+        for (i = 0; i < filasInv.length; i++) {
+            if (ObebeAdminData.idFilaInventario(filasInv[i]) === id) {
+                var s = parseInt(filasInv[i].stock, 10);
+                return !isNaN(s) && s >= 0 ? s : 0;
+            }
+        }
+        return 0;
+    }
+
+    function actualizarCantidadItemPedido(pedidoId, itemId, cantidad, filasInv) {
+        var hit = findPedido(pedidoId);
+        if (hit.idx < 0) return { ok: false, error: 'Pedido no encontrado.' };
+        var p = hit.pedido;
+        if (p.estado === 'revisado' || p.estado === 'cancelado') {
+            return { ok: false, error: 'Este pedido ya no admite cambiar cantidades.' };
+        }
+        var item = (p.items || []).find(function (it) { return it.itemId === itemId; });
+        if (!item) return { ok: false, error: 'Artículo no encontrado.' };
+        if (item.disponibilidad === 'no') {
+            return { ok: false, error: 'No puedes ajustar cantidad en artículos marcados como No hay.' };
+        }
+        if (item.cantidadSolicitada == null || item.cantidadSolicitada === undefined) {
+            item.cantidadSolicitada = Math.max(1, parseInt(item.cantidad, 10) || 1);
+        }
+        var tope = Math.max(1, parseInt(item.cantidadSolicitada, 10) || 1);
+        var stock = stockInventarioItem(item, filasInv);
+        if (item.disponibilidad === 'si' && stock > 0) tope = Math.min(tope, stock);
+        var n = Math.max(1, parseInt(cantidad, 10) || 1);
+        if (n > tope) n = tope;
+        item.cantidad = n;
+        recalcularPreciosPedido(p, filasInv);
+        tocarPedido(p, 'obebe');
+        hit.todos[hit.idx] = p;
+        setPedidos(hit.todos);
+        return { ok: true, pedido: p, cantidad: n };
     }
 
     function refsDesdeItemsPedido(items) {
@@ -242,6 +304,8 @@
             clienteKey: claveCliente(payload.clienteKey || 'naty'),
             clienteNombre: payload.clienteNombre || 'Mayoreo',
             creadoEn: Date.now(),
+            pedidoActualizadoEn: Date.now(),
+            clienteEditadoEn: Date.now(),
             estado: 'pendiente',
             unidades: unidades,
             totalRetail: totalRetail,
@@ -263,6 +327,171 @@
         });
     }
 
+    function colRefComprasPedidos() {
+        var idx = global.ObebeAdminData && ObebeAdminData.idxInventario
+            ? ObebeAdminData.idxInventario()
+            : { imagen: 0 };
+        return idx.imagen != null ? idx.imagen : 0;
+    }
+
+    /** Refs en pedidos mayoreo abiertos (sin venta confirmada). */
+    function mapaRefsPedidosMayoreoActivos() {
+        var map = {};
+        getPedidos().forEach(function (p) {
+            if (!p || p.estado === 'combinado' || p.estado === 'cancelado') return;
+            if (p.ventaRetailRegistradaEn) return;
+            (p.items || []).forEach(function (it) {
+                var r = parseInt(it.ref, 10);
+                if (isNaN(r) || r < 1) return;
+                var k = String(r);
+                var prev = map[k];
+                if (!prev) {
+                    map[k] = { disponibilidad: it.disponibilidad, enPedido: true };
+                    return;
+                }
+                if (it.disponibilidad === 'si') prev.disponibilidad = 'si';
+                else if (prev.disponibilidad !== 'si' && it.disponibilidad === 'no') {
+                    prev.disponibilidad = 'no';
+                }
+            });
+        });
+        return map;
+    }
+
+    function refApartadaEnMayoreo(ref) {
+        var r = parseInt(ref, 10);
+        if (isNaN(r) || r < 1) return false;
+        return !!mapaRefsPedidosMayoreoActivos()[String(r)];
+    }
+
+    function refsApartadasMayoreo() {
+        var map = mapaRefsPedidosMayoreoActivos();
+        return Object.keys(map).map(function (k) { return parseInt(k, 10); }).filter(function (n) {
+            return !isNaN(n) && n > 0;
+        });
+    }
+
+    /** Alinea filas Compras con pedidos Naty (tabla 1 / tabla 2 / apartados mayoreo). */
+    function sincronizarFilasComprasConPedidos(filas) {
+        filas = filas || [];
+        if (!filas.length || !global.ObebeComprasStore) return { ok: true, dirty: false };
+        var map = mapaRefsPedidosMayoreoActivos();
+        var col = colRefComprasPedidos();
+        var dirty = false;
+        var quitarEarly = [];
+        filas.forEach(function (f) {
+            if (f.enTienda) return;
+            var r = parseInt(f.celdas && f.celdas[col], 10);
+            if (isNaN(r) || r < 1) return;
+            var info = map[String(r)];
+            if (info) {
+                quitarEarly.push(r);
+                if (info.disponibilidad === 'si') {
+                    if (f.earlyAccess || f.earlyAccessSuspendidoPorPedido || !f.mayoreoPublicarPendiente) {
+                        f.earlyAccess = false;
+                        f.earlyAccessEn = null;
+                        f.earlyAccessSuspendidoPorPedido = false;
+                        f.mayoreoPublicarPendiente = true;
+                        f.mayoreoPublicarPendienteEn = f.mayoreoPublicarPendienteEn || Date.now();
+                        dirty = true;
+                    }
+                } else {
+                    if (f.earlyAccess || f.mayoreoPublicarPendiente || !f.earlyAccessSuspendidoPorPedido) {
+                        f.earlyAccess = false;
+                        f.earlyAccessEn = null;
+                        f.earlyAccessSuspendidoPorPedido = true;
+                        f.mayoreoPublicarPendiente = false;
+                        f.mayoreoPublicarPendienteEn = null;
+                        dirty = true;
+                    }
+                }
+            } else if (global.ObebeComprasEarlyStore && ObebeComprasEarlyStore.tieneRef(r)) {
+                if (!f.earlyAccess || f.earlyAccessSuspendidoPorPedido || f.mayoreoPublicarPendiente) {
+                    f.earlyAccess = true;
+                    f.earlyAccessEn = f.earlyAccessEn || Date.now();
+                    f.earlyAccessSuspendidoPorPedido = false;
+                    f.mayoreoPublicarPendiente = false;
+                    f.mayoreoPublicarPendienteEn = null;
+                    dirty = true;
+                }
+            }
+        });
+        if (global.ObebeComprasEarlyStore && quitarEarly.length) {
+            ObebeComprasEarlyStore.quitarRefs(quitarEarly);
+        }
+        if (dirty) {
+            ObebeComprasStore.reemplazar(filas);
+        }
+        return { ok: true, dirty: dirty };
+    }
+
+    function refDesdeItemPedido(it) {
+        var r = parseInt(it && it.ref, 10);
+        return !isNaN(r) && r > 0 ? r : 0;
+    }
+
+    /** Sí hay en mayoreo: sacar de early access (tabla 2) y marcar para publicar en inventario Obebe. */
+    function aplicarSiHayEarlyAccessDesdeItem(it) {
+        var ref = refDesdeItemPedido(it);
+        if (!ref) return { ok: true, ref: 0 };
+        if (global.ObebeComprasEarlyStore) ObebeComprasEarlyStore.quitarRefs([ref]);
+        if (!global.ObebeComprasStore) return { ok: true, ref: ref };
+        var col = colRefComprasPedidos();
+        var filas = ObebeComprasStore.getAll();
+        var dirty = false;
+        filas.forEach(function (f) {
+            if (f.enTienda) return;
+            var r = parseInt(f.celdas && f.celdas[col], 10);
+            if (r !== ref) return;
+            f.earlyAccess = false;
+            f.earlyAccessEn = null;
+            f.earlyAccessSuspendidoPorPedido = false;
+            f.mayoreoPublicarPendiente = true;
+            f.mayoreoPublicarPendienteEn = Date.now();
+            dirty = true;
+        });
+        if (dirty) ObebeComprasStore.reemplazar(filas);
+        if (dirty && typeof document !== 'undefined') {
+            try {
+                document.dispatchEvent(new CustomEvent('obebe-compras-early-access'));
+            } catch (e) { /* ignore */ }
+        }
+        return { ok: true, ref: ref };
+    }
+
+    /** No hay: puede volver a early access si aún está en Compras (sin publicar). */
+    function revertirSiHayEarlyAccessDesdeItem(it) {
+        var ref = refDesdeItemPedido(it);
+        if (!ref || !global.ObebeComprasStore) return { ok: true, ref: 0 };
+        var col = colRefComprasPedidos();
+        var filas = ObebeComprasStore.getAll();
+        var dirty = false;
+        var restauradas = [];
+        filas.forEach(function (f) {
+            if (f.enTienda) return;
+            var r = parseInt(f.celdas && f.celdas[col], 10);
+            if (r !== ref) return;
+            if (!f.mayoreoPublicarPendiente && !f.earlyAccessSuspendidoPorPedido) return;
+            f.mayoreoPublicarPendiente = false;
+            f.mayoreoPublicarPendienteEn = null;
+            f.earlyAccess = true;
+            f.earlyAccessEn = f.earlyAccessEn || Date.now();
+            f.earlyAccessSuspendidoPorPedido = false;
+            dirty = true;
+            restauradas.push(r);
+        });
+        if (dirty) ObebeComprasStore.reemplazar(filas);
+        if (global.ObebeComprasEarlyStore && restauradas.length) {
+            ObebeComprasEarlyStore.marcarRefs(restauradas);
+        }
+        if (dirty && typeof document !== 'undefined') {
+            try {
+                document.dispatchEvent(new CustomEvent('obebe-compras-early-access'));
+            } catch (e2) { /* ignore */ }
+        }
+        return { ok: true, ref: ref };
+    }
+
     function marcarItemDisponibilidad(pedidoId, itemId, valor) {
         valor = valor === 'no' ? 'no' : (valor === 'si' ? 'si' : null);
         if (!valor) return { ok: false, error: 'Valor inválido.' };
@@ -273,7 +502,13 @@
         if (!item) return { ok: false, error: 'Artículo no encontrado.' };
         item.disponibilidad = valor;
         item.clienteConfirmoNoHay = false;
+        if (valor === 'si') {
+            aplicarSiHayEarlyAccessDesdeItem(item);
+        } else if (valor === 'no') {
+            revertirSiHayEarlyAccessDesdeItem(item);
+        }
         if (p.estado === 'pendiente') p.estado = 'en_revision';
+        tocarPedido(p, 'obebe');
         hit.todos[hit.idx] = p;
         setPedidos(hit.todos);
         return { ok: true, pedido: p, listoConfirmar: todosItemsMarcados(p) };
@@ -289,6 +524,7 @@
         var item = (p.items || []).find(function (it) { return it.itemId === itemId; });
         if (!item) return { ok: false, error: 'Artículo no encontrado.' };
         item.comentarioObebe = String(texto || '').trim();
+        tocarPedido(p, 'obebe');
         hit.todos[hit.idx] = p;
         setPedidos(hit.todos);
         return { ok: true };
@@ -318,6 +554,7 @@
             p.estado = 'en_revision';
             p.revisadoEn = null;
             p.inventarioAplicado = false;
+            tocarPedido(p, 'obebe');
             hit.todos[hit.idx] = p;
             setPedidos(hit.todos);
             return { ok: true, pedido: p };
@@ -333,17 +570,37 @@
         }
         p.estado = 'revisado';
         p.revisadoEn = Date.now();
+        tocarPedido(p, 'obebe');
         hit.todos[hit.idx] = p;
         setPedidos(hit.todos);
         var fresh = findPedido(pedidoId).pedido || p;
-        if (global.ObebeAdminData && global.ObebeAdminData.descontarStockPedidoMayoreo) {
-            var optsStock = { silent: true };
-            if (fresh.stockInventarioObebeAplicado) optsStock.soloItemsNuevos = true;
-            return global.ObebeAdminData.descontarStockPedidoMayoreo(fresh, optsStock).then(function (sr) {
-                return { ok: true, pedido: findPedido(pedidoId).pedido || fresh, stockObebe: sr };
-            });
+        var chainPub = Promise.resolve({ ok: true, publicados: 0 });
+        if (global.ObebeAdminData && ObebeAdminData.asegurarInventarioPedidoMayoreoSiHay) {
+            chainPub = ObebeAdminData.asegurarInventarioPedidoMayoreoSiHay(fresh);
         }
-        return Promise.resolve({ ok: true, pedido: fresh });
+        return chainPub.then(function (pubRes) {
+            if (pubRes && pubRes.ok === false) {
+                return pubRes;
+            }
+            var despuesPub = findPedido(pedidoId).pedido || fresh;
+            if (global.ObebeAdminData && global.ObebeAdminData.descontarStockPedidoMayoreo) {
+                var optsStock = { silent: true };
+                if (despuesPub.stockInventarioObebeAplicado) optsStock.soloItemsNuevos = true;
+                return ObebeAdminData.descontarStockPedidoMayoreo(despuesPub, optsStock).then(function (sr) {
+                    return {
+                        ok: true,
+                        pedido: findPedido(pedidoId).pedido || despuesPub,
+                        stockObebe: sr,
+                        inventarioPublicado: pubRes && pubRes.publicados
+                    };
+                });
+            }
+            return {
+                ok: true,
+                pedido: despuesPub,
+                inventarioPublicado: pubRes && pubRes.publicados
+            };
+        });
     }
 
     function confirmarVentaRetailPedido(pedidoId) {
@@ -359,9 +616,18 @@
         if (!global.ObebeAdminData || !global.ObebeAdminData.registrarVentasDesdePedidoMayoreo) {
             return Promise.resolve({ ok: false, error: 'Registro de ventas no disponible.' });
         }
-        var ventaP = global.ObebeAdminData.registrarVentasDesdePedidoMayoreo(p).then(function (res) {
+        var prepInv = Promise.resolve({ ok: true });
+        if (ObebeAdminData.asegurarInventarioPedidoMayoreoSiHay) {
+            prepInv = ObebeAdminData.asegurarInventarioPedidoMayoreoSiHay(p);
+        }
+        var ventaP = prepInv.then(function (prep) {
+            if (prep && prep.ok === false) return prep;
+            return ObebeAdminData.registrarVentasDesdePedidoMayoreo(findPedido(pedidoId).pedido || p);
+        }).then(function (res) {
+            if (res && res.ok === false && !res.lineas) return res;
             if (!res || !res.ok) return res || { ok: false, error: 'Error al registrar venta.' };
             p.ventaRetailRegistradaEn = Date.now();
+            tocarPedido(p, 'obebe');
             hit.todos[hit.idx] = p;
             setPedidos(hit.todos);
             var pedidoAct = findPedido(pedidoId).pedido || p;
@@ -501,6 +767,7 @@
             p.estado = 'pendiente';
             p.revisadoEn = null;
         }
+        tocarPedido(p, 'cliente');
         hit.todos[hit.idx] = p;
         setPedidos(hit.todos);
         bajarEarlyAccessPorItemsPedido(items);
@@ -1042,6 +1309,7 @@
             return { ok: false, error: 'Solo puedes confirmar artículos marcados como No hay.' };
         }
         item.clienteConfirmoNoHay = true;
+        tocarPedido(p, 'cliente');
         hit.todos[hit.idx] = p;
         setPedidos(hit.todos);
         return { ok: true, pedido: p };
@@ -1071,11 +1339,8 @@
                 return { ok: false, error: 'Espera la respuesta de Obebe antes de quitar artículos.' };
             }
         } else {
-            if (!item.clienteConfirmoNoHay) {
-                return {
-                    ok: false,
-                    error: 'El cliente debe confirmar primero que no hay stock (Confirmo ausencia).'
-                };
+            if (p.estado !== 'revisado' && p.estado !== 'en_revision' && p.estado !== 'pendiente') {
+                return { ok: false, error: 'No puedes quitar artículos de este pedido ahora.' };
             }
         }
         p.items = (p.items || []).filter(function (it) { return it.itemId !== itemId; });
@@ -1087,6 +1352,7 @@
             p.estado = 'en_revision';
             p.revisadoEn = null;
         }
+        tocarPedido(p, rol === 'obebe' ? 'obebe' : 'cliente');
         hit.todos[hit.idx] = p;
         setPedidos(hit.todos);
         return { ok: true, pedido: p };
@@ -1314,6 +1580,7 @@
         combinarPedidos: combinarPedidos,
         recalcularPreciosPedido: recalcularPreciosPedido,
         confirmarNoHayItemCliente: confirmarNoHayItemCliente,
+        actualizarCantidadItemPedido: actualizarCantidadItemPedido,
         eliminarItemPedido: eliminarItemPedido,
         marcarClienteVioAvisoPedido: marcarClienteVioAvisoPedido,
         asegurarPedidoNatyLegacy20261017: asegurarPedidoNatyLegacy20261017,
@@ -1322,6 +1589,9 @@
         quitarInventarioNatySegundoPedido2910: quitarInventarioNatySegundoPedido2910,
         revertirInventarioNatyPedidosSinVentaConfirmada: revertirInventarioNatyPedidosSinVentaConfirmada,
         pedidosNatyEnFechaCreado: pedidosNatyEnFechaCreado,
+        refApartadaEnMayoreo: refApartadaEnMayoreo,
+        refsApartadasMayoreo: refsApartadasMayoreo,
+        sincronizarFilasComprasConPedidos: sincronizarFilasComprasConPedidos,
         PEDIDO_NATY_LEGACY_ID: PEDIDO_NATY_LEGACY_ID
     };
 })(window);

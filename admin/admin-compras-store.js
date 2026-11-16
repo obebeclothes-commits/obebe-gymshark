@@ -51,6 +51,9 @@
             actualizadoEn: row.actualizadoEn || Date.now(),
             earlyAccess: !!row.earlyAccess,
             earlyAccessEn: row.earlyAccessEn || null,
+            earlyAccessSuspendidoPorPedido: !!row.earlyAccessSuspendidoPorPedido,
+            mayoreoPublicarPendiente: !!row.mayoreoPublicarPendiente,
+            mayoreoPublicarPendienteEn: row.mayoreoPublicarPendienteEn || null,
             enTienda: !!row.enTienda,
             enTiendaEn: row.enTiendaEn || null
         };

@@ -96,14 +96,32 @@
         });
     }
 
+    function tsPedidoMayoreo(p) {
+        if (!p) return 0;
+        var t = Math.max(
+            Number(p.pedidoActualizadoEn || 0),
+            Number(p.clienteEditadoEn || 0),
+            Number(p.obebeEditadoEn || 0)
+        );
+        if (t > 0) return t;
+        var leg = Math.max(Number(p.revisadoEn || 0), Number(p.creadoEn || 0));
+        if (p.ventaRetailRegistradaEn) {
+            leg = Math.max(leg, Number(p.ventaRetailRegistradaEn));
+        }
+        (p.items || []).forEach(function (it) {
+            leg = Math.max(leg, Number(it.actualizadoEn || 0));
+        });
+        return leg;
+    }
+
     function elegirPedidoMayoreo(prev, next) {
         if (!prev) return next;
         if (!next) return prev;
-        var nPrev = cuentaItemsPedido(prev);
-        var nNext = cuentaItemsPedido(next);
-        if (nNext > nPrev) return next;
-        if (nPrev > nNext) return prev;
-        return tsItem(next) >= tsItem(prev) ? next : prev;
+        var tPrev = tsPedidoMayoreo(prev);
+        var tNext = tsPedidoMayoreo(next);
+        if (tNext > tPrev) return next;
+        if (tPrev > tNext) return prev;
+        return cuentaItemsPedido(next) >= cuentaItemsPedido(prev) ? next : prev;
     }
 
     function fusionarPorId(localArr, cloudArr) {
@@ -305,6 +323,11 @@
                 ObebeAdminModulosCloud.aplicarComprasEarlyEnLocal &&
                 pack.comprasEarly && pack.comprasEarly.length) {
                 ObebeAdminModulosCloud.aplicarComprasEarlyEnLocal(pack.comprasEarly);
+            }
+            if (typeof document !== 'undefined') {
+                try {
+                    document.dispatchEvent(new CustomEvent('obebe-mayoreo-pedidos-sync'));
+                } catch (e) { /* ignore */ }
             }
         } finally {
             aplicandoRemoto -= 1;

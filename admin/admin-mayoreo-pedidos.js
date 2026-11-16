@@ -872,22 +872,22 @@
             }
             var accionesItem = '';
             if (obebe && p.estado === 'revisado' && it.disponibilidad === 'no') {
-                if (it.clienteConfirmoNoHay) {
-                    accionesItem = '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm admin-ped-quitar-item-obebe" data-pedido-id="' +
-                        esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Quitar del pedido</button>';
-                } else {
-                    accionesItem = '<span class="admin-muted-text admin-ped-espera-conf">Esperando confirmación del cliente</span>';
-                }
+                accionesItem = '<button type="button" class="admin-btn admin-btn-ghost admin-btn-sm admin-ped-quitar-item-obebe" data-pedido-id="' +
+                    esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Quitar del pedido</button>';
             } else if (!obebe && p.estado === 'revisado' && !p.ventaRetailRegistradaEn && it.disponibilidad === 'no') {
                 accionesItem = '<div class="admin-ped-item-acciones-cliente">' +
-                    (it.clienteConfirmoNoHay
-                        ? '<button type="button" class="admin-btn admin-btn-danger admin-btn-sm admin-ped-quitar-item-cliente" data-pedido-id="' +
-                        esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Quitar artículo</button>'
-                        : '<button type="button" class="admin-btn admin-btn-warn admin-btn-sm admin-ped-conf-no-cliente" data-pedido-id="' +
-                        esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Confirmo ausencia</button>' +
-                        '<button type="button" class="admin-btn admin-btn-danger admin-btn-sm admin-ped-quitar-item-cliente" data-pedido-id="' +
-                        esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Quitar artículo</button>') +
-                    '</div>';
+                    '<button type="button" class="admin-btn admin-btn-danger admin-btn-sm admin-ped-quitar-item-cliente" data-pedido-id="' +
+                    esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">Quitar artículo</button></div>';
+            }
+            var cantidadLinea = '';
+            if (obebe && p.estado !== 'revisado' && p.estado !== 'cancelado' && it.disponibilidad !== 'no') {
+                var topeCant = Math.max(1, parseInt(it.cantidadSolicitada, 10) || parseInt(it.cantidad, 10) || 1);
+                var stockFila = (filaIt && parseInt(filaIt.stock, 10)) || 0;
+                if (it.disponibilidad === 'si' && stockFila > 0) topeCant = Math.min(topeCant, stockFila);
+                cantidadLinea = ' · Cant. <input type="number" min="1" max="' + topeCant + '" value="' + (it.cantidad || 1) +
+                    '" class="admin-venta-num admin-ped-item-qty" data-pedido-id="' + esc(p.id) + '" data-item-id="' + esc(it.itemId) + '" title="Piezas disponibles para este pedido">';
+            } else {
+                cantidadLinea = ' · ×' + (it.cantidad || 1);
             }
             var notaTier = it.notaPrecio ? '<span class="admin-muted-text">' + esc(it.notaPrecio) + '</span>' : '';
             var refNum = parseInt(it.ref, 10) || (filaIt && filaIt.ref) || 0;
@@ -899,7 +899,7 @@
                 thumbHtml(url, it.nombre, 'admin-ped-rev-thumb', candidatosImagenFila(filaIt)) +
                 '<div class="admin-ped-rev-info">' + refLinea +
                 '<strong class="admin-ped-rev-nombre">' + esc(it.nombre) + '</strong>' +
-                '<span class="admin-muted-text">' + esc(it.talla) + ' · ' + esc(it.color) + ' · ×' + it.cantidad + '</span>' +
+                '<span class="admin-muted-text">' + esc(it.talla) + ' · ' + esc(it.color) + cantidadLinea + '</span>' +
                 '<span>' + fmt(it.precioCliente) + ' c/u · tienda ' + fmt(it.precioRetail) + '</span>' +
                 notaTier + revBlock + comBlock + accionesItem + '</div></div>';
         }
@@ -1268,20 +1268,6 @@
                     if (window.matchMedia('(max-width: 900px)').matches) cerrarDrawerFiltros();
                     return;
                 }
-                var confNoCli = fromEv.closest('.admin-ped-conf-no-cliente');
-                if (confNoCli) {
-                    var rConf = ObebeMayoreoPedidosStore.confirmarNoHayItemCliente(
-                        confNoCli.getAttribute('data-pedido-id'),
-                        confNoCli.getAttribute('data-item-id'),
-                        clienteKey
-                    );
-                    if (!rConf.ok) {
-                        ObebeAdminDialog.alert({ title: 'No se pudo', message: rConf.error });
-                        return;
-                    }
-                    pintarHistorial();
-                    return;
-                }
                 var quitarCli = fromEv.closest('.admin-ped-quitar-item-cliente');
                 if (quitarCli) {
                     ObebeAdminDialog.confirm({
@@ -1520,7 +1506,7 @@
                 if (quitarOb) {
                     ObebeAdminDialog.confirm({
                         title: '¿Quitar artículo?',
-                        message: 'El cliente ya confirmó que no hay stock.',
+                        message: 'Se eliminará del pedido (artículo sin stock).',
                         confirmText: 'Quitar',
                         cancelText: 'Cancelar',
                         variant: 'danger'
@@ -1691,7 +1677,26 @@
                     });
                 }
             };
-            container.onchange = null;
+            container.onchange = function (ev) {
+                var qtyPed = ev.target.closest('.admin-ped-item-qty');
+                if (qtyPed) {
+                    filasInv = (ObebeAdminData.getEstado().filas || filasInv);
+                    var rQty = ObebeMayoreoPedidosStore.actualizarCantidadItemPedido(
+                        qtyPed.getAttribute('data-pedido-id'),
+                        qtyPed.getAttribute('data-item-id'),
+                        qtyPed.value,
+                        filasInv
+                    );
+                    if (!rQty.ok) {
+                        ObebeAdminDialog.alert({ title: 'Cantidad', message: rQty.error });
+                        pintar();
+                        return;
+                    }
+                    qtyPed.value = rQty.cantidad;
+                    pintar();
+                    return;
+                }
+            };
             container.oninput = function (ev) {
                 var ta = ev.target.closest('.admin-ped-com-input');
                 if (!ta) return;
@@ -1735,6 +1740,32 @@
             }
         };
         syncStockPedidosPendientes();
+
+        var pullPedidosTimer = null;
+        function pullPedidosDesdeNube() {
+            var cloud = global.ObebeAdminMayoreoCloud;
+            if (!cloud || !cloud.pullMayoreoNatyDesdeNube) return;
+            cloud.pullMayoreoNatyDesdeNube().then(function (r) {
+                if (!r || !r.ok) return;
+                if (modoObebe) pintar();
+                else pintarHistorial();
+            }).catch(function () { /* sync en segundo plano */ });
+        }
+        function enSyncPedidosRemoto() {
+            if (modoObebe) pintar();
+            else pintarHistorial();
+        }
+        document.addEventListener('obebe-mayoreo-pedidos-sync', enSyncPedidosRemoto);
+        pullPedidosDesdeNube();
+        pullPedidosTimer = setInterval(pullPedidosDesdeNube, 18000);
+        document.addEventListener('visibilitychange', function onVisPedidos() {
+            if (!document.hidden) pullPedidosDesdeNube();
+        });
+        container._pedidosPullCleanup = function () {
+            if (pullPedidosTimer) clearInterval(pullPedidosTimer);
+            document.removeEventListener('obebe-mayoreo-pedidos-sync', enSyncPedidosRemoto);
+        };
+
         pintar();
     }
 
