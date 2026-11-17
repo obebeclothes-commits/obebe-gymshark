@@ -2940,6 +2940,51 @@ body.admin-ped-filtros-open {
     min-width: 0;
 }
 
+.admin-ped-empaque-obebe {
+    margin-top: 0.25rem;
+    padding: 0.2rem 0.35rem;
+    border-radius: 6px;
+    border: 1px dashed var(--admin-border);
+    background: var(--admin-surface);
+}
+
+.admin-ped-empaque-obebe.admin-ped-empaque--parcial {
+    border-color: #c9a227;
+    background: rgba(201, 162, 39, 0.08);
+}
+
+.admin-ped-empaque-obebe.admin-ped-empaque--ok {
+    border-color: #2e7d4f;
+    background: rgba(46, 125, 79, 0.1);
+}
+
+.admin-ped-empaque-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin: 0;
+    cursor: default;
+}
+
+.admin-ped-empaque-hint {
+    font-size: 0.68rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.admin-ped-empaque-select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    font-size: 0.78rem;
+    padding: 0.2rem 0.35rem;
+    border-radius: 4px;
+    border: 1px solid var(--admin-border);
+    background: var(--admin-bg);
+    color: inherit;
+}
+
 .admin-ped-rev-actions {
     display: flex;
     flex-wrap: wrap;

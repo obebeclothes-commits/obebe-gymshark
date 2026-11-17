@@ -980,6 +980,25 @@
                 refNum = ObebeAdminData.refParaArticulo(it) || ObebeAdminData.refParaArticulo(filaIt) || 0;
             }
             var refLinea = refNum ? ObebeAdminData.htmlRef(refNum) : '';
+            var empaqueBlock = '';
+            if (obebe && it.disponibilidad === 'si' && p.estado !== 'cancelado' &&
+                global.ObebeMayoreoPedidosStore && ObebeMayoreoPedidosStore.empaquetadoObebeItem) {
+                var totalEmp = Math.max(1, parseInt(it.cantidad, 10) || 1);
+                var nEmp = ObebeMayoreoPedidosStore.empaquetadoObebeItem(p.id, it.itemId);
+                var clsEmp = 'admin-ped-empaque--falta';
+                if (nEmp > 0 && nEmp < totalEmp) clsEmp = 'admin-ped-empaque--parcial';
+                else if (nEmp >= totalEmp) clsEmp = 'admin-ped-empaque--ok';
+                var optsEmp = '';
+                var kEmp;
+                for (kEmp = 0; kEmp <= totalEmp; kEmp++) {
+                    optsEmp += '<option value="' + kEmp + '"' + (kEmp === nEmp ? ' selected' : '') + '>' +
+                        esc(ObebeMayoreoPedidosStore.etiquetaEmpaqueObebe(kEmp, totalEmp)) + '</option>';
+                }
+                empaqueBlock = '<div class="admin-ped-empaque-obebe ' + clsEmp + '">' +
+                    '<select class="admin-ped-empaque-select" title="Cuántas piezas ya guardaste"' +
+                    ' data-pedido-id="' + esc(p.id) + '" data-item-id="' + esc(it.itemId) + '">' +
+                    optsEmp + '</select></div>';
+            }
             var candsThumb = modoObebe ? [] : candidatosImagenFila(filaIt);
             return '<div class="admin-ped-rev-item">' +
                 thumbHtml(url, it.nombre, 'admin-ped-rev-thumb', candsThumb) +
@@ -987,7 +1006,7 @@
                 '<strong class="admin-ped-rev-nombre">' + esc(it.nombre) + '</strong>' +
                 '<span class="admin-muted-text">' + esc(it.talla) + ' · ' + esc(it.color) + cantidadLinea + '</span>' +
                 '<span>' + fmt(it.precioCliente) + ' c/u · tienda ' + fmt(it.precioRetail) + '</span>' +
-                notaTier + revBlock + comBlock + accionesItem + '</div></div>';
+                notaTier + revBlock + empaqueBlock + comBlock + accionesItem + '</div></div>';
         }
 
         function detalleListaPedidos(lista, obebe) {
@@ -1776,6 +1795,19 @@
                 }
             };
             container.onchange = function (ev) {
+                var selEmp = ev.target.closest('.admin-ped-empaque-select');
+                if (selEmp) {
+                    var rEmp = ObebeMayoreoPedidosStore.setEmpaquetadoObebeItem(
+                        selEmp.getAttribute('data-pedido-id'),
+                        selEmp.getAttribute('data-item-id'),
+                        selEmp.value
+                    );
+                    if (!rEmp.ok) {
+                        ObebeAdminDialog.alert({ title: 'Empaque', message: rEmp.error });
+                    }
+                    actualizarVistaPedidos();
+                    return;
+                }
                 var qtyPed = ev.target.closest('.admin-ped-item-qty');
                 if (qtyPed) {
                     filasInv = (ObebeAdminData.getEstado().filas || filasInv);

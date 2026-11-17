@@ -2096,7 +2096,15 @@
     }
 
     function esLineaVentaRetail(v) {
-        return (Number(v && v.precio) || 0) > 0;
+        if (!v) return false;
+        var precio = Number(v.precio);
+        if (isNaN(precio)) precio = 0;
+        if (precio < 0) return false;
+        var nombre = String(v.nombre || '').trim();
+        var fechaRaw = String(v.fechaRaw || '').trim();
+        if (esFilaEncabezadoVenta(nombre, fechaRaw)) return false;
+        if (precio > 0) return true;
+        return !!nombre;
     }
 
     function acumularPeriodo(rv, venta, periodo) {

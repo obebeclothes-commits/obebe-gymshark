@@ -2,6 +2,7 @@
     'use strict';
 
     var KEY = 'obebe_mayoreo_pedidos_v1';
+    var KEY_EMPAQUE_OBE = 'obebe_mayoreo_empaque_obebe_v1';
     var PEDIDO_NATY_LEGACY_ID = 'mp-naty-pedido-20261017';
     var FECHA_PEDIDO_NATY_LEGACY = '2026-10-17';
     var PEDIDO_NATY_2_ID = 'mp-naty-pedido-20261029';
@@ -77,7 +78,49 @@
             return p;
         });
         if (dirty) setPedidos(arr);
+        if (migrarEmpaqueLegacyAPedidos(arr)) setPedidos(arr);
         return arr;
+    }
+
+    function migrarEmpaqueLegacyAPedidos(arr) {
+        var m = leerMapaEmpaqueObebe();
+        var mapDirty = false;
+        var pedidosDirty = false;
+        (arr || []).forEach(function (p) {
+            (p.items || []).forEach(function (it) {
+                var total = cantidadItemParaEmpaque(it);
+                var k = claveEmpaqueObebe(p.id, it.itemId);
+                var rec = m[k];
+                var nItem = it.empaquetadoObebe != null && it.empaquetadoObebe !== ''
+                    ? Math.max(0, parseInt(it.empaquetadoObebe, 10) || 0) : null;
+                if (rec && rec.n != null) {
+                    var nLeg = Math.max(0, parseInt(rec.n, 10) || 0);
+                    var nUse = Math.min(total, nItem == null ? nLeg : Math.max(nItem, nLeg));
+                    if (nUse > 0) {
+                        if (nItem !== nUse) {
+                            it.empaquetadoObebe = nUse;
+                            pedidosDirty = true;
+                        }
+                    } else if (it.empaquetadoObebe != null) {
+                        delete it.empaquetadoObebe;
+                        pedidosDirty = true;
+                    }
+                    delete m[k];
+                    mapDirty = true;
+                } else if (nItem != null) {
+                    var clamped = Math.min(total, nItem);
+                    if (clamped <= 0) {
+                        delete it.empaquetadoObebe;
+                        pedidosDirty = true;
+                    } else if (clamped !== nItem) {
+                        it.empaquetadoObebe = clamped;
+                        pedidosDirty = true;
+                    }
+                }
+            });
+        });
+        if (mapDirty) guardarMapaEmpaqueObebe(m);
+        return pedidosDirty;
     }
 
     function setPedidos(arr) {
@@ -255,6 +298,10 @@
         var n = Math.max(1, parseInt(cantidad, 10) || 1);
         if (n > tope) n = tope;
         item.cantidad = n;
+        var empPrev = empaquetadoObebeItem(pedidoId, itemId);
+        if (empPrev > n) {
+            ajustarEmpaquetadoObebeItem(pedidoId, itemId, n - empPrev);
+        }
         recalcularPreciosPedido(p, filasInv);
         tocarPedido(p, 'obebe');
         hit.todos[hit.idx] = p;
@@ -586,12 +633,155 @@
             aplicarSiHayEarlyAccessDesdeItem(item);
         } else if (valor === 'no') {
             revertirSiHayEarlyAccessDesdeItem(item);
+            borrarEmpaqueItemObebe(pedidoId, itemId);
         }
         if (p.estado === 'pendiente') p.estado = 'en_revision';
         tocarPedido(p, 'obebe');
         hit.todos[hit.idx] = p;
         setPedidos(hit.todos);
         return { ok: true, pedido: p, listoConfirmar: todosItemsMarcados(p) };
+    }
+
+    function claveEmpaqueObebe(pedidoId, itemId) {
+        return String(pedidoId || '') + '|' + String(itemId || '');
+    }
+
+    function leerMapaEmpaqueObebe() {
+        var m = leerJson(KEY_EMPAQUE_OBE, {});
+        return m && typeof m === 'object' ? m : {};
+    }
+
+    function guardarMapaEmpaqueObebe(map) {
+        guardarJson(KEY_EMPAQUE_OBE, map || {});
+    }
+
+    function cantidadItemParaEmpaque(item) {
+        return Math.max(1, parseInt(item && item.cantidad, 10) || 1);
+    }
+
+    function etiquetaEmpaqueObebe(guardadas, total) {
+        total = Math.max(1, parseInt(total, 10) || 1);
+        guardadas = Math.max(0, Math.min(total, parseInt(guardadas, 10) || 0));
+        var faltan = total - guardadas;
+        if (faltan <= 0) return 'Completo';
+        if (faltan === 1) return 'Falta 1';
+        return 'Faltan ' + faltan;
+    }
+
+    function empaquetadoObebeItem(pedidoId, itemId) {
+        var hit = findPedido(pedidoId);
+        if (hit.idx < 0) return 0;
+        var item = (hit.pedido.items || []).find(function (it) { return it.itemId === itemId; });
+        if (!item) return 0;
+        if (item.empaquetadoObebe == null || item.empaquetadoObebe === '') return 0;
+        var total = cantidadItemParaEmpaque(item);
+        return Math.min(total, Math.max(0, parseInt(item.empaquetadoObebe, 10) || 0));
+    }
+
+    function limpiarEmpaqueLegacy(pedidoId, itemId) {
+        var k = claveEmpaqueObebe(pedidoId, itemId);
+        var m = leerMapaEmpaqueObebe();
+        if (!m[k]) return;
+        delete m[k];
+        guardarMapaEmpaqueObebe(m);
+    }
+
+    function persistirEmpaquetadoEnItem(hit, item, next) {
+        var p = hit.pedido;
+        var total = cantidadItemParaEmpaque(item);
+        next = Math.max(0, Math.min(total, parseInt(next, 10) || 0));
+        if (next <= 0) {
+            delete item.empaquetadoObebe;
+        } else {
+            item.empaquetadoObebe = next;
+        }
+        limpiarEmpaqueLegacy(p.id, item.itemId);
+        tocarPedido(p, 'obebe');
+        hit.todos[hit.idx] = p;
+        setPedidos(hit.todos);
+        return {
+            ok: true,
+            n: next,
+            total: total,
+            etiqueta: etiquetaEmpaqueObebe(next, total)
+        };
+    }
+
+    function borrarEmpaqueItemObebe(pedidoId, itemId) {
+        var hit = findPedido(pedidoId);
+        if (hit.idx >= 0) {
+            var item = (hit.pedido.items || []).find(function (it) { return it.itemId === itemId; });
+            if (item && item.empaquetadoObebe != null) {
+                delete item.empaquetadoObebe;
+            }
+        }
+        limpiarEmpaqueLegacy(pedidoId, itemId);
+    }
+
+    function borrarEmpaquePedidoObebe(pedidoId) {
+        var hit = findPedido(pedidoId);
+        if (hit.idx >= 0) {
+            (hit.pedido.items || []).forEach(function (it) {
+                if (it.empaquetadoObebe != null) delete it.empaquetadoObebe;
+            });
+        }
+        var pref = String(pedidoId || '') + '|';
+        var m = leerMapaEmpaqueObebe();
+        var dirty = false;
+        Object.keys(m).forEach(function (k) {
+            if (k.indexOf(pref) === 0) {
+                delete m[k];
+                dirty = true;
+            }
+        });
+        if (dirty) guardarMapaEmpaqueObebe(m);
+    }
+
+    function ajustarEmpaquetadoObebeItem(pedidoId, itemId, delta) {
+        var hit = findPedido(pedidoId);
+        if (hit.idx < 0) return { ok: false, error: 'Pedido no encontrado.' };
+        var item = (hit.pedido.items || []).find(function (it) { return it.itemId === itemId; });
+        if (!item) return { ok: false, error: 'Artículo no encontrado.' };
+        if (item.disponibilidad !== 'si') {
+            return { ok: false, error: 'Solo aplica a artículos marcados como Sí hay.' };
+        }
+        var total = cantidadItemParaEmpaque(item);
+        var cur = empaquetadoObebeItem(pedidoId, itemId);
+        var next = Math.max(0, Math.min(total, cur + (parseInt(delta, 10) || 0)));
+        return persistirEmpaquetadoEnItem(hit, item, next);
+    }
+
+    function ciclarEmpaquetadoObebeItem(pedidoId, itemId) {
+        var hit = findPedido(pedidoId);
+        if (hit.idx < 0) return { ok: false, error: 'Pedido no encontrado.' };
+        var item = (hit.pedido.items || []).find(function (it) { return it.itemId === itemId; });
+        if (!item) return { ok: false, error: 'Artículo no encontrado.' };
+        var total = cantidadItemParaEmpaque(item);
+        var cur = empaquetadoObebeItem(pedidoId, itemId);
+        var next = cur >= total ? 0 : cur + 1;
+        return ajustarEmpaquetadoObebeItem(pedidoId, itemId, next - cur);
+    }
+
+    function setEmpaquetadoObebeItem(pedidoId, itemId, n) {
+        var hit = findPedido(pedidoId);
+        if (hit.idx < 0) return { ok: false, error: 'Pedido no encontrado.' };
+        var item = (hit.pedido.items || []).find(function (it) { return it.itemId === itemId; });
+        if (!item) return { ok: false, error: 'Artículo no encontrado.' };
+        if (item.disponibilidad !== 'si') {
+            return { ok: false, error: 'Solo aplica a artículos marcados como Sí hay.' };
+        }
+        var total = cantidadItemParaEmpaque(item);
+        var cur = empaquetadoObebeItem(pedidoId, itemId);
+        var next = Math.max(0, Math.min(total, parseInt(n, 10) || 0));
+        if (next === cur) {
+            return {
+                ok: true,
+                n: cur,
+                total: total,
+                etiqueta: etiquetaEmpaqueObebe(cur, total)
+            };
+        }
+        return ajustarEmpaquetadoObebeItem(pedidoId, itemId, next - cur);
     }
 
     function actualizarComentarioItem(pedidoId, itemId, texto) {
@@ -823,11 +1013,17 @@
                 it.comentarioObebe = prev.comentarioObebe || '';
                 it.clienteConfirmoNoHay = !!prev.clienteConfirmoNoHay;
                 it.stockObebeAplicado = !!prev.stockObebeAplicado;
+                if (prev.empaquetadoObebe != null && prev.empaquetadoObebe !== '') {
+                    it.empaquetadoObebe = prev.empaquetadoObebe;
+                }
             } else {
                 if (it.disponibilidad !== 'si' && it.disponibilidad !== 'no') it.disponibilidad = null;
                 it.comentarioObebe = (it.comentarioObebe || prev.comentarioObebe) || '';
                 it.clienteConfirmoNoHay = !!prev.clienteConfirmoNoHay;
                 it.stockObebeAplicado = !!prev.stockObebeAplicado;
+                if (prev.empaquetadoObebe != null && prev.empaquetadoObebe !== '') {
+                    it.empaquetadoObebe = prev.empaquetadoObebe;
+                }
             }
             return it;
         });
@@ -857,6 +1053,7 @@
                 it.comentarioObebe = '';
                 it.clienteConfirmoNoHay = false;
                 it.stockObebeAplicado = false;
+                if (it.empaquetadoObebe != null) delete it.empaquetadoObebe;
             });
         }
         p.items = normalizarItems(items);
@@ -1009,6 +1206,9 @@
                     stub.disponibilidad = prev.disponibilidad;
                 }
                 if (prev.comentarioObebe) stub.comentarioObebe = prev.comentarioObebe;
+                if (prev.empaquetadoObebe != null && prev.empaquetadoObebe !== '') {
+                    stub.empaquetadoObebe = prev.empaquetadoObebe;
+                }
             }
             return stub;
         });
@@ -1501,6 +1701,7 @@
         }
         tocarPedido(p, rol === 'obebe' ? 'obebe' : 'cliente');
         hit.todos[hit.idx] = p;
+        borrarEmpaqueItemObebe(pedidoId, itemId);
         setPedidos(hit.todos);
         return { ok: true, pedido: p };
     }
@@ -1725,6 +1926,7 @@
                 fresh.todos.splice(fresh.idx, 1);
                 setPedidos(fresh.todos);
             }
+            borrarEmpaquePedidoObebe(pedidoId);
             return { ok: true };
         });
     }
@@ -1737,6 +1939,11 @@
         eliminarPedido: eliminarPedido,
         marcarItemDisponibilidad: marcarItemDisponibilidad,
         actualizarComentarioItem: actualizarComentarioItem,
+        empaquetadoObebeItem: empaquetadoObebeItem,
+        etiquetaEmpaqueObebe: etiquetaEmpaqueObebe,
+        ajustarEmpaquetadoObebeItem: ajustarEmpaquetadoObebeItem,
+        setEmpaquetadoObebeItem: setEmpaquetadoObebeItem,
+        ciclarEmpaquetadoObebeItem: ciclarEmpaquetadoObebeItem,
         reabrirRevisionPedido: reabrirRevisionPedido,
         confirmarRevisionPedido: confirmarRevisionPedido,
         confirmarVentaRetailPedido: confirmarVentaRetailPedido,
