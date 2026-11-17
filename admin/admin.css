@@ -1630,6 +1630,11 @@ html[data-admin-theme="light"] .admin-banner.info {
     contain-intrinsic-size: auto 40px;
 }
 
+.admin-inv-grid td.admin-inv-thumb-cell,
+.admin-table td.admin-inv-thumb-cell {
+    content-visibility: visible;
+}
+
 .admin-agotados-scroll {
     overflow: auto;
     max-height: min(52vh, 480px);

@@ -1047,12 +1047,17 @@
         var ext = meta.ext;
         var base = refFile ? ('../' + seg + '/' + refFile) : '';
         var candidatos1 = [];
+        var sufijos1 = ['.' + ext, '.webp', '.avif', '.jpg', '.jpeg'];
+        function pushFotoEnCarpeta(carpeta) {
+            if (!refFile) return;
+            var b = '../' + carpeta + '/' + refFile;
+            sufijos1.forEach(function (suf) {
+                candidatos1.push(b + suf + v);
+            });
+        }
         if (base) {
-            candidatos1.push(base + '.' + ext + v);
-            if (ext !== 'webp') candidatos1.push(base + '.webp' + v);
-            if (ext !== 'avif') candidatos1.push(base + '.avif' + v);
-            candidatos1.push(base + '.jpg' + v);
-            candidatos1.push(base + '.jpeg' + v);
+            pushFotoEnCarpeta(seg);
+            pushFotoEnCarpeta(seg === 'mujer' ? 'hombre' : 'mujer');
         }
         if (incluirInvUrl && meta.invUrl) candidatos1.push(meta.invUrl);
         if (meta.normFoto) candidatos1.push(meta.normFoto);
@@ -1081,6 +1086,28 @@
         };
     }
 
+    function candidatosImagenInventarioAdmin(fila) {
+        if (!fila) return [];
+        var pack = urlsFotosTiendaObebe(fila);
+        var cands = (pack.candidatos1 || []).slice();
+        var iFoto = idxInventario().foto != null ? idxInventario().foto : 9;
+        var celda = fila.celdas && fila.celdas[iFoto];
+        var norm = normalizarRutaImagenAdmin(celda || fila.fotoUrl || '');
+        if (norm) cands.unshift(norm);
+        if (esMarcaUniqlo(fila.marca, fila.nombre)) {
+            cands = cands.sort(function (a, b) {
+                function rank(u) {
+                    if (/\.webp(\?|$)/i.test(u)) return 0;
+                    if (/\.avif(\?|$)/i.test(u)) return 1;
+                    if (/\.jpe?g(\?|$)/i.test(u)) return 2;
+                    return 3;
+                }
+                return rank(a) - rank(b);
+            });
+        }
+        return cands.filter(function (u, i, a) { return u && a.indexOf(u) === i; });
+    }
+
     function refArchivoImagenDesdeFila(fila) {
         var celdas = (fila && fila.celdas) || [];
         var idxInv = idxInventario();
@@ -1101,7 +1128,7 @@
     }
 
     function extensionImagenRef(hit) {
-        if (esMarcaUniqlo(hit.marca, hit.nombre)) return 'avif';
+        if (esMarcaUniqlo(hit.marca, hit.nombre)) return 'webp';
         return 'webp';
     }
 
@@ -5307,13 +5334,14 @@
         fetchTextoHoja: fetchTextoHoja,
         normalizarMarca: normalizarMarca,
         urlImagenFilaInventario: urlImagenFilaInventario,
+        candidatosImagenInventarioAdmin: candidatosImagenInventarioAdmin,
+        candidatosUrlImagenAdmin: candidatosUrlImagenAdmin,
         normalizarRutaImagenAdmin: normalizarRutaImagenAdmin,
         INVENTARIO_COLS_VISTA: columnasVistaInventario().length,
         urlsFotosComprasEtiquetadas: urlsFotosComprasEtiquetadas,
         urlsFotosTiendaObebe: urlsFotosTiendaObebe,
         urlsFotosTiendaDesdeRefFila: urlsFotosTiendaDesdeRefFila,
         candidatosSegundaFotoDesdeUrl: candidatosSegundaFotoDesdeUrl,
-        candidatosUrlImagenAdmin: candidatosUrlImagenAdmin,
         refEsEtiquetadaMujer: refEsEtiquetadaMujer,
         segmentoEtiquetadaRef: segmentoEtiquetadaRef,
         filaInventarioDesdeComprasCeldas: filaInventarioDesdeComprasCeldas,

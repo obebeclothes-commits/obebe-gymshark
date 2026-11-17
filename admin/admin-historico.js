@@ -78,19 +78,22 @@
         }
 
         function filaThumbHtml(r) {
-            var url = ObebeAdminData.urlImagenFilaInventario(r);
-            if (!url) {
+            var cands = ObebeAdminData.candidatosImagenInventarioAdmin
+                ? ObebeAdminData.candidatosImagenInventarioAdmin(r)
+                : [];
+            if (!cands.length) {
+                var url = ObebeAdminData.urlImagenFilaInventario(r);
+                if (url && ObebeAdminData.candidatosUrlImagenAdmin) {
+                    cands = ObebeAdminData.candidatosUrlImagenAdmin(url);
+                } else if (url) {
+                    cands = [url];
+                }
+            }
+            if (!cands.length) {
                 return '<span class="admin-mayoreo-thumb-empty admin-inv-thumb"></span>';
             }
-            var base = url.split('?')[0];
-            var q = url.indexOf('?') >= 0 ? '?' + url.split('?').slice(1).join('?') : '';
-            var fb1 = base.replace(/\.avif$/i, '.webp') + q;
-            if (fb1 === url) fb1 = base.replace(/\.webp$/i, '.jpeg') + q;
-            var cands = [url, base.replace(/\.(avif|webp)$/i, '.avif') + q, fb1, base.replace(/\.(avif|webp)$/i, '.jpg') + q]
-                .filter(function (v, i, a) { return v && a.indexOf(v) === i; });
             return '<img src="' + esc(cands[0]) + '" alt="" class="admin-inv-thumb" loading="lazy" decoding="async" ' +
                 'data-candidate-step="0" data-candidates="' + esc(cands.join('|')) + '" ' +
-                'data-fb1="' + esc(fb1) + '" data-fb2="' + esc(base.replace(/\.(avif|webp)$/i, '.jpg') + q) + '" ' +
                 'onerror="typeof adminMayoreoImgFallback===\'function\'&&adminMayoreoImgFallback(this)">';
         }
 
