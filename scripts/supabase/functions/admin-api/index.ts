@@ -579,8 +579,34 @@ async function appendRow(celdasIn: unknown[]) {
 
 async function deleteRows(filas: number[]) {
   const sb = adminClient();
-  const ids = filas.map((r) => parseInt(String(r), 10)).filter((r) => r > 0);
-  if (!ids.length) return { ok: true, deleted: 0 };
+  const refs = filas.map((r) => parseInt(String(r), 10)).filter((r) => r > 0);
+  if (!refs.length) return { ok: true, deleted: 0 };
+
+  const dbIds = new Set<number>();
+  for (const ref of refs) {
+    const { data: byId, error: e1 } = await sb
+      .from("inventario_filas")
+      .select("id")
+      .eq("id", ref)
+      .maybeSingle();
+    if (e1) throw e1;
+    if (byId?.id) {
+      dbIds.add(byId.id as number);
+      continue;
+    }
+    const { data: byLegacy, error: e2 } = await sb
+      .from("inventario_filas")
+      .select("id")
+      .eq("legacy_sheet_row", ref)
+      .maybeSingle();
+    if (e2) throw e2;
+    if (byLegacy?.id) dbIds.add(byLegacy.id as number);
+  }
+
+  const ids = Array.from(dbIds);
+  if (!ids.length) {
+    return { ok: false, error: "No se encontraron filas en inventario para borrar." };
+  }
   const { error } = await sb.from("inventario_filas").delete().in("id", ids);
   if (error) throw error;
   return { ok: true, deleted: ids.length };

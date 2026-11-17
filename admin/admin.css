@@ -113,6 +113,7 @@ a { color: var(--admin-accent); }
     right: 0.35rem;
     top: 50%;
     transform: translateY(-50%);
+    z-index: 2;
     border: none;
     background: transparent;
     color: var(--admin-muted);
@@ -4513,10 +4514,15 @@ body.admin-vr-modal-open {
     text-align: left;
 }
 
+.admin-dialog-pw-field .admin-password-field {
+    width: 100%;
+}
+
 .admin-dialog-pw-input {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    padding-right: 2.6rem;
 }
 
 /* Mayoreo OBEBE — desglose por pedido */

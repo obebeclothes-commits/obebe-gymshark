@@ -1841,7 +1841,7 @@
         (filasInv || []).forEach(function (f) {
             var ref = f.ref || parseInt(f.celdas && f.celdas[0], 10);
             if (!ref || !set[String(ref)]) return;
-            var id = f.inventarioDbId || f.filaSheet;
+            var id = idInventarioParaBorrado(f);
             if (id) ids.push(id);
         });
         return ids.filter(function (v, i, a) { return a.indexOf(v) === i; });
@@ -1858,6 +1858,14 @@
     function filaSheetInventario(f) {
         if (!f) return 0;
         return parseInt(f.filaSheet, 10) || parseInt(f.inventarioDbId, 10) || 0;
+    }
+
+    /** Id Postgres para borrar/actualizar en Supabase (no confundir con legacy_sheet_row). */
+    function idInventarioParaBorrado(f) {
+        if (!f) return 0;
+        var dbId = parseInt(f.inventarioDbId, 10) || 0;
+        if (dbId > 0) return dbId;
+        return parseInt(f.filaSheet, 10) || 0;
     }
 
     function filtrarFilasSinApartadasMayoreo(filasInv) {
@@ -3336,7 +3344,7 @@
             return Promise.resolve({ ok: true, borradas: 0 });
         }
         var sheetRows = duplicadas
-            .map(function (f) { return f.filaSheet; })
+            .map(idInventarioParaBorrado)
             .filter(function (n) { return n > 0; });
         var quitarIds = {};
         duplicadas.forEach(function (f) {
@@ -5171,6 +5179,7 @@
             return '../producto.html?id=' + encodeURIComponent(r.ref) + '&categoria=' + encodeURIComponent(cat);
         },
         idFilaInventario: idFilaInventario,
+        idInventarioParaBorrado: idInventarioParaBorrado,
         precioVentaRetailFila: precioVentaRetailFila,
         esOfertaSemanalFila: esOfertaSemanalFila,
         errorVentasParaUi: errorVentasParaUi,

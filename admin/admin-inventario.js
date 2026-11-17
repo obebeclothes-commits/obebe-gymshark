@@ -1072,12 +1072,22 @@
         });
     }
 
+    function idFilaParaBorradoApi(f) {
+        if (global.ObebeAdminData && ObebeAdminData.idInventarioParaBorrado) {
+            return ObebeAdminData.idInventarioParaBorrado(f);
+        }
+        return parseInt(f.inventarioDbId, 10) || parseInt(f.filaSheet, 10) || 0;
+    }
+
     function ejecutarEliminarSeleccion(keys, onReload, container) {
         var filasSheet = [];
         keys.forEach(function (k) {
             var f = findFila(k);
             if (!f) return;
-            if (!f._isNew && f.filaSheet) filasSheet.push(f.filaSheet);
+            if (!f._isNew) {
+                var idDel = idFilaParaBorradoApi(f);
+                if (idDel > 0) filasSheet.push(idDel);
+            }
         });
         state.nuevasFilas = state.nuevasFilas.filter(function (f) {
             return keys.indexOf(keyFila(f)) < 0;
@@ -1089,12 +1099,20 @@
         state.modoEliminar = false;
 
         if (!filasSheet.length) {
-            state.msg = 'Filas quitadas.';
-            state.msgOk = true;
+            var soloNuevas = keys.length > 0;
+            state.msg = soloNuevas
+                ? 'Filas quitadas.'
+                : 'No se pudo identificar filas en la base de datos. Recarga inventario (Ctrl+F5) e inténtalo de nuevo.';
+            state.msgOk = soloNuevas;
             refreshUi(container, onReload);
+            if (soloNuevas && onReload) onReload();
             return;
         }
+        filasSheet = filasSheet.filter(function (v, i, a) { return a.indexOf(v) === i; });
         apiInventario('deleteRows', { filas: filasSheet }).then(function (res) {
+            if (res && res.deleted === 0 && filasSheet.length) {
+                throw new Error('La base no borró ninguna fila. Redespliega admin-api o recarga el panel.');
+            }
             if (res && res.ok === false) throw new Error(res.error || 'Error');
             state.msg = 'Artículos eliminados del inventario.';
             state.msgOk = true;

@@ -95,6 +95,33 @@
         });
     }
 
+    function svgIconoPassword(mostrar) {
+        if (mostrar) {
+            return '<svg class="admin-icon-svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">' +
+                '<path fill="none" stroke="currentColor" stroke-width="2" d="M3 3l18 18"/>' +
+                '<path fill="none" stroke="currentColor" stroke-width="2" d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58"/>' +
+                '<path fill="none" stroke="currentColor" stroke-width="2" d="M9.88 5.09A10.94 10.94 0 0 1 12 5c7 0 10 7 10 7a18.45 18.45 0 0 1-2.16 3.19"/>' +
+                '<path fill="none" stroke="currentColor" stroke-width="2" d="M6.61 6.61A18.48 18.48 0 0 0 2 12s3 7 10 7a10.66 10.66 0 0 0 5.39-1.45"/></svg>';
+        }
+        return '<svg class="admin-icon-svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">' +
+            '<path fill="none" stroke="currentColor" stroke-width="2" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>' +
+            '<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+    }
+
+    function bindMostrarPassword(inputId, toggleId) {
+        var passInp = document.getElementById(inputId);
+        var passToggle = document.getElementById(toggleId);
+        if (!passToggle || !passInp) return;
+        passToggle.innerHTML = svgIconoPassword(false);
+        passToggle.onclick = function () {
+            var mostrar = passInp.type === 'password';
+            passInp.type = mostrar ? 'text' : 'password';
+            passToggle.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+            passToggle.setAttribute('title', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+            passToggle.innerHTML = svgIconoPassword(mostrar);
+        };
+    }
+
     function confirm(opts) {
         return openDialog(opts, 'confirm');
     }
@@ -120,8 +147,10 @@
             String(opts.message || 'Para eliminar artículos del inventario.') + '</span>' +
             '<div class="admin-field admin-dialog-pw-field">' +
             '<label for="adminDialogPasswordInput">Contraseña</label>' +
+            '<div class="admin-password-field">' +
             '<input type="password" id="adminDialogPasswordInput" autocomplete="current-password" class="admin-dialog-pw-input">' +
-            '</div><p id="adminDialogPasswordError" class="admin-login-error" role="alert"></p>';
+            '<button type="button" id="adminDialogPasswordToggle" class="admin-password-toggle" aria-label="Mostrar contraseña" title="Mostrar contraseña"></button>' +
+            '</div></div><p id="adminDialogPasswordError" class="admin-login-error" role="alert"></p>';
 
         btnCancel.classList.remove('admin-hidden');
         btnCancel.textContent = opts.cancelText || 'Cancelar';
@@ -160,6 +189,7 @@
             root.classList.remove('admin-hidden');
             root.setAttribute('aria-hidden', 'false');
             document.body.classList.add('admin-dialog-open');
+            bindMostrarPassword('adminDialogPasswordInput', 'adminDialogPasswordToggle');
             var inputFocus = document.getElementById('adminDialogPasswordInput');
             if (inputFocus) inputFocus.focus();
         });
