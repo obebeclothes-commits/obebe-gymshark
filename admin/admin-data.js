@@ -1876,6 +1876,8 @@
         return filasInv.filter(function (f) {
             var ref = refDeFilaInventario(f);
             if (!ref || isNaN(ref)) return true;
+            var stock = Math.max(0, parseInt(f.stock, 10) || 0);
+            if (stock > 0) return true;
             return !ped.refApartadaEnMayoreo(ref);
         });
     }
@@ -4016,9 +4018,21 @@
 
     function refApiInventarioFila(filaSheet, filaObj) {
         if (filaObj && filaObj.inventarioDbId) return parseInt(filaObj.inventarioDbId, 10);
-        var hit = (estado.filas || []).find(function (x) { return x.filaSheet === filaSheet; });
+        var fs = parseInt(filaSheet, 10) || 0;
+        var hit = (estado.filas || []).find(function (x) {
+            return x.filaSheet === fs || (x.inventarioDbId && x.inventarioDbId === fs);
+        });
         if (hit && hit.inventarioDbId) return parseInt(hit.inventarioDbId, 10);
-        return parseInt(filaSheet, 10);
+        if (hit && hit.filaSheet) return parseInt(hit.filaSheet, 10);
+        return fs;
+    }
+
+    function buscarFilaInventarioPorSheetOId(sheetOrId) {
+        var n = parseInt(sheetOrId, 10) || 0;
+        if (!n) return null;
+        return (estado.filas || []).find(function (x) {
+            return x.filaSheet === n || x.inventarioDbId === n;
+        }) || null;
     }
 
     function actualizarStockFila(filaSheet, stock, opts) {
@@ -4029,14 +4043,16 @@
         }
         var filaRef = refApiInventarioFila(filaSheet, opts.fila || null);
         if (escrituraLocalHabilitada()) {
-            var hitL = estado.filas.find(function (x) {
+            var colStockL = idxInventario().stock != null ? idxInventario().stock : IDX.stock;
+            var hitL = opts.fila || estado.filas.find(function (x) {
                 return x.filaSheet === filaSheet || (x.inventarioDbId && x.inventarioDbId === filaRef);
             });
+            if (!hitL) hitL = buscarFilaInventarioPorSheetOId(filaRef);
             if (hitL) {
                 hitL.stock = stock;
-                if (hitL.celdas) hitL.celdas[IDX.stock] = String(stock);
+                if (hitL.celdas) hitL.celdas[colStockL] = String(stock);
             }
-            notificarCambioStockInventario(filaSheet, stock);
+            notificarCambioStockInventario(hitL ? (hitL.filaSheet || filaSheet) : filaSheet, stock);
             sincronizarHistoricoInventario(estado.filas);
             var pend = leerPendienteSync();
             pend.stockByRow[String(filaSheet)] = stock;
@@ -4052,14 +4068,21 @@
             if (!res || res.ok === false) {
                 throw new Error((res && res.error) || 'No se pudo actualizar stock');
             }
+            var idxInv = idxInventario();
+            var colStock = idxInv.stock != null ? idxInv.stock : IDX.stock;
             var hit = estado.filas.find(function (x) {
                 return x.filaSheet === filaSheet || (x.inventarioDbId && x.inventarioDbId === filaRef);
             });
+            if (!hit) {
+                hit = buscarFilaInventarioPorSheetOId(filaRef);
+            }
             if (hit) {
                 hit.stock = stock;
-                if (hit.celdas) hit.celdas[IDX.stock] = String(stock);
+                if (hit.celdas) hit.celdas[colStock] = String(stock);
+                notificarCambioStockInventario(hit.filaSheet || filaSheet, stock);
+            } else {
+                notificarCambioStockInventario(filaSheet, stock);
             }
-            notificarCambioStockInventario(filaSheet, stock);
             sincronizarHistoricoInventario(estado.filas);
             guardarCacheInventarioLocal();
             return { ok: true, stock: stock };
@@ -5180,6 +5203,7 @@
         },
         idFilaInventario: idFilaInventario,
         idInventarioParaBorrado: idInventarioParaBorrado,
+        buscarFilaInventarioPorSheetOId: buscarFilaInventarioPorSheetOId,
         precioVentaRetailFila: precioVentaRetailFila,
         esOfertaSemanalFila: esOfertaSemanalFila,
         errorVentasParaUi: errorVentasParaUi,

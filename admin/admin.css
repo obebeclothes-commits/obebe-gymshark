@@ -1618,6 +1618,23 @@ html[data-admin-theme="light"] .admin-banner.info {
     margin-left: auto;
 }
 
+.admin-inv-render-limit {
+    margin: 0 0 0.35rem;
+    padding: 0 0.25rem;
+    font-size: 0.8rem;
+}
+
+.admin-inv-grid tbody tr.admin-inv-data-row,
+.admin-table tbody tr.admin-agotados-row {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 40px;
+}
+
+.admin-agotados-scroll {
+    overflow: auto;
+    max-height: min(52vh, 480px);
+}
+
 .admin-inv-scroll {
     overflow: auto;
     max-height: min(70vh, 640px);

@@ -18,8 +18,16 @@
         mayoreoInventario: null,
         columnasOcultas: [],
         mostrarAuditoriaStock: true,
-        ordenAuditoria: null
+        ordenAuditoria: null,
+        _visCacheKey: '',
+        _visCache: null
     };
+
+    var INV_RENDER_MAX = 400;
+    var INV_SEARCH_DEBOUNCE_MS = 280;
+    var INV_THUMBS_MAX = 100;
+    var INV_AGOTADOS_RENDER_MAX = 200;
+    var invSearchTimer = null;
 
     function colIdxAuditoriaInventario() {
         if (global.ObebeInventarioColumnas && ObebeInventarioColumnas.COL_AUDITORIA != null) {
@@ -102,6 +110,61 @@
         return filas;
     }
 
+    function invalidarCacheFilasVisibles() {
+        state._visCacheKey = '';
+        state._visCache = null;
+    }
+
+    function normInv(s) {
+        return String(s || '').trim().toLowerCase();
+    }
+
+    function normSegmentoInv(s) {
+        return ObebeAdminData.normSegmento ? ObebeAdminData.normSegmento(s) : normInv(s);
+    }
+
+    function blobBusquedaFila(f) {
+        if (!f) return '';
+        if (f._invBlob) return f._invBlob;
+        f._invBlob = [
+            f.nombre, f.marca, f.tipo, f.color, f.talla, f.segmento, String(f.ref || '')
+        ].join(' ').toLowerCase();
+        return f._invBlob;
+    }
+
+    function filtrarFilasInv(filas, query, filtros) {
+        filtros = filtros || {};
+        query = normInv(query);
+        var tokens = query ? query.split(/\s+/).filter(Boolean) : [];
+        return (filas || []).filter(function (r) {
+            if (filtros.soloStock && (r.stock || 0) <= 0) return false;
+            if (filtros.soloBajo && (r.stock === 0 || r.stock > 2)) return false;
+            if (filtros.segmento && normSegmentoInv(r.segmento) !== normSegmentoInv(filtros.segmento)) {
+                return false;
+            }
+            if (filtros.tipo && normInv(r.tipo) !== normInv(filtros.tipo)) return false;
+            if (filtros.marca && ObebeAdminData.normalizarMarca &&
+                ObebeAdminData.normalizarMarca(r.marca) !== ObebeAdminData.normalizarMarca(filtros.marca)) {
+                return false;
+            }
+            if (!tokens.length) return true;
+            var blob = blobBusquedaFila(r);
+            for (var i = 0; i < tokens.length; i++) {
+                if (blob.indexOf(tokens[i]) < 0) return false;
+            }
+            return true;
+        });
+    }
+
+    function prepararListasRenderInventario() {
+        state._listasInv = {
+            tallas: listaTallasInventario(),
+            colores: listaColoresInventario(),
+            tipos: listaTiposInventario(),
+            marcas: listaMarcasInventario()
+        };
+    }
+
     function valorAuditoriaFila(f) {
         var col = colIdxAuditoriaInventario();
         if (!f || !f.celdas) return '';
@@ -128,10 +191,18 @@
     }
 
     function filasVisibles() {
+        var cacheKey = [
+            state.filtro, state.filtroGenero, state.filtroTipo, state.ordenAuditoria,
+            state.filas.length, state.nuevasFilas.length
+        ].join('|');
+        if (state._visCacheKey === cacheKey && state._visCache) return state._visCache;
         var base = filasInventarioBase();
-        var activas = ObebeAdminData.filtrarFilas(base, state.filtro, optsFiltro({ soloStock: true }));
-        var nuevas = ObebeAdminData.filtrarFilas(state.nuevasFilas, state.filtro, optsFiltro({}));
-        return ordenarFilasPorAuditoria(activas.concat(nuevas));
+        var activas = filtrarFilasInv(base, state.filtro, optsFiltro({ soloStock: true }));
+        var nuevas = filtrarFilasInv(state.nuevasFilas, state.filtro, optsFiltro({}));
+        var out = ordenarFilasPorAuditoria(activas.concat(nuevas));
+        state._visCacheKey = cacheKey;
+        state._visCache = out;
+        return out;
     }
 
     function etiquetaOrdenAuditoria() {
@@ -191,11 +262,17 @@
     function mountSeccionAgotados(rootContainer, onReload) {
         var el = rootContainer.querySelector('#adminInvAgotadosMount');
         if (!el || !global.ObebeAdminAgotados) return;
+        var filasAgot = (ObebeAdminData.getEstado && ObebeAdminData.getEstado().filas)
+            ? ObebeAdminData.getEstado().filas
+            : state.filas;
         global.ObebeAdminAgotados.mount(el, {
-            filas: ObebeAdminData.filtrarFilas(state.filas, '', optsFiltro()),
+            filas: filtrarFilasInv(filasAgot, '', optsFiltro()),
             onStockRestaurado: function () {
+                invalidarCacheFilasVisibles();
                 refreshGrid(rootContainer, onReload);
-                mountSeccionAgotados(rootContainer, onReload);
+                if (global.ObebeAdminAgotados.refrescar) {
+                    global.ObebeAdminAgotados.refrescar(el);
+                }
                 if (onReload) onReload();
             }
         });
@@ -223,6 +300,7 @@
 
     function cancelarEdicionInv(container, onReload) {
         state.filas = clonarFilas(state.snapshot || state.filas);
+        invalidarCacheFilasVisibles();
         state.nuevasFilas = [];
         state.seleccion = {};
         state.modoEdicion = false;
@@ -642,8 +720,8 @@
     }
 
     function textoExistencia() {
-        var n = ObebeAdminData.filtrarFilas(filasInventarioBase(), state.filtro, optsFiltro({ soloStock: true })).length;
-        var nuevas = ObebeAdminData.filtrarFilas(state.nuevasFilas, state.filtro, optsFiltro({})).length;
+        var n = filtrarFilasInv(filasInventarioBase(), state.filtro, optsFiltro({ soloStock: true })).length;
+        var nuevas = filtrarFilasInv(state.nuevasFilas, state.filtro, optsFiltro({})).length;
         var etiqueta = '';
         if (state.filtroGenero) etiqueta += ' · ' + state.filtroGenero;
         if (state.filtroTipo) etiqueta += ' · ' + state.filtroTipo;
@@ -680,6 +758,9 @@
             mostrar = mayusInv(mostrar);
         }
         if (colIdx === colFotoInventario()) {
+            if (state._renderCtx && state._renderCtx.omitThumbs) {
+                return '<td class="admin-inv-thumb-cell"><span class="admin-mayoreo-thumb-empty admin-inv-thumb" aria-hidden="true"></span></td>';
+            }
             return '<td class="admin-inv-thumb-cell">' + renderCeldaThumb(f) + '</td>';
         }
         var editCell = edit;
@@ -694,17 +775,18 @@
                 return '<td class="admin-inv-total-td" data-inv-total-for="' + esc(keyFila(f)) + '">' +
                     '<span class="admin-inv-readonly admin-inv-total">' + esc(totalMostrar) + '</span></td>';
             }
+            var listas = state._listasInv;
             if (colIdx === (idx.talla != null ? idx.talla : 3)) {
-                return renderCeldaSelectInventario(f, colIdx, listaTallasInventario());
+                return renderCeldaSelectInventario(f, colIdx, listas ? listas.tallas : listaTallasInventario());
             }
             if (colIdx === (idx.color != null ? idx.color : 4)) {
-                return renderCeldaSelectInventario(f, colIdx, listaColoresInventario());
+                return renderCeldaSelectInventario(f, colIdx, listas ? listas.colores : listaColoresInventario());
             }
             if (colIdx === (idx.tipo != null ? idx.tipo : 5)) {
-                return renderCeldaSelectInventario(f, colIdx, listaTiposInventario());
+                return renderCeldaSelectInventario(f, colIdx, listas ? listas.tipos : listaTiposInventario());
             }
             if (colIdx === (idx.marca != null ? idx.marca : 6)) {
-                return renderCeldaSelectInventario(f, colIdx, listaMarcasInventario());
+                return renderCeldaSelectInventario(f, colIdx, listas ? listas.marcas : listaMarcasInventario());
             }
             if (esColumnaAuditoria(colIdx)) {
                 var audVal = esVacioONa(val) ? '' : val;
@@ -726,6 +808,51 @@
         return '<td' + tdArtRead + '><span class="admin-inv-readonly">' + esc(mostrar) + '</span></td>';
     }
 
+    function prepararRenderGridContext(visTotal) {
+        var edit = state.modoEdicion;
+        state._renderCtx = {
+            edit: edit,
+            omitThumbs: !edit && visTotal > INV_THUMBS_MAX
+        };
+        if (edit) prepararListasRenderInventario();
+    }
+
+    function visiblesParaRender() {
+        var visAll = filasVisibles();
+        var trunc = visAll.length > INV_RENDER_MAX;
+        return {
+            visAll: visAll,
+            vis: trunc ? visAll.slice(0, INV_RENDER_MAX) : visAll,
+            trunc: trunc
+        };
+    }
+
+    function mensajeLimiteRender(visAll, trunc) {
+        if (!trunc) return '';
+        return '<p class="admin-inv-render-limit admin-muted-text">Mostrando los primeros ' + INV_RENDER_MAX +
+            ' de ' + visAll.length + ' resultados. Acota la búsqueda o los filtros.</p>';
+    }
+
+    function renderFilasTbodyHtml(vis, edit, pick) {
+        var colsVista = columnasVistaGrid();
+        var i;
+        return vis.map(function (f, visIdx) {
+            var k = keyFila(f);
+            var checked = state.seleccion[k] ? ' checked' : '';
+            var rowNum = f.filaSheet;
+            if (!rowNum || rowNum === 'nueva') rowNum = visIdx + 2;
+            var cells = '';
+            for (i = 0; i < colsVista.length; i++) {
+                cells += renderCeldaInventario(f, colsVista[i], edit);
+            }
+            var sel = pick
+                ? '<td class="admin-inv-sel"><input type="checkbox" class="admin-inv-pick" data-key="' + esc(k) + '"' + checked + '></td>'
+                : '';
+            return '<tr class="admin-inv-data-row" data-inv-key="' + esc(k) + '">' + sel +
+                '<td class="admin-inv-row">' + rowNum + '</td>' + cells + '</tr>';
+        }).join('');
+    }
+
     function renderGrid() {
         var colsVista = columnasVistaGrid();
         var enc = ObebeAdminData.encabezadosInventarioActuales
@@ -734,7 +861,9 @@
         if (!enc.length && ObebeAdminData.combinarEncabezadosInventario) {
             enc = ObebeAdminData.combinarEncabezadosInventario(state.encabezadosFila2);
         }
-        var vis = filasVisibles();
+        var pack = visiblesParaRender();
+        prepararRenderGridContext(pack.visAll.length);
+        var vis = pack.vis;
         var edit = state.modoEdicion;
         var pick = edit && !state.mayoreoInventario;
 
@@ -768,35 +897,59 @@
         var headSheet = '<tr class="admin-inv-head-sheet">' + (pick ? '<th class="admin-inv-sel admin-inv-sticky-corner"></th>' : '') +
             '<th class="admin-inv-row admin-inv-sticky-corner2">2</th>' + thSheet + '</tr>';
 
-        var tbody = vis.map(function (f, visIdx) {
-            var k = keyFila(f);
-            var checked = state.seleccion[k] ? ' checked' : '';
-            var rowNum = f.filaSheet;
-            if (!rowNum || rowNum === 'nueva') rowNum = visIdx + 2;
-            var cells = '';
-            for (i = 0; i < colsVista.length; i++) {
-                cells += renderCeldaInventario(f, colsVista[i], edit);
-            }
-            var sel = pick
-                ? '<td class="admin-inv-sel"><input type="checkbox" class="admin-inv-pick" data-key="' + esc(k) + '"' + checked + '></td>'
-                : '';
-            return '<tr data-inv-key="' + esc(k) + '">' + sel +
-                '<td class="admin-inv-row">' + rowNum + '</td>' + cells + '</tr>';
-        }).join('');
+        var tbody = renderFilasTbodyHtml(vis, edit, pick);
 
         var colSpan = colsVista.length + 1 + (pick ? 1 : 0);
         var scrollCls = 'admin-inv-scroll' + (edit ? ' admin-inv-scroll--edit' : '') +
             (state.mayoreoInventario ? ' admin-inv-scroll--mayoreo' : '');
-        return '<div class="' + scrollCls + '">' +
+        return mensajeLimiteRender(pack.visAll, pack.trunc) +
+            '<div class="' + scrollCls + '">' +
             '<table class="admin-table admin-inv-grid' + (edit ? ' admin-inv-grid--edit' : '') + '"><thead>' + headLetters + headSheet +
             '</thead><tbody>' + (tbody || '<tr><td colspan="' + colSpan + '">Sin filas</td></tr>') + '</tbody></table></div>';
+    }
+
+    function actualizarAvisoLimiteRender(mount, pack) {
+        var prev = mount.querySelector('.admin-inv-render-limit');
+        if (!pack.trunc) {
+            if (prev) prev.remove();
+            return;
+        }
+        var msg = 'Mostrando los primeros ' + INV_RENDER_MAX + ' de ' + pack.visAll.length +
+            ' resultados. Acota la búsqueda o los filtros.';
+        if (prev) prev.textContent = msg;
+        else {
+            var p = document.createElement('p');
+            p.className = 'admin-inv-render-limit admin-muted-text';
+            p.textContent = msg;
+            mount.insertBefore(p, mount.firstChild);
+        }
     }
 
     function refreshGrid(container, onReload) {
         var mount = container.querySelector('#adminInvGridMount');
         if (!mount) return;
-        mount.innerHTML = renderGrid();
-        bindGridEvents(container, onReload);
+        var pack = visiblesParaRender();
+        prepararRenderGridContext(pack.visAll.length);
+        var edit = state.modoEdicion;
+        var pick = edit && !state.mayoreoInventario;
+        var colsVista = columnasVistaGrid();
+        var colSpan = colsVista.length + 1 + (pick ? 1 : 0);
+        var tbodyHtml = renderFilasTbodyHtml(pack.vis, edit, pick) ||
+            '<tr><td colspan="' + colSpan + '">Sin filas</td></tr>';
+
+        var sc = mount.querySelector('.admin-inv-scroll');
+        var scrollTop = sc ? sc.scrollTop : 0;
+        var table = mount.querySelector('.admin-inv-grid');
+        var canPatch = table && table.querySelector('tbody') && table.querySelector('thead') &&
+            table.classList.contains('admin-inv-grid--edit') === !!edit;
+        if (canPatch) {
+            table.querySelector('tbody').innerHTML = tbodyHtml;
+            actualizarAvisoLimiteRender(mount, pack);
+            if (sc) sc.scrollTop = scrollTop;
+        } else {
+            mount.innerHTML = renderGrid();
+        }
+        ensureGridDelegatedEvents(container, onReload);
         if (global.ObebeAdminCamposUi && state.modoEdicion) {
             global.ObebeAdminCamposUi.bindSelectOtros(container);
         }
@@ -820,66 +973,72 @@
         else state.ordenAuditoria = null;
     }
 
-    function bindGridEvents(container, onReload) {
-        container.querySelectorAll('[data-inv-sort-aud]').forEach(function (th) {
-            function activar(ev) {
-                if (ev) ev.preventDefault();
-                ciclarOrdenAuditoria();
-                refreshGrid(container, onReload);
-            }
-            th.addEventListener('click', activar);
-            th.addEventListener('keydown', function (ev) {
-                if (ev.key === 'Enter' || ev.key === ' ') activar(ev);
-            });
+    function ensureGridDelegatedEvents(container, onReload) {
+        if (container._obebeInvGridDelegated) return;
+        container._obebeInvGridDelegated = true;
+
+        function activarSortAud(ev) {
+            if (ev) ev.preventDefault();
+            invalidarCacheFilasVisibles();
+            ciclarOrdenAuditoria();
+            refreshGrid(container, onReload);
+        }
+
+        container.addEventListener('click', function (ev) {
+            var th = ev.target.closest('[data-inv-sort-aud]');
+            if (!th || !container.contains(th)) return;
+            activarSortAud(ev);
         });
-        if (state.modoEdicion) {
-            container.querySelectorAll('.admin-inv-cell').forEach(function (input) {
-                function volcar(inputEl) {
-                    var k = inputEl.getAttribute('data-key');
-                    var col = parseInt(inputEl.getAttribute('data-col'), 10);
-                    var f = findFila(k);
-                    if (!f) return;
-                    aplicarCambioCelda(container, f, col, inputEl.value);
-                }
-                input.addEventListener('input', function () { volcar(input); });
-                input.addEventListener('change', function () { volcar(input); });
-            });
-            container.querySelectorAll('.admin-inv-cell-select').forEach(function (sel) {
-                sel.addEventListener('change', function () {
-                    if (global.ObebeAdminCamposUi) {
-                        global.ObebeAdminCamposUi.toggleOtroInput(sel);
-                        if (sel.value === (global.ObebeAdminCamposUi.OTRO || '__otro__')) {
-                            global.ObebeAdminCamposUi.enfocarInputOtro(sel);
-                        }
-                    }
-                    var k = sel.getAttribute('data-key');
-                    var col = parseInt(sel.getAttribute('data-col'), 10);
-                    var f = findFila(k);
-                    if (!f) return;
-                    aplicarCambioCelda(container, f, col, leerValorSelectInventario(sel));
-                });
-            });
-            function onOtroTallaChange(inp) {
-                var k = inp.getAttribute('data-key');
-                var col = parseInt(inp.getAttribute('data-col'), 10);
-                var row = inp.closest('tr');
-                var sel = row ? row.querySelector('.admin-inv-cell-select[data-col="' + col + '"]') : null;
+        container.addEventListener('keydown', function (ev) {
+            var th = ev.target.closest('[data-inv-sort-aud]');
+            if (!th || !container.contains(th)) return;
+            if (ev.key === 'Enter' || ev.key === ' ') activarSortAud(ev);
+        });
+
+        container.addEventListener('input', function (ev) {
+            var t = ev.target;
+            if (!state.modoEdicion || !container.contains(t)) return;
+            if (t.classList.contains('admin-inv-cell')) {
+                var k = t.getAttribute('data-key');
+                var col = parseInt(t.getAttribute('data-col'), 10);
                 var f = findFila(k);
-                if (!f || !sel) return;
-                aplicarCambioCelda(container, f, col, leerValorSelectInventario(sel));
+                if (f) aplicarCambioCelda(container, f, col, t.value);
+                return;
             }
-            container.querySelectorAll('.admin-inv-cell-otro').forEach(function (inp) {
-                inp.addEventListener('input', function () { onOtroTallaChange(inp); });
-                inp.addEventListener('change', function () { onOtroTallaChange(inp); });
-            });
-        }
-        if (state.modoEdicion) {
-            container.querySelectorAll('.admin-inv-pick').forEach(function (cb) {
-                cb.addEventListener('change', function () {
-                    state.seleccion[cb.getAttribute('data-key')] = cb.checked;
-                });
-            });
-        }
+            if (t.classList.contains('admin-inv-cell-otro')) {
+                var k2 = t.getAttribute('data-key');
+                var col2 = parseInt(t.getAttribute('data-col'), 10);
+                var row = t.closest('tr');
+                var sel = row ? row.querySelector('.admin-inv-cell-select[data-col="' + col2 + '"]') : null;
+                var f2 = findFila(k2);
+                if (f2 && sel) aplicarCambioCelda(container, f2, col2, leerValorSelectInventario(sel));
+            }
+        });
+
+        container.addEventListener('change', function (ev) {
+            var t = ev.target;
+            if (!state.modoEdicion || !container.contains(t)) return;
+            if (t.classList.contains('admin-inv-cell-select')) {
+                if (global.ObebeAdminCamposUi) {
+                    global.ObebeAdminCamposUi.toggleOtroInput(t);
+                    if (t.value === (global.ObebeAdminCamposUi.OTRO || '__otro__')) {
+                        global.ObebeAdminCamposUi.enfocarInputOtro(t);
+                    }
+                }
+                var k = t.getAttribute('data-key');
+                var col = parseInt(t.getAttribute('data-col'), 10);
+                var f = findFila(k);
+                if (f) aplicarCambioCelda(container, f, col, leerValorSelectInventario(t));
+                return;
+            }
+            if (t.classList.contains('admin-inv-pick')) {
+                state.seleccion[t.getAttribute('data-key')] = t.checked;
+            }
+        });
+    }
+
+    function bindGridEvents(container, onReload) {
+        ensureGridDelegatedEvents(container, onReload);
     }
 
     function bindEvents(container, onReload) {
@@ -887,12 +1046,16 @@
         if (searchEl) {
             searchEl.addEventListener('input', function (e) {
                 state.filtro = e.target.value;
-                refreshGrid(container, onReload);
+                if (invSearchTimer) clearTimeout(invSearchTimer);
+                invSearchTimer = setTimeout(function () {
+                    refreshGrid(container, onReload);
+                }, INV_SEARCH_DEBOUNCE_MS);
             });
         }
         container.querySelectorAll('[data-inv-genero]').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 state.filtroGenero = btn.getAttribute('data-inv-genero') || '';
+                invalidarCacheFilasVisibles();
                 refreshUi(container, onReload);
             });
         });
@@ -900,6 +1063,7 @@
         if (tipoEl) {
             tipoEl.addEventListener('change', function () {
                 state.filtroTipo = tipoEl.value || '';
+                invalidarCacheFilasVisibles();
                 refreshUi(container, onReload);
             });
         }
@@ -1039,6 +1203,7 @@
         f.marca = mayusInv(f.marca);
         f.celdas[colMarca] = f.marca;
         recalcularTotalFila(f);
+        f._invBlob = null;
     }
 
     function volcarInputsInventarioDesdeDom(container) {
@@ -1157,6 +1322,7 @@
             state.msg = err.message || String(err);
             state.msgOk = false;
         }).finally(function () {
+            invalidarCacheFilasVisibles();
             refreshUi(container, onReload);
         });
     }
@@ -1240,6 +1406,8 @@
         state.columnasOcultas = (opts.columnasOcultas || []).slice();
         state.mostrarAuditoriaStock = opts.mostrarAuditoriaStock !== false && !state.mayoreoInventario;
         state.filas = clonarFilas(filas);
+        invalidarCacheFilasVisibles();
+        state.filas.forEach(blobBusquedaFila);
         state.encabezadosFila2 = ObebeAdminData.combinarEncabezadosInventario
             ? ObebeAdminData.combinarEncabezadosInventario(encabezadosFila2 || [])
             : (encabezadosFila2 || []).slice();
