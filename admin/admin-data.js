@@ -100,6 +100,7 @@
     var PENDING_SYNC_KEY = 'obebe_admin_pending_sync_v1';
     var HISTORICO_BD_KEY = 'obebe_historico_inventario_v1';
     var AGOTADOS_TS_KEY = 'obebe_agotados_ts_v1';
+    var RESTOCK_MANUAL_KEY = 'obebe_restock_manual_refs_v1';
     var KEY_CLIENTES_OVERRIDE = 'obebe_clientes_override_v1';
     var MEMORY_VENTAS_TTL_MS = 5 * 60 * 1000;
     var STORAGE_VENTAS_TTL_MS = 20 * 60 * 1000;
@@ -196,6 +197,38 @@
         var map = leerAgotadosTs();
         delete map[String(filaSheet)];
         guardarAgotadosTs(map);
+    }
+
+    function leerRestockManualRefs() {
+        try {
+            var raw = localStorage.getItem(RESTOCK_MANUAL_KEY);
+            var o = raw ? JSON.parse(raw) : {};
+            return o && typeof o === 'object' ? o : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function marcarRestockManualRef(ref) {
+        ref = parseInt(ref, 10);
+        if (!ref || isNaN(ref)) return;
+        var m = leerRestockManualRefs();
+        m[String(ref)] = Date.now();
+        try {
+            localStorage.setItem(RESTOCK_MANUAL_KEY, JSON.stringify(m));
+        } catch (e2) { /* ignore */ }
+    }
+
+    function refConRestockManualPermitido(ref) {
+        ref = parseInt(ref, 10);
+        if (!ref || isNaN(ref)) return false;
+        return !!leerRestockManualRefs()[String(ref)];
+    }
+
+    function refApartadaPedidoMayoreoSiHay(ref) {
+        ref = parseInt(ref, 10);
+        if (!ref || isNaN(ref)) return false;
+        return !!mapaRefsSiHayMayoreoActivos()[String(ref)];
     }
 
     function timestampAgotadoFila(filaSheet) {
@@ -2310,14 +2343,15 @@
 
     function aplicarOverridesStockEnFilas(filas, stockByRow) {
         if (!filas || !stockByRow) return;
+        var colStock = idxInventario().stock != null ? idxInventario().stock : IDX.stock;
         Object.keys(stockByRow).forEach(function (k) {
             var row = parseInt(k, 10);
             var stock = parseInt(stockByRow[k], 10);
             if (isNaN(row) || isNaN(stock)) return;
             filas.forEach(function (f) {
-                if (f.filaSheet !== row) return;
+                if (f.filaSheet !== row && f.inventarioDbId !== row) return;
                 f.stock = stock;
-                if (f.celdas) f.celdas[IDX.stock] = String(stock);
+                if (f.celdas) f.celdas[colStock] = String(stock);
             });
         });
     }
@@ -3424,6 +3458,7 @@
         (estado.filas || []).forEach(function (f) {
             var ref = refDeFilaInventario(f);
             if (!refs[String(ref)]) return;
+            if (refConRestockManualPermitido(ref)) return;
             var row = filaSheetInventario(f);
             if (!row || !f.stock || f.stock <= 0) return;
             porFila[row] = 0;
@@ -4035,6 +4070,14 @@
         }) || null;
     }
 
+    function buscarFilaInventarioPorRef(ref) {
+        ref = parseInt(ref, 10);
+        if (!ref || isNaN(ref)) return null;
+        return (estado.filas || []).find(function (x) {
+            return refDeFilaInventario(x) === ref;
+        }) || null;
+    }
+
     function actualizarStockFila(filaSheet, stock, opts) {
         opts = opts || {};
         stock = parseInt(stock, 10);
@@ -4042,9 +4085,14 @@
             return Promise.resolve({ ok: false, error: 'Stock inválido.' });
         }
         var filaRef = refApiInventarioFila(filaSheet, opts.fila || null);
+        var hitFila = opts.fila || null;
+        if (opts.restockDesdeAgotados && hitFila) {
+            var refManual = refDeFilaInventario(hitFila);
+            if (refManual) marcarRestockManualRef(refManual);
+        }
         if (escrituraLocalHabilitada()) {
             var colStockL = idxInventario().stock != null ? idxInventario().stock : IDX.stock;
-            var hitL = opts.fila || estado.filas.find(function (x) {
+            var hitL = hitFila || estado.filas.find(function (x) {
                 return x.filaSheet === filaSheet || (x.inventarioDbId && x.inventarioDbId === filaRef);
             });
             if (!hitL) hitL = buscarFilaInventarioPorSheetOId(filaRef);
@@ -4052,18 +4100,23 @@
                 hitL.stock = stock;
                 if (hitL.celdas) hitL.celdas[colStockL] = String(stock);
             }
-            notificarCambioStockInventario(hitL ? (hitL.filaSheet || filaSheet) : filaSheet, stock);
+            var claveAgot = hitL ? filaSheetInventario(hitL) : (parseInt(filaSheet, 10) || 0);
+            notificarCambioStockInventario(claveAgot || filaSheet, stock);
             sincronizarHistoricoInventario(estado.filas);
             var pend = leerPendienteSync();
-            pend.stockByRow[String(filaSheet)] = stock;
+            var rowKey = hitL ? String(filaSheetInventario(hitL) || filaSheet) : String(filaSheet);
+            pend.stockByRow[rowKey] = stock;
             guardarPendienteSync(pend);
             guardarCacheInventarioLocal();
             return Promise.resolve({ ok: true, stock: stock, soloLocal: true });
         }
+        var legacyRow = hitFila ? (parseInt(hitFila.filaSheet, 10) || 0) : (parseInt(filaSheet, 10) || 0);
+        var dbId = hitFila ? (parseInt(hitFila.inventarioDbId, 10) || 0) : 0;
+        if (!dbId) dbId = filaRef;
         return apiAdminScript('actualizarStock', {
-            filaSheet: filaRef,
+            filaSheet: legacyRow || filaRef,
             stock: stock,
-            inventarioDbId: filaRef
+            inventarioDbId: dbId || undefined
         }, { silent: !!opts.silent }).then(function (res) {
             if (!res || res.ok === false) {
                 throw new Error((res && res.error) || 'No se pudo actualizar stock');
@@ -4079,13 +4132,15 @@
             if (hit) {
                 hit.stock = stock;
                 if (hit.celdas) hit.celdas[colStock] = String(stock);
-                notificarCambioStockInventario(hit.filaSheet || filaSheet, stock);
+                notificarCambioStockInventario(filaSheetInventario(hit) || filaSheet, stock);
             } else {
                 notificarCambioStockInventario(filaSheet, stock);
             }
             sincronizarHistoricoInventario(estado.filas);
             guardarCacheInventarioLocal();
             return { ok: true, stock: stock };
+        }).catch(function (err) {
+            return { ok: false, error: (err && err.message) || String(err) };
         });
     }
 
@@ -5204,6 +5259,10 @@
         idFilaInventario: idFilaInventario,
         idInventarioParaBorrado: idInventarioParaBorrado,
         buscarFilaInventarioPorSheetOId: buscarFilaInventarioPorSheetOId,
+        buscarFilaInventarioPorRef: buscarFilaInventarioPorRef,
+        refApartadaPedidoMayoreoSiHay: refApartadaPedidoMayoreoSiHay,
+        marcarRestockManualRef: marcarRestockManualRef,
+        filaSheetInventario: filaSheetInventario,
         precioVentaRetailFila: precioVentaRetailFila,
         esOfertaSemanalFila: esOfertaSemanalFila,
         errorVentasParaUi: errorVentasParaUi,

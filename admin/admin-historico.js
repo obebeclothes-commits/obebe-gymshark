@@ -3,7 +3,6 @@
 
     var AGOTADOS_SEARCH_DEBOUNCE_MS = 280;
     var AGOTADOS_RENDER_MAX = 200;
-    var AGOTADOS_THUMBS_MAX = 60;
 
     function esc(s) {
         return String(s || '')
@@ -78,16 +77,21 @@
             return filtrarAgotados(baseAgotadas, filtro);
         }
 
-        function filaThumbHtml(r, omitImg) {
-            if (omitImg) {
-                return '<span class="admin-mayoreo-thumb-empty admin-inv-thumb" aria-hidden="true"></span>';
+        function filaThumbHtml(r) {
+            var url = ObebeAdminData.urlImagenFilaInventario(r);
+            if (!url) {
+                return '<span class="admin-mayoreo-thumb-empty admin-inv-thumb"></span>';
             }
-            var img = ObebeAdminData.urlImagenFilaInventario(r);
-            if (img) {
-                return '<img src="' + esc(img) + '" alt="" class="admin-inv-thumb" loading="lazy" ' +
-                    'onerror="typeof adminMayoreoImgFallback===\'function\'&&adminMayoreoImgFallback(this)">';
-            }
-            return '<span class="admin-mayoreo-thumb-empty admin-inv-thumb"></span>';
+            var base = url.split('?')[0];
+            var q = url.indexOf('?') >= 0 ? '?' + url.split('?').slice(1).join('?') : '';
+            var fb1 = base.replace(/\.avif$/i, '.webp') + q;
+            if (fb1 === url) fb1 = base.replace(/\.webp$/i, '.jpeg') + q;
+            var cands = [url, base.replace(/\.(avif|webp)$/i, '.avif') + q, fb1, base.replace(/\.(avif|webp)$/i, '.jpg') + q]
+                .filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+            return '<img src="' + esc(cands[0]) + '" alt="" class="admin-inv-thumb" loading="lazy" decoding="async" ' +
+                'data-candidate-step="0" data-candidates="' + esc(cands.join('|')) + '" ' +
+                'data-fb1="' + esc(fb1) + '" data-fb2="' + esc(base.replace(/\.(avif|webp)$/i, '.jpg') + q) + '" ' +
+                'onerror="typeof adminMayoreoImgFallback===\'function\'&&adminMayoreoImgFallback(this)">';
         }
 
         function pintarTbody() {
@@ -99,11 +103,10 @@
             var listAll = listaFiltrada();
             var trunc = listAll.length > AGOTADOS_RENDER_MAX;
             var list = trunc ? listAll.slice(0, AGOTADOS_RENDER_MAX) : listAll;
-            var omitImg = listAll.length > AGOTADOS_THUMBS_MAX;
             var tbody = list.map(function (r) {
                 var k = filaKey(r);
                 return '<tr class="admin-agotados-row" data-inv-row-key="' + esc(k) + '">' +
-                    '<td class="admin-inv-thumb-cell">' + filaThumbHtml(r, omitImg) + '</td>' +
+                    '<td class="admin-inv-thumb-cell">' + filaThumbHtml(r) + '</td>' +
                     '<td>#' + r.ref + '</td><td>' + esc(r.nombre) + '</td>' +
                     '<td>' + esc(r.talla) + '</td><td>' + esc(r.color) + '</td>' +
                     '<td>' + esc(r.marca) + '</td>' +
@@ -126,11 +129,10 @@
             var listAll = listaFiltrada();
             var trunc = listAll.length > AGOTADOS_RENDER_MAX;
             var list = trunc ? listAll.slice(0, AGOTADOS_RENDER_MAX) : listAll;
-            var omitImg = listAll.length > AGOTADOS_THUMBS_MAX;
             var tbody = list.map(function (r) {
                 var k = filaKey(r);
                 return '<tr class="admin-agotados-row" data-inv-row-key="' + esc(k) + '">' +
-                    '<td class="admin-inv-thumb-cell">' + filaThumbHtml(r, omitImg) + '</td>' +
+                    '<td class="admin-inv-thumb-cell">' + filaThumbHtml(r) + '</td>' +
                     '<td>#' + r.ref + '</td><td>' + esc(r.nombre) + '</td>' +
                     '<td>' + esc(r.talla) + '</td><td>' + esc(r.color) + '</td>' +
                     '<td>' + esc(r.marca) + '</td>' +
@@ -192,9 +194,18 @@
 
         function encontrarFilaPorKey(key) {
             key = String(key || '');
-            return filasVivas().find(function (f) {
-                return filaKey(f) === key;
-            }) || null;
+            var list = filasVivas();
+            var hit = list.find(function (f) { return filaKey(f) === key; });
+            if (hit) return hit;
+            var n = parseInt(key, 10);
+            if (n && ObebeAdminData.buscarFilaInventarioPorSheetOId) {
+                hit = ObebeAdminData.buscarFilaInventarioPorSheetOId(n);
+                if (hit) return hit;
+            }
+            if (ObebeAdminData.buscarFilaInventarioPorRef) {
+                return ObebeAdminData.buscarFilaInventarioPorRef(key);
+            }
+            return null;
         }
 
         if (!container._obebeAgotadosClick) {
@@ -217,9 +228,19 @@
                     return;
                 }
                 var nom = hit.nombre || 'este artículo';
+                var refArt = ObebeAdminData.refDeFilaInventario
+                    ? ObebeAdminData.refDeFilaInventario(hit)
+                    : (hit.ref || 0);
+                var msg =
+                    '¿Seguro que quieres devolver «' + nom + '» al inventario con stock ' + stock + '?';
+                if (refArt && ObebeAdminData.refApartadaPedidoMayoreoSiHay &&
+                    ObebeAdminData.refApartadaPedidoMayoreoSiHay(refArt)) {
+                    msg += ' Este artículo (ref #' + refArt + ') está como «Sí hay» en un pedido mayoreo; ' +
+                        'el stock se conservará en inventario aunque siga apartado para mayoreo.';
+                }
                 ObebeAdminDialog.confirm({
                     title: '¿Regresar a inventario?',
-                    message: '¿Seguro que quieres devolver «' + nom + '» al inventario con stock ' + stock + '?',
+                    message: msg,
                     confirmText: 'Sí, regresar',
                     cancelText: 'Cancelar',
                     variant: 'warn'
@@ -228,8 +249,13 @@
                     var errEl = document.getElementById('adminAgotadosError');
                     if (errEl) errEl.textContent = '';
                     btn.disabled = true;
-                    var idSheet = hit.filaSheet || hit.inventarioDbId;
-                    return ObebeAdminData.actualizarStockFila(idSheet, stock, { fila: hit });
+                    var idSheet = ObebeAdminData.filaSheetInventario
+                        ? ObebeAdminData.filaSheetInventario(hit)
+                        : (hit.filaSheet || hit.inventarioDbId);
+                    return ObebeAdminData.actualizarStockFila(idSheet, stock, {
+                        fila: hit,
+                        restockDesdeAgotados: true
+                    });
                 }).then(function (res) {
                     if (!res) return;
                     if (!res.ok) {
@@ -240,7 +266,7 @@
                     }
                     baseAgotadas = null;
                     if (opts.onStockRestaurado) {
-                        return Promise.resolve(opts.onStockRestaurado(hit.filaSheet, stock)).then(function () {
+                        return Promise.resolve(opts.onStockRestaurado(hit, stock)).then(function () {
                             reconstruirBase();
                             pintarTbody();
                         });

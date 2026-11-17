@@ -115,6 +115,13 @@
         state._visCache = null;
     }
 
+    function sincronizarStateFilasDesdeEstadoGlobal() {
+        var st = ObebeAdminData.getEstado ? ObebeAdminData.getEstado() : null;
+        if (!st || !st.filas || !st.filas.length) return;
+        state.filas = clonarFilas(st.filas);
+        state.filas.forEach(blobBusquedaFila);
+    }
+
     function normInv(s) {
         return String(s || '').trim().toLowerCase();
     }
@@ -268,12 +275,14 @@
         global.ObebeAdminAgotados.mount(el, {
             filas: filtrarFilasInv(filasAgot, '', optsFiltro()),
             onStockRestaurado: function () {
+                sincronizarStateFilasDesdeEstadoGlobal();
                 invalidarCacheFilasVisibles();
                 refreshGrid(rootContainer, onReload);
                 if (global.ObebeAdminAgotados.refrescar) {
                     global.ObebeAdminAgotados.refrescar(el);
                 }
-                if (onReload) onReload();
+                if (onReload) return onReload();
+                return Promise.resolve();
             }
         });
     }
