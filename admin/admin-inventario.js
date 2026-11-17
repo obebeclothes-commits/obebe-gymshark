@@ -25,7 +25,6 @@
 
     var INV_RENDER_MAX = 400;
     var INV_SEARCH_DEBOUNCE_MS = 280;
-    var INV_THUMBS_MAX = 100;
     var INV_AGOTADOS_RENDER_MAX = 200;
     var invSearchTimer = null;
 
@@ -821,7 +820,7 @@
         var edit = state.modoEdicion;
         state._renderCtx = {
             edit: edit,
-            omitThumbs: !edit && visTotal > INV_THUMBS_MAX
+            omitThumbs: false
         };
         if (edit) prepararListasRenderInventario();
     }
