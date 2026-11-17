@@ -315,7 +315,7 @@
         });
     }
 
-    var COLS_INV_OCULTAS_MAYOREO = [10, 13, 15, 16, 17, 18, 20, 21, 22, 23, 24];
+    var COLS_INV_OCULTAS_MAYOREO = [10, 13, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25];
 
     function idLineaVentaMayoreo(ventaId, lineaIdx, subIdx) {
         var s = String(ventaId || '') + ':' + lineaIdx + ':' + (subIdx || 0);

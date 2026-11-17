@@ -1700,7 +1700,7 @@
             return ObebeInventarioColumnas.columnasVistaInventario();
         }
         var out = [];
-        for (var c = 0; c < 25; c++) {
+        for (var c = 0; c < 26; c++) {
             if (c !== 18) out.push(c);
         }
         return out;

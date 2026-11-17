@@ -16,13 +16,30 @@
         msgOk: false,
         soloLectura: false,
         mayoreoInventario: null,
-        columnasOcultas: []
+        columnasOcultas: [],
+        mostrarAuditoriaStock: true
     };
+
+    function colIdxAuditoriaInventario() {
+        if (global.ObebeInventarioColumnas && ObebeInventarioColumnas.COL_AUDITORIA != null) {
+            return ObebeInventarioColumnas.COL_AUDITORIA;
+        }
+        var idx = idxInventarioCols();
+        return idx.auditoria != null ? idx.auditoria : 25;
+    }
+
+    function esColumnaAuditoria(colIdx) {
+        return colIdx === colIdxAuditoriaInventario();
+    }
 
     function columnasVistaGrid() {
         var cols = ObebeAdminData.columnasVistaInventario
             ? ObebeAdminData.columnasVistaInventario()
             : [];
+        if (!state.mostrarAuditoriaStock) {
+            var colAud = colIdxAuditoriaInventario();
+            cols = cols.filter(function (c) { return c !== colAud; });
+        }
         if (state.columnasOcultas && state.columnasOcultas.length) {
             cols = cols.filter(function (c) {
                 return state.columnasOcultas.indexOf(c) < 0;
@@ -397,6 +414,8 @@
             : '<span class="admin-inv-modo">Solo vista</span>';
         if (state.mayoreoInventario && state.modoEdicion) {
             modo += '<span class="admin-inv-modo-hint admin-muted-text">Solo puedes cambiar la columna H (tu precio de venta).</span>';
+        } else if (state.modoEdicion && state.mostrarAuditoriaStock) {
+            modo += '<span class="admin-inv-modo-hint admin-muted-text">Columna Z: anota Sí hay, No hay u otras notas de auditoría.</span>';
         }
 
         var acciones = '';
@@ -605,12 +624,23 @@
             if (colIdx === (idx.marca != null ? idx.marca : 6)) {
                 return renderCeldaSelectInventario(f, colIdx, listaMarcasInventario());
             }
+            if (esColumnaAuditoria(colIdx)) {
+                var audVal = esVacioONa(val) ? '' : val;
+                return '<td class="admin-inv-auditoria-td"><textarea class="admin-inv-cell admin-inv-auditoria" rows="2" ' +
+                    'placeholder="Sí hay / No hay / nota…" data-key="' + esc(keyFila(f)) + '" data-col="' + colIdx + '">' +
+                    esc(audVal) + '</textarea></td>';
+            }
             var inputVal = esVacioONa(val) ? mostrar : val;
             if (esColumnaMayusculas(colIdx)) inputVal = mayusInv(inputVal);
             var tdArt = (state.mayoreoInventario && esColumnaArticulo(colIdx)) ? ' class="admin-inv-col-articulo"' : '';
             return '<td' + tdArt + '><input type="text" class="admin-inv-cell" data-key="' + esc(keyFila(f)) + '" data-col="' + colIdx + '" value="' + esc(inputVal) + '"></td>';
         }
         var tdArtRead = (state.mayoreoInventario && esColumnaArticulo(colIdx)) ? ' class="admin-inv-col-articulo"' : '';
+        if (esColumnaAuditoria(colIdx)) {
+            var notaAud = esVacioONa(mostrar) ? '—' : mostrar;
+            return '<td class="admin-inv-auditoria-td"><span class="admin-inv-readonly admin-inv-auditoria-read" title="' +
+                esc(notaAud) + '">' + esc(notaAud) + '</span></td>';
+        }
         return '<td' + tdArtRead + '><span class="admin-inv-readonly">' + esc(mostrar) + '</span></td>';
     }
 
@@ -632,11 +662,14 @@
         for (i = 0; i < colsVista.length; i++) {
             var c = colsVista[i];
             var thArt = (state.mayoreoInventario && esColumnaArticulo(c)) ? ' admin-inv-col-articulo' : '';
-            thLetters += '<th class="admin-inv-th-letter' + thArt + '" title="Columna ' + esc(ObebeAdminData.colLetter(c)) + '">' +
+            var thAudL = esColumnaAuditoria(c) ? ' admin-inv-col-auditoria' : '';
+            thLetters += '<th class="admin-inv-th-letter' + thArt + thAudL + '" title="Columna ' + esc(ObebeAdminData.colLetter(c)) + '">' +
                 esc(ObebeAdminData.colLetter(c)) + '</th>';
             var titulo = (enc[c] || '').trim();
             if (/^(no\.?\s*)?imagen|^ref$|^#$/i.test(titulo) || titulo.toLowerCase() === 'no imagen') titulo = 'Ref';
-            thSheet += '<th class="admin-inv-th-title' + thArt + '" title="' + esc(titulo) + '">' + esc(titulo) + '</th>';
+            if (esColumnaAuditoria(c) && !titulo) titulo = 'Comentario auditoría';
+            var thAud = esColumnaAuditoria(c) ? ' admin-inv-col-auditoria' : '';
+            thSheet += '<th class="admin-inv-th-title' + thArt + thAud + '" title="' + esc(titulo) + '">' + esc(titulo) + '</th>';
         }
         var selHead = pick ? '<th class="admin-inv-sel admin-inv-sticky-corner">✓</th>' : '';
         var headLetters = '<tr class="admin-inv-head-letters">' + selHead +
@@ -1079,6 +1112,7 @@
         state.soloLectura = !!opts.soloLectura;
         state.mayoreoInventario = opts.mayoreoInventario || null;
         state.columnasOcultas = (opts.columnasOcultas || []).slice();
+        state.mostrarAuditoriaStock = opts.mostrarAuditoriaStock !== false && !state.mayoreoInventario;
         state.filas = clonarFilas(filas);
         state.encabezadosFila2 = ObebeAdminData.combinarEncabezadosInventario
             ? ObebeAdminData.combinarEncabezadosInventario(encabezadosFila2 || [])

@@ -1,12 +1,13 @@
 /**
- * Inventario INVENTARIO (Supabase / admin): columnas A–Y por título de encabezado,
+ * Inventario INVENTARIO (Supabase / admin): columnas A–Z (auditoría en Z) por título de encabezado,
  * no por letra fija — si mueves columnas, basta con mantener el texto del título.
  */
 (function (global) {
     'use strict';
 
     var COL_FALTANTE = 18; // S · no se muestra en admin
-    var COL_VISTA_MAX = 25; // A–Y (índice 0..24)
+    var COL_AUDITORIA = 25; // Z · comentario auditoría stock (OBEBE)
+    var COL_VISTA_MAX = 26; // A–Z (índice 0..25)
 
     var TITULOS_DEFAULT = [
         'NO. IMAGEN',
@@ -33,7 +34,8 @@
         'MAYOREO +50',
         '%MAYOREO +50',
         'COLECCION',
-        'OFERTA SEMANAL'
+        'OFERTA SEMANAL',
+        'COMENTARIO AUDITORIA'
     ];
 
     var DEFAULT_IDX = {
@@ -62,6 +64,7 @@
         pctMayoreo50: 22,
         coleccion: 23,
         ofertaSemanal: 24,
+        auditoria: COL_AUDITORIA,
         ubicacion: 27
     };
 
@@ -135,6 +138,7 @@
             else if (/%.*mayoreo.*50|mayoreo.*50.*%/.test(t)) idx.pctMayoreo50 = c;
             else if (/coleccion|colecci\u00f3n/.test(t)) idx.coleccion = c;
             else if (/oferta\s*semanal/.test(t)) idx.ofertaSemanal = c;
+            else if (/auditoria|comentario\s*auditoria|revisi[oó]n\s*stock/.test(t)) idx.auditoria = c;
             else if (/ubicacion|ubicaci\u00f3n/.test(t)) idx.ubicacion = c;
         }
         return idx;
@@ -149,6 +153,7 @@
     global.ObebeInventarioColumnas = {
         TITULOS_DEFAULT: TITULOS_DEFAULT,
         COL_FALTANTE: COL_FALTANTE,
+        COL_AUDITORIA: COL_AUDITORIA,
         COL_VISTA_MAX: COL_VISTA_MAX,
         titulosDefault: titulosDefault,
         combinarEncabezados: combinarEncabezados,
