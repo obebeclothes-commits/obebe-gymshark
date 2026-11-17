@@ -17,7 +17,8 @@
         soloLectura: false,
         mayoreoInventario: null,
         columnasOcultas: [],
-        mostrarAuditoriaStock: true
+        mostrarAuditoriaStock: true,
+        ordenAuditoria: null
     };
 
     function colIdxAuditoriaInventario() {
@@ -101,11 +102,90 @@
         return filas;
     }
 
+    function valorAuditoriaFila(f) {
+        var col = colIdxAuditoriaInventario();
+        if (!f || !f.celdas) return '';
+        return String(f.celdas[col] == null ? '' : f.celdas[col]).trim();
+    }
+
+    function compararFilasAuditoria(a, b, dir) {
+        var va = valorAuditoriaFila(a);
+        var vb = valorAuditoriaFila(b);
+        var ea = !va;
+        var eb = !vb;
+        if (ea && eb) return 0;
+        if (ea) return 1;
+        if (eb) return -1;
+        var cmp = va.localeCompare(vb, 'es', { sensitivity: 'base' });
+        return dir === 'desc' ? -cmp : cmp;
+    }
+
+    function ordenarFilasPorAuditoria(lista) {
+        if (!state.ordenAuditoria) return lista;
+        return lista.slice().sort(function (a, b) {
+            return compararFilasAuditoria(a, b, state.ordenAuditoria);
+        });
+    }
+
     function filasVisibles() {
         var base = filasInventarioBase();
         var activas = ObebeAdminData.filtrarFilas(base, state.filtro, optsFiltro({ soloStock: true }));
         var nuevas = ObebeAdminData.filtrarFilas(state.nuevasFilas, state.filtro, optsFiltro({}));
-        return activas.concat(nuevas);
+        return ordenarFilasPorAuditoria(activas.concat(nuevas));
+    }
+
+    function etiquetaOrdenAuditoria() {
+        if (state.ordenAuditoria === 'desc') return ' ▼';
+        if (state.ordenAuditoria === 'asc') return ' ▲';
+        return '';
+    }
+
+    function vaciarCeldasAuditoriaEnEstado() {
+        var col = colIdxAuditoriaInventario();
+        var cambios = 0;
+        function vaciar(f) {
+            if (!f) return;
+            if (!f.celdas) f.celdas = [];
+            var antes = String(f.celdas[col] == null ? '' : f.celdas[col]).trim();
+            if (!antes) return;
+            f.celdas[col] = '';
+            f._dirty = f._dirty || {};
+            f._dirty[col] = true;
+            cambios++;
+        }
+        state.filas.forEach(vaciar);
+        state.nuevasFilas.forEach(vaciar);
+        return cambios;
+    }
+
+    var KEY_VACIADO_AUDITORIA_INICIO = 'obebe_auditoria_z_inicio_20261117';
+
+    function ofrecerVaciadoInicialAuditoria(onReload, container) {
+        if (!state.mostrarAuditoriaStock || state.mayoreoInventario || state.soloLectura) return;
+        try {
+            if (localStorage.getItem(KEY_VACIADO_AUDITORIA_INICIO)) return;
+        } catch (e) { return; }
+        var col = colIdxAuditoriaInventario();
+        var tieneTexto = (state.filas || []).some(function (f) {
+            return String(f.celdas && f.celdas[col] || '').trim();
+        });
+        if (!tieneTexto) {
+            try { localStorage.setItem(KEY_VACIADO_AUDITORIA_INICIO, '1'); } catch (e2) { /* ignore */ }
+            return;
+        }
+        ObebeAdminDialog.confirm({
+            title: '¿Empezar auditoría en blanco?',
+            message: 'Vaciaremos la columna Z en inventario y guardaremos en Supabase para que empieces desde cero.',
+            confirmText: 'Vaciar y guardar',
+            cancelText: 'Conservar textos',
+            variant: 'warn'
+        }).then(function (ok) {
+            try { localStorage.setItem(KEY_VACIADO_AUDITORIA_INICIO, '1'); } catch (e3) { /* ignore */ }
+            if (!ok) return;
+            var n = vaciarCeldasAuditoriaEnEstado();
+            if (!n) return;
+            guardar(onReload, container);
+        });
     }
 
     function mountSeccionAgotados(rootContainer, onReload) {
@@ -415,7 +495,9 @@
         if (state.mayoreoInventario && state.modoEdicion) {
             modo += '<span class="admin-inv-modo-hint admin-muted-text">Solo puedes cambiar la columna H (tu precio de venta).</span>';
         } else if (state.modoEdicion && state.mostrarAuditoriaStock) {
-            modo += '<span class="admin-inv-modo-hint admin-muted-text">Columna Z: anota Sí hay, No hay u otras notas de auditoría.</span>';
+            modo += '<span class="admin-inv-modo-hint admin-muted-text">Columna Z: notas de auditoría. Clic en encabezado Z para ordenar (vacíos al final).</span>';
+        } else if (state.mostrarAuditoriaStock && !state.mayoreoInventario) {
+            modo += '<span class="admin-inv-modo-hint admin-muted-text">Clic en columna Z para ordenar (▼ Z→A, vacíos al final).</span>';
         }
 
         var acciones = '';
@@ -627,7 +709,7 @@
             if (esColumnaAuditoria(colIdx)) {
                 var audVal = esVacioONa(val) ? '' : val;
                 return '<td class="admin-inv-auditoria-td"><textarea class="admin-inv-cell admin-inv-auditoria" rows="2" ' +
-                    'placeholder="Sí hay / No hay / nota…" data-key="' + esc(keyFila(f)) + '" data-col="' + colIdx + '">' +
+                    'data-key="' + esc(keyFila(f)) + '" data-col="' + colIdx + '">' +
                     esc(audVal) + '</textarea></td>';
             }
             var inputVal = esVacioONa(val) ? mostrar : val;
@@ -663,13 +745,22 @@
             var c = colsVista[i];
             var thArt = (state.mayoreoInventario && esColumnaArticulo(c)) ? ' admin-inv-col-articulo' : '';
             var thAudL = esColumnaAuditoria(c) ? ' admin-inv-col-auditoria' : '';
-            thLetters += '<th class="admin-inv-th-letter' + thArt + thAudL + '" title="Columna ' + esc(ObebeAdminData.colLetter(c)) + '">' +
-                esc(ObebeAdminData.colLetter(c)) + '</th>';
+            var sortAudL = esColumnaAuditoria(c) ? ' admin-inv-th-sortable' : '';
+            var sortLblL = esColumnaAuditoria(c) ? etiquetaOrdenAuditoria() : '';
+            var sortTitL = esColumnaAuditoria(c)
+                ? 'Ordenar columna Z (vacíos al final). Clic: Z→A, A→Z, sin orden.'
+                : ('Columna ' + ObebeAdminData.colLetter(c));
+            thLetters += '<th class="admin-inv-th-letter' + thArt + thAudL + sortAudL + '"' +
+                (esColumnaAuditoria(c) ? ' data-inv-sort-aud="1" role="button" tabindex="0"' : '') +
+                ' title="' + esc(sortTitL) + '">' +
+                esc(ObebeAdminData.colLetter(c)) + esc(sortLblL) + '</th>';
             var titulo = (enc[c] || '').trim();
             if (/^(no\.?\s*)?imagen|^ref$|^#$/i.test(titulo) || titulo.toLowerCase() === 'no imagen') titulo = 'Ref';
             if (esColumnaAuditoria(c) && !titulo) titulo = 'Comentario auditoría';
             var thAud = esColumnaAuditoria(c) ? ' admin-inv-col-auditoria' : '';
-            thSheet += '<th class="admin-inv-th-title' + thArt + thAud + '" title="' + esc(titulo) + '">' + esc(titulo) + '</th>';
+            thSheet += '<th class="admin-inv-th-title' + thArt + thAud + sortAudL + '"' +
+                (esColumnaAuditoria(c) ? ' data-inv-sort-aud="1" role="button" tabindex="0"' : '') +
+                ' title="' + esc(sortTitL) + '">' + esc(titulo) + esc(sortLblL) + '</th>';
         }
         var selHead = pick ? '<th class="admin-inv-sel admin-inv-sticky-corner">✓</th>' : '';
         var headLetters = '<tr class="admin-inv-head-letters">' + selHead +
@@ -723,7 +814,24 @@
         if (!state.soloLectura) mountSeccionAgotados(container, onReload);
     }
 
+    function ciclarOrdenAuditoria() {
+        if (!state.ordenAuditoria) state.ordenAuditoria = 'desc';
+        else if (state.ordenAuditoria === 'desc') state.ordenAuditoria = 'asc';
+        else state.ordenAuditoria = null;
+    }
+
     function bindGridEvents(container, onReload) {
+        container.querySelectorAll('[data-inv-sort-aud]').forEach(function (th) {
+            function activar(ev) {
+                if (ev) ev.preventDefault();
+                ciclarOrdenAuditoria();
+                refreshGrid(container, onReload);
+            }
+            th.addEventListener('click', activar);
+            th.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Enter' || ev.key === ' ') activar(ev);
+            });
+        });
         if (state.modoEdicion) {
             container.querySelectorAll('.admin-inv-cell').forEach(function (input) {
                 function volcar(inputEl) {
@@ -1150,6 +1258,9 @@
             '<div id="adminInvAgotadosMount" class="admin-inv-agotados-wrap"></div>';
         bindEvents(container, onReload);
         if (!state.soloLectura) mountSeccionAgotados(container, onReload);
+        setTimeout(function () {
+            ofrecerVaciadoInicialAuditoria(onReload, container);
+        }, 300);
     }
 
     global.ObebeAdminInventario = { mount: mount };

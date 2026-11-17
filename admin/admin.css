@@ -1683,6 +1683,16 @@ html[data-admin-theme="light"] .admin-banner.info {
     text-overflow: ellipsis;
 }
 
+.admin-inv-grid .admin-inv-th-sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.admin-inv-grid .admin-inv-th-sortable:hover {
+    background: rgba(120, 160, 255, 0.12);
+    color: var(--admin-accent);
+}
+
 .admin-inv-grid th.admin-inv-sel,
 .admin-inv-grid td.admin-inv-sel {
     position: sticky;
