@@ -903,7 +903,7 @@
         });
     }
 
-    var VERSION_IMAGENES_ADMIN = '20261021b';
+    var VERSION_IMAGENES_ADMIN = '20261118f';
 
     var MARCAS_CANON = {
         'GYMSHARK': 'Gym Shark',
