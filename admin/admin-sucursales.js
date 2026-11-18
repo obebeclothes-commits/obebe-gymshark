@@ -714,35 +714,23 @@
                 if (nueva <= 0) refrescarTodo();
                 else pintar(root);
             }
-            if (nueva > 0 || !line.stockDescontado) {
+            if (nueva > 0) {
                 cerrar();
                 return;
             }
-            var f = filaDeLinea(line);
-            var cant = line.cantidad || 0;
-            if (!f || !cant || !ObebeAdminData.actualizarStockFila) {
+            if (!ObebeAdminData.devolverStockAlQuitarLineaSucursal) {
                 cerrar();
                 return;
             }
-            var devolver = line.cantidad || cant;
-            var idSheet = ObebeAdminData.filaSheetInventario
-                ? ObebeAdminData.filaSheetInventario(f)
-                : (f.filaSheet || f.inventarioDbId);
-            var stockNuevo = stockActualFila(f) + devolver;
-            ObebeAdminData.actualizarStockFila(idSheet, stockNuevo, { fila: f }).then(function (res) {
+            ObebeAdminData.devolverStockAlQuitarLineaSucursal(line).then(function (res) {
                 if (!res || res.ok === false) {
                     ObebeAdminDialog.alert({
-                        title: 'No se pudo',
-                        message: (res && res.error) || 'No se devolvió el stock al inventario.',
+                        title: 'No se pudo quitar',
+                        message: (res && res.error) ||
+                            'No se devolvió el stock. El artículo sigue en la sucursal.',
                         confirmText: 'Ok'
                     });
                     return;
-                }
-                f.stock = stockNuevo;
-                if (f.celdas && ObebeAdminData.idxInventario) {
-                    var idx = ObebeAdminData.idxInventario();
-                    var col = idx.stock != null ? idx.stock : 2;
-                    f.celdas[col] = String(stockNuevo);
                 }
                 cerrar();
             }).catch(function (e) {

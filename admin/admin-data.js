@@ -4581,9 +4581,69 @@
         return SUCURSALES_INVENTARIO.find(function (s) { return s.id === sucursalId; }) || null;
     }
 
+    function resolverFilaLineaSucursal(line) {
+        if (!line) return null;
+        var db = parseInt(line.inventarioDbId, 10);
+        var sheet = parseInt(line.filaSheet, 10);
+        if (db) {
+            var hd = buscarFilaInventarioPorSheetOId(db);
+            if (hd) return hd;
+        }
+        if (sheet) {
+            var hs = buscarFilaInventarioPorSheetOId(sheet);
+            if (hs) return hs;
+        }
+        var ref = parseInt(line.ref, 10);
+        if (ref) {
+            var hr = buscarFilaInventarioPorRef(ref);
+            if (hr) return hr;
+        }
+        return buscarFilaInventarioPorVenta(line.nombre, line.talla, line.color);
+    }
+
+    function stockMostradoFila(f) {
+        if (!f) return 0;
+        if (f.celdas && f.celdas.length) {
+            var idx = idxInventario();
+            var col = idx.stock != null ? idx.stock : IDX.stock;
+            var n = parseInt(f.celdas[col], 10);
+            if (!isNaN(n)) return n;
+        }
+        return parseInt(f.stock, 10) || 0;
+    }
+
+    function devolverStockAlQuitarLineaSucursal(line) {
+        if (!line) return Promise.resolve({ ok: false, error: 'Línea no válida.' });
+        var cant = parseInt(line.cantidad, 10) || 0;
+        if (cant <= 0) return Promise.resolve({ ok: true, sinStock: true });
+        if (line.stockDescontado === false) {
+            return Promise.resolve({ ok: true, sinStock: true });
+        }
+        var f = resolverFilaLineaSucursal(line);
+        if (!f) {
+            return Promise.resolve({
+                ok: false,
+                error: 'No encontré «' + (line.nombre || 'artículo') + '» en inventario para devolver ' +
+                    cant + ' pza(s).'
+            });
+        }
+        var stockNuevo = stockMostradoFila(f) + cant;
+        var idSheet = filaSheetInventario(f);
+        return actualizarStockFila(idSheet, stockNuevo, { fila: f }).then(function (res) {
+            if (!res || res.ok === false) {
+                return { ok: false, error: (res && res.error) || 'No se pudo actualizar inventario.' };
+            }
+            f.stock = stockNuevo;
+            var idx = idxInventario();
+            var col = idx.stock != null ? idx.stock : IDX.stock;
+            if (f.celdas) f.celdas[col] = String(stockNuevo);
+            return { ok: true, stock: stockNuevo, fila: f };
+        });
+    }
+
     function filaDesdeLineaSucursal(line) {
         if (!line) return null;
-        var f = (estado.filas || []).find(function (x) { return x.filaSheet === line.filaSheet; });
+        var f = resolverFilaLineaSucursal(line);
         if (f) return f;
         return {
             filaSheet: line.filaSheet,
@@ -5335,6 +5395,8 @@
         definicionSucursalInventario: definicionSucursalInventario,
         trasladarInventarioASucursal: trasladarInventarioASucursal,
         trasladarLoteInventarioASucursal: trasladarLoteInventarioASucursal,
+        devolverStockAlQuitarLineaSucursal: devolverStockAlQuitarLineaSucursal,
+        resolverFilaLineaSucursal: resolverFilaLineaSucursal,
         registrarVentasDesdeSucursal: registrarVentasDesdeSucursal,
         apiAdminScript: apiAdminScript,
         appsScriptConfigurado: appsScriptConfigurado,

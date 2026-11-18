@@ -1,10 +1,9 @@
 @echo off
 cd /d "%~dp0"
-echo === PUBLICAR MARKETPLACE EN 4 VENTANAS ===
+echo === PUBLICAR MARKETPLACE — 4 ventanas (paralelo actual) ===
 echo.
-echo 1) Se abre UN Chrome: inicia sesion UNA vez.
-echo 2) Luego se abren 4 ventanas y cada una sube articulos distintos.
-echo 3) No cierres esas ventanas mientras publica.
+echo Script: scripts\publicar-marketplace-paralelo.py
+echo - 1 Chrome, articulos distintos por ventana, login solo en la 1ra
 echo.
 python -u scripts\publicar-marketplace-paralelo.py --ventanas 4
 echo.
