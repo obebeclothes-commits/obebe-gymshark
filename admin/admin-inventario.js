@@ -217,54 +217,6 @@
         return '';
     }
 
-    function vaciarCeldasAuditoriaEnEstado() {
-        var col = colIdxAuditoriaInventario();
-        var cambios = 0;
-        function vaciar(f) {
-            if (!f) return;
-            if (!f.celdas) f.celdas = [];
-            var antes = String(f.celdas[col] == null ? '' : f.celdas[col]).trim();
-            if (!antes) return;
-            f.celdas[col] = '';
-            f._dirty = f._dirty || {};
-            f._dirty[col] = true;
-            cambios++;
-        }
-        state.filas.forEach(vaciar);
-        state.nuevasFilas.forEach(vaciar);
-        return cambios;
-    }
-
-    var KEY_VACIADO_AUDITORIA_INICIO = 'obebe_auditoria_z_inicio_20261117';
-
-    function ofrecerVaciadoInicialAuditoria(onReload, container) {
-        if (!state.mostrarAuditoriaStock || state.mayoreoInventario || state.soloLectura) return;
-        try {
-            if (localStorage.getItem(KEY_VACIADO_AUDITORIA_INICIO)) return;
-        } catch (e) { return; }
-        var col = colIdxAuditoriaInventario();
-        var tieneTexto = (state.filas || []).some(function (f) {
-            return String(f.celdas && f.celdas[col] || '').trim();
-        });
-        if (!tieneTexto) {
-            try { localStorage.setItem(KEY_VACIADO_AUDITORIA_INICIO, '1'); } catch (e2) { /* ignore */ }
-            return;
-        }
-        ObebeAdminDialog.confirm({
-            title: '¿Empezar auditoría en blanco?',
-            message: 'Vaciaremos la columna Z en inventario y guardaremos en Supabase para que empieces desde cero.',
-            confirmText: 'Vaciar y guardar',
-            cancelText: 'Conservar textos',
-            variant: 'warn'
-        }).then(function (ok) {
-            try { localStorage.setItem(KEY_VACIADO_AUDITORIA_INICIO, '1'); } catch (e3) { /* ignore */ }
-            if (!ok) return;
-            var n = vaciarCeldasAuditoriaEnEstado();
-            if (!n) return;
-            guardar(onReload, container);
-        });
-    }
-
     function mountSeccionAgotados(rootContainer, onReload) {
         var el = rootContainer.querySelector('#adminInvAgotadosMount');
         if (!el || !global.ObebeAdminAgotados) return;
@@ -1437,9 +1389,6 @@
             '<div id="adminInvAgotadosMount" class="admin-inv-agotados-wrap"></div>';
         bindEvents(container, onReload);
         if (!state.soloLectura) mountSeccionAgotados(container, onReload);
-        setTimeout(function () {
-            ofrecerVaciadoInicialAuditoria(onReload, container);
-        }, 300);
     }
 
     global.ObebeAdminInventario = { mount: mount };

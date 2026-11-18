@@ -161,8 +161,13 @@
         var idx = todos.findIndex(function (e) { return e.id === id; });
         if (idx < 0) return { ok: false, error: 'Línea no encontrada.' };
         if (qty <= 0) {
+            var removedId = todos[idx].id;
             todos.splice(idx, 1);
             guardar(todos);
+            if (removedId && global.ObebeAdminModulosCloud &&
+                ObebeAdminModulosCloud.marcarSucursalLineaBorrada) {
+                ObebeAdminModulosCloud.marcarSucursalLineaBorrada(removedId);
+            }
             return { ok: true, linea: null };
         }
         todos[idx].cantidad = qty;
@@ -221,8 +226,15 @@
         }
         line.cantidad -= qty;
         line.actualizadoEn = Date.now();
-        if (line.cantidad <= 0) todos.splice(idx, 1);
-        else todos[idx] = line;
+        if (line.cantidad <= 0) {
+            if (line.id && global.ObebeAdminModulosCloud &&
+                ObebeAdminModulosCloud.marcarSucursalLineaBorrada) {
+                ObebeAdminModulosCloud.marcarSucursalLineaBorrada(line.id);
+            }
+            todos.splice(idx, 1);
+        } else {
+            todos[idx] = line;
+        }
         guardar(todos);
         return { ok: true, linea: line.cantidad > 0 ? line : null, vendidas: qty };
     }

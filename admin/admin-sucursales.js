@@ -613,16 +613,30 @@
         });
 
         function filaDeLinea(line) {
+            if (!line) return null;
+            if (ObebeAdminData.buscarFilaInventarioPorSheetOId) {
+                var db = parseInt(line.inventarioDbId, 10);
+                var sheet = parseInt(line.filaSheet, 10);
+                var hit = (db && ObebeAdminData.buscarFilaInventarioPorSheetOId(db)) ||
+                    (sheet && ObebeAdminData.buscarFilaInventarioPorSheetOId(sheet));
+                if (hit) return hit;
+            }
+            if (line.ref && ObebeAdminData.buscarFilaInventarioPorRef) {
+                var porRef = ObebeAdminData.buscarFilaInventarioPorRef(line.ref);
+                if (porRef) return porRef;
+            }
             var filas = getFilas();
-            var db = line && line.inventarioDbId;
-            var sheet = parseInt(line && line.filaSheet, 10);
             var i;
             for (i = 0; i < filas.length; i++) {
                 var f = filas[i];
-                if (db && f.inventarioDbId === db) return f;
-                if (sheet && (f.filaSheet === sheet || f.inventarioDbId === sheet)) return f;
+                if (line.inventarioDbId && f.inventarioDbId === line.inventarioDbId) return f;
+                if (line.filaSheet && (f.filaSheet === line.filaSheet || f.inventarioDbId === line.filaSheet)) {
+                    return f;
+                }
             }
-            return null;
+            return ObebeSucursalesStore.filaParaLinea
+                ? ObebeSucursalesStore.filaParaLinea(line, filas)
+                : null;
         }
 
         function stockActualFila(f) {
@@ -662,7 +676,10 @@
                     }
                     var actual = stockActualFila(g.fila);
                     var nuevo = Math.max(0, actual - g.total);
-                    return ObebeAdminData.actualizarStockFila(g.fila.filaSheet, nuevo, { fila: g.fila }).then(function (res) {
+                    var idSheet = ObebeAdminData.filaSheetInventario
+                        ? ObebeAdminData.filaSheetInventario(g.fila)
+                        : (g.fila.filaSheet || g.fila.inventarioDbId);
+                    return ObebeAdminData.actualizarStockFila(idSheet, nuevo, { fila: g.fila }).then(function (res) {
                         if (!res || res.ok === false) {
                             fallos.push(g.fila.nombre || 'Artículo');
                             return;
@@ -707,7 +724,12 @@
                 cerrar();
                 return;
             }
-            ObebeAdminData.actualizarStockFila(f.filaSheet, (f.stock || 0) + cant, { fila: f }).then(function (res) {
+            var devolver = line.cantidad || cant;
+            var idSheet = ObebeAdminData.filaSheetInventario
+                ? ObebeAdminData.filaSheetInventario(f)
+                : (f.filaSheet || f.inventarioDbId);
+            var stockNuevo = stockActualFila(f) + devolver;
+            ObebeAdminData.actualizarStockFila(idSheet, stockNuevo, { fila: f }).then(function (res) {
                 if (!res || res.ok === false) {
                     ObebeAdminDialog.alert({
                         title: 'No se pudo',
@@ -716,7 +738,12 @@
                     });
                     return;
                 }
-                f.stock = (f.stock || 0) + cant;
+                f.stock = stockNuevo;
+                if (f.celdas && ObebeAdminData.idxInventario) {
+                    var idx = ObebeAdminData.idxInventario();
+                    var col = idx.stock != null ? idx.stock : 2;
+                    f.celdas[col] = String(stockNuevo);
+                }
                 cerrar();
             }).catch(function (e) {
                 ObebeAdminDialog.alert({

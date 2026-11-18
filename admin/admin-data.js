@@ -4601,7 +4601,15 @@
 
     function filaInventarioPrincipal(filaSheet, filaSnapshot) {
         filaSheet = parseInt(filaSheet, 10);
-        var f = (estado.filas || []).find(function (x) { return x.filaSheet === filaSheet; });
+        if (filaSnapshot && (filaSnapshot.inventarioDbId || filaSnapshot.filaSheet)) {
+            var h0 = buscarFilaInventarioPorSheetOId(filaSnapshot.inventarioDbId || filaSnapshot.filaSheet);
+            if (h0) return h0;
+        }
+        var f = buscarFilaInventarioPorSheetOId(filaSheet);
+        if (f) return f;
+        f = (estado.filas || []).find(function (x) {
+            return x.filaSheet === filaSheet || x.inventarioDbId === filaSheet;
+        });
         if (f) return f;
         if (filaSnapshot && parseInt(filaSnapshot.filaSheet, 10) === filaSheet) return filaSnapshot;
         return null;
@@ -4620,23 +4628,29 @@
         }
         var f = filaInventarioPrincipal(filaSheet, filaSnapshot);
         if (!f) return Promise.resolve({ ok: false, error: 'Artículo no encontrado en inventario principal.' });
-        var live = (estado.filas || []).find(function (x) { return x.filaSheet === filaSheet; });
-        var disp = Math.max(0, live ? (live.stock || 0) : (f.stock || 0));
+        var live = buscarFilaInventarioPorSheetOId(f.inventarioDbId || f.filaSheet || filaSheet) || f;
+        var disp = ObebeSucursalesStore.stockDisponibleInventarioPrincipal
+            ? ObebeSucursalesStore.stockDisponibleInventarioPrincipal(live)
+            : Math.max(0, live.stock || f.stock || 0);
         if (cantidad > disp) {
             return Promise.resolve({
                 ok: false,
                 error: 'Stock insuficiente en inventario principal (disponible: ' + disp + ').'
             });
         }
-        var nuevoStock = disp - cantidad;
+        var stockActual = Math.max(0, parseInt(live.stock, 10) || parseInt(f.stock, 10) || 0);
+        var nuevoStock = stockActual - cantidad;
+        var idSheet = filaSheetInventario(f);
         var precioU = precioVentaRetailFila(f);
-        return actualizarStockFila(filaSheet, nuevoStock, { fila: f }).then(function (res) {
+        return actualizarStockFila(idSheet, nuevoStock, { fila: live }).then(function (res) {
             if (!res || res.ok === false) {
                 return { ok: false, error: (res && res.error) || 'No se pudo actualizar el inventario principal.' };
             }
             if (live) {
                 live.stock = nuevoStock;
-                if (live.celdas && IDX.stock != null) live.celdas[IDX.stock] = String(nuevoStock);
+                var idxInv = idxInventario();
+                var colStock = idxInv.stock != null ? idxInv.stock : IDX.stock;
+                if (live.celdas) live.celdas[colStock] = String(nuevoStock);
             } else if (f && f !== live) {
                 f.stock = nuevoStock;
             }

@@ -13,6 +13,7 @@
     var COMPRAS_BLOB_ID = 'obebe-compras-blob';
     var ENTREGAS_DELETED_BLOB_ID = 'obebe-entregas-deleted-blob';
     var KEY_ENTREGAS_DELETED = 'obebe_entregas_deleted_v1';
+    var KEY_SUCURSALES_DELETED = 'obebe_sucursales_deleted_v1';
 
     var pushTimers = {};
     var borradasPendientes = {};
@@ -125,15 +126,68 @@
         });
     }
 
+    function leerBorradasSucursalesLocal() {
+        try {
+            var raw = localStorage.getItem(KEY_SUCURSALES_DELETED);
+            if (!raw) return {};
+            var o = JSON.parse(raw);
+            return o && typeof o === 'object' ? o : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function guardarBorradasSucursalesLocal(map) {
+        try {
+            localStorage.setItem(KEY_SUCURSALES_DELETED, JSON.stringify(map || {}));
+        } catch (e) { /* ignore */ }
+    }
+
+    function fusionarBorradasSucursales() {
+        var out = Object.assign({}, leerBorradasSucursalesLocal());
+        var args = Array.prototype.slice.call(arguments);
+        args.forEach(function (mapa) {
+            if (!mapa || typeof mapa !== 'object') return;
+            Object.keys(mapa).forEach(function (id) {
+                var ts = Number(mapa[id]) || 0;
+                if (!out[id] || ts >= out[id]) out[id] = ts;
+            });
+        });
+        return out;
+    }
+
+    function filtrarSucursalesBorradas(lineas, borradas) {
+        borradas = borradas || {};
+        return (lineas || []).filter(function (l) {
+            if (!l || !l.id) return false;
+            var delAt = Number(borradas[l.id]) || 0;
+            if (!delAt) return true;
+            return tsRegistro(l) > delAt;
+        });
+    }
+
+    function lineasSucursalesDesdeLocal() {
+        return filtrarSucursalesBorradas(leerLocal(KEYS.sucursales), fusionarBorradasSucursales());
+    }
+
     function partirEntregas(arr) {
         var entregas = [];
         var lineas = [];
         var compras = [];
         var borradas = {};
+        var sucursalesBorradas = {};
         var comprasActualizadoEn = 0;
         (arr || []).forEach(function (item) {
             if (esBlobSucursales(item)) {
                 if (Array.isArray(item.lineas)) lineas = lineas.concat(item.lineas);
+                if (item.deleted && typeof item.deleted === 'object') {
+                    Object.keys(item.deleted).forEach(function (id) {
+                        var t = Number(item.deleted[id]) || 0;
+                        if (!sucursalesBorradas[id] || t >= sucursalesBorradas[id]) {
+                            sucursalesBorradas[id] = t;
+                        }
+                    });
+                }
             } else if (esBlobCompras(item)) {
                 if (Array.isArray(item.lineas)) compras = compras.concat(item.lineas);
                 var ts = Number(item.actualizadoEn) || 0;
@@ -154,16 +208,19 @@
             lineas: lineas,
             compras: compras,
             borradas: borradas,
+            sucursalesBorradas: sucursalesBorradas,
             comprasActualizadoEn: comprasActualizadoEn
         };
     }
 
-    function payloadEntregas(entregas, lineas, compras, borradas) {
+    function payloadEntregas(entregas, lineas, compras, borradas, sucursalesBorradas) {
         var out = (entregas || []).filter(function (item) { return item && !esBlobMarcador(item); });
+        sucursalesBorradas = fusionarBorradasSucursales(sucursalesBorradas, leerBorradasSucursalesLocal());
         out.push({
             id: SUCURSALES_BLOB_ID,
             _modulo: 'sucursales',
             lineas: lineas || [],
+            deleted: sucursalesBorradas,
             actualizadoEn: Date.now()
         });
         out.push({
@@ -189,10 +246,10 @@
             });
     }
 
-    function guardarEntregasCloud(entregas, lineas, compras, borradas) {
+    function guardarEntregasCloud(entregas, lineas, compras, borradas, sucursalesBorradas) {
         return ObebeAdminBackend.callAdminApi('setAdminModuloBlob', {
             moduleKey: 'entregas',
-            payload: payloadEntregas(entregas, lineas, compras, borradas)
+            payload: payloadEntregas(entregas, lineas, compras, borradas, sucursalesBorradas)
         }).then(asegurarOk);
     }
 
@@ -269,13 +326,18 @@
                 fusionarPorId(localEntregas, cloud.entregas),
                 borradas
             );
-            var lineas = fusionarPorId(leerLocal(KEYS.sucursales), cloud.lineas);
+            var sucBorradas = fusionarBorradasSucursales(cloud.sucursalesBorradas, leerBorradasSucursalesLocal());
+            var lineas = filtrarSucursalesBorradas(
+                fusionarPorId(leerLocal(KEYS.sucursales), cloud.lineas),
+                sucBorradas
+            );
             var compras = comprasMasRecientes(cloud);
             guardarBorradasLocal(borradas);
+            guardarBorradasSucursalesLocal(sucBorradas);
             guardarLocal(KEYS.entregas, entregas);
             guardarLocal(KEYS.sucursales, lineas);
             guardarLocal(KEYS.compras, compras);
-            return guardarEntregasCloud(entregas, lineas, compras, borradas);
+            return guardarEntregasCloud(entregas, lineas, compras, borradas, sucBorradas);
         }).then(function () {
             if (global.ObebeAdminMayoreoCloud &&
                 ObebeAdminMayoreoCloud.publicarComprasEarlyParaNaty) {
@@ -335,10 +397,12 @@
             leerEntregasCloud().then(function (cloud) {
                 var borradas = fusionarBorradas(cloud.borradas, borradasLocal);
                 entregas = filtrarEntregasBorradas(entregas, borradas);
-                var lineas = fusionarPorId(leerLocal(KEYS.sucursales), cloud.lineas);
+                var sucBorradas = fusionarBorradasSucursales(cloud.sucursalesBorradas, leerBorradasSucursalesLocal());
+                var lineas = lineasSucursalesDesdeLocal();
                 var compras = fusionarPorId(leerLocal(KEYS.compras), cloud.compras);
                 guardarBorradasLocal(borradas);
-                return guardarEntregasCloud(entregas, lineas, compras, borradas);
+                guardarBorradasSucursalesLocal(sucBorradas);
+                return guardarEntregasCloud(entregas, lineas, compras, borradas, sucBorradas);
             }).catch(function (err) {
                 console.warn('[admin-modulos-cloud] push entregas', err);
             });
@@ -350,16 +414,19 @@
         if (pushTimers.sucursales) clearTimeout(pushTimers.sucursales);
         pushTimers.sucursales = setTimeout(function () {
             pushTimers.sucursales = null;
-            var lineas = leerLocal(KEYS.sucursales);
+            var sucBorradas = fusionarBorradasSucursales(leerBorradasSucursalesLocal());
+            var lineas = lineasSucursalesDesdeLocal();
             leerEntregasCloud().then(function (cloud) {
                 var borradas = fusionarBorradas(cloud.borradas);
+                sucBorradas = fusionarBorradasSucursales(cloud.sucursalesBorradas, sucBorradas);
                 // local manda en entregas para que un borrado no reaparezca
                 var entregas = filtrarEntregasBorradas(
                     partirEntregas(leerLocal(KEYS.entregas)).entregas,
                     borradas
                 );
                 var compras = fusionarPorId(leerLocal(KEYS.compras), cloud.compras);
-                return guardarEntregasCloud(entregas, lineas, compras, borradas);
+                guardarBorradasSucursalesLocal(sucBorradas);
+                return guardarEntregasCloud(entregas, lineas, compras, borradas, sucBorradas);
             }).catch(function (err) {
                 console.warn('[admin-modulos-cloud] push sucursales', err);
             });
@@ -401,8 +468,10 @@
                     partirEntregas(leerLocal(KEYS.entregas)).entregas,
                     borradas
                 );
-                var lineas = fusionarPorId(leerLocal(KEYS.sucursales), cloud.lineas);
-                return guardarEntregasCloud(entregas, lineas, compras, borradas).then(function () {
+                var sucBorradas = fusionarBorradasSucursales(cloud.sucursalesBorradas, leerBorradasSucursalesLocal());
+                var lineas = lineasSucursalesDesdeLocal();
+                guardarBorradasSucursalesLocal(sucBorradas);
+                return guardarEntregasCloud(entregas, lineas, compras, borradas, sucBorradas).then(function () {
                     if (global.ObebeAdminMayoreoCloud &&
                         ObebeAdminMayoreoCloud.publicarComprasEarlyParaNaty) {
                         return ObebeAdminMayoreoCloud.publicarComprasEarlyParaNaty();
@@ -420,6 +489,13 @@
         var map = fusionarBorradas();
         map[id] = borradasPendientes[id];
         guardarBorradasLocal(map);
+    }
+
+    function marcarSucursalLineaBorrada(id) {
+        if (!id) return;
+        var map = fusionarBorradasSucursales();
+        map[id] = Date.now();
+        guardarBorradasSucursalesLocal(map);
     }
 
     function syncCotizador() {
@@ -494,6 +570,7 @@
         notifySucursalesSaved: programarPushSucursales,
         notifyComprasSaved: programarPushCompras,
         notifyCotizadorSaved: notifyCotizadorSaved,
-        marcarEntregaBorrada: marcarEntregaBorrada
+        marcarEntregaBorrada: marcarEntregaBorrada,
+        marcarSucursalLineaBorrada: marcarSucursalLineaBorrada
     };
 })(window);
