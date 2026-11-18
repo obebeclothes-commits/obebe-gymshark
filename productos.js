@@ -1997,6 +1997,8 @@ function renderizarTodosLosProductos() {
     
     function actualizarTituloPagina() {
         if (!pageTitle) return;
+        pageTitle.classList.remove('page-title-pending');
+        pageTitle.removeAttribute('aria-hidden');
         var tituloBase = tituloAtletasSegunGenero(categoriaEfectivaParaTitulo());
         if (esModoColeccion()) {
             var colNombre = (obtenerColeccionDeURL() || '').trim();
