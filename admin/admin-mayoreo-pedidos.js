@@ -509,8 +509,14 @@
         });
     }
 
+    var MODULO_PEDIDOS_ID = 'pedidos_mayoreo';
+
     function mount(container, opts) {
         opts = opts || {};
+        if (container && typeof container._pedidosPullCleanup === 'function') {
+            container._pedidosPullCleanup();
+            container._pedidosPullCleanup = null;
+        }
         var modoObebe = !!opts.modoObebe;
         var clienteKey = opts.clienteKey || 'naty';
         var clienteNombre = opts.clienteNombre || 'NATY';
@@ -521,6 +527,12 @@
         var generoCatalogo = 'todos';
         var editingPedidoId = null;
         var expandedPedidos = {};
+
+        function pedidosModuloSigueActivo() {
+            if (!container || !container.isConnected) return false;
+            return container.getAttribute('data-admin-modulo') === MODULO_PEDIDOS_ID;
+        }
+
         function setOverlayEnvio(visible, texto) {
             var id = 'adminMayoreoEnvioOverlay';
             var el = document.getElementById(id);
@@ -708,6 +720,7 @@
         }
 
         function pintar() {
+            if (!pedidosModuloSigueActivo()) return;
             filasInv = filasInventarioActivas();
             if (modoObebe) {
                 container.innerHTML = vistaObebe();
@@ -799,14 +812,13 @@
         }
 
         function refrescarListaPedidosLigero() {
+            if (!pedidosModuloSigueActivo()) return;
             if (modoObebe) {
                 var box = document.getElementById('adminPedListaObebe');
                 if (box) {
                     var list = ObebeMayoreoPedidosStore.listarTodos(filtroCliente || null);
                     box.innerHTML = detalleListaPedidos(list, true);
-                    return;
                 }
-                pintar();
                 return;
             }
             pintarHistorial();
@@ -1843,6 +1855,7 @@
             if (!modoObebe || !ObebeAdminData.aplicarStockPendientePedidosMayoreo) return;
             setTimeout(function () {
                 ObebeAdminData.aplicarStockPendientePedidosMayoreo().then(function (r) {
+                    if (!pedidosModuloSigueActivo()) return;
                     if (!r || !r.aplicados) return;
                     invalidarCacheFilasInvPedidos();
                     filasInv = ObebeAdminData.getEstado().filas || filasInv;
@@ -1860,6 +1873,7 @@
         document.body.classList.remove('admin-mayoreo-envio-lock');
         catalogoMontado = {
             actualizar: function (nuevasFilas) {
+                if (!pedidosModuloSigueActivo()) return;
                 invalidarCacheFilasInvPedidos();
                 var raw = Array.isArray(nuevasFilas) && nuevasFilas.length
                     ? nuevasFilas
@@ -1885,7 +1899,7 @@
         var pullEnCurso = false;
 
         function pullPedidosDesdeNube() {
-            if (pullEnCurso || document.hidden) return;
+            if (!pedidosModuloSigueActivo() || pullEnCurso || document.hidden) return;
             var cloud = global.ObebeAdminMayoreoCloud;
             if (!cloud || !cloud.pullMayoreoNatyDesdeNube) return;
             pullEnCurso = true;
@@ -1900,7 +1914,7 @@
             if (syncUiTimer) clearTimeout(syncUiTimer);
             syncUiTimer = setTimeout(function () {
                 syncUiTimer = null;
-                refrescarListaPedidosLigero();
+                if (pedidosModuloSigueActivo()) refrescarListaPedidosLigero();
             }, 500);
         }
 
@@ -1911,16 +1925,22 @@
         document.addEventListener('obebe-mayoreo-pedidos-sync', enSyncPedidosRemoto);
         pullPedidosDelayTimer = setTimeout(pullPedidosDesdeNube, 6000);
         pullPedidosTimer = setInterval(pullPedidosDesdeNube, PULL_PEDIDOS_MS);
-        document.addEventListener('visibilitychange', function onVisPedidos() {
-            if (!document.hidden) {
+        function onVisPedidos() {
+            if (!document.hidden && pedidosModuloSigueActivo()) {
                 setTimeout(pullPedidosDesdeNube, 1500);
             }
-        });
+        }
+        document.addEventListener('visibilitychange', onVisPedidos);
         container._pedidosPullCleanup = function () {
             if (pullPedidosTimer) clearInterval(pullPedidosTimer);
+            pullPedidosTimer = null;
             if (pullPedidosDelayTimer) clearTimeout(pullPedidosDelayTimer);
+            pullPedidosDelayTimer = null;
             if (syncUiTimer) clearTimeout(syncUiTimer);
+            syncUiTimer = null;
             document.removeEventListener('obebe-mayoreo-pedidos-sync', enSyncPedidosRemoto);
+            document.removeEventListener('visibilitychange', onVisPedidos);
+            catalogoMontado = null;
         };
 
         filasInv = filasInventarioActivas();

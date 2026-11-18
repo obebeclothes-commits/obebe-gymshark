@@ -1162,7 +1162,16 @@
             '</div>';
     }
 
+    function limpiarModuloAnterior() {
+        if (elContent && typeof elContent._pedidosPullCleanup === 'function') {
+            elContent._pedidosPullCleanup();
+            elContent._pedidosPullCleanup = null;
+        }
+    }
+
     function renderModulo(id) {
+        limpiarModuloAnterior();
+        if (elContent) elContent.setAttribute('data-admin-modulo', id);
         if (!datosCache && id !== 'ventas_mayoreo' && id !== 'registrar_venta_mayoreo' &&
             id !== 'dashboard_mayoreo' && id !== 'mayoreo' &&
             id !== 'clientes_mayoreo' && id !== 'pedidos_mayoreo' &&
@@ -1632,8 +1641,6 @@
             }
             if (ObebeAdminMayoreoPedidos.refrescarCatalogoDesdeCache && datosCache) {
                 ObebeAdminMayoreoPedidos.refrescarCatalogoDesdeCache(datosCache.filas || []);
-            } else {
-                renderModulo('pedidos_mayoreo');
             }
         }
     });
