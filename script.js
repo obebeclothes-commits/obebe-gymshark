@@ -18,7 +18,7 @@ const productos = (typeof productosHombre !== 'undefined' && Array.isArray(produ
 
 
 /** Bust de caché para fotos (CDN / navegador) al corregir un archivo. */
-var VERSION_IMAGENES_PRODUCTO = '20261118f';
+var VERSION_IMAGENES_PRODUCTO = '20261118g';
 
 function esRutaImagen(valor) {
     return /\.(png|jpe?g|webp|avif|gif|svg)(\?|$)/i.test(valor || '');
@@ -34,8 +34,12 @@ function obtenerRutaImagenProducto(producto, numero) {
     var guardada = numero === 2 ? (producto.imagen2 || '') : (producto.imagen1 || '');
     guardada = String(guardada).trim();
     if (guardada && esRutaImagen(guardada)) return conVersionImagen(guardada);
-    if (numero !== 1 || !producto || !producto.id) return '';
+    if (!producto || !producto.id) return '';
     var carpeta = (producto.categoria === 'Mujer') ? 'mujer' : 'hombre';
+    if (numero === 2) {
+        return conVersionImagen(carpeta + '/' + producto.id + '.1.webp');
+    }
+    if (numero !== 1) return '';
     return conVersionImagen(carpeta + '/' + producto.id + '.webp');
 }
 
@@ -59,8 +63,15 @@ function candidatosImagen(fuente) {
         path = fuente.slice(0, qi);
     }
     var base = path.replace(/\.(png|jpe?g|webp|avif|gif)$/i, '');
-    return [base + '.avif' + q, base + '.webp' + q, base + '.png' + q, base + '.jpeg' + q, base + '.jpg' + q, path + q]
-        .filter(function(v, i, a) { return v && a.indexOf(v) === i; });
+    var todos = [base + '.avif' + q, base + '.webp' + q, base + '.png' + q, base + '.jpeg' + q, base + '.jpg' + q, path + q];
+    var unicos = todos.filter(function(v, i, a) { return v && a.indexOf(v) === i; });
+    var extMatch = path.match(/\.(avif|webp|png|jpe?g|gif)$/i);
+    if (extMatch) {
+        var canon = (base + '.' + (extMatch[1].toLowerCase() === 'jpeg' ? 'jpg' : extMatch[1].toLowerCase()) + q);
+        var primero = path + (q || '');
+        unicos = [primero, canon].concat(unicos.filter(function(u) { return u !== primero && u !== canon; }));
+    }
+    return unicos.filter(function(v, i, a) { return v && a.indexOf(v) === i; });
 }
 
 function renderizarImagenProducto(contenedor, fuente, opciones) {
