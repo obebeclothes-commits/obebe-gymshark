@@ -38,6 +38,24 @@ function candidatosImagen(fuente) {
     return unicos.filter(function(v, i, a) { return v && a.indexOf(v) === i; });
 }
 
+function candidatosImagenProducto(contenedor, fuente, numero) {
+    numero = numero || 1;
+    var list = candidatosImagen(fuente);
+    if (!contenedor || !contenedor.dataset) return list;
+    var id = String(contenedor.dataset.productId || '').trim();
+    if (!id || !/^\d+$/.test(id)) return list;
+    var suf = numero === 2 ? '.1' : '';
+    var cat = (contenedor.dataset.productCategoria || 'Hombre').trim();
+    var carpetas = cat === 'Mujer' ? ['mujer', 'hombre'] : ['hombre', 'mujer'];
+    var version = typeof conVersionImagen === 'function'
+        ? conVersionImagen
+        : function (r) { return r || ''; };
+    carpetas.forEach(function (c) {
+        list = list.concat(candidatosImagen(version(c + '/' + id + suf + '.webp')));
+    });
+    return list.filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+}
+
 function mostrarPlaceholderImagenProducto(contenedor, etiqueta) {
     contenedor.dataset.type = 'placeholder';
     contenedor.innerHTML = '';
@@ -50,14 +68,15 @@ function mostrarPlaceholderImagenProducto(contenedor, etiqueta) {
 
 function renderizarImagenProducto(contenedor, fuente, opciones) {
     opciones = opciones || {};
-    var candidatos = candidatosImagen(fuente);
+    var numeroImg = opciones.numeroImagen === 2 ? 2 : 1;
+    var candidatos = candidatosImagenProducto(contenedor, fuente, numeroImg);
     if (!candidatos.length) {
         if (typeof obtenerRutaImagenProducto === 'function' && contenedor.dataset.productId) {
             var fallback = obtenerRutaImagenProducto(
                 { id: contenedor.dataset.productId, categoria: contenedor.dataset.productCategoria || 'Hombre' },
-                1
+                numeroImg
             );
-            candidatos = candidatosImagen(fallback);
+            candidatos = candidatosImagenProducto(contenedor, fallback, numeroImg);
         }
     }
     if (!candidatos.length) {
@@ -2017,10 +2036,6 @@ function renderizarTodosLosProductos() {
         var marcaTitulo = filtrosUrl.marcas.length === 1 ? filtrosUrl.marcas[0] : (marca || '');
         var sufijoTitulo = marcaTitulo;
         var titulo = sufijoTitulo ? (tituloBase + ' · ' + sufijoTitulo.toUpperCase()) : tituloBase;
-        var esMovil = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
-        var tituloMarcaEnDosLineas = esMovil && sufijoTitulo && !esModoColeccion() && !esModoOfertasSemanal()
-            && !esModoNuevoStock() && !esModoMayoreo() && !esModoMayoreo50();
-
         pageTitle.classList.remove(
             'page-title-gymshark', 'page-title-mujer', 'page-title-coleccion', 'page-title-ofertas',
             'page-title-atletas', 'page-title-auto-fit', 'page-title-marca'
@@ -2028,17 +2043,11 @@ function renderizarTodosLosProductos() {
         pageTitle.style.fontSize = '';
         pageTitle.style.whiteSpace = '';
 
-        if (tituloMarcaEnDosLineas) {
-            pageTitle.innerHTML = escaparHtmlTitulo(tituloBase)
-                + '<span class="page-title-marca-line">' + escaparHtmlTitulo(sufijoTitulo.toUpperCase()) + '</span>';
-            pageTitle.classList.add('page-title-atletas', 'page-title-marca', 'page-title-auto-fit');
-            if (tituloBase === 'PARA NUESTROS ATLETAS') pageTitle.classList.add('page-title-gymshark');
-            else if (tituloBase === 'PARA NUESTRAS ATLETAS') pageTitle.classList.add('page-title-mujer');
-        } else if (esModoColeccion()) {
+        if (esModoColeccion()) {
             pageTitle.textContent = tituloBase;
             pageTitle.classList.add('page-title-coleccion', 'page-title-atletas', 'page-title-auto-fit');
         } else {
-            pageTitle.textContent = esMovil ? tituloBase : titulo;
+            pageTitle.textContent = titulo;
             if (esModoOfertasSemanal()) {
                 pageTitle.classList.add('page-title-ofertas', 'page-title-atletas');
             } else if (esModoNuevoStock() || esModoMayoreo50() || esModoMayoreo()) {
@@ -2047,7 +2056,7 @@ function renderizarTodosLosProductos() {
                 pageTitle.classList.add('page-title-gymshark', 'page-title-atletas');
             } else if (tituloBase === 'PARA NUESTRAS ATLETAS') {
                 pageTitle.classList.add('page-title-mujer', 'page-title-atletas');
-            } else if (sufijoTitulo && !esMovil) {
+            } else if (sufijoTitulo) {
                 pageTitle.classList.add('page-title-atletas', 'page-title-auto-fit');
             }
         }

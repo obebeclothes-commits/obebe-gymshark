@@ -18,7 +18,7 @@ const productos = (typeof productosHombre !== 'undefined' && Array.isArray(produ
 
 
 /** Bust de caché para fotos (CDN / navegador) al corregir un archivo. */
-var VERSION_IMAGENES_PRODUCTO = '20261118g';
+var VERSION_IMAGENES_PRODUCTO = '20261118i';
 
 function esRutaImagen(valor) {
     return /\.(png|jpe?g|webp|avif|gif|svg)(\?|$)/i.test(valor || '');
@@ -74,9 +74,26 @@ function candidatosImagen(fuente) {
     return unicos.filter(function(v, i, a) { return v && a.indexOf(v) === i; });
 }
 
+/** Incluye hombre/ y mujer/ por si la foto quedó en la carpeta del otro género (p. ej. ref 676). */
+function candidatosImagenProducto(contenedor, fuente, numero) {
+    numero = numero || 1;
+    var list = candidatosImagen(fuente);
+    if (!contenedor || !contenedor.dataset) return list;
+    var id = String(contenedor.dataset.productId || '').trim();
+    if (!id || !/^\d+$/.test(id)) return list;
+    var suf = numero === 2 ? '.1' : '';
+    var cat = (contenedor.dataset.productCategoria || 'Hombre').trim();
+    var carpetas = cat === 'Mujer' ? ['mujer', 'hombre'] : ['hombre', 'mujer'];
+    carpetas.forEach(function (c) {
+        list = list.concat(candidatosImagen(conVersionImagen(c + '/' + id + suf + '.webp')));
+    });
+    return list.filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+}
+
 function renderizarImagenProducto(contenedor, fuente, opciones) {
     opciones = opciones || {};
-    var candidatos = candidatosImagen(fuente);
+    var numeroImg = opciones.numeroImagen === 2 ? 2 : 1;
+    var candidatos = candidatosImagenProducto(contenedor, fuente, numeroImg);
     if (!candidatos.length) {
         mostrarPlaceholderImagenProducto(contenedor, contenedor.dataset.alt || '');
         return;

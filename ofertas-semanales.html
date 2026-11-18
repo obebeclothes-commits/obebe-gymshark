@@ -32,6 +32,7 @@
     </script>
     <style>
 *,*::before,*::after{box-sizing:border-box}
+:root{--primary-color:#1a1a1a;--accent-color:#1a1a1a}
 body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5;color:#333;background:#f8f9fa}
 a{text-decoration:none;color:inherit}
 img{max-width:100%;height:auto;display:block}
@@ -96,8 +97,13 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
 
         .page-header h1 {
             font-size: 2.5rem;
-            color: var(--accent-color);
+            color: var(--primary-color);
             margin-bottom: 0.5rem;
+        }
+
+        .page-header h1.page-title-pending {
+            visibility: hidden;
+            min-height: 2.75rem;
         }
 
         .page-header h1.page-title-gymshark,
@@ -1291,7 +1297,9 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                             <span class="mayoreo-cta-sub">Mejor precio</span>
                         </a>
                     </div>
-                    <h1 id="pageTitle">OFERTAS SEMANALES</h1>
+                    <h1 id="pageTitle" class="page-title-pending" aria-hidden="true"></h1>
+                    <script src="obebe-titulo-inicial.js?v=20261118i"></script>
+                    <script>obebeAplicarTituloInicialPagina();</script>
                     <p class="page-product-count" id="pageProductCount" aria-live="polite"></p>
                     <div class="nuevo-stock-gender-filter" id="nuevoStockGenderFilter" hidden aria-label="Filtrar por categoría Hombre o Mujer">
                         <button type="button" class="nuevo-stock-gender-btn" data-categoria="" aria-pressed="false">Todos</button>
@@ -1425,8 +1433,8 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
 
     <script defer src="productos-hombre.js?v=20261112s"></script>
     <script defer src="productos-mujer.js?v=20261112s"></script>
-    <script defer src="script.js?v=20261118g"></script>
-    <script defer src="productos.js?v=20261111h"></script>
+    <script defer src="script.js?v=20261118i"></script>
+    <script defer src="productos.js?v=20261118i"></script>
     <script defer src="obebe-listo.js?v=20261112a"></script>
     <script>
     // Si la tienda no arranca, avisar en pantalla en vez de quedarse muda.

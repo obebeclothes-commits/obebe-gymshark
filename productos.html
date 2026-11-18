@@ -1297,33 +1297,8 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
                         </a>
                     </div>
                     <h1 id="pageTitle" class="page-title-pending" aria-hidden="true"></h1>
-                    <script>
-                    (function () {
-                        var h = document.getElementById('pageTitle');
-                        if (!h) return;
-                        var p = new URLSearchParams(location.search);
-                        var cat = (p.get('categoria') || '').trim();
-                        var titulo = 'Productos';
-                        if (cat === 'Hombre') {
-                            titulo = 'PARA NUESTROS ATLETAS';
-                            h.classList.add('page-title-gymshark', 'page-title-atletas');
-                        } else if (cat === 'Mujer') {
-                            titulo = 'PARA NUESTRAS ATLETAS';
-                            h.classList.add('page-title-mujer', 'page-title-atletas');
-                        } else if ((p.get('mayoreo50') || '') === '1') {
-                            titulo = 'MAYOREO +50';
-                        } else if ((p.get('mayoreo') || '') === '1') {
-                            titulo = 'MAYOREO +20';
-                        } else if ((p.get('nuevoStock') || p.get('nuevostock') || '') === '1') {
-                            titulo = 'NUEVO STOCK';
-                        } else if ((p.get('ofertas') || '') === '1') {
-                            titulo = 'OFERTAS SEMANALES';
-                        }
-                        h.textContent = titulo;
-                        h.classList.remove('page-title-pending');
-                        h.removeAttribute('aria-hidden');
-                    })();
-                    </script>
+                    <script src="obebe-titulo-inicial.js?v=20261118i"></script>
+                    <script>obebeAplicarTituloInicialPagina();</script>
                     <p class="page-product-count" id="pageProductCount" aria-live="polite"></p>
                     <div class="nuevo-stock-gender-filter" id="nuevoStockGenderFilter" hidden aria-label="Filtrar nuevo stock por categoría">
                         <button type="button" class="nuevo-stock-gender-btn" data-categoria="" aria-pressed="false">Todos</button>
@@ -1457,8 +1432,8 @@ footer{background:#fff;color:#1a1a1a;padding:2rem 0;margin-top:2rem;border-top:3
 
     <script defer src="productos-hombre.js?v=20261118h"></script>
     <script defer src="productos-mujer.js?v=20261118g"></script>
-    <script defer src="script.js?v=20261118g"></script>
-    <script defer src="productos.js?v=20261118h"></script>
+    <script defer src="script.js?v=20261118i"></script>
+    <script defer src="productos.js?v=20261118i"></script>
     <script defer src="obebe-listo.js?v=20261112a"></script>
     <script>
     // Si la tienda no arranca, avisar en pantalla en vez de quedarse muda.
