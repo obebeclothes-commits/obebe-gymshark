@@ -251,12 +251,8 @@
             if (cfgMayoreo) {
                 return carrito.map(function (c) {
                     var precio = c.precioUnitario != null ? c.precioUnitario : 0;
-                    var retail = c.precioRetailObebe != null ? c.precioRetailObebe : 0;
                     var cat = c.precioCatalogo != null ? c.precioCatalogo : 0;
-                    var precioOrig = precio;
-                    if (retail > 0) precioOrig = retail;
-                    else if (cat > 0 && Math.abs(cat - precio) >= 0.01) precioOrig = cat;
-                    else if (cat > 0) precioOrig = cat;
+                    var precioOrig = cat > 0 ? cat : 0;
                     return {
                         fila: c.fila,
                         cantidad: c.cantidad,

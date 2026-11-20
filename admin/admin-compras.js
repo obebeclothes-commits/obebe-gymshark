@@ -2,9 +2,11 @@
     'use strict';
 
     var COL_FOTO = 9;
+    /** Columna AA · cliente mayoreo que apartó el artículo (solo lectura en Compras). */
+    var COL_CLIENTE_MAYOREO = 26;
+    var ZONA_COMPRAS = 'compras';
     var filas = [];
-    var filtroPendiente = '';
-    var filtroEarly = '';
+    var filtroCompras = '';
     var editandoZona = null;
     var mountSesion = 0;
     var aviso = '';
@@ -291,6 +293,10 @@
     }
 
     function renderCeldaCompras(f, c, editActivo) {
+        if (c === COL_CLIENTE_MAYOREO) {
+            return '<td><span class="admin-inv-readonly admin-compras-col-cliente-mayoreo">' +
+                esc(etiquetaClienteApartado(f)) + '</span></td>';
+        }
         var Ui = global.ObebeAdminCamposUi;
         var idx = idxCols();
         var val = f.celdas[c] == null ? '' : String(f.celdas[c]);
@@ -347,6 +353,12 @@
             : [];
     }
 
+    function columnasComprasGrid() {
+        var cols = columnas().slice();
+        if (cols.indexOf(COL_CLIENTE_MAYOREO) < 0) cols.push(COL_CLIENTE_MAYOREO);
+        return cols;
+    }
+
     function encabezados() {
         return ObebeAdminData.combinarEncabezadosInventario
             ? ObebeAdminData.combinarEncabezadosInventario([])
@@ -354,9 +366,29 @@
     }
 
     function tituloCol(enc, c) {
+        if (c === COL_CLIENTE_MAYOREO) return 'Cliente mayoreo';
         var titulo = (enc[c] || '').trim();
         if (/^(no\.?\s*)?imagen|^ref$|^#$/i.test(titulo)) titulo = 'Ref';
         return titulo;
+    }
+
+    function filaApartadaMayoreo(f) {
+        return refApartadaEnPedidoMayoreo(refNumeroFila(f));
+    }
+
+    function etiquetaClienteApartado(f) {
+        var ref = refNumeroFila(f);
+        if (!filaApartadaMayoreo(f)) return '';
+        if (global.ObebeMayoreoPedidosStore && ObebeMayoreoPedidosStore.etiquetaClienteApartadoRef) {
+            return ObebeMayoreoPedidosStore.etiquetaClienteApartadoRef(ref);
+        }
+        return 'Mayoreo';
+    }
+
+    function claseFilaCompras(f) {
+        if (filaApartadaMayoreo(f)) return ' class="admin-compras-row--apartado-mayoreo"';
+        if (f.earlyAccess) return ' class="admin-compras-row--early"';
+        return '';
     }
 
     function coincideFiltroCompras(f, q) {
@@ -373,10 +405,21 @@
         return filas.some(function (f) { return !f.earlyAccess && !f.enTienda; });
     }
 
+    /** Hay al menos una fila ya enviada a early access (Naty la ve en Pedidos). */
+    function hayEarlyAccessEnCompras() {
+        return filasActivasEnCompras().some(function (f) {
+            return !!f.earlyAccess;
+        });
+    }
+
+    function hayComprasPendientesEarly() {
+        return filasSinEarlyAccess().length > 0;
+    }
+
     function focoBusquedaActivo(root) {
         var a = document.activeElement;
         if (!a || !root || !root.contains(a)) return null;
-        if (a.id === 'adminComprasBuscarPend' || a.id === 'adminComprasBuscarEarly') {
+        if (a.id === 'adminComprasBuscar') {
             return { id: a.id, start: a.selectionStart, end: a.selectionEnd };
         }
         return null;
@@ -416,32 +459,28 @@
         return true;
     }
 
+    /** No sube a inventario Obebe filas apartadas en pedido mayoreo (columna AA). */
+    function filaExcluidaSubirInventarioObebe(f) {
+        if (!f || f.enTienda) return true;
+        if (f.mayoreoPublicarPendiente || f.earlyAccessSuspendidoPorPedido) return true;
+        if (filaApartadaMayoreo(f) || etiquetaClienteApartado(f)) return true;
+        return false;
+    }
+
     function filtrarCandidatasSubirInventario(lista) {
         return (lista || []).filter(function (f) {
-            var ref = refNumeroFila(f);
-            return !refApartadaEnPedidoMayoreo(ref) && !f.mayoreoPublicarPendiente &&
-                !f.earlyAccessSuspendidoPorPedido;
+            if (!f.earlyAccess) return false;
+            return !filaExcluidaSubirInventarioObebe(f);
         });
     }
 
-    function visibles() {
-        return filas.filter(function (f) {
-            if (f.enTienda) return false;
-            if (f.earlyAccess) return coincideFiltroCompras(f, filtroEarly);
-            if (!esFilaTabla1Nuevas(f)) return false;
-            return coincideFiltroCompras(f, filtroPendiente);
-        });
+    function filasActivasEnCompras() {
+        return filas.filter(function (f) { return !f.enTienda; });
     }
 
-    function filasPendientesConfirmar() {
-        return filas.filter(function (f) {
-            return esFilaTabla1Nuevas(f) && coincideFiltroCompras(f, filtroPendiente);
-        });
-    }
-
-    function filasEarlyConfirmadas() {
-        return filas.filter(function (f) {
-            return esFilaTabla2Early(f) && coincideFiltroCompras(f, filtroEarly);
+    function filasComprasVisibles() {
+        return filasActivasEnCompras().filter(function (f) {
+            return coincideFiltroCompras(f, filtroCompras);
         });
     }
 
@@ -449,12 +488,10 @@
         return filas.filter(function (f) { return f.enTienda; });
     }
 
-    function htmlBuscadorZona(zona) {
-        var id = zona === 'early' ? 'adminComprasBuscarEarly' : 'adminComprasBuscarPend';
-        var val = zona === 'early' ? filtroEarly : filtroPendiente;
-        var ph = zona === 'early' ? 'Buscar en tabla 2…' : 'Buscar en tabla 1…';
-        return '<input type="text" class="admin-search admin-compras-zone-search" id="' + id + '" ' +
-            'placeholder="' + esc(ph) + '" value="' + esc(val) + '" aria-label="' + esc(ph) + '" autocomplete="off">';
+    function htmlBuscadorCompras() {
+        var ph = 'Buscar en compras…';
+        return '<input type="text" class="admin-search admin-compras-zone-search" id="adminComprasBuscar" ' +
+            'placeholder="' + esc(ph) + '" value="' + esc(filtroCompras) + '" aria-label="' + esc(ph) + '" autocomplete="off">';
     }
 
     function refNumeroFila(f) {
@@ -535,22 +572,17 @@
             'onerror="typeof adminMayoreoImgFallback===\'function\'&&adminMayoreoImgFallback(this)">';
     }
 
-    function filasZonaSinFiltro(zona) {
-        return filas.filter(function (f) {
-            if (f.enTienda) return false;
-            return zona === 'early' ? !!f.earlyAccess : !f.earlyAccess;
-        });
-    }
-
-    function textoConteoZona(zona) {
-        var lista = filasZonaSinFiltro(zona);
+    function textoConteoCompras(lista) {
+        lista = lista || filasActivasEnCompras();
         var n = lista.length;
         var pzas = 0;
+        var apart = 0;
         lista.forEach(function (f) {
             pzas += numCelda(f.celdas && f.celdas[2]);
+            if (filaApartadaMayoreo(f)) apart += 1;
         });
-        var tabLbl = zona === 'early' ? 'tabla 2' : 'tabla 1';
-        return n + ' en Compras · ' + pzas + ' pzas · ' + n + ' ' + tabLbl;
+        var extra = apart ? ' · ' + apart + ' apartado(s) mayoreo' : '';
+        return n + ' en Compras · ' + pzas + ' pzas' + extra;
     }
 
     function celdaExcel(v) {
@@ -561,11 +593,11 @@
             .replace(/"/g, '&quot;');
     }
 
-    function exportarExcelZona(zona, list) {
+    function exportarExcelCompras(list) {
         prepararFilasParaVista();
-        var cols = columnas();
+        var cols = columnasComprasGrid();
         var enc = encabezados();
-        list = list || filasZonaSinFiltro(zona);
+        list = list || filasActivasEnCompras();
         if (!list.length) {
             aviso = 'No hay filas en esta tabla para exportar.';
             return false;
@@ -578,6 +610,7 @@
                 var raw = f.celdas && f.celdas[c] != null ? f.celdas[c] : '';
                 var val = valorCeldaMostrar(f, c, raw);
                 if (c === COL_FOTO) val = srcFoto(f) || val;
+                if (c === COL_CLIENTE_MAYOREO) val = etiquetaClienteApartado(f);
                 return '<td>' + celdaExcel(val) + '</td>';
             }).join('');
             return '<tr>' + tds + '</tr>';
@@ -600,102 +633,78 @@
             String(d.getHours()).padStart(2, '0') +
             String(d.getMinutes()).padStart(2, '0');
         a.href = url;
-        var slug = zona === 'early' ? 'tabla2-early' : 'tabla1-nuevas';
-        a.download = 'compras-obebe-' + slug + '-' + stamp + '.xls';
+        a.download = 'compras-obebe-' + stamp + '.xls';
         document.body.appendChild(a);
         a.click();
         a.remove();
         setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
-        aviso = 'Excel exportado (' + (zona === 'early' ? 'tabla 2' : 'tabla 1') + '): ' + list.length + ' fila(s).';
+        aviso = 'Excel exportado: ' + list.length + ' fila(s).';
         return true;
     }
 
     function renderToolbar() {
-        var editLabel = editandoZona === 'pendiente' ? 'Editando tabla 1'
-            : (editandoZona === 'early' ? 'Editando tabla 2' : 'Pedidos en camino');
+        var editLabel = editandoZona === ZONA_COMPRAS ? 'Editando compras' : 'Pedidos en camino';
         return '<div class="admin-inv-toolbar">' +
             '<span class="admin-inv-modo' + (editandoZona ? ' admin-inv-modo-edit' : '') + '">' + esc(editLabel) + '</span>' +
             '</div>' +
             (aviso ? '<p class="admin-banner">' + esc(aviso) + '</p>' : '');
     }
 
-    function botonComprasEarlyAccess(zona) {
-        return '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact admin-compras-early" data-zona="' +
-            esc(zona || 'pendiente') + '">Subir a early access</button>';
+    function botonComprasEarlyAccess() {
+        return '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact admin-compras-early">Subir a early access</button>';
     }
 
-    function botonExportarZona(zona) {
-        return '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-compras-excel" data-zona="' +
-            esc(zona) + '">Exportar Excel</button>';
+    function botonExportarCompras() {
+        return '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-compras-excel">Exportar Excel</button>';
     }
 
-    function botonSubirInventario(zona) {
-        return '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-compras-subir-inv" data-zona="' +
-            esc(zona) + '">Subir a inventario</button>';
-    }
-
-    function botonesComprasBaseEdicion(zona) {
-        var earlyBtn = zona === 'early' ? '' : botonComprasEarlyAccess('pendiente');
-        return '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-compras-add-row" data-zona="' + esc(zona) + '">+ Fila</button>' +
-            earlyBtn +
-            '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact admin-compras-borrar" data-zona="' + esc(zona) + '">Eliminar</button>';
-    }
-
-    function botonesComprasBaseVista(zona) {
-        var earlyBtn = zona === 'pendiente' ? botonComprasEarlyAccess('pendiente') : '';
-        return earlyBtn + botonSubirInventario(zona) + botonExportarZona(zona);
+    function botonSubirInventario() {
+        return '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-compras-subir-inv">Subir a inventario</button>';
     }
 
     function botonesComprasExtrasEarly() {
         return '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-compras-quitar-early">Quitar early access</button>';
     }
 
-    function botonesComprasGuardarCancelar(zona) {
-        if (zona === 'early') {
-            return '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminComprasCancelarEarly">Cancelar</button>' +
-                '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminComprasGuardarEarly">Guardar</button>';
-        }
-        return '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminComprasCancelarPend">Cancelar</button>' +
-            '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminComprasGuardarPend">Guardar</button>';
-    }
-
-    function botonEditarZona(zona) {
-        var id = zona === 'early' ? 'adminComprasEditarEarly' : 'adminComprasEditarPend';
-        return '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="' + id + '">Editar</button>';
-    }
-
-    function renderZonaToolbar(zona) {
-        var on = editandoZona === zona;
-        var extraEarly = zona === 'early' ? botonesComprasExtrasEarly() : '';
+    function renderComprasToolbar() {
+        var on = editandoZona === ZONA_COMPRAS;
+        var btnEarly = hayComprasPendientesEarly() ? botonComprasEarlyAccess() : '';
+        var postEarly = hayEarlyAccessEnCompras()
+            ? botonSubirInventario() + botonesComprasExtrasEarly()
+            : '';
         if (on) {
             return '<div class="admin-compras-zone-toolbar admin-compras-zone-toolbar--edit">' +
                 '<div class="admin-compras-zone-toolbar-grp admin-compras-zone-toolbar-grp--izq">' +
-                botonesComprasBaseEdicion(zona) +
+                '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact admin-compras-add-row">+ Fila</button>' +
+                btnEarly +
+                '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact admin-compras-borrar">Eliminar</button>' +
                 '</div>' +
                 '<div class="admin-compras-zone-toolbar-grp admin-compras-zone-toolbar-grp--der">' +
-                botonSubirInventario(zona) + botonExportarZona(zona) + extraEarly + botonesComprasGuardarCancelar(zona) +
+                postEarly + botonExportarCompras() +
+                '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminComprasCancelar">Cancelar</button>' +
+                '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminComprasGuardar">Guardar</button>' +
                 '</div></div>';
         }
-        var earlyVista = zona === 'pendiente' ? botonComprasEarlyAccess('pendiente') : '';
         return '<div class="admin-compras-zone-toolbar admin-compras-zone-toolbar--vista">' +
             '<div class="admin-compras-zone-toolbar-grp admin-compras-zone-toolbar-grp--izq">' +
-            botonEditarZona(zona) + earlyVista +
+            '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminComprasEditar">Editar</button>' +
+            btnEarly +
             '</div>' +
             '<div class="admin-compras-zone-toolbar-grp admin-compras-zone-toolbar-grp--der">' +
-            botonSubirInventario(zona) + botonExportarZona(zona) + extraEarly +
+            postEarly + botonExportarCompras() +
             '</div></div>';
     }
 
     function renderGridTabla(list, opts) {
         opts = opts || {};
-        var zona = opts.zona || 'pendiente';
-        var editActivo = editandoZona === zona;
-        var cols = columnas();
+        var editActivo = editandoZona === ZONA_COMPRAS;
+        var cols = columnasComprasGrid();
         var enc = encabezados();
         var thLetters = '';
         var thSheet = '';
         cols.forEach(function (c) {
-            thLetters += '<th class="admin-inv-th-letter">' + esc(ObebeAdminData.colLetter(c)) + '</th>';
+            var letra = c === COL_CLIENTE_MAYOREO ? 'AA' : ObebeAdminData.colLetter(c);
+            thLetters += '<th class="admin-inv-th-letter">' + esc(letra) + '</th>';
             thSheet += '<th class="admin-inv-th-title">' + esc(tituloCol(enc, c)) + '</th>';
         });
         var sel = editActivo ? '<th class="admin-inv-sel"></th>' : '';
@@ -712,40 +721,24 @@
                 }
                 return renderCeldaCompras(f, c, editActivo);
             }).join('');
-            var trCls = f.earlyAccess ? ' class="admin-compras-row--early"' : '';
-            return '<tr' + trCls + '>' + check + '<td class="admin-inv-row">' + (i + 1) + '</td>' + tds + '</tr>';
+            return '<tr' + claseFilaCompras(f) + '>' + check + '<td class="admin-inv-row">' + (i + 1) + '</td>' + tds + '</tr>';
         }).join('');
         if (!body) {
             body = '<tr><td colspan="' + (cols.length + 2) + '">' + esc(vacio) + '</td></tr>';
         }
-        var titulo = opts.titulo
-            ? '<div class="admin-compras-section-head"><h3 class="admin-compras-section-title">' + esc(opts.titulo) +
-              '</h3><p class="admin-muted-text admin-inv-stock-count">' + esc(textoConteoZona(zona)) + '</p>' +
-              '<div class="admin-compras-section-search">' + htmlBuscadorZona(zona) + '</div>' +
-              renderZonaToolbar(zona) + '</div>'
-            : renderZonaToolbar(zona);
-        return '<section class="admin-compras-section"' + (opts.sectionId ? ' id="' + esc(opts.sectionId) + '"' : '') + '>' +
-            titulo +
+        var titulo = '<div class="admin-compras-section-head"><h3 class="admin-compras-section-title">Compras</h3>' +
+            '<p class="admin-muted-text admin-inv-stock-count">' + esc(textoConteoCompras(filasActivasEnCompras())) + '</p>' +
+            '<div class="admin-compras-section-search">' + htmlBuscadorCompras() + '</div>' +
+            renderComprasToolbar() + '</div>';
+        return '<section class="admin-compras-section" id="adminComprasMain">' + titulo +
             '<div class="admin-inv-scroll' + (editActivo ? ' admin-inv-scroll--edit' : '') + '">' +
             '<table class="admin-table admin-inv-grid"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div></section>';
     }
 
     function renderAllGrids() {
-        var pend = filasPendientesConfirmar();
-        var early = filasEarlyConfirmadas();
-        var html = renderGridTabla(pend, {
-            zona: 'pendiente',
-            titulo: 'Tabla 1 — Nuevas compras',
-            emptyMsg: 'No hay compras nuevas. Corre el script de detección o usa + Fila en Editar.',
-            sectionId: 'adminComprasPendientes'
-        });
-        html += renderGridTabla(early, {
-            zona: 'early',
-            titulo: 'Tabla 2 — Early access confirmado',
-            emptyMsg: 'Nada en early access. Confírmalo desde la tabla 1.',
-            sectionId: 'adminComprasEarly'
-        });
-        return '<div class="admin-compras-grids">' + html + '</div>';
+        return '<div class="admin-compras-grids">' + renderGridTabla(filasComprasVisibles(), {
+            emptyMsg: 'No hay compras pendientes. Corre el script de detección o usa + Fila en Editar.'
+        }) + '</div>';
     }
 
     function pintar(root) {
@@ -766,42 +759,33 @@
     }
 
     function bind(root) {
-        var buscarPend = root.querySelector('#adminComprasBuscarPend');
-        if (buscarPend) {
-            buscarPend.addEventListener('input', function () {
-                filtroPendiente = buscarPend.value || '';
-                pintar(root);
-            });
-        }
-        var buscarEarly = root.querySelector('#adminComprasBuscarEarly');
-        if (buscarEarly) {
-            buscarEarly.addEventListener('input', function () {
-                filtroEarly = buscarEarly.value || '';
+        var buscar = root.querySelector('#adminComprasBuscar');
+        if (buscar) {
+            buscar.addEventListener('input', function () {
+                filtroCompras = buscar.value || '';
                 pintar(root);
             });
         }
         root.querySelectorAll('.admin-compras-excel').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                var z = btn.getAttribute('data-zona') || 'pendiente';
-                var list = filasZonaSinFiltro(z);
+                var list = filasActivasEnCompras();
                 var n = list.length;
                 if (!n || !global.ObebeAdminDialog) {
                     if (!n) {
-                        aviso = 'Esta tabla no tiene filas para exportar.';
+                        aviso = 'No hay filas en Compras para exportar.';
                         pintar(root);
                     }
                     return;
                 }
-                var tabNom = z === 'early' ? 'tabla 2 (early access)' : 'tabla 1 (nuevas compras)';
                 ObebeAdminDialog.confirm({
                     title: '¿Exportar Excel?',
-                    message: 'Se descargará un Excel solo de ' + tabNom + ' (' + n + ' fila(s)).',
+                    message: 'Se descargará un Excel con todas las compras activas (' + n + ' fila(s)).',
                     confirmText: 'Sí, exportar',
                     cancelText: 'Cancelar',
                     confirmSuccess: true
                 }).then(function (ok) {
                     if (!ok) return;
-                    exportarExcelZona(z, list);
+                    exportarExcelCompras(list);
                     pintar(root);
                     setTimeout(function () {
                         if (aviso.indexOf('Excel exportado') === 0) {
@@ -820,19 +804,12 @@
         });
         root.querySelectorAll('.admin-compras-subir-inv').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                var z = btn.getAttribute('data-zona') || 'early';
-                if (z === 'early') subirEarlyAInventario(root);
-                else subirPendientesAInventario(root);
+                subirComprasAInventario(root);
             });
         });
-        var editPend = root.querySelector('#adminComprasEditarPend');
-        if (editPend) editPend.addEventListener('click', function () {
-            editandoZona = 'pendiente';
-            pintar(root);
-        });
-        var editEarly = root.querySelector('#adminComprasEditarEarly');
-        if (editEarly) editEarly.addEventListener('click', function () {
-            editandoZona = 'early';
+        var edit = root.querySelector('#adminComprasEditar');
+        if (edit) edit.addEventListener('click', function () {
+            editandoZona = ZONA_COMPRAS;
             pintar(root);
         });
         function cancelarEdicion() {
@@ -840,23 +817,18 @@
             filas = ObebeComprasStore.getAll();
             pintar(root);
         }
-        var cancP = root.querySelector('#adminComprasCancelarPend');
-        if (cancP) cancP.addEventListener('click', cancelarEdicion);
-        var cancE = root.querySelector('#adminComprasCancelarEarly');
-        if (cancE) cancE.addEventListener('click', cancelarEdicion);
+        var canc = root.querySelector('#adminComprasCancelar');
+        if (canc) canc.addEventListener('click', cancelarEdicion);
         function guardarEdicion() {
             filas.forEach(function (f) { syncFilaCompras(f); f.actualizadoEn = Date.now(); });
             persistir();
             editandoZona = null;
             pintar(root);
         }
-        var guardP = root.querySelector('#adminComprasGuardarPend');
-        if (guardP) guardP.addEventListener('click', guardarEdicion);
-        var guardE = root.querySelector('#adminComprasGuardarEarly');
-        if (guardE) guardE.addEventListener('click', guardarEdicion);
+        var guard = root.querySelector('#adminComprasGuardar');
+        if (guard) guard.addEventListener('click', guardarEdicion);
         root.querySelectorAll('.admin-compras-add-row').forEach(function (addRow) {
             addRow.addEventListener('click', function () {
-                var zona = addRow.getAttribute('data-zona') || editandoZona || 'pendiente';
                 var idx = idxCols();
                 var vacia = [];
                 var i;
@@ -868,11 +840,6 @@
                     celdas: vacia,
                     actualizadoEn: Date.now()
                 };
-                if (zona === 'early') {
-                    nueva.earlyAccess = true;
-                    nueva.earlyAccessEn = Date.now();
-                    asignarFotoColJ(nueva);
-                }
                 filas.push(nueva);
                 persistir();
                 pintar(root);
@@ -880,10 +847,7 @@
         });
         root.querySelectorAll('.admin-compras-borrar').forEach(function (borrar) {
             borrar.addEventListener('click', function () {
-                var zona = borrar.getAttribute('data-zona') || editandoZona;
-                var section = zona === 'early'
-                    ? root.querySelector('#adminComprasEarly')
-                    : root.querySelector('#adminComprasPendientes');
+                var section = root.querySelector('#adminComprasMain');
                 var scope = section || root;
                 var ids = {};
                 scope.querySelectorAll('.admin-compras-sel:checked').forEach(function (cb) {
@@ -1189,7 +1153,7 @@
         var n = pendientes.length;
         ObebeAdminDialog.confirm({
             title: '¿Early access para Naty?',
-            message: 'Naty verá ' + n + ' artículo(s) en Pedidos (early access) sin publicarlos en la web. No se suben al inventario hasta Subir a inventario. Se llenan fotos en columna J y pasan a la tabla «Early access confirmado».',
+            message: 'Naty verá ' + n + ' artículo(s) en Pedidos (early access) sin publicarlos en la web. No se suben al inventario hasta Subir a inventario. Se llenan fotos en columna J y se marcan en verde en esta tabla.',
             confirmText: 'Sí, activar early access',
             cancelText: 'Cancelar',
             variant: 'ok',
@@ -1222,57 +1186,23 @@
         });
     }
 
-    function subirPendientesAInventario(root) {
+    function subirComprasAInventario(root) {
         if (subiendo || !global.ObebeAdminDialog || !global.ObebeAdminBackend) return;
-        var candidatas = filtrarCandidatasSubirInventario(filasPendientesConfirmar());
+        var candidatas = filtrarCandidatasSubirInventario(filasActivasEnCompras());
+        if (!hayEarlyAccessEnCompras()) {
+            aviso = 'Primero usa «Subir a early access» para que Naty vea el stock en Pedidos.';
+            pintar(root);
+            return;
+        }
         if (!candidatas.length) {
-            aviso = 'La tabla 1 no tiene filas pendientes para subir (sin early access ni pedido mayoreo abierto).';
+            aviso = 'No hay filas en early access listas para subir (se excluyen apartados en pedido mayoreo / columna AA).';
             pintar(root);
             return;
         }
         var n = candidatas.length;
         ObebeAdminDialog.confirm({
-            title: '¿Subir tabla 1 a inventario?',
-            message: 'Se publican ' + n + ' artículo(s) de nuevas compras. No se incluyen refs en pedido mayoreo de Naty. Salen de Compras al terminar.',
-            confirmText: 'Sí, subir',
-            cancelText: 'Cancelar',
-            variant: 'ok',
-            cancelDanger: true,
-            confirmSuccess: true
-        }).then(function (ok) {
-            if (!ok) return;
-            subiendo = true;
-            aviso = '';
-            var payload = candidatas.map(function (f) {
-                return { celdas: celdasParaInventario(f) };
-            });
-            pintar(root);
-            enviarAlInventario(payload).then(function () {
-                marcarComprasPublicadasEnTienda(candidatas);
-                pintar(root);
-            }).catch(function (err) {
-                aviso = (err && err.message) || 'No se pudo subir al inventario.';
-            }).then(function () {
-                subiendo = false;
-                pintar(root);
-            });
-        });
-    }
-
-    function subirEarlyAInventario(root) {
-        if (subiendo || !global.ObebeAdminDialog || !global.ObebeAdminBackend) return;
-        var candidatas = filtrarCandidatasSubirInventario(filas.filter(function (f) {
-            return esFilaTabla2Early(f);
-        }));
-        if (!candidatas.length) {
-            aviso = 'La tabla 2 no tiene filas en early access para subir (o están en pedido mayoreo).';
-            pintar(root);
-            return;
-        }
-        var n = candidatas.length;
-        ObebeAdminDialog.confirm({
-            title: '¿Subir tabla 2 a inventario?',
-            message: 'Se publican ' + n + ' artículo(s) de early access. No se suben los apartados en pedido mayoreo. Salen de Compras al terminar.',
+            title: '¿Subir a inventario?',
+            message: 'Se publican ' + n + ' artículo(s) que ya están en early access. No se incluyen apartados en pedido mayoreo. Salen de Compras al terminar.',
             confirmText: 'Sí, subir',
             cancelText: 'Cancelar',
             variant: 'ok',

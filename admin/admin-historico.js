@@ -11,8 +11,12 @@
             .replace(/"/g, '&quot;');
     }
 
-    function filaKey(f) {
+    function filaKey(f, opts) {
         if (!f) return '0';
+        if (opts && opts.modoMayoreo) {
+            if (f.mayoreoLineaId) return 'mayoreo-' + f.mayoreoLineaId;
+            if (f._localId) return String(f._localId);
+        }
         return String(f.inventarioDbId || f.filaSheet || '0');
     }
 
@@ -57,6 +61,7 @@
         opts = opts || {};
 
         function filasVivas() {
+            if (opts.preferirFilasOpts && opts.filas && opts.filas.length) return opts.filas;
             var st = ObebeAdminData.getEstado ? ObebeAdminData.getEstado() : {};
             return (st.filas && st.filas.length) ? st.filas : (opts.filas || []);
         }
@@ -106,25 +111,14 @@
             var listAll = listaFiltrada();
             var trunc = listAll.length > AGOTADOS_RENDER_MAX;
             var list = trunc ? listAll.slice(0, AGOTADOS_RENDER_MAX) : listAll;
-            var tbody = list.map(function (r) {
-                var k = filaKey(r);
-                return '<tr class="admin-agotados-row" data-inv-row-key="' + esc(k) + '">' +
-                    '<td class="admin-inv-thumb-cell">' + filaThumbHtml(r) + '</td>' +
-                    '<td>#' + r.ref + '</td><td>' + esc(r.nombre) + '</td>' +
-                    '<td>' + esc(r.talla) + '</td><td>' + esc(r.color) + '</td>' +
-                    '<td>' + esc(r.marca) + '</td>' +
-                    '<td><span class="admin-tag admin-tag-danger">0</span></td>' +
-                    '<td><input type="number" min="1" value="1" class="admin-venta-num admin-hist-stock-input" ' +
-                    'data-row-key="' + esc(k) + '" aria-label="Nuevo stock"></td>' +
-                    '<td><button type="button" class="admin-btn admin-btn-primary admin-btn-compact admin-hist-guardar" data-row-key="' +
-                    esc(k) + '">Regresar a inventario</button></td></tr>';
-            }).join('');
+            var tbody = list.map(filaAgotadaHtml).join('');
             wrap.innerHTML = tbody || '<tr><td colspan="9">No hay artículos agotados.</td></tr>';
 
             var cnt = document.getElementById('adminAgotadosCount');
             if (cnt) {
                 var extra = trunc ? ' (mostrando ' + AGOTADOS_RENDER_MAX + ' — acota la búsqueda)' : '';
-                cnt.textContent = listAll.length + ' artículo(s) agotado(s)' + extra;
+                var titulo = opts.modoMayoreo ? ' en tu inventario' : '';
+                cnt.textContent = listAll.length + ' artículo(s) agotado(s)' + titulo + extra;
             }
         }
 
@@ -132,19 +126,7 @@
             var listAll = listaFiltrada();
             var trunc = listAll.length > AGOTADOS_RENDER_MAX;
             var list = trunc ? listAll.slice(0, AGOTADOS_RENDER_MAX) : listAll;
-            var tbody = list.map(function (r) {
-                var k = filaKey(r);
-                return '<tr class="admin-agotados-row" data-inv-row-key="' + esc(k) + '">' +
-                    '<td class="admin-inv-thumb-cell">' + filaThumbHtml(r) + '</td>' +
-                    '<td>#' + r.ref + '</td><td>' + esc(r.nombre) + '</td>' +
-                    '<td>' + esc(r.talla) + '</td><td>' + esc(r.color) + '</td>' +
-                    '<td>' + esc(r.marca) + '</td>' +
-                    '<td><span class="admin-tag admin-tag-danger">0</span></td>' +
-                    '<td><input type="number" min="1" value="1" class="admin-venta-num admin-hist-stock-input" ' +
-                    'data-row-key="' + esc(k) + '" aria-label="Nuevo stock"></td>' +
-                    '<td><button type="button" class="admin-btn admin-btn-primary admin-btn-compact admin-hist-guardar" data-row-key="' +
-                    esc(k) + '">Regresar a inventario</button></td></tr>';
-            }).join('');
+            var tbody = list.map(filaAgotadaHtml).join('');
 
             var tableHost = document.getElementById('adminAgotadosTable');
             if (tableHost) {
@@ -165,9 +147,28 @@
         function refrescarDesde(optsIn) {
             optsIn = optsIn || {};
             if (optsIn.filas) opts.filas = optsIn.filas;
+            if (optsIn.preferirFilasOpts != null) opts.preferirFilasOpts = optsIn.preferirFilasOpts;
+            if (optsIn.modoMayoreo != null) opts.modoMayoreo = optsIn.modoMayoreo;
+            if (optsIn.clienteMayoreo != null) opts.clienteMayoreo = optsIn.clienteMayoreo;
             baseAgotadas = null;
             reconstruirBase();
             pintarTbody();
+        }
+
+        function filaAgotadaHtml(r) {
+            var k = filaKey(r, opts);
+            var acciones =
+                '<td><input type="number" min="1" value="1" class="admin-venta-num admin-hist-stock-input" ' +
+                'data-row-key="' + esc(k) + '" aria-label="Nuevo stock"></td>' +
+                '<td><button type="button" class="admin-btn admin-btn-primary admin-btn-compact admin-hist-guardar" data-row-key="' +
+                esc(k) + '">Regresar a inventario</button></td>';
+            return '<tr class="admin-agotados-row" data-inv-row-key="' + esc(k) + '">' +
+                '<td class="admin-inv-thumb-cell">' + filaThumbHtml(r) + '</td>' +
+                '<td>#' + (r.ref || '—') + '</td><td>' + esc(r.nombre) + '</td>' +
+                '<td>' + esc(r.talla) + '</td><td>' + esc(r.color) + '</td>' +
+                '<td>' + esc(r.marca) + '</td>' +
+                '<td><span class="admin-tag admin-tag-danger">0</span></td>' +
+                acciones + '</tr>';
         }
 
         if (container._obebeAgotadosMounted) {
@@ -177,7 +178,8 @@
         container._obebeAgotadosMounted = true;
 
         container.innerHTML =
-            '<div class="admin-panel"><div class="admin-panel-head"><h3>Agotados</h3>' +
+            '<div class="admin-panel"><div class="admin-panel-head"><h3>' +
+            (opts.modoMayoreo ? 'Agotados (tu stock)' : 'Agotados') + '</h3>' +
             '<input type="search" class="admin-search" id="adminAgotadosSearch" placeholder="Buscar…"></div>' +
             '<p id="adminAgotadosCount" class="admin-muted-text" style="padding:0 1rem 0.5rem;margin:0"></p>' +
             '<div id="adminAgotadosTable"></div></div>' +
@@ -198,8 +200,9 @@
         function encontrarFilaPorKey(key) {
             key = String(key || '');
             var list = filasVivas();
-            var hit = list.find(function (f) { return filaKey(f) === key; });
+            var hit = list.find(function (f) { return filaKey(f, opts) === key; });
             if (hit) return hit;
+            if (opts.modoMayoreo) return null;
             var n = parseInt(key, 10);
             if (n && ObebeAdminData.buscarFilaInventarioPorSheetOId) {
                 hit = ObebeAdminData.buscarFilaInventarioPorSheetOId(n);
@@ -231,15 +234,19 @@
                     return;
                 }
                 var nom = hit.nombre || 'este artículo';
-                var refArt = ObebeAdminData.refDeFilaInventario
-                    ? ObebeAdminData.refDeFilaInventario(hit)
-                    : (hit.ref || 0);
-                var msg =
-                    '¿Seguro que quieres devolver «' + nom + '» al inventario con stock ' + stock + '?';
-                if (refArt && ObebeAdminData.refApartadaPedidoMayoreoSiHay &&
-                    ObebeAdminData.refApartadaPedidoMayoreoSiHay(refArt)) {
-                    msg += ' Este artículo (ref #' + refArt + ') está como «Sí hay» en un pedido mayoreo; ' +
-                        'el stock se conservará en inventario aunque siga apartado para mayoreo.';
+                var msg = opts.modoMayoreo
+                    ? '¿Devolver «' + nom + '» a tu inventario con ' + stock + ' unidad(es) disponible(s)? ' +
+                    'No modifica el stock de Obebe.'
+                    : '¿Seguro que quieres devolver «' + nom + '» al inventario con stock ' + stock + '?';
+                if (!opts.modoMayoreo) {
+                    var refArt = ObebeAdminData.refDeFilaInventario
+                        ? ObebeAdminData.refDeFilaInventario(hit)
+                        : (hit.ref || 0);
+                    if (refArt && ObebeAdminData.refApartadaPedidoMayoreoSiHay &&
+                        ObebeAdminData.refApartadaPedidoMayoreoSiHay(refArt)) {
+                        msg += ' Este artículo (ref #' + refArt + ') está como «Sí hay» en un pedido mayoreo; ' +
+                            'el stock se conservará en inventario aunque siga apartado para mayoreo.';
+                    }
                 }
                 ObebeAdminDialog.confirm({
                     title: '¿Regresar a inventario?',
@@ -252,6 +259,18 @@
                     var errEl = document.getElementById('adminAgotadosError');
                     if (errEl) errEl.textContent = '';
                     btn.disabled = true;
+                    if (opts.modoMayoreo) {
+                        if (!hit.mayoreoLineaId || !global.ObebeMayoreoStore ||
+                            !ObebeMayoreoStore.ajustarStockDisponibleLinea) {
+                            return { ok: false, error: 'No se pudo actualizar tu inventario.' };
+                        }
+                        var resMay = ObebeMayoreoStore.ajustarStockDisponibleLinea(hit.mayoreoLineaId, stock);
+                        if (resMay && resMay.ok && global.ObebeAdminMayoreoCloud &&
+                            ObebeAdminMayoreoCloud.pushMayoreoNatyNow) {
+                            try { ObebeAdminMayoreoCloud.pushMayoreoNatyNow(); } catch (ePush) { /* ignore */ }
+                        }
+                        return resMay;
+                    }
                     var idSheet = ObebeAdminData.filaSheetInventario
                         ? ObebeAdminData.filaSheetInventario(hit)
                         : (hit.filaSheet || hit.inventarioDbId);
@@ -287,9 +306,9 @@
         container._obebeAgotadosRefrescar = refrescarDesde;
     }
 
-    function refrescar(container) {
+    function refrescar(container, optsIn) {
         if (container && container._obebeAgotadosRefrescar) {
-            container._obebeAgotadosRefrescar();
+            container._obebeAgotadosRefrescar(optsIn || {});
         }
     }
 

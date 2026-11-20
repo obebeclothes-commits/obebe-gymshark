@@ -468,14 +468,23 @@
                 if (isNaN(r) || r < 1) return;
                 var k = String(r);
                 var prev = map[k];
+                var etiquetaCli = String(p.clienteNombre || p.clienteKey || 'Mayoreo').trim();
+                if (etiquetaCli) etiquetaCli = etiquetaCli.toUpperCase();
                 if (!prev) {
-                    map[k] = { disponibilidad: it.disponibilidad, enPedido: true };
+                    map[k] = {
+                        disponibilidad: it.disponibilidad,
+                        enPedido: true,
+                        clienteKey: p.clienteKey || '',
+                        clienteNombre: etiquetaCli,
+                        clientes: etiquetaCli ? [etiquetaCli] : []
+                    };
                     return;
                 }
                 if (it.disponibilidad === 'si') prev.disponibilidad = 'si';
                 else if (prev.disponibilidad !== 'si' && it.disponibilidad === 'no') {
                     prev.disponibilidad = 'no';
                 }
+                if (etiquetaCli && prev.clientes.indexOf(etiquetaCli) < 0) prev.clientes.push(etiquetaCli);
             });
         });
         return map;
@@ -491,6 +500,17 @@
         var r = parseInt(ref, 10);
         if (isNaN(r) || r < 1) return false;
         return refBloqueadaPedidoMayoreo(mapaRefsPedidosMayoreoActivos()[String(r)]);
+    }
+
+    function etiquetaClienteApartadoRef(ref) {
+        var r = parseInt(ref, 10);
+        if (isNaN(r) || r < 1) return '';
+        var info = mapaRefsPedidosMayoreoActivos()[String(r)];
+        if (!refBloqueadaPedidoMayoreo(info)) return '';
+        if (info.clientes && info.clientes.length) return info.clientes.join(', ');
+        if (info.clienteNombre) return info.clienteNombre;
+        if (info.clienteKey) return String(info.clienteKey).trim().toUpperCase();
+        return 'Mayoreo';
     }
 
     function refsApartadasMayoreo() {
@@ -884,14 +904,8 @@
         if (!global.ObebeAdminData || !global.ObebeAdminData.registrarVentasDesdePedidoMayoreo) {
             return Promise.resolve({ ok: false, error: 'Registro de ventas no disponible.' });
         }
-        var prepInv = Promise.resolve({ ok: true });
-        if (ObebeAdminData.asegurarInventarioPedidoMayoreoSiHay) {
-            prepInv = ObebeAdminData.asegurarInventarioPedidoMayoreoSiHay(p);
-        }
-        var ventaP = prepInv.then(function (prep) {
-            if (prep && prep.ok === false) return prep;
-            return ObebeAdminData.registrarVentasDesdePedidoMayoreo(findPedido(pedidoId).pedido || p);
-        }).then(function (res) {
+        /** No publicar Compras en inventario Obebe al confirmar venta (apartados / AA siguen solo en Compras). */
+        var ventaP = ObebeAdminData.registrarVentasDesdePedidoMayoreo(findPedido(pedidoId).pedido || p).then(function (res) {
             if (res && res.ok === false && !res.lineas) return res;
             if (!res || !res.ok) return res || { ok: false, error: 'Error al registrar venta.' };
             p.ventaRetailRegistradaEn = Date.now();
@@ -1969,6 +1983,7 @@
         deduplicarItemsPedido: deduplicarItemsPedido,
         unificarPedidosNaty2910EnCanon: unificarPedidosNaty2910EnCanon,
         refApartadaEnMayoreo: refApartadaEnMayoreo,
+        etiquetaClienteApartadoRef: etiquetaClienteApartadoRef,
         refsApartadasMayoreo: refsApartadasMayoreo,
         sincronizarFilasComprasConPedidos: sincronizarFilasComprasConPedidos,
         PEDIDO_NATY_LEGACY_ID: PEDIDO_NATY_LEGACY_ID

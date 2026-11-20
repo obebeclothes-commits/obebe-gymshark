@@ -3195,6 +3195,14 @@ body.admin-ped-filtros-open {
     box-shadow: inset 3px 0 0 var(--admin-accent);
 }
 
+.admin-compras-wrap tr.admin-compras-row--apartado-mayoreo td {
+    background: color-mix(in srgb, #c62828 16%, var(--admin-surface-2));
+}
+
+.admin-compras-wrap tr.admin-compras-row--apartado-mayoreo td:first-child {
+    box-shadow: inset 3px 0 0 #c62828;
+}
+
 .admin-compras-wrap tr.admin-compras-row--tienda td {
     background: color-mix(in srgb, #2d9f5a 10%, var(--admin-surface-2));
     opacity: 0.92;

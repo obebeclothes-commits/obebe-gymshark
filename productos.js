@@ -105,6 +105,11 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
                 renderizarImagenProducto(contenedor, contenedor.dataset.img1);
                 return;
             }
+            if (opciones.ocultarSiFalla) {
+                delete contenedor.dataset.resolvedSrc;
+                contenedor.remove();
+                return;
+            }
             delete contenedor.dataset.resolvedSrc;
             mostrarPlaceholderImagenProducto(contenedor, contenedor.dataset.alt || alt);
         });

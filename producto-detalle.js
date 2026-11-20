@@ -62,14 +62,22 @@ window.iniciarDetalleProducto = function() {
     var imagesBlock = document.createElement('div');
     imagesBlock.className = 'product-detail-images' + (tieneImagenes ? ' product-detail-show-full-image' : '');
 
-    function crearBloqueImagen(ruta) {
+    function crearBloqueImagen(ruta, opts) {
+        opts = opts || {};
         var wrap = document.createElement('div');
         wrap.className = imageWrapClass;
+        wrap.dataset.productId = String(producto.id || '');
+        wrap.dataset.productCategoria = producto.categoria || 'Hombre';
         if (ruta && typeof renderizarImagenProducto === 'function') {
             wrap.dataset.type = 'img';
             wrap.dataset.alt = producto.nombre;
             wrap.dataset.imagenSrc = ruta;
-            renderizarImagenProducto(wrap, ruta, { eager: true });
+            var renderOpts = { eager: true };
+            if (opts.segundaFoto) {
+                renderOpts.numeroImagen = 2;
+                renderOpts.ocultarSiFalla = true;
+            }
+            renderizarImagenProducto(wrap, ruta, renderOpts);
         } else {
             wrap.textContent = '🛍️';
         }
@@ -92,7 +100,7 @@ window.iniciarDetalleProducto = function() {
     }
 
     if (imagen1) imagesBlock.appendChild(crearBloqueImagen(imagen1));
-    if (imagen2) imagesBlock.appendChild(crearBloqueImagen(imagen2));
+    if (imagen2) imagesBlock.appendChild(crearBloqueImagen(imagen2, { segundaFoto: true }));
     if (!imagen1 && !imagen2) imagesBlock.appendChild(crearBloqueImagen(''));
     container.appendChild(imagesBlock);
 

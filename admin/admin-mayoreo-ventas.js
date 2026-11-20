@@ -428,31 +428,21 @@
         return { talla: talla, color: color, tipo: tipo, marca: marca, segmento: segmento };
     }
 
-    function precioOriginalSubtotalLineaVenta(l, clienteKey, filasInv) {
+    /** Precio de referencia = columna H del inventario Naty (no retail Obebe). */
+    function precioReferenciaUnitarioLineaVenta(l, clienteKey) {
+        if (!l || !l.lineaId) return 0;
+        var hitLinea = ObebeMayoreoStore.getLineasForCliente(clienteKey).find(function (x) {
+            return x.id === l.lineaId;
+        });
+        return hitLinea ? precioVentaNatyDesdeLinea(hitLinea) : 0;
+    }
+
+    function precioOriginalSubtotalLineaVenta(l, clienteKey) {
         var qty = l.cantidad || 1;
         var unit = parsePrecioMayoreo(l.precioUnitario);
         var sub = l.subtotal != null ? parsePrecioMayoreo(l.subtotal) : unit * qty;
-        var retailU = 0;
-        if (l.lineaId) {
-            var hitLinea = ObebeMayoreoStore.getLineasForCliente(clienteKey).find(function (x) {
-                return x.id === l.lineaId;
-            });
-            if (hitLinea) {
-                var row = ObebeMayoreoStore.lineaToMayoreoRow(hitLinea);
-                var hitObebe = buscarFilaObebeParaMayoreo(row, filasInv || []);
-                retailU = valorRetailInventarioObebe(hitObebe);
-                if (!retailU && hitLinea.precioRetail != null) {
-                    retailU = parsePrecioMayoreo(hitLinea.precioRetail);
-                }
-            }
-        }
-        if (retailU > 0 && Math.abs(retailU * qty - sub) >= 0.01) return retailU * qty;
-        var origU = l.precioOriginal != null ? parsePrecioMayoreo(l.precioOriginal) : 0;
-        if (origU > 0) {
-            var origSub = origU * qty;
-            if (Math.abs(origSub - sub) >= 0.01) return origSub;
-        }
-        if (origU > 0) return origU * qty;
+        var refU = precioReferenciaUnitarioLineaVenta(l, clienteKey);
+        if (refU > 0 && Math.abs(refU * qty - sub) >= 0.01) return refU * qty;
         return 0;
     }
 
@@ -677,7 +667,7 @@
                 var cobN = parseFloat(precioBtn.getAttribute('data-precio'));
                 ObebeAdminDialog.alert({
                     title: 'Precio de la venta',
-                    message: 'Precio original: ' + fmtMoney(origN) +
+                    message: 'Precio de referencia: ' + fmtMoney(origN) +
                         '\nPrecio registrado: ' + fmtMoney(cobN),
                     confirmText: 'Entendido'
                 });
@@ -849,17 +839,16 @@
             '</div></div></td>';
     }
 
-    function htmlPrecioLineaHistorialMayoreo(l) {
+    function htmlPrecioLineaHistorialMayoreo(l, clienteKey) {
         var qty = l.cantidad || 1;
         var unit = l.precioUnitario || 0;
         var sub = l.subtotal != null ? l.subtotal : unit * qty;
-        var origU = l.precioOriginal != null ? parseFloat(l.precioOriginal) : unit;
-        if (isNaN(origU)) origU = unit;
-        var origSub = origU * qty;
-        var dif = origSub > 0 && Math.abs(origSub - sub) >= 0.5;
+        var refU = precioReferenciaUnitarioLineaVenta(l, clienteKey);
+        var origSub = refU * qty;
+        var dif = refU > 0 && Math.abs(origSub - sub) >= 0.01;
         if (!dif) return '(' + fmtMoney(sub) + ')';
         return '(<button type="button" class="admin-venta-precio-btn" data-precio="' + esc(String(sub)) +
-            '" data-orig="' + esc(String(origSub)) + '" title="Ver precio original">' + fmtMoney(sub) + '</button>)';
+            '" data-orig="' + esc(String(origSub)) + '" title="Ver precio de referencia">' + fmtMoney(sub) + '</button>)';
     }
 
     function panelHistorial(ventas, clienteKey, filasInv, titulo, sinLimite, soloTabla) {
@@ -867,7 +856,7 @@
         var lista = sinLimite ? (ventas || []) : (ventas || []).slice(0, 50);
         var rows = lista.map(function (v) {
             var arts = (v.lineas || []).map(function (l) {
-                return esc(l.nombre) + ' ×' + l.cantidad + ' ' + htmlPrecioLineaHistorialMayoreo(l);
+                return esc(l.nombre) + ' ×' + l.cantidad + ' ' + htmlPrecioLineaHistorialMayoreo(l, clienteKey);
             }).join('<br>');
             var fotos = stripFotosHistorial(v, clienteKey, filasInv);
             var fechaVal = esc(v.fechaIso || '');

@@ -585,11 +585,19 @@ def obtener_valor(fila: list[str], indice: int) -> str:
 
 def resolver_imagenes(carpeta: Path, carpeta_rel: str, numero_imagen: int) -> tuple[str, str]:
     extensiones = (".avif", ".webp", ".png", ".jpg", ".jpeg")
+    raiz = carpeta.parent
+    otra_rel = "mujer" if carpeta_rel == "hombre" else "hombre"
+    otra = raiz / otra_rel
 
     def buscar(sufijo: str) -> str:
         for ext in extensiones:
             if (carpeta / f"{numero_imagen}{sufijo}{ext}").exists():
                 return f"{carpeta_rel}/{numero_imagen}{sufijo}{ext}"
+        if otra.is_dir():
+            for ext in extensiones:
+                alt = otra / f"{numero_imagen}{sufijo}{ext}"
+                if alt.is_file() and alt.stat().st_size > 0:
+                    return f"{otra_rel}/{numero_imagen}{sufijo}{ext}"
         return ""
 
     img1 = buscar("")

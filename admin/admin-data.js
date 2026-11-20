@@ -3562,8 +3562,8 @@
     }
 
     /**
-     * Artículos early / Compras marcados Sí hay: publicar en inventario Obebe al enviar respuesta,
-     * para que Ventas y el descuento de stock encuentren la fila.
+     * Publicar en inventario Obebe filas Compras sin apartado mayoreo (sin AA).
+     * No se usa al confirmar venta en pedidos mayoreo.
      */
     function asegurarInventarioPedidoMayoreoSiHay(pedido) {
         pedido = pedido || {};
@@ -3573,6 +3573,7 @@
         if (!Store || !Store.getAll) {
             return Promise.resolve({ ok: true, publicados: 0, omitido: true });
         }
+        var Pedidos = global.ObebeMayoreoPedidosStore;
         var idxRef = idxInventario().imagen != null ? idxInventario().imagen : 0;
         var refsNec = {};
         items.forEach(function (it) {
@@ -3587,6 +3588,8 @@
             if (f.enTienda) return;
             var r = parseInt(f.celdas && f.celdas[idxRef], 10);
             if (isNaN(r) || !refsNec[String(r)]) return;
+            if (f.earlyAccessSuspendidoPorPedido || f.mayoreoPublicarPendiente) return;
+            if (Pedidos && Pedidos.refApartadaEnMayoreo && Pedidos.refApartadaEnMayoreo(r)) return;
             if (!f.mayoreoPublicarPendiente && !f.earlyAccess && !f.earlyAccessSuspendidoPorPedido) {
                 var ya = estado.filas.some(function (inv) {
                     return inv.ref === r && inv.filaSheet > 0;

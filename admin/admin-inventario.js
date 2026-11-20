@@ -217,25 +217,36 @@
         return '';
     }
 
+    function optsAgotadosMount() {
+        var esMayoreo = !!state.mayoreoInventario;
+        var filasAgot = esMayoreo
+            ? (state.filas || [])
+            : ((ObebeAdminData.getEstado && ObebeAdminData.getEstado().filas)
+                ? ObebeAdminData.getEstado().filas
+                : state.filas);
+        return {
+            preferirFilasOpts: esMayoreo,
+            modoMayoreo: esMayoreo,
+            clienteMayoreo: esMayoreo && state.mayoreoInventario ? state.mayoreoInventario.clienteKey : '',
+            filas: filtrarFilasInv(filasAgot, '', optsFiltro())
+        };
+    }
+
     function mountSeccionAgotados(rootContainer, onReload) {
         var el = rootContainer.querySelector('#adminInvAgotadosMount');
         if (!el || !global.ObebeAdminAgotados) return;
-        var filasAgot = (ObebeAdminData.getEstado && ObebeAdminData.getEstado().filas)
-            ? ObebeAdminData.getEstado().filas
-            : state.filas;
-        global.ObebeAdminAgotados.mount(el, {
-            filas: filtrarFilasInv(filasAgot, '', optsFiltro()),
-            onStockRestaurado: function () {
-                sincronizarStateFilasDesdeEstadoGlobal();
-                invalidarCacheFilasVisibles();
-                refreshGrid(rootContainer, onReload);
-                if (global.ObebeAdminAgotados.refrescar) {
-                    global.ObebeAdminAgotados.refrescar(el);
-                }
-                if (onReload) return onReload();
-                return Promise.resolve();
+        var mountOpts = optsAgotadosMount();
+        mountOpts.onStockRestaurado = function () {
+            if (!state.mayoreoInventario) sincronizarStateFilasDesdeEstadoGlobal();
+            invalidarCacheFilasVisibles();
+            refreshGrid(rootContainer, onReload);
+            if (global.ObebeAdminAgotados.refrescar) {
+                global.ObebeAdminAgotados.refrescar(el, optsAgotadosMount());
             }
-        });
+            if (onReload) return onReload();
+            return Promise.resolve();
+        };
+        global.ObebeAdminAgotados.mount(el, mountOpts);
     }
 
     function keyFila(f) {

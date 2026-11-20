@@ -381,10 +381,31 @@
         }
         if (patch.imagenUrl != null) l.imagenUrl = patch.imagenUrl;
         if (patch.fechaStockIso != null) l.fechaStockIso = patch.fechaStockIso;
+        if (patch.cantidad != null) {
+            var cq = parseInt(patch.cantidad, 10);
+            if (!isNaN(cq) && cq >= 0) l.cantidad = cq;
+        }
         recalcDisponible(l);
         lista[idx] = l;
         if (!setLineas(lista)) return null;
         return l;
+    }
+
+    /** Ajusta stock disponible sin tocar ventas ya registradas (cantidad = vendido + nuevo disponible). */
+    function ajustarStockDisponibleLinea(id, stockDisponible) {
+        var lista = getLineas();
+        var idx = lista.findIndex(function (l) { return l.id === id; });
+        if (idx < 0) return { ok: false, error: 'Línea no encontrada.' };
+        var l = lista[idx];
+        recalcDisponible(l);
+        var vendido = l.cantidadVendida || 0;
+        var disp = parseInt(stockDisponible, 10);
+        if (isNaN(disp) || disp < 1) return { ok: false, error: 'El stock debe ser al menos 1.' };
+        l.cantidad = vendido + disp;
+        recalcDisponible(l);
+        lista[idx] = l;
+        if (!setLineas(lista)) return { ok: false, error: 'No se pudo guardar en el navegador.' };
+        return { ok: true, linea: l };
     }
 
     function lineaToMayoreoRow(l) {
@@ -892,6 +913,7 @@
         getLineasForCliente: getLineasForCliente,
         getAllLineasEnriched: getAllLineasEnriched,
         updateLinea: updateLinea,
+        ajustarStockDisponibleLinea: ajustarStockDisponibleLinea,
         lineaToMayoreoRow: lineaToMayoreoRow,
         filtrarLineasStore: filtrarLineasStore,
         registrarVenta: registrarVenta,

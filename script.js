@@ -29,18 +29,13 @@ function conVersionImagen(ruta) {
     return ruta + (ruta.indexOf('?') >= 0 ? '&' : '?') + 'v=' + VERSION_IMAGENES_PRODUCTO;
 }
 
-/** Usa rutas del catálogo o convención hombre|mujer/{id}.webp solo para la foto principal. */
+/** Foto 1: catálogo o convención hombre|mujer/{id}.webp. Foto 2: solo si está en catálogo (sin inventar .1.webp). */
 function obtenerRutaImagenProducto(producto, numero) {
     var guardada = numero === 2 ? (producto.imagen2 || '') : (producto.imagen1 || '');
     guardada = String(guardada).trim();
     if (guardada && esRutaImagen(guardada)) return conVersionImagen(guardada);
-    if (!producto || !producto.id) return '';
-    var carpeta = (producto.categoria === 'Mujer') ? 'mujer' : 'hombre';
-    if (numero === 2) {
-        return conVersionImagen(carpeta + '/' + producto.id + '.1.webp');
-    }
-    if (numero !== 1) return '';
-    return conVersionImagen(carpeta + '/' + producto.id + '.webp');
+    if (numero === 2 || !producto || !producto.id) return '';
+    return conVersionImagen(((producto.categoria === 'Mujer') ? 'mujer' : 'hombre') + '/' + producto.id + '.webp');
 }
 
 function mostrarPlaceholderImagenProducto(contenedor, etiqueta) {
@@ -117,6 +112,11 @@ function renderizarImagenProducto(contenedor, fuente, opciones) {
             }
             if (opciones.noOcultarSiFalla && contenedor.dataset.img1) {
                 renderizarImagenProducto(contenedor, contenedor.dataset.img1);
+                return;
+            }
+            if (opciones.ocultarSiFalla) {
+                delete contenedor.dataset.resolvedSrc;
+                contenedor.remove();
                 return;
             }
             delete contenedor.dataset.resolvedSrc;
