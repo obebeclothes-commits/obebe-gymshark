@@ -57,7 +57,7 @@
     }
 
     function cfg() {
-        return global.OBEBE_ADMIN_CONFIG || { appsScriptUrl: '', inventarioSecret: '' };
+        return global.OBEBE_ADMIN_CONFIG || { appsScriptUrl: '' };
     }
 
     function esc(s) {

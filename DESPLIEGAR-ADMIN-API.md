@@ -1,53 +1,30 @@
-# Desplegar admin-api (cotizador y módulos en nube)
+# Desplegar admin-api
 
-El mensaje **«La API no acepta el módulo cotizador»** significa que en Supabase sigue la **versión vieja** de la Edge Function. El código nuevo ya está en `scripts/supabase/functions/admin-api/index.ts`; hay que **subirlo**.
+Código canónico: `supabase/functions/admin-api/index.ts`.
 
-## Requisitos
+## Auth (Etapa A)
 
-1. Cuenta en [Supabase](https://supabase.com/dashboard) con el proyecto **yueajorzawaanubgekpm**.
-2. **Access token** del CLI: Supabase → **Account** → **Access Tokens** → crear token.
+- El panel inicia sesión con **Supabase Auth** (correo + contraseña).
+- Las acciones administrativas exigen JWT + fila activa en `admin_profiles`.
+- `getCotizadorConfig` sigue siendo **público** (solo lectura de la fórmula del cotizador).
+- **No** uses `ADMIN_SECRET` en el body ni en archivos JS. Si el secret existe en el proyecto, elimínalo.
 
-## Opción A — PowerShell (recomendada)
+`verify_jwt = false` en el gateway es intencional (endpoint público mixto). La autorización real está dentro de la función.
 
-En PowerShell, en la carpeta del proyecto:
-
-```powershell
-cd "C:\Users\Dr. Coito\Desktop\Obebe Gym Shark"
-$env:SUPABASE_ACCESS_TOKEN = "TU_TOKEN_AQUI"
-.\deploy-admin-api.ps1
-```
-
-O inicia sesión una vez:
-
-```powershell
-npx supabase@latest login
-.\deploy-admin-api.ps1
-```
-
-## Opción B — Comandos manuales
+## Despliegue
 
 ```powershell
 cd "C:\Users\Dr. Coito\Desktop\Obebe Gym Shark"
 npx supabase@latest login
-Copy-Item scripts\supabase\functions\admin-api\index.ts supabase\functions\admin-api\index.ts -Force
+npx supabase@latest secrets set SITE_URL=https://obebe.store --project-ref yueajorzawaanubgekpm
 npx supabase@latest functions deploy admin-api --no-verify-jwt --project-ref yueajorzawaanubgekpm
 ```
 
-## Secretos (solo si aún no los configuraste)
+O: `.\deploy-admin-api.ps1`
 
-En Supabase → **Project Settings** → **Edge Functions** → secrets, o:
+## Antes de desplegar (Etapa A)
 
-```powershell
-npx supabase@latest secrets set ADMIN_SECRET=OBebeClotes.1 --project-ref yueajorzawaanubgekpm
-```
-
-(La función usa también las variables de entorno del proyecto que ya vienen con el service role.)
-
-## Comprobar que quedó bien
-
-1. Admin **Obebe** → Ventas → **Cotizador** → **Guardar** (debe decir sincronizado, sin error de módulo).
-2. **Abrir página web** del cotizador y probar un monto USD (los precios deben coincidir con el probador del admin).
-
-## Tabla en base de datos
-
-Si guardar falla por tabla inexistente, en Supabase → **SQL Editor** ejecuta `scripts/supabase/schema.sql` (al menos la parte de `admin_modulos_blob`).
+1. Ejecutar `scripts/supabase/diagnostico-esquema.sql` y revisar.
+2. Ejecutar `scripts/supabase/etapa-a-seguridad.sql`.
+3. Crear usuarios Auth e insertar `admin_profiles`.
+4. Ver checklist completa: `scripts/supabase/ETAPA-A-ACCIONES-MANUALES.md`.

@@ -1,9 +1,12 @@
 /**
  * Despliegue (CLI Supabase):
- *   supabase link --project-ref TU_REF
- *   supabase secrets set ADMIN_SECRET=OBebeClotes.1
+ *   supabase link --project-ref yueajorzawaanubgekpm
  *   supabase functions deploy admin-api --no-verify-jwt
- * URL: https://TU_REF.supabase.co/functions/v1/admin-api
+ *
+ * Auth: JWT de Supabase Auth + fila activa en public.admin_profiles.
+ * verify_jwt=false en el gateway porque getCotizadorConfig es público;
+ * las demás acciones validan el JWT dentro de esta función.
+ * NUNCA hardcodear secretos ni contraseñas aquí.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
@@ -14,21 +17,53 @@ const IDX_INV_STOCK = 2;
 const IDX_INV_TALLA = 3;
 const IDX_INV_COLOR = 4;
 
+type AdminRole = "admin" | "mayoreo_cliente";
+
+type AdminProfile = {
+  user_id: string;
+  email: string;
+  display_name: string;
+  role: AdminRole;
+  cliente_mayoreo: string;
+  active: boolean;
+};
+
+type AuthOk = {
+  userId: string;
+  email: string;
+  profile: AdminProfile;
+};
+
 function norm(s: unknown) {
   return String(s ?? "").trim().toLowerCase();
 }
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+function allowedOrigins(): string[] {
+  const fromEnv = String(Deno.env.get("SITE_URL") || "")
+    .split(",")
+    .map((s) => s.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+  const defaults = ["https://obebe.store", "https://www.obebe.store"];
+  return Array.from(new Set([...defaults, ...fromEnv]));
+}
 
-function json(data: unknown, status = 200) {
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") || "";
+  const allow = allowedOrigins();
+  const ok = allow.includes(origin) ? origin : allow[0];
+  return {
+    "Access-Control-Allow-Origin": ok,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
+
+function json(req: Request, data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...cors, "Content-Type": "application/json" },
+    headers: { ...corsHeaders(req), "Content-Type": "application/json" },
   });
 }
 
@@ -40,18 +75,94 @@ function padCeldas(arr: unknown[]): string[] {
   return out;
 }
 
-function checkAuth(body: Record<string, unknown>) {
-  const secret = Deno.env.get("ADMIN_SECRET") || "OBebeClotes.1";
-  if (!body || body.secret !== secret) {
-    return { ok: false, error: "No autorizado" };
-  }
-  return null;
-}
-
 function adminClient() {
   const url = Deno.env.get("SUPABASE_URL")!;
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   return createClient(url, key);
+}
+
+function extractBearer(req: Request): string | null {
+  const h = req.headers.get("Authorization") || req.headers.get("authorization") || "";
+  const m = h.match(/^Bearer\s+(.+)$/i);
+  const token = m ? m[1].trim() : "";
+  if (!token) return null;
+  const anon = Deno.env.get("SUPABASE_ANON_KEY") || "";
+  if (anon && token === anon) return null;
+  return token;
+}
+
+async function requireAuth(
+  req: Request,
+  roles: AdminRole[] = ["admin", "mayoreo_cliente"],
+): Promise<AuthOk | { ok: false; error: string; status: number }> {
+  const jwt = extractBearer(req);
+  if (!jwt) {
+    return { ok: false, error: "No autorizado: falta sesión", status: 401 };
+  }
+  const sb = adminClient();
+  const { data: userData, error: userErr } = await sb.auth.getUser(jwt);
+  if (userErr || !userData?.user) {
+    return { ok: false, error: "No autorizado: sesión inválida", status: 401 };
+  }
+  const user = userData.user;
+  const { data: profile, error: profErr } = await sb
+    .from("admin_profiles")
+    .select("user_id, email, display_name, role, cliente_mayoreo, active")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (profErr) throw profErr;
+  if (!profile || profile.active !== true) {
+    return { ok: false, error: "No autorizado: sin perfil administrativo", status: 403 };
+  }
+  const role = profile.role as AdminRole;
+  if (!roles.includes(role)) {
+    return { ok: false, error: "No autorizado: rol insuficiente", status: 403 };
+  }
+  return {
+    userId: user.id,
+    email: user.email || profile.email,
+    profile: profile as AdminProfile,
+  };
+}
+
+function profileToSessionUser(profile: AdminProfile) {
+  return {
+    usuario: profile.display_name,
+    nombre: profile.display_name,
+    rol: profile.role === "admin" ? "Administrador" : "Mayoreo",
+    acceso: profile.role === "admin" ? "admin" : "mayoreo_cliente",
+    clienteMayoreo: profile.cliente_mayoreo || "",
+    email: profile.email,
+  };
+}
+
+async function getMe(auth: AuthOk) {
+  return { ok: true, user: profileToSessionUser(auth.profile) };
+}
+
+async function getInventario() {
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("inventario_filas")
+    .select("id, celdas, legacy_sheet_row")
+    .order("id", { ascending: true })
+    .limit(5000);
+  if (error) throw error;
+  return { ok: true, rows: data || [] };
+}
+
+/** Acciones permitidas para mayoreo_cliente (el resto exige admin). */
+const MAYOREO_ACTIONS = new Set([
+  "ping",
+  "getMe",
+  "getInventario",
+  "getAdminModuloBlob",
+  "setAdminModuloBlob",
+]);
+
+function actionAllowedForRole(action: string, role: AdminRole): boolean {
+  if (role === "admin") return true;
+  return MAYOREO_ACTIONS.has(action);
 }
 
 async function getVentas() {
@@ -985,89 +1096,120 @@ async function getCotizadorConfig() {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: cors });
+    return new Response("ok", { headers: corsHeaders(req) });
   }
   try {
-    const body = await req.json();
-    const action = body.action as string;
-
-    // Público: cotizador de la tienda
-    if (action === "getCotizadorConfig") {
-      return json(await getCotizadorConfig());
+    if (req.method !== "POST") {
+      return json(req, { ok: false, error: "Método no permitido" }, 405);
     }
 
-    const auth = checkAuth(body);
-    if (auth) return json(auth, 401);
+    const body = (await req.json()) as Record<string, unknown>;
+    const action = String(body.action || "");
+
+    // Público justificado: la tienda necesita la fórmula del cotizador.
+    // Solo lectura; no inventarios, ventas ni secretos.
+    if (action === "getCotizadorConfig") {
+      return json(req, await getCotizadorConfig());
+    }
+
+    const auth = await requireAuth(req);
+    if ("ok" in auth && auth.ok === false) {
+      return json(req, { ok: false, error: auth.error }, auth.status);
+    }
+    const session = auth as AuthOk;
+
+    if (!actionAllowedForRole(action, session.profile.role)) {
+      return json(req, { ok: false, error: "No autorizado: rol insuficiente" }, 403);
+    }
+
+    // mayoreo_cliente: solo blob de mayoreo_naty
+    if (
+      session.profile.role === "mayoreo_cliente" &&
+      (action === "getAdminModuloBlob" || action === "setAdminModuloBlob")
+    ) {
+      const key = String(body.moduleKey || body.module_key || "");
+      if (key !== "mayoreo_naty") {
+        return json(req, { ok: false, error: "No autorizado para este módulo" }, 403);
+      }
+    }
 
     if (action === "ping") {
-      return json({ ok: true, message: "admin-api Supabase OK", apiVersion: 4 });
+      return json(req, {
+        ok: true,
+        message: "admin-api Supabase OK",
+        apiVersion: 5,
+        role: session.profile.role,
+      });
     }
+    if (action === "getMe") return json(req, await getMe(session));
+    if (action === "getInventario") return json(req, await getInventario());
 
-    if (action === "getVentas") return json(await getVentas());
-    if (action === "getGastos") return json(await getGastos());
-    if (action === "createGasto") return json(await createGasto(body));
-    if (action === "updateGasto") return json(await updateGasto(body));
-    if (action === "deleteGasto") return json(await deleteGasto(body));
+    if (action === "getVentas") return json(req, await getVentas());
+    if (action === "getGastos") return json(req, await getGastos());
+    if (action === "createGasto") return json(req, await createGasto(body));
+    if (action === "updateGasto") return json(req, await updateGasto(body));
+    if (action === "deleteGasto") return json(req, await deleteGasto(body));
     if (action === "limpiarVentasNegativasMigrarGastos") {
-      return json(await limpiarVentasNegativasMigrarGastos());
+      return json(req, await limpiarVentasNegativasMigrarGastos());
     }
-    if (action === "getDbStats") return json(await getDbStats());
+    if (action === "getDbStats") return json(req, await getDbStats());
     if (action === "getAdminModuloBlob") {
-      return json(await getAdminModuloBlob(body));
+      return json(req, await getAdminModuloBlob(body));
     }
     if (action === "setAdminModuloBlob") {
-      return json(await setAdminModuloBlob(body));
+      return json(req, await setAdminModuloBlob(body));
     }
     if (action === "importFromGoogleRetail") {
-      return json(await importFromGoogleRetail());
+      return json(req, await importFromGoogleRetail());
     }
     if (action === "importVentasFromGoogle") {
-      return json(await importVentasFromGoogle());
+      return json(req, await importVentasFromGoogle());
     }
 
     if (action === "registrarVentaRetail") {
-      return json(await registrarVentaRetail(body));
+      return json(req, await registrarVentaRetail(body));
     }
     if (action === "updateVentaLine") {
-      return json(await updateVentaLine(body));
+      return json(req, await updateVentaLine(body));
     }
     if (action === "deleteVentaLine") {
-      return json(await deleteVentaLine(body));
+      return json(req, await deleteVentaLine(body));
     }
     if (action === "createVentaLine") {
-      return json(await createVentaLine(body));
+      return json(req, await createVentaLine(body));
     }
     if (action === "actualizarStock") {
       return json(
-        await actualizarStock(body.filaSheet, body.stock, body.inventarioDbId)
+        req,
+        await actualizarStock(body.filaSheet, body.stock, body.inventarioDbId),
       );
     }
     if (action === "updateCells") {
-      return json(await updateCells(body.updates || []));
+      return json(req, await updateCells(body.updates || []));
     }
     if (action === "appendRow") {
-      return json(await appendRow(body.celdas || []));
+      return json(req, await appendRow(body.celdas || []));
     }
     if (action === "deleteRows") {
-      return json(await deleteRows(body.filas || []));
+      return json(req, await deleteRows(body.filas || []));
     }
     if (action === "importInventarioReplace") {
-      return json(await importInventarioReplace(body.filas || []));
+      return json(req, await importInventarioReplace(body.filas || []));
     }
     if (action === "importVentasReplace") {
-      return json(await importVentasReplace(body.ventas || []));
+      return json(req, await importVentasReplace(body.ventas || []));
     }
     if (action === "importInventarioAppend") {
-      return json(await importInventarioAppend(body.filas || []));
+      return json(req, await importInventarioAppend(body.filas || []));
     }
     if (action === "importVentasAppend") {
-      return json(await importVentasAppend(body.ventas || []));
+      return json(req, await importVentasAppend(body.ventas || []));
     }
 
-    return json({ ok: false, error: "Acción desconocida" }, 400);
+    return json(req, { ok: false, error: "Acción desconocida" }, 400);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[admin-api]", msg, err);
-    return json({ ok: false, error: msg }, 500);
+    return json(req, { ok: false, error: msg }, 500);
   }
 });

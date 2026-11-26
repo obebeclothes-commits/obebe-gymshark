@@ -1498,19 +1498,26 @@
         form.addEventListener('submit', function (e) {
             e.preventDefault();
             err.textContent = '';
-            var usuario = form.usuario.value;
+            var correo = form.usuario.value;
             var pass = form.password.value;
-            var res = ObebeAdminAuth.iniciarSesion(usuario, pass);
-            if (!res.ok) {
-                err.textContent = res.error;
-                return;
-            }
-            try {
-                mostrarApp(res.user);
-            } catch (ex) {
-                err.textContent = 'Error al abrir el panel. Recarga la página (Ctrl+F5).';
-                console.error('[admin-app] mostrarApp', ex);
-            }
+            var btn = form.querySelector('button[type="submit"]');
+            if (btn) btn.disabled = true;
+            ObebeAdminAuth.iniciarSesion(correo, pass).then(function (res) {
+                if (btn) btn.disabled = false;
+                if (!res.ok) {
+                    err.textContent = res.error || 'No se pudo iniciar sesión.';
+                    return;
+                }
+                try {
+                    mostrarApp(res.user);
+                } catch (ex) {
+                    err.textContent = 'Error al abrir el panel. Recarga la página (Ctrl+F5).';
+                    console.error('[admin-app] mostrarApp', ex);
+                }
+            }).catch(function (ex) {
+                if (btn) btn.disabled = false;
+                err.textContent = (ex && ex.message) || 'Error de red al iniciar sesión.';
+            });
         });
     }
 
@@ -1523,8 +1530,9 @@
             variant: 'warn'
         }).then(function (ok) {
             if (!ok) return;
-            ObebeAdminAuth.cerrarSesion();
-            mostrarLogin();
+            Promise.resolve(ObebeAdminAuth.cerrarSesion()).finally(function () {
+                mostrarLogin();
+            });
         });
     }
 

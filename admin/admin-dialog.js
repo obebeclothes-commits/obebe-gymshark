@@ -174,13 +174,25 @@
                 var errEl = document.getElementById('adminDialogPasswordError');
                 var input = document.getElementById('adminDialogPasswordInput');
                 var pw = input ? input.value : '';
-                if (!global.ObebeAdminAuth || !ObebeAdminAuth.verificarPasswordObebe(pw)) {
-                    if (errEl) errEl.textContent = 'Contraseña incorrecta.';
-                    if (input) input.focus();
+                if (!global.ObebeAdminAuth || typeof ObebeAdminAuth.verificarPasswordActual !== 'function') {
+                    if (errEl) errEl.textContent = 'No se pudo verificar la sesión.';
                     return;
                 }
-                finishDialog();
-                resolve(true);
+                var btnOk = document.getElementById('adminDialogPasswordOk');
+                if (btnOk) btnOk.disabled = true;
+                ObebeAdminAuth.verificarPasswordActual(pw).then(function (ok) {
+                    if (btnOk) btnOk.disabled = false;
+                    if (!ok) {
+                        if (errEl) errEl.textContent = 'Contraseña incorrecta.';
+                        if (input) input.focus();
+                        return;
+                    }
+                    finishDialog();
+                    resolve(true);
+                }).catch(function () {
+                    if (btnOk) btnOk.disabled = false;
+                    if (errEl) errEl.textContent = 'No se pudo verificar la contraseña.';
+                });
             }
             pendingResolve = function (confirmed) {
                 if (confirmed) onConfirm();

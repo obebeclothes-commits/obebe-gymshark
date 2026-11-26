@@ -1,10 +1,10 @@
-﻿# Sincroniza admin-api desde scripts/supabase y lo sube a Supabase.
+# Despliega admin-api desde supabase/functions (canónico) y sincroniza a scripts/supabase.
 # Necesitas: supabase login (o variable SUPABASE_ACCESS_TOKEN)
 $ErrorActionPreference = "Stop"
 $ProjectRef = "yueajorzawaanubgekpm"
 $Root = $PSScriptRoot
-$Src = Join-Path $Root "scripts\supabase\functions\admin-api\index.ts"
-$DstDir = Join-Path $Root "supabase\functions\admin-api"
+$Src = Join-Path $Root "supabase\functions\admin-api\index.ts"
+$DstDir = Join-Path $Root "scripts\supabase\functions\admin-api"
 $Dst = Join-Path $DstDir "index.ts"
 
 if (-not (Test-Path $Src)) {

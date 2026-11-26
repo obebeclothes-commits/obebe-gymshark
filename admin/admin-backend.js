@@ -31,10 +31,6 @@
         return String(cfg().adminApiUrl || '').trim();
     }
 
-    function adminSecret() {
-        return cfg().inventarioSecret || cfg().adminApiSecret || 'OBebeClotes.1';
-    }
-
     function supabaseListoAdmin() {
         return usarSupabaseAdmin() && supabaseUrl() && supabaseAnonKey() && adminApiUrl();
     }
@@ -48,16 +44,33 @@
         };
     }
 
+    function resolveAccessToken() {
+        if (global.ObebeAdminAuth && typeof global.ObebeAdminAuth.accessToken === 'function') {
+            return global.ObebeAdminAuth.accessToken();
+        }
+        return Promise.resolve(null);
+    }
+
     function callAdminApi(action, payload) {
         if (!adminApiUrl()) {
             return Promise.reject(new Error('Falta adminApiUrl en admin-config.js (Edge Function admin-api).'));
         }
-        var body = Object.assign({ action: action, secret: adminSecret() }, payload || {});
-        return fetch(adminApiUrl(), {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + supabaseAnonKey() },
-            body: JSON.stringify(body)
+        var body = Object.assign({ action: action }, payload || {});
+        delete body.secret;
+        return resolveAccessToken().then(function (token) {
+            if (!token) {
+                throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+            }
+            return fetch(adminApiUrl(), {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                    apikey: supabaseAnonKey(),
+                    Authorization: 'Bearer ' + token
+                },
+                body: JSON.stringify(body)
+            });
         }).then(function (res) {
             return res.text().then(function (text) {
                 var data;
@@ -77,32 +90,21 @@
         });
     }
 
+    /** Inventario completo (con costos): solo vía admin-api con JWT de administrador. */
     function fetchInventarioRaw(intento) {
         intento = intento || 0;
-        if (!supabaseUrl() || !supabaseAnonKey()) {
-            return Promise.reject(new Error('Faltan supabaseUrl o supabaseAnonKey.'));
-        }
-        var url = supabaseUrl().replace(/\/$/, '') +
-            '/rest/v1/inventario_filas?select=id,celdas,legacy_sheet_row&order=id.asc&limit=5000';
-        return fetch(url, { cache: 'no-store', headers: headersAnon() })
-            .then(function (res) {
-                if (!res.ok) {
-                    var err = new Error('Inventario Supabase HTTP ' + res.status);
-                    err.httpStatus = res.status;
-                    throw err;
-                }
-                return res.json();
-            })
-            .catch(function (err) {
-                if (intento < 2 && (!err.httpStatus || err.httpStatus >= 500)) {
-                    return new Promise(function (resolve) {
-                        setTimeout(resolve, 800 * (intento + 1));
-                    }).then(function () {
-                        return fetchInventarioRaw(intento + 1);
-                    });
-                }
-                throw err;
-            });
+        return callAdminApi('getInventario', {}).then(function (res) {
+            return res.rows || [];
+        }).catch(function (err) {
+            if (intento < 2) {
+                return new Promise(function (resolve) {
+                    setTimeout(resolve, 800 * (intento + 1));
+                }).then(function () {
+                    return fetchInventarioRaw(intento + 1);
+                });
+            }
+            throw err;
+        });
     }
 
     function fetchVentasDesdeApi() {

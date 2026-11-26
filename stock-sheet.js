@@ -1019,7 +1019,8 @@
         if (!url || !key) {
             return Promise.reject(new Error('Faltan supabaseUrl o supabaseAnonKey en obebe-data-config.js'));
         }
-        var api = url + '/rest/v1/inventario_filas?select=celdas&order=id.asc&limit=5000';
+        // Vista pública sin costos/márgenes (Etapa A). Incluye id para el carrito (Etapa C).
+        var api = url + '/rest/v1/inventario_publico?select=id,celdas&order=id.asc&limit=5000';
         return fetchConTimeout(api, {
             cache: 'no-store',
             headers: { apikey: key, Authorization: 'Bearer ' + key }

@@ -2317,7 +2317,7 @@
     }
 
     function cfgAdmin() {
-        return global.OBEBE_ADMIN_CONFIG || { appsScriptUrl: '', inventarioSecret: '', permitirEscrituraLocal: true };
+        return global.OBEBE_ADMIN_CONFIG || { appsScriptUrl: '', permitirEscrituraLocal: true };
     }
 
     function appsScriptConfigurado() {
@@ -2570,13 +2570,9 @@
         if (!c.appsScriptUrl) {
             return Promise.reject(new Error('Falta appsScriptUrl en admin-config.js (Web App Apps Script).'));
         }
-        var body = Object.assign({ action: action, secret: c.inventarioSecret || '' }, payload || {});
-        return envolver(fetch(c.appsScriptUrl, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(body)
-        }).then(function (res) { return res.json(); }));
+        return Promise.reject(new Error(
+            'Apps Script ya no está soportado. Usa dataSource supabase y autenticación del panel.'
+        ));
     }
 
     function cargarInventarioDesdeSupabase() {

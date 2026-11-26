@@ -1,9 +1,8 @@
 /**
  * dataSource: 'supabase' — inventario, ventas retail y sync con obebe.store.
  *
- * 1. Schema y Edge Function: scripts/supabase/
- * 2. Rellena supabaseUrl, supabaseAnonKey, adminApiUrl
- * 3. Copia las mismas claves a obebe-data-config.js en la raíz (tienda web)
+ * La llave supabaseAnonKey / publishable es pública por diseño (RLS + Auth).
+ * NUNCA pongas service_role, ADMIN_SECRET ni contraseñas en este archivo.
  */
 window.OBEBE_ADMIN_CONFIG = {
     dataSource: 'supabase',
@@ -13,6 +12,5 @@ window.OBEBE_ADMIN_CONFIG = {
     adminApiUrl: 'https://yueajorzawaanubgekpm.supabase.co/functions/v1/admin-api',
 
     appsScriptUrl: '',
-    inventarioSecret: 'OBebeClotes.1',
     permitirEscrituraLocal: true
 };

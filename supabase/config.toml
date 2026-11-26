@@ -1,5 +1,8 @@
 # Config mínima para desplegar Edge Functions (proyecto yueajorzawaanubgekpm).
 # Despliegue: ver DESPLIEGAR-ADMIN-API.md o ejecutar deploy-admin-api.ps1
+#
+# verify_jwt=false: getCotizadorConfig es público. El resto valida JWT + admin_profiles
+# dentro de la función (no confiar en el body.secret).
 
 [functions.admin-api]
 verify_jwt = false
