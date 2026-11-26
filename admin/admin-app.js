@@ -1657,10 +1657,11 @@
         initTemaAdmin();
         initLogin();
         initApp();
-        if (ObebeAdminAuth.requiereAuth(mostrarApp)) {
-            /* sesión restaurada */
-        } else {
-            mostrarLogin();
+        mostrarLogin();
+        if (ObebeAdminAuth && typeof ObebeAdminAuth.restaurarSesion === 'function') {
+            ObebeAdminAuth.restaurarSesion().then(function (ses) {
+                if (ses && ses.user) mostrarApp(ses.user);
+            }).catch(function () { /* login visible */ });
         }
     });
 })();

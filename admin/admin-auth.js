@@ -11,8 +11,11 @@
 
     function getClient() {
         if (_client) return _client;
-        if (!global.supabase || typeof global.supabase.createClient !== 'function') {
-            throw new Error('Falta el SDK de Supabase (supabase-js).');
+        var sdk = global.supabase;
+        if (!sdk || typeof sdk.createClient !== 'function') {
+            throw new Error(
+                'Falta el SDK de Supabase (supabase-js). Recarga con Ctrl+F5. Si persiste, el CDN no cargó.'
+            );
         }
         var url = String(cfg().supabaseUrl || '').trim();
         var key = String(cfg().supabaseAnonKey || '').trim();
