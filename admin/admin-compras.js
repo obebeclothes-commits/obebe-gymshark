@@ -1128,9 +1128,18 @@
         return Promise.resolve();
     }
 
-    var KEY_QUITAR_VERDE_TODO = 'obebe_compras_quitar_verde_todo_20261127g';
+    var KEY_QUITAR_VERDE_TODO = 'obebe_compras_quitar_verde_todo_20261127i';
+    var KEY_QUITAR_VENDIDAS_NATY = 'obebe_compras_quitar_vendidas_naty_20261127i';
+    /** 0 = quitar fila completa; N = restar N piezas de la cantidad. */
+    var VENDIDAS_NATY_REFS = {
+        '629': 0, '622': 0, '568': 0, '562': 0, '571': 0,
+        '552': 1, '609': 1, '566': 0, '606': 2, '608': 1,
+        '581': 0, '611': 0, '598': 1, '553': 0, '549': 1,
+        '564': 0, '569': 0, '567': 0, '576': 0, '623': 0,
+        '625': 0, '624': 0, '626': 0, '582': 0, '551': 1
+    };
 
-    /** Por ahora: quita todo el early access (verde) de Compras. */
+    /** Por ahora: quita todo el early access (verde) de Compras y vacía early en la nube. */
     function desmarcarTodoVerdeEarlyAccess(root) {
         try {
             if (localStorage.getItem(KEY_QUITAR_VERDE_TODO)) {
@@ -1139,12 +1148,12 @@
         } catch (e0) { /* ignore */ }
         var n = 0;
         var refs = [];
+        var clearTs = Date.now();
         filas.forEach(function (f) {
-            if (!f || f.enTienda) return;
+            if (!f) return;
             if (f.earlyAccess || f.earlyAccessEn) n += 1;
             f.earlyAccess = false;
             f.earlyAccessEn = null;
-            f.earlyAccessSuspendidoPorPedido = !!f.earlyAccessSuspendidoPorPedido;
             var r = refNumeroFila(f);
             if (!isNaN(r) && r > 0) refs.push(r);
         });
@@ -1152,15 +1161,88 @@
             if (ObebeComprasEarlyStore.reemplazarRefs) ObebeComprasEarlyStore.reemplazarRefs([]);
             else if (refs.length) ObebeComprasEarlyStore.quitarRefs(refs);
         }
+        if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.marcarEarlyClearLocal) {
+            ObebeAdminMayoreoCloud.marcarEarlyClearLocal(clearTs);
+        } else {
+            try { localStorage.setItem('obebe_compras_early_clear_ts', String(clearTs)); } catch (eClear) { /* */ }
+        }
         persistir();
-        try { localStorage.setItem(KEY_QUITAR_VERDE_TODO, String(Date.now())); } catch (e1) { /* */ }
+        try { localStorage.setItem(KEY_QUITAR_VERDE_TODO, String(clearTs)); } catch (e1) { /* */ }
         try { localStorage.setItem('obebe_compras_reparo_verdes_undo_20261127c', 'replaced'); } catch (e2) { /* */ }
         aviso = n
-            ? 'Se quitó el marcado verde (early access) de Compras. Usa la casilla AB · Apartado si aplica.'
-            : '';
+            ? 'Se quitó el marcado verde (early access) de Compras.'
+            : 'Early access desmarcado (nada estaba en verde).';
         document.dispatchEvent(new CustomEvent('obebe-compras-early-access'));
         pintar(root);
-        return Promise.resolve({ ok: true, n: n });
+        var pushEarly = (global.ObebeAdminMayoreoCloud &&
+            ObebeAdminMayoreoCloud.publicarComprasEarlyParaNaty)
+            ? ObebeAdminMayoreoCloud.publicarComprasEarlyParaNaty({ forzarVacio: true })
+            : Promise.resolve({ ok: true });
+        return pushEarly.then(function () {
+            return { ok: true, n: n };
+        }).catch(function () {
+            return { ok: true, n: n };
+        });
+    }
+
+    /** Quita de Compras refs ya vendidas a Naty (o resta piezas parciales). */
+    function quitarVendidasNatyDeCompras(root) {
+        try {
+            if (localStorage.getItem(KEY_QUITAR_VENDIDAS_NATY)) {
+                return Promise.resolve({ ok: true, omitido: true });
+            }
+        } catch (e0) { /* ignore */ }
+        var idx = idxCols();
+        var colStock = idx.stock != null ? idx.stock : 2;
+        var quitadas = 0;
+        var restadas = 0;
+        var pzas = 0;
+        var refsTocadas = [];
+        var nuevas = [];
+        filas.forEach(function (f) {
+            if (!f || f.enTienda) {
+                nuevas.push(f);
+                return;
+            }
+            var r = refNumeroFila(f);
+            var key = String(r);
+            if (isNaN(r) || !Object.prototype.hasOwnProperty.call(VENDIDAS_NATY_REFS, key)) {
+                nuevas.push(f);
+                return;
+            }
+            var quitar = VENDIDAS_NATY_REFS[key];
+            var stock = Math.max(0, Math.floor(numCelda(f.celdas && f.celdas[colStock])));
+            refsTocadas.push(r);
+            if (!quitar || quitar <= 0 || quitar >= stock) {
+                quitadas += 1;
+                pzas += stock > 0 ? stock : 1;
+                return;
+            }
+            var queda = stock - quitar;
+            f.celdas[colStock] = String(queda);
+            var abN = cantidadApartadoFila(f);
+            if (abN > queda) setCantidadApartado(f, queda);
+            recalcular(f.celdas);
+            f.earlyAccess = false;
+            f.earlyAccessEn = null;
+            f.actualizadoEn = Date.now();
+            nuevas.push(f);
+            restadas += 1;
+            pzas += quitar;
+        });
+        filas = nuevas;
+        if (global.ObebeComprasEarlyStore && refsTocadas.length) {
+            ObebeComprasEarlyStore.quitarRefs(refsTocadas);
+        }
+        persistir();
+        try { localStorage.setItem(KEY_QUITAR_VENDIDAS_NATY, String(Date.now())); } catch (e1) { /* */ }
+        var partes = [];
+        if (quitadas) partes.push('se quitaron ' + quitadas + ' ref(s)');
+        if (restadas) partes.push('se restaron piezas en ' + restadas + ' ref(s)');
+        aviso = (partes.length ? partes.join('; ') : 'No había coincidencias') +
+            ' (ventas Naty, ' + pzas + ' pza(s)).';
+        pintar(root);
+        return Promise.resolve({ ok: true, quitadas: quitadas, restadas: restadas, pzas: pzas });
     }
 
     function quitarDelInventario(root, listaFilas) {
@@ -1444,6 +1526,9 @@
                     if (sesion !== mountSesion || !container) return;
                     pintar(container);
                     return desmarcarTodoVerdeEarlyAccess(container);
+                }).then(function () {
+                    if (sesion !== mountSesion || !container) return;
+                    return quitarVendidasNatyDeCompras(container);
                 });
             } catch (err) {
                 container.innerHTML = '<p class="admin-banner">No se pudo mostrar Compras. ' +

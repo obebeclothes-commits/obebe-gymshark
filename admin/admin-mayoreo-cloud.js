@@ -338,9 +338,31 @@
         });
     }
 
+    function tsEarlyClearLocal() {
+        try {
+            var n = parseInt(localStorage.getItem('obebe_compras_early_clear_ts') || '0', 10);
+            return isNaN(n) ? 0 : n;
+        } catch (e) {
+            return 0;
+        }
+    }
+
+    function marcarEarlyClearLocal(ts) {
+        try {
+            localStorage.setItem('obebe_compras_early_clear_ts', String(ts || Date.now()));
+        } catch (e) { /* ignore */ }
+    }
+
     function elegirComprasEarly(localE, cloudE, cloudEn, localEn) {
         localE = Array.isArray(localE) ? localE : [];
         cloudE = Array.isArray(cloudE) ? cloudE : [];
+        /* Un vaciado reciente (lista vacía + ts más nuevo) gana sobre early viejo en la nube. */
+        if (!localE.length && (localEn || 0) > (cloudEn || 0)) {
+            return { list: [], en: localEn || 0 };
+        }
+        if (!cloudE.length && (cloudEn || 0) > (localEn || 0)) {
+            return { list: [], en: cloudEn || 0 };
+        }
         if (cloudE.length > localE.length) return { list: cloudE, en: cloudEn || Date.now() };
         if (localE.length > cloudE.length) return { list: localE, en: localEn || 0 };
         if ((cloudEn || 0) >= (localEn || 0)) return { list: cloudE, en: cloudEn || 0 };
@@ -359,9 +381,12 @@
             actualizadoEn: Date.now()
         };
         var early = comprasEarlyDesdeStore();
+        pack.comprasEarly = early;
         if (early.length) {
-            pack.comprasEarly = early;
             pack.comprasEarlyEn = Date.now();
+        } else {
+            var clearTs = tsEarlyClearLocal();
+            if (clearTs) pack.comprasEarlyEn = clearTs;
         }
         return pack;
     }
@@ -480,15 +505,19 @@
             merged.comprasEarlyEn
         );
         var earlyOb = comprasEarlyDesdeStore();
+        var clearTs = tsEarlyClearLocal();
         if (earlyOb.length) {
             merged.comprasEarly = earlyOb;
             merged.comprasEarlyEn = Date.now();
+        } else if (clearTs && clearTs >= (pick.en || 0)) {
+            merged.comprasEarly = [];
+            merged.comprasEarlyEn = clearTs;
         } else if (pick.list.length) {
             merged.comprasEarly = pick.list;
             merged.comprasEarlyEn = pick.en;
         } else {
-            delete merged.comprasEarly;
-            delete merged.comprasEarlyEn;
+            merged.comprasEarly = [];
+            merged.comprasEarlyEn = Math.max(clearTs, pick.en || 0, Date.now());
         }
         return merged;
     }
@@ -505,18 +534,23 @@
         });
     }
 
-    function publicarComprasEarlyParaNaty() {
+    function publicarComprasEarlyParaNaty(opts) {
+        opts = opts || {};
         if (!canSync()) return Promise.resolve({ ok: false, offline: true });
         var early = comprasEarlyDesdeStore();
-        if (!early.length) return Promise.resolve({ ok: true, early: 0, omitido: true });
+        if (!early.length && !opts.forzarVacio) {
+            return Promise.resolve({ ok: true, early: 0, omitido: true });
+        }
+        var ts = Date.now();
+        if (!early.length) marcarEarlyClearLocal(ts);
         return enColaNubeMayoreo(function () {
             return leerPackNubeMayoreo().then(function (cloud) {
                 var local = packDesdeLocal();
                 var merged = cloud ? fusionarPacks(local, cloud) : local;
                 merged.comprasEarly = early;
-                merged.comprasEarlyEn = Date.now();
+                merged.comprasEarlyEn = ts;
                 return subirPackMayoreoNaty(merged).then(function () {
-                    return { ok: true, early: early.length };
+                    return { ok: true, early: early.length, vaciado: !early.length };
                 });
             });
         }).catch(function (err) {
@@ -617,6 +651,8 @@
         pullMayoreoNatyDesdeNube: pullMayoreoNatyDesdeNube,
         pushMayoreoNatyNow: pushMayoreoNatyNow,
         notifyMayoreoNatySaved: notifyMayoreoNatySaved,
-        publicarComprasEarlyParaNaty: publicarComprasEarlyParaNaty
+        publicarComprasEarlyParaNaty: publicarComprasEarlyParaNaty,
+        marcarEarlyClearLocal: marcarEarlyClearLocal,
+        tsEarlyClearLocal: tsEarlyClearLocal
     };
 })(window);
