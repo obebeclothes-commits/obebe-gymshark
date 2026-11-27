@@ -3225,6 +3225,19 @@ body.admin-ped-filtros-open {
     vertical-align: middle;
 }
 
+.admin-compras-apartado-qty,
+.admin-inv-apartado-qty {
+    width: 3.2rem;
+    max-width: 4rem;
+    padding: 0.25rem 0.3rem;
+    text-align: center;
+    font: inherit;
+    border: 1px solid var(--admin-border, #ccc);
+    border-radius: 4px;
+    background: var(--admin-surface, #fff);
+    color: inherit;
+}
+
 .admin-compras-wrap tr.admin-compras-row--tienda td {
     background: color-mix(in srgb, #2d9f5a 10%, var(--admin-surface-2));
     opacity: 0.92;

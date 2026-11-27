@@ -8,7 +8,7 @@
     var COL_FALTANTE = 18; // S · no se muestra en admin
     var COL_AUDITORIA = 25; // Z · comentario auditoría stock (OBEBE)
     var COL_AA_APARTADO = 26; // AA · texto "Apartado" / cliente mayoreo
-    var COL_AB_APARTADO = 27; // AB · casilla apartado (oculto en web)
+    var COL_AB_APARTADO = 27; // AB · piezas apartadas (resto sí en web)
     var COL_VISTA_MAX = 28; // A–AB (índice 0..27)
 
     var TITULOS_DEFAULT = [

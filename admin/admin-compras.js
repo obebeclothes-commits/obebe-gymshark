@@ -5,7 +5,7 @@
     /** Columna AA · texto "Apartado" (o cliente mayoreo legacy). */
     var COL_CLIENTE_MAYOREO = 26;
     var COL_AA_APARTADO = 26;
-    /** Columna AB · casilla Apartado (sube a inventario pero no sale en la web). */
+    /** Columna AB · piezas apartadas (resto sí sale en la web). */
     var COL_AB_APARTADO = 27;
     var ZONA_COMPRAS = 'compras';
     var filas = [];
@@ -295,34 +295,58 @@
         return Ui ? Ui.normalizarValorColumnaInventario(col, val) : String(val || '').trim().toUpperCase();
     }
 
-    function celdaApartadoMarcada(f) {
-        if (!f) return false;
-        if (f.apartadoManual) return true;
-        var raw = String((f.celdas && f.celdas[COL_AB_APARTADO]) || '').trim().toLowerCase();
-        if (raw === '1' || raw === 'si' || raw === 'sí' || raw === 'true' || raw === 'x' || raw === 'apartado') {
-            return true;
-        }
-        var aa = String((f.celdas && f.celdas[COL_AA_APARTADO]) || '').trim().toLowerCase();
-        return aa === 'apartado';
+    function stockFilaCompras(f) {
+        var idx = idxCols();
+        var colStock = idx.stock != null ? idx.stock : 2;
+        return Math.max(0, Math.floor(numCelda(f && f.celdas && f.celdas[colStock])));
     }
 
-    function setApartadoManual(f, on) {
+    /** Piezas apartadas en AB (0 = ninguna). Flags legacy si/true/x → 1. */
+    function cantidadApartadoFila(f) {
+        if (!f) return 0;
+        var raw = String((f.celdas && f.celdas[COL_AB_APARTADO]) || '').trim().toLowerCase();
+        var n = 0;
+        if (/^\d+$/.test(raw)) n = parseInt(raw, 10);
+        else if (raw === 'si' || raw === 'sí' || raw === 'true' || raw === 'x' || raw === 'apartado') n = 1;
+        else if (f.apartadoManual) n = 1;
+        else {
+            var aa = String((f.celdas && f.celdas[COL_AA_APARTADO]) || '').trim().toLowerCase();
+            if (aa === 'apartado') n = 1;
+        }
+        if (isNaN(n) || n < 0) n = 0;
+        var stock = stockFilaCompras(f);
+        if (stock > 0 && n > stock) n = stock;
+        return n;
+    }
+
+    function celdaApartadoMarcada(f) {
+        return cantidadApartadoFila(f) > 0;
+    }
+
+    function setCantidadApartado(f, qty) {
         if (!f) return;
         if (!f.celdas) f.celdas = [];
         var i;
         for (i = f.celdas.length; i < 29; i++) f.celdas.push('');
-        f.apartadoManual = !!on;
-        f.celdas[COL_AB_APARTADO] = on ? '1' : '';
-        f.celdas[COL_AA_APARTADO] = on ? 'Apartado' : (etiquetaClienteApartado(f) || '');
+        var n = parseInt(qty, 10);
+        if (isNaN(n) || n < 0) n = 0;
+        var stock = stockFilaCompras(f);
+        if (stock > 0 && n > stock) n = stock;
+        f.apartadoManual = n > 0;
+        f.celdas[COL_AB_APARTADO] = n > 0 ? String(n) : '';
+        f.celdas[COL_AA_APARTADO] = n > 0 ? 'Apartado' : (etiquetaClienteApartado(f) || '');
     }
 
     function renderCeldaCompras(f, c, editActivo) {
         if (c === COL_AB_APARTADO) {
-            var on = celdaApartadoMarcada(f);
+            var qty = cantidadApartadoFila(f);
+            var maxStock = stockFilaCompras(f);
             return '<td class="admin-compras-apartado-td">' +
-                '<label class="admin-compras-apartado-check">' +
-                '<input type="checkbox" class="admin-compras-apartado-cb" data-id="' + esc(f.id) + '"' +
-                (on ? ' checked' : '') + '> Apartado</label></td>';
+                '<input type="number" class="admin-compras-apartado-qty" data-id="' + esc(f.id) + '"' +
+                ' min="0"' + (maxStock > 0 ? ' max="' + maxStock + '"' : '') +
+                ' step="1" value="' + (qty > 0 ? qty : '') + '"' +
+                ' placeholder="0" title="Piezas apartadas (no salen en la web)"' +
+                ' inputmode="numeric"></td>';
         }
         if (c === COL_AA_APARTADO) {
             var txtAa = celdaApartadoMarcada(f)
@@ -919,13 +943,13 @@
         if (editandoZona && global.ObebeAdminCamposUi) {
             ObebeAdminCamposUi.bindSelectOtros(root);
         }
-        root.querySelectorAll('.admin-compras-apartado-cb').forEach(function (cb) {
-            if (cb._comprasApartadoBound) return;
-            cb._comprasApartadoBound = true;
-            cb.addEventListener('change', function () {
-                var f = filaPorId(cb.getAttribute('data-id'));
+        root.querySelectorAll('.admin-compras-apartado-qty').forEach(function (inp) {
+            if (inp._comprasApartadoBound) return;
+            inp._comprasApartadoBound = true;
+            inp.addEventListener('change', function () {
+                var f = filaPorId(inp.getAttribute('data-id'));
                 if (!f) return;
-                setApartadoManual(f, !!cb.checked);
+                setCantidadApartado(f, inp.value);
                 f.actualizadoEn = Date.now();
                 persistir();
                 pintar(root);
@@ -975,11 +999,17 @@
         for (i = celdas.length; i < 29; i++) celdas.push('');
         var foto = String(celdas[9] || '');
         if (foto.indexOf('compras/') === 0) celdas[9] = '';
-        if (celdaApartadoMarcada(fila)) {
+        var qtyApart = cantidadApartadoFila(fila);
+        if (qtyApart > 0) {
             celdas[COL_AA_APARTADO] = 'Apartado';
-            celdas[COL_AB_APARTADO] = '1';
+            celdas[COL_AB_APARTADO] = String(qtyApart);
             var idxCarr = idxCols();
             if (idxCarr.carrusel != null) celdas[idxCarr.carrusel] = '';
+        } else {
+            celdas[COL_AB_APARTADO] = '';
+            if (String(celdas[COL_AA_APARTADO] || '').trim().toLowerCase() === 'apartado') {
+                celdas[COL_AA_APARTADO] = '';
+            }
         }
         return celdas;
     }
@@ -1276,9 +1306,11 @@
         }
         var n = candidatas.length;
         var nApart = candidatas.filter(celdaApartadoMarcada).length;
+        var pzasApart = candidatas.reduce(function (acc, f) { return acc + cantidadApartadoFila(f); }, 0);
         var msg = 'Se publican ' + n + ' artículo(s) en inventario y salen de Compras.';
         if (nApart) {
-            msg += ' ' + nApart + ' marcado(s) como Apartado (columna AB): entran al stock con AA = «Apartado» y no aparecen en la página web.';
+            msg += ' ' + nApart + ' con piezas apartadas (AB = ' + pzasApart +
+                ' pza(s)): AA = «Apartado»; esas piezas no salen en la web y el resto sí.';
         }
         ObebeAdminDialog.confirm({
             title: '¿Subir a inventario?',

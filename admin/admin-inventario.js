@@ -743,15 +743,19 @@
             ? ObebeInventarioColumnas.COL_AA_APARTADO : 26;
         if (colIdx === colAb) {
             var aaTxt = String((f.celdas && f.celdas[colAa]) || '').trim().toLowerCase();
-            var onAb = /^(1|si|sí|true|x|apartado)$/i.test(String(val || '').trim()) || aaTxt === 'apartado';
+            var rawAb = String(val || '').trim().toLowerCase();
+            var qtyAb = 0;
+            if (/^\d+$/.test(rawAb)) qtyAb = parseInt(rawAb, 10);
+            else if (/^(si|sí|true|x|apartado)$/i.test(rawAb) || aaTxt === 'apartado') qtyAb = 1;
             if (!edit) {
                 return '<td class="admin-compras-apartado-td">' +
-                    (onAb ? '<span class="admin-tag admin-tag-warn">Apartado</span>' : '—') + '</td>';
+                    (qtyAb > 0 ? '<span class="admin-tag admin-tag-warn">' + esc(String(qtyAb)) + '</span>' : '—') +
+                    '</td>';
             }
             return '<td class="admin-compras-apartado-td">' +
-                '<label class="admin-compras-apartado-check">' +
-                '<input type="checkbox" class="admin-inv-apartado-cb" data-key="' + esc(keyFila(f)) +
-                '" data-col="' + colIdx + '"' + (onAb ? ' checked' : '') + '> Apartado</label></td>';
+                '<input type="number" class="admin-inv-apartado-qty admin-compras-apartado-qty" data-key="' +
+                esc(keyFila(f)) + '" data-col="' + colIdx + '" min="0" step="1" value="' +
+                (qtyAb > 0 ? qtyAb : '') + '" placeholder="0" title="Piezas apartadas" inputmode="numeric"></td>';
         }
         if (colIdx === colAa && /apartado/i.test(String(val || '').trim())) {
             return '<td><span class="admin-tag admin-tag-warn">Apartado</span></td>';
@@ -1011,20 +1015,24 @@
         container.addEventListener('change', function (ev) {
             var t = ev.target;
             if (!state.modoEdicion || !container.contains(t)) return;
-            if (t.classList.contains('admin-inv-apartado-cb')) {
+            if (t.classList.contains('admin-inv-apartado-qty')) {
                 var kAb = t.getAttribute('data-key');
                 var colAb = parseInt(t.getAttribute('data-col'), 10);
                 var fAb = findFila(kAb);
                 if (!fAb) return;
-                var on = !!t.checked;
+                var nAb = parseInt(t.value, 10);
+                if (isNaN(nAb) || nAb < 0) nAb = 0;
+                var idxStockAb = idxInventarioCols();
+                var stockAb = parseInt(String((fAb.celdas && fAb.celdas[idxStockAb.stock != null ? idxStockAb.stock : 2]) || '0'), 10) || 0;
+                if (stockAb > 0 && nAb > stockAb) nAb = stockAb;
                 var colAa = (global.ObebeInventarioColumnas && ObebeInventarioColumnas.COL_AA_APARTADO != null)
                     ? ObebeInventarioColumnas.COL_AA_APARTADO : 26;
-                aplicarCambioCelda(container, fAb, colAb, on ? '1' : '');
-                aplicarCambioCelda(container, fAb, colAa, on ? 'Apartado' : '');
-                var idxCarr = idxInventarioCols();
-                if (on && idxCarr.carrusel != null) {
-                    aplicarCambioCelda(container, fAb, idxCarr.carrusel, '');
+                aplicarCambioCelda(container, fAb, colAb, nAb > 0 ? String(nAb) : '');
+                aplicarCambioCelda(container, fAb, colAa, nAb > 0 ? 'Apartado' : '');
+                if (nAb > 0 && idxStockAb.carrusel != null) {
+                    aplicarCambioCelda(container, fAb, idxStockAb.carrusel, '');
                 }
+                t.value = nAb > 0 ? String(nAb) : '';
                 return;
             }
             if (t.classList.contains('admin-inv-cell-select')) {

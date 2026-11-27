@@ -18,7 +18,7 @@
     var IDX_COLECCION = 23; // columna X
     var IDX_OFERTA_SEMANAL = 24; // columna Y
     var IDX_FECHA_STOCK = 10; // columna K
-    var IDX_UBICACION = 27; // columna AB (casilla apartado)
+    var IDX_UBICACION = 27; // columna AB (piezas apartadas)
     var IDX_AA_APARTADO = 26; // columna AA (texto Apartado)
 
     function indicesInventarioDesdeFilas(filas) {
@@ -515,14 +515,19 @@
             var nombre = String(celdaInv(f, IX, 'nombre') || '').trim();
             if (!nombre || nombre.toUpperCase() === 'NOMBRE' || nombre.toUpperCase() === 'ARTICULO') continue;
             if (!filaPerteneceCategoria(f, categoria, usarSegmento, IX)) continue;
-            /* Apartados (AA/AB): en inventario admin sí; en la tienda web no. */
+            /* Apartados (AB = piezas): se restan del stock público; si quedan 0, no salen en la web. */
             var aaApart = String(celdaInv(f, IX, 'apartadoLabel') || '').trim().toLowerCase();
             var abApart = String(celdaInv(f, IX, 'apartado') || '').trim().toLowerCase();
-            if (aaApart === 'apartado' || abApart === '1' || abApart === 'si' || abApart === 'sí' ||
-                abApart === 'true' || abApart === 'x' || abApart === 'apartado') {
-                continue;
-            }
             var stock = parsearStock(celdaInv(f, IX, 'stock'));
+            var qtyApart = 0;
+            if (/^\d+$/.test(abApart)) qtyApart = parseInt(abApart, 10);
+            else if (abApart === 'si' || abApart === 'sí' || abApart === 'true' || abApart === 'x' ||
+                abApart === 'apartado') qtyApart = 1;
+            else if (aaApart === 'apartado') qtyApart = stock;
+            if (isNaN(qtyApart) || qtyApart < 0) qtyApart = 0;
+            if (qtyApart > stock) qtyApart = stock;
+            stock = Math.max(0, stock - qtyApart);
+            if (stock <= 0 && qtyApart > 0) continue;
             var talla = normalizarTalla(celdaInv(f, IX, 'talla'));
             var color = normalizarColor(celdaInv(f, IX, 'color'));
             var tipo = normalizarTipo(celdaInv(f, IX, 'tipo'));

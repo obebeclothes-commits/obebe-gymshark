@@ -1845,8 +1845,21 @@
             apartado: (function () {
                 var ab = String(celdas[idxInv.apartado != null ? idxInv.apartado : 27] || '').trim().toLowerCase();
                 var aa = String(celdas[idxInv.apartadoLabel != null ? idxInv.apartadoLabel : 26] || '').trim().toLowerCase();
-                return aa === 'apartado' || ab === '1' || ab === 'si' || ab === 'sí' ||
+                if (/^\d+$/.test(ab)) return parseInt(ab, 10) > 0;
+                return aa === 'apartado' || ab === 'si' || ab === 'sí' ||
                     ab === 'true' || ab === 'x' || ab === 'apartado';
+            }()),
+            apartadoCantidad: (function () {
+                var ab = String(celdas[idxInv.apartado != null ? idxInv.apartado : 27] || '').trim().toLowerCase();
+                var aa = String(celdas[idxInv.apartadoLabel != null ? idxInv.apartadoLabel : 26] || '').trim().toLowerCase();
+                var stockN = parseInt(String(celdas[idxInv.stock != null ? idxInv.stock : 2] || '0'), 10) || 0;
+                var n = 0;
+                if (/^\d+$/.test(ab)) n = parseInt(ab, 10);
+                else if (ab === 'si' || ab === 'sí' || ab === 'true' || ab === 'x' || ab === 'apartado') n = 1;
+                else if (aa === 'apartado') n = stockN > 0 ? stockN : 1;
+                if (isNaN(n) || n < 0) n = 0;
+                if (stockN > 0 && n > stockN) n = stockN;
+                return n;
             }()),
             fotoUrl: normalizarRutaImagenAdmin(celdas[iFoto]),
             filaSheet: filaSheet,
