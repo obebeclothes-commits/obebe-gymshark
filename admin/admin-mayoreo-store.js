@@ -169,17 +169,40 @@
         ].join('::');
     }
 
-    function ingresarInventarioDesdePedido(pedido) {
+    function itemsSiPedidoSinLinea(pedido) {
+        var k = claveCliente(pedido && pedido.clienteKey);
+        var lineas = getLineas();
+        var faltan = [];
+        (pedido && pedido.items || []).forEach(function (it) {
+            if (!it || it.disponibilidad !== 'si') return;
+            var id = idLineaDesdePedidoItem(it, k);
+            var hit = lineas.find(function (l) {
+                return l.id === id && l.clienteKey === k;
+            });
+            if (!hit) faltan.push(it);
+        });
+        return faltan;
+    }
+
+    function ingresarInventarioDesdePedido(pedido, opts) {
+        opts = opts || {};
         if (!pedido || pedido.estado !== 'revisado') {
             return { ok: false, error: 'Pedido no confirmado.' };
         }
-        if (pedido.inventarioAplicado) {
-            return { ok: true, omitido: true };
+        var soloFaltantes = false;
+        if (pedido.inventarioAplicado && !opts.forzar) {
+            var faltanPrev = itemsSiPedidoSinLinea(pedido);
+            if (!faltanPrev.length) {
+                return { ok: true, omitido: true };
+            }
+            /* Venta confirmada pero líneas perdidas en sync: solo reponer faltantes. */
+            soloFaltantes = true;
         }
         var k = claveCliente(pedido.clienteKey);
-        var fecha = fechaLocalIso(new Date(pedido.revisadoEn || Date.now()));
+        var fecha = fechaLocalIso(new Date(pedido.revisadoEn || pedido.ventaRetailRegistradaEn || Date.now()));
         var lineas = getLineas();
         var nuevas = 0;
+        var ahora = Date.now();
         (pedido.items || []).forEach(function (it) {
             if (it.disponibilidad !== 'si') return;
             var id = idLineaDesdePedidoItem(it, k);
@@ -188,8 +211,10 @@
                 return l.id === id && l.clienteKey === k;
             });
             if (hit) {
+                if (soloFaltantes) return;
                 hit.cantidad = (hit.cantidad || 0) + qty;
                 hit.fechaStockIso = fecha;
+                hit.actualizadoEn = ahora;
                 if (it.imagenUrl) hit.imagenUrl = it.imagenUrl;
                 if (it.precioCliente != null) hit.precioMayoreo = it.precioCliente;
                 if (it.precioRetail != null) hit.precioRetail = it.precioRetail;
@@ -212,7 +237,8 @@
                     imagenUrl: it.imagenUrl || '',
                     filaSheet: 0,
                     fechaStockIso: fecha,
-                    importadoEn: Date.now()
+                    importadoEn: ahora,
+                    actualizadoEn: ahora
                 });
                 nuevas += 1;
             }
@@ -228,14 +254,50 @@
             var pi = todos.findIndex(function (p) { return p.id === pedido.id; });
             if (pi >= 0) {
                 todos[pi].inventarioAplicado = true;
-                todos[pi].inventarioAplicadoEn = Date.now();
+                todos[pi].inventarioAplicadoEn = ahora;
                 guardarJson('obebe_mayoreo_pedidos_v1', todos);
                 if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
                     ObebeAdminMayoreoCloud.notifyMayoreoNatySaved();
                 }
             }
         }
-        return { ok: true, nuevas: nuevas };
+        return { ok: true, nuevas: nuevas, reparado: soloFaltantes };
+    }
+
+    /** Reaplica stock mayoreo de pedidos con venta confirmada si faltan líneas (p. ej. sync viejo). */
+    function asegurarInventarioDesdePedidosConfirmados() {
+        var todos = leerJson('obebe_mayoreo_pedidos_v1', []);
+        if (!Array.isArray(todos) || !todos.length) {
+            return { ok: true, reparados: 0 };
+        }
+        var reparados = 0;
+        todos.forEach(function (p) {
+            if (!p || !p.ventaRetailRegistradaEn) return;
+            if (p.estado !== 'revisado') return;
+            if (!itemsSiPedidoSinLinea(p).length) return;
+            var r = ingresarInventarioDesdePedido(p);
+            if (r && r.ok && !r.omitido) reparados += 1;
+        });
+        todos = leerJson('obebe_mayoreo_pedidos_v1', []);
+        var dirtyFlags = false;
+        if (Array.isArray(todos)) {
+            todos.forEach(function (p) {
+                if (!p || !p.ventaRetailRegistradaEn || p.estado !== 'revisado') return;
+                if (p.inventarioAplicado) return;
+                if (itemsSiPedidoSinLinea(p).length) return;
+                p.inventarioAplicado = true;
+                p.inventarioAplicadoEn = p.inventarioAplicadoEn || Date.now();
+                dirtyFlags = true;
+                reparados += 1;
+            });
+            if (dirtyFlags) {
+                guardarJson('obebe_mayoreo_pedidos_v1', todos);
+                if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
+                    ObebeAdminMayoreoCloud.notifyMayoreoNatySaved();
+                }
+            }
+        }
+        return { ok: true, reparados: reparados };
     }
 
     function revertirInventarioDesdePedido(pedido, opts) {
@@ -257,6 +319,7 @@
             });
             if (idx < 0) return;
             lineas[idx].cantidad = Math.max(0, (lineas[idx].cantidad || 0) - qty);
+            lineas[idx].actualizadoEn = Date.now();
             if (lineas[idx].cantidad <= 0) lineas.splice(idx, 1);
         });
         lineas.forEach(function (l) {
@@ -385,6 +448,7 @@
             var cq = parseInt(patch.cantidad, 10);
             if (!isNaN(cq) && cq >= 0) l.cantidad = cq;
         }
+        l.actualizadoEn = Date.now();
         recalcDisponible(l);
         lista[idx] = l;
         if (!setLineas(lista)) return null;
@@ -402,6 +466,7 @@
         var disp = parseInt(stockDisponible, 10);
         if (isNaN(disp) || disp < 1) return { ok: false, error: 'El stock debe ser al menos 1.' };
         l.cantidad = vendido + disp;
+        l.actualizadoEn = Date.now();
         recalcDisponible(l);
         lista[idx] = l;
         if (!setLineas(lista)) return { ok: false, error: 'No se pudo guardar en el navegador.' };
@@ -933,6 +998,7 @@
         claveCliente: claveCliente,
         metaCliente: metaCliente,
         ingresarInventarioDesdePedido: ingresarInventarioDesdePedido,
+        asegurarInventarioDesdePedidosConfirmados: asegurarInventarioDesdePedidosConfirmados,
         revertirInventarioDesdePedido: revertirInventarioDesdePedido,
         eliminarLineasPorFechaStock: eliminarLineasPorFechaStock,
         ejecutarLimpiezaProgramadaMayoreo: ejecutarLimpiezaProgramadaMayoreo,

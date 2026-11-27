@@ -1736,7 +1736,7 @@
                                     message: (rV.soloLocal
                                         ? 'Guardado en este navegador (' + n + ' línea(s)).'
                                         : n + ' línea(s) en Ventas con fecha de hoy.') +
-                                        ' Revisa el módulo Ventas.',
+                                        ' El stock ya está en el inventario de Naty (sincronizado).',
                                     confirmText: 'Listo'
                                 }).then(function () { actualizarVistaPedidos(); });
                             });

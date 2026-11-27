@@ -139,6 +139,41 @@
         return Object.keys(map).map(function (id) { return map[id]; });
     }
 
+    /** Timestamp de línea de inventario mayoreo (no usar lógica de pedidos). */
+    function tsLineaMayoreo(l) {
+        if (!l) return 0;
+        return Math.max(
+            Number(l.actualizadoEn || 0),
+            Number(l.importadoEn || 0)
+        );
+    }
+
+    function elegirLineaMayoreo(prev, next) {
+        if (!prev) return next;
+        if (!next) return prev;
+        var tPrev = tsLineaMayoreo(prev);
+        var tNext = tsLineaMayoreo(next);
+        if (tNext > tPrev) return next;
+        if (tPrev > tNext) return prev;
+        var cPrev = Number(prev.cantidad || 0);
+        var cNext = Number(next.cantidad || 0);
+        if (cNext !== cPrev) return cNext > cPrev ? next : prev;
+        /* Empate: conservar la que ya estaba (local se fusiona primero → no pisar stock nuevo). */
+        return prev;
+    }
+
+    function fusionarLineasMayoreo(localArr, cloudArr) {
+        var map = Object.create(null);
+        function poner(item) {
+            if (!item || !item.id) return;
+            var prev = map[item.id];
+            map[item.id] = elegirLineaMayoreo(prev, item);
+        }
+        (localArr || []).forEach(poner);
+        (cloudArr || []).forEach(poner);
+        return Object.keys(map).map(function (id) { return map[id]; });
+    }
+
     function fusionarObj(localO, cloudO) {
         var out = Object.assign({}, cloudO || {});
         Object.keys(localO || {}).forEach(function (k) {
@@ -302,7 +337,7 @@
         return {
             id: PACK_ID,
             clienteKey: 'naty',
-            lineas: fusionarPorId(local.lineas, cloud.lineas),
+            lineas: fusionarLineasMayoreo(local.lineas, cloud.lineas),
             ventas: fusionarVentasMayoreo(local.ventas, cloud.ventas, ventasElim, huellasElim),
             pedidos: pedidosSinDuplicadoNaty2910(fusionarPorId(local.pedidos, cloud.pedidos)),
             meta: metaFus,
@@ -342,6 +377,18 @@
             }
         } finally {
             aplicandoRemoto -= 1;
+        }
+    }
+
+    function repararInventarioTrasPack() {
+        if (!global.ObebeMayoreoStore ||
+            typeof ObebeMayoreoStore.asegurarInventarioDesdePedidosConfirmados !== 'function') {
+            return { ok: true, reparados: 0 };
+        }
+        try {
+            return ObebeMayoreoStore.asegurarInventarioDesdePedidosConfirmados() || { ok: true, reparados: 0 };
+        } catch (e) {
+            return { ok: false, reparados: 0 };
         }
     }
 
@@ -414,6 +461,8 @@
                     return leerPackNubeMayoreo();
                 })
                 .then(function (cloudOtraVez) {
+                    repararInventarioTrasPack();
+                    merged = fusionarPacks(packDesdeLocal(), cloudOtraVez || cloudPackRef);
                     var aSubir = preservarEarlyEnPackSubida(merged, cloudOtraVez || cloudPackRef);
                     return subirPackMayoreoNaty(aSubir);
                 })
@@ -436,9 +485,19 @@
         var local = packDesdeLocal();
         return leerPackNubeMayoreo()
             .then(function (cloud) {
-                if (!cloud) return { ok: true, vacio: true };
+                if (!cloud) {
+                    var r0 = repararInventarioTrasPack();
+                    if (r0 && r0.reparados > 0) {
+                        return pushMayoreoNatyNow().then(function () { return { ok: true, reparado: true }; });
+                    }
+                    return { ok: true, vacio: true };
+                }
                 var merged = fusionarPacks(local, cloud);
                 aplicarPackLocal(merged);
+                var r = repararInventarioTrasPack();
+                if (r && r.reparados > 0) {
+                    return pushMayoreoNatyNow().then(function () { return { ok: true, reparado: true }; });
+                }
                 return { ok: true };
             })
             .catch(function (err) {

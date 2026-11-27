@@ -916,12 +916,20 @@
             if (global.ObebeMayoreoStore && global.ObebeMayoreoStore.ingresarInventarioDesdePedido) {
                 global.ObebeMayoreoStore.ingresarInventarioDesdePedido(pedidoAct);
             }
-            return {
+            var fin = {
                 ok: true,
                 lineas: res.lineas,
                 pedido: findPedido(pedidoId).pedido || pedidoAct,
                 soloLocal: !!res.soloLocal
             };
+            if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.pushMayoreoNatyNow) {
+                return ObebeAdminMayoreoCloud.pushMayoreoNatyNow().then(function () {
+                    return fin;
+                }).catch(function () {
+                    return fin;
+                });
+            }
+            return fin;
         });
         if (global.ObebeAdminData.descontarStockPedidoMayoreo && !p.stockInventarioObebeAplicado) {
             return global.ObebeAdminData.descontarStockPedidoMayoreo(p, { silent: true }).then(function (sr) {
