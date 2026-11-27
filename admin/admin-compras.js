@@ -459,7 +459,7 @@
         return true;
     }
 
-    /** Elegidos por cliente mayoreo (early → pedido / columna AA). */
+    /** Elegidos por cliente mayoreo (early → pedido / columna AA). No se suben a inventario. */
     function filaReservadaMayoreo(f) {
         if (!f || f.enTienda) return false;
         if (f.mayoreoPublicarPendiente || f.earlyAccessSuspendidoPorPedido) return true;
@@ -467,27 +467,12 @@
         return false;
     }
 
-    /**
-     * Candidatas a inventario: early access libres + las ya apartadas/vendidas en mayoreo
-     * (estas últimas salen de Compras con stock 0; la venta ya está en Ventas).
-     */
+    /** Solo early access libres (verdes). Apartados/vendidos mayoreo no se publican. */
     function filtrarCandidatasSubirInventario(lista) {
         return (lista || []).filter(function (f) {
-            if (!f || f.enTienda) return false;
-            if (filaReservadaMayoreo(f)) return true;
-            return !!f.earlyAccess;
+            if (!f || f.enTienda || !f.earlyAccess) return false;
+            return !filaReservadaMayoreo(f);
         });
-    }
-
-    function celdasPayloadSubirInventario(f) {
-        var celdas = celdasParaInventario(f);
-        if (filaReservadaMayoreo(f)) {
-            var idx = idxCols();
-            var iStock = idx.stock != null ? idx.stock : 2;
-            celdas[iStock] = '0';
-            if (idx.total != null) celdas[idx.total] = '';
-        }
-        return celdas;
     }
 
     function filasActivasEnCompras() {
@@ -1048,74 +1033,75 @@
         return Promise.resolve([]);
     }
 
-    /**
-     * Ya no se ofrece borrar inventario al abrir Compras (causaba pérdida accidental).
-     * Los apartados mayoreo ahora se publican con stock 0 al subir a inventario.
-     */
+    /** Ya no se ofrece borrar inventario al abrir Compras (causaba pérdida accidental). */
     function ofrecerLimpiarInventarioDuplicado() {
         return Promise.resolve();
     }
 
-    var KEY_REPARO_COMPRAS_INV = 'obebe_compras_reparo_inv_apartados_20261127';
+    var KEY_REPARO_VERDES_EARLY = 'obebe_compras_reparo_verdes_early_20261127b';
 
-    /** Una vez: republica en inventario lo que quedó en Compras (early/apartados) y lo saca de Compras. */
-    function repararComprasPendientesTrasBorrado(root) {
-        if (!global.ObebeAdminBackend || !global.ObebeAdminDialog) {
-            return Promise.resolve({ ok: false });
-        }
+    /**
+     * Restaura el marcado verde (early access) en Compras.
+     * No sube nada a inventario: ni verdes libres ni apartados/vendidos mayoreo.
+     */
+    function repararMarcadoVerdeEarlyAccess(root) {
         try {
-            if (localStorage.getItem(KEY_REPARO_COMPRAS_INV)) {
+            if (localStorage.getItem(KEY_REPARO_VERDES_EARLY)) {
                 return Promise.resolve({ ok: true, omitido: true });
             }
         } catch (e0) { /* ignore */ }
-        var activas = filasActivasEnCompras();
-        var candidatas = activas.filter(function (f) {
-            return !!f.earlyAccess || filaReservadaMayoreo(f);
-        });
-        /* Tras el borrado accidental se apagaron flags early: usar todas las activas del lote. */
-        if (!candidatas.length) candidatas = activas.slice();
-        if (!candidatas.length) {
-            try { localStorage.setItem(KEY_REPARO_COMPRAS_INV, String(Date.now())); } catch (e1) { /* */ }
-            return Promise.resolve({ ok: true, vacio: true });
+
+        if (global.ObebeMayoreoPedidosStore &&
+            ObebeMayoreoPedidosStore.sincronizarFilasComprasConPedidos) {
+            try {
+                ObebeMayoreoPedidosStore.sincronizarFilasComprasConPedidos(filas);
+                filas = global.ObebeComprasStore ? ObebeComprasStore.getAll() : filas;
+            } catch (eSync) { /* ignore */ }
         }
-        var n = candidatas.length;
-        var nReserv = candidatas.filter(filaReservadaMayoreo).length;
-        return ObebeAdminDialog.confirm({
-            title: '¿Restaurar artículos a inventario?',
-            message: 'Hay ' + n + ' artículo(s) aún en Compras (early access / apartados mayoreo). ' +
-                'Se suben otra vez a inventario' +
-                (nReserv ? ' (' + nReserv + ' con stock 0 por venta mayoreo)' : '') +
-                ' y salen de Compras. Esto repara el borrado accidental.',
-            confirmText: 'Sí, restaurar',
-            cancelText: 'Ahora no',
-            variant: 'warn',
-            confirmSuccess: true
-        }).then(function (ok) {
-            if (!ok) {
-                try { localStorage.setItem(KEY_REPARO_COMPRAS_INV, 'skip:' + Date.now()); } catch (eSkip) { /* */ }
-                return { ok: true, omitido: true };
+
+        var t = Date.now();
+        var verdes = 0;
+        var reservadas = 0;
+        var refsEarly = [];
+        filas.forEach(function (f) {
+            if (!f || f.enTienda) return;
+            if (filaReservadaMayoreo(f)) {
+                if (f.earlyAccess) {
+                    f.earlyAccess = false;
+                    f.earlyAccessEn = null;
+                }
+                f.earlyAccessSuspendidoPorPedido = true;
+                reservadas += 1;
+                return;
             }
-            subiendo = true;
-            aviso = 'Reparando: subiendo ' + n + ' artículo(s) a inventario…';
-            pintar(root);
-            var payload = candidatas.map(function (f) {
-                return { celdas: celdasPayloadSubirInventario(f) };
-            });
-            return enviarAlInventario(payload).then(function () {
-                marcarComprasPublicadasEnTienda(candidatas);
-                try { localStorage.setItem(KEY_REPARO_COMPRAS_INV, String(Date.now())); } catch (e2) { /* */ }
-                aviso = 'Reparación lista: ' + n +
-                    ' artículo(s) volvieron a inventario y salieron de Compras.';
-                return { ok: true, n: n };
-            }).catch(function (err) {
-                aviso = (err && err.message) || 'No se pudo reparar Compras → inventario.';
-                return { ok: false, error: aviso };
-            }).then(function (r) {
-                subiendo = false;
-                pintar(root);
-                return r;
-            });
+            /* Libres: volver a early access (verde). */
+            if (!f.earlyAccess) {
+                f.earlyAccess = true;
+                f.earlyAccessEn = f.earlyAccessEn || t;
+                f.earlyAccessSuspendidoPorPedido = false;
+                f.mayoreoPublicarPendiente = false;
+                asignarFotoColJ(f);
+                verdes += 1;
+            } else {
+                verdes += 1;
+            }
+            var r = refNumeroFila(f);
+            if (!isNaN(r) && r > 0) refsEarly.push(r);
         });
+
+        if (global.ObebeComprasEarlyStore && refsEarly.length) {
+            ObebeComprasEarlyStore.marcarRefs(refsEarly);
+        }
+        persistir();
+        try { localStorage.setItem(KEY_REPARO_VERDES_EARLY, String(Date.now())); } catch (e1) { /* */ }
+        /* Anula el reparo anterior que proponía subir vendidos a inventario. */
+        try { localStorage.setItem('obebe_compras_reparo_inv_apartados_20261127', 'replaced:' + Date.now()); } catch (e2) { /* */ }
+
+        aviso = 'Early access restaurado: ' + verdes + ' en verde (no se suben). ' +
+            (reservadas ? reservadas + ' apartado(s)/vendido(s) mayoreo quedan fuera del verde.' : '');
+        document.dispatchEvent(new CustomEvent('obebe-compras-early-access'));
+        pintar(root);
+        return Promise.resolve({ ok: true, verdes: verdes, reservadas: reservadas });
     }
 
     function quitarDelInventario(root, listaFilas) {
@@ -1254,27 +1240,21 @@
     function subirComprasAInventario(root) {
         if (subiendo || !global.ObebeAdminDialog || !global.ObebeAdminBackend) return;
         var candidatas = filtrarCandidatasSubirInventario(filasActivasEnCompras());
-        var hayEarly = hayEarlyAccessEnCompras();
-        var hayReservadas = filasActivasEnCompras().some(filaReservadaMayoreo);
-        if (!hayEarly && !hayReservadas) {
+        if (!hayEarlyAccessEnCompras()) {
             aviso = 'Primero usa «Subir a early access» para que Naty vea el stock en Pedidos.';
             pintar(root);
             return;
         }
         if (!candidatas.length) {
-            aviso = 'No hay artículos de Compras listos para subir a inventario.';
+            aviso = 'No hay early access libres para subir (los apartados/vendidos mayoreo no se publican).';
             pintar(root);
             return;
         }
         var n = candidatas.length;
-        var nReserv = candidatas.filter(filaReservadaMayoreo).length;
-        var msg = 'Se publican ' + n + ' artículo(s) en inventario y salen de Compras.';
-        if (nReserv) {
-            msg += ' ' + nReserv + ' apartado(s) mayoreo (ya elegidos/vendidos) entran con stock 0.';
-        }
         ObebeAdminDialog.confirm({
             title: '¿Subir a inventario?',
-            message: msg,
+            message: 'Se publican ' + n + ' artículo(s) en early access libres. ' +
+                'Los apartados/vendidos mayoreo se quedan en Compras (no se suben). Salen de Compras al terminar.',
             confirmText: 'Sí, subir',
             cancelText: 'Cancelar',
             variant: 'ok',
@@ -1285,7 +1265,7 @@
             subiendo = true;
             aviso = '';
             var payload = candidatas.map(function (f) {
-                return { celdas: celdasPayloadSubirInventario(f) };
+                return { celdas: celdasParaInventario(f) };
             });
             pintar(root);
             enviarAlInventario(payload).then(function () {
@@ -1403,7 +1383,7 @@
                 recuperarComprasDesdeInventario().then(function () {
                     if (sesion !== mountSesion || !container) return;
                     pintar(container);
-                    return repararComprasPendientesTrasBorrado(container);
+                    return repararMarcadoVerdeEarlyAccess(container);
                 });
             } catch (err) {
                 container.innerHTML = '<p class="admin-banner">No se pudo mostrar Compras. ' +
