@@ -3203,6 +3203,28 @@ body.admin-ped-filtros-open {
     box-shadow: inset 3px 0 0 #c62828;
 }
 
+.admin-compras-wrap tr.admin-compras-row--apartado-manual td {
+    background: color-mix(in srgb, #ef6c00 14%, var(--admin-surface-2));
+}
+
+.admin-compras-wrap tr.admin-compras-row--apartado-manual td:first-child {
+    box-shadow: inset 3px 0 0 #ef6c00;
+}
+
+.admin-compras-apartado-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.admin-compras-apartado-td {
+    text-align: center;
+    vertical-align: middle;
+}
+
 .admin-compras-wrap tr.admin-compras-row--tienda td {
     background: color-mix(in srgb, #2d9f5a 10%, var(--admin-surface-2));
     opacity: 0.92;

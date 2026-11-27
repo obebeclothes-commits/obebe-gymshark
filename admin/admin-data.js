@@ -1842,6 +1842,12 @@
             valorLinea: valorLinea,
             segmento: segmento,
             ubicacion: (celdas[idxInv.ubicacion != null ? idxInv.ubicacion : IDX.ubicacion] || '').trim(),
+            apartado: (function () {
+                var ab = String(celdas[idxInv.apartado != null ? idxInv.apartado : 27] || '').trim().toLowerCase();
+                var aa = String(celdas[idxInv.apartadoLabel != null ? idxInv.apartadoLabel : 26] || '').trim().toLowerCase();
+                return aa === 'apartado' || ab === '1' || ab === 'si' || ab === 'sí' ||
+                    ab === 'true' || ab === 'x' || ab === 'apartado';
+            }()),
             fotoUrl: normalizarRutaImagenAdmin(celdas[iFoto]),
             filaSheet: filaSheet,
             celdas: celdas

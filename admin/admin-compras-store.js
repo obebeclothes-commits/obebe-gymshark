@@ -45,6 +45,9 @@
         var src = Array.isArray(row.celdas) ? row.celdas : [];
         var i;
         for (i = 0; i < NUM; i++) celdas[i] = src[i] == null ? '' : String(src[i]);
+        var apartadoManual = !!row.apartadoManual ||
+            /^(1|si|sí|true|x|apartado)$/i.test(String(celdas[27] || '').trim()) ||
+            String(celdas[26] || '').trim().toLowerCase() === 'apartado';
         return {
             id: row.id || uid(),
             celdas: celdas,
@@ -54,6 +57,7 @@
             earlyAccessSuspendidoPorPedido: !!row.earlyAccessSuspendidoPorPedido,
             mayoreoPublicarPendiente: !!row.mayoreoPublicarPendiente,
             mayoreoPublicarPendienteEn: row.mayoreoPublicarPendienteEn || null,
+            apartadoManual: apartadoManual,
             enTienda: !!row.enTienda,
             enTiendaEn: row.enTiendaEn || null
         };

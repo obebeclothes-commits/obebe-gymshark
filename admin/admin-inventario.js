@@ -737,6 +737,25 @@
             }
             return '<td class="admin-inv-thumb-cell">' + renderCeldaThumb(f) + '</td>';
         }
+        var colAb = (global.ObebeInventarioColumnas && ObebeInventarioColumnas.COL_AB_APARTADO != null)
+            ? ObebeInventarioColumnas.COL_AB_APARTADO : 27;
+        var colAa = (global.ObebeInventarioColumnas && ObebeInventarioColumnas.COL_AA_APARTADO != null)
+            ? ObebeInventarioColumnas.COL_AA_APARTADO : 26;
+        if (colIdx === colAb) {
+            var aaTxt = String((f.celdas && f.celdas[colAa]) || '').trim().toLowerCase();
+            var onAb = /^(1|si|sí|true|x|apartado)$/i.test(String(val || '').trim()) || aaTxt === 'apartado';
+            if (!edit) {
+                return '<td class="admin-compras-apartado-td">' +
+                    (onAb ? '<span class="admin-tag admin-tag-warn">Apartado</span>' : '—') + '</td>';
+            }
+            return '<td class="admin-compras-apartado-td">' +
+                '<label class="admin-compras-apartado-check">' +
+                '<input type="checkbox" class="admin-inv-apartado-cb" data-key="' + esc(keyFila(f)) +
+                '" data-col="' + colIdx + '"' + (onAb ? ' checked' : '') + '> Apartado</label></td>';
+        }
+        if (colIdx === colAa && /apartado/i.test(String(val || '').trim())) {
+            return '<td><span class="admin-tag admin-tag-warn">Apartado</span></td>';
+        }
         var editCell = edit;
         if (editCell && state.mayoreoInventario && colIdx !== colPrecioInventario()) {
             editCell = false;
@@ -992,6 +1011,22 @@
         container.addEventListener('change', function (ev) {
             var t = ev.target;
             if (!state.modoEdicion || !container.contains(t)) return;
+            if (t.classList.contains('admin-inv-apartado-cb')) {
+                var kAb = t.getAttribute('data-key');
+                var colAb = parseInt(t.getAttribute('data-col'), 10);
+                var fAb = findFila(kAb);
+                if (!fAb) return;
+                var on = !!t.checked;
+                var colAa = (global.ObebeInventarioColumnas && ObebeInventarioColumnas.COL_AA_APARTADO != null)
+                    ? ObebeInventarioColumnas.COL_AA_APARTADO : 26;
+                aplicarCambioCelda(container, fAb, colAb, on ? '1' : '');
+                aplicarCambioCelda(container, fAb, colAa, on ? 'Apartado' : '');
+                var idxCarr = idxInventarioCols();
+                if (on && idxCarr.carrusel != null) {
+                    aplicarCambioCelda(container, fAb, idxCarr.carrusel, '');
+                }
+                return;
+            }
             if (t.classList.contains('admin-inv-cell-select')) {
                 if (global.ObebeAdminCamposUi) {
                     global.ObebeAdminCamposUi.toggleOtroInput(t);

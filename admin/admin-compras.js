@@ -2,8 +2,11 @@
     'use strict';
 
     var COL_FOTO = 9;
-    /** Columna AA · cliente mayoreo que apartó el artículo (solo lectura en Compras). */
+    /** Columna AA · texto "Apartado" (o cliente mayoreo legacy). */
     var COL_CLIENTE_MAYOREO = 26;
+    var COL_AA_APARTADO = 26;
+    /** Columna AB · casilla Apartado (sube a inventario pero no sale en la web). */
+    var COL_AB_APARTADO = 27;
     var ZONA_COMPRAS = 'compras';
     var filas = [];
     var filtroCompras = '';
@@ -292,10 +295,41 @@
         return Ui ? Ui.normalizarValorColumnaInventario(col, val) : String(val || '').trim().toUpperCase();
     }
 
+    function celdaApartadoMarcada(f) {
+        if (!f) return false;
+        if (f.apartadoManual) return true;
+        var raw = String((f.celdas && f.celdas[COL_AB_APARTADO]) || '').trim().toLowerCase();
+        if (raw === '1' || raw === 'si' || raw === 'sí' || raw === 'true' || raw === 'x' || raw === 'apartado') {
+            return true;
+        }
+        var aa = String((f.celdas && f.celdas[COL_AA_APARTADO]) || '').trim().toLowerCase();
+        return aa === 'apartado';
+    }
+
+    function setApartadoManual(f, on) {
+        if (!f) return;
+        if (!f.celdas) f.celdas = [];
+        var i;
+        for (i = f.celdas.length; i < 29; i++) f.celdas.push('');
+        f.apartadoManual = !!on;
+        f.celdas[COL_AB_APARTADO] = on ? '1' : '';
+        f.celdas[COL_AA_APARTADO] = on ? 'Apartado' : (etiquetaClienteApartado(f) || '');
+    }
+
     function renderCeldaCompras(f, c, editActivo) {
-        if (c === COL_CLIENTE_MAYOREO) {
+        if (c === COL_AB_APARTADO) {
+            var on = celdaApartadoMarcada(f);
+            return '<td class="admin-compras-apartado-td">' +
+                '<label class="admin-compras-apartado-check">' +
+                '<input type="checkbox" class="admin-compras-apartado-cb" data-id="' + esc(f.id) + '"' +
+                (on ? ' checked' : '') + '> Apartado</label></td>';
+        }
+        if (c === COL_AA_APARTADO) {
+            var txtAa = celdaApartadoMarcada(f)
+                ? 'Apartado'
+                : (etiquetaClienteApartado(f) || String((f.celdas && f.celdas[c]) || ''));
             return '<td><span class="admin-inv-readonly admin-compras-col-cliente-mayoreo">' +
-                esc(etiquetaClienteApartado(f)) + '</span></td>';
+                esc(txtAa) + '</span></td>';
         }
         var Ui = global.ObebeAdminCamposUi;
         var idx = idxCols();
@@ -355,7 +389,8 @@
 
     function columnasComprasGrid() {
         var cols = columnas().slice();
-        if (cols.indexOf(COL_CLIENTE_MAYOREO) < 0) cols.push(COL_CLIENTE_MAYOREO);
+        if (cols.indexOf(COL_AA_APARTADO) < 0) cols.push(COL_AA_APARTADO);
+        if (cols.indexOf(COL_AB_APARTADO) < 0) cols.push(COL_AB_APARTADO);
         return cols;
     }
 
@@ -366,7 +401,8 @@
     }
 
     function tituloCol(enc, c) {
-        if (c === COL_CLIENTE_MAYOREO) return 'Cliente mayoreo';
+        if (c === COL_AB_APARTADO) return 'Apartado';
+        if (c === COL_AA_APARTADO) return 'Apartado';
         var titulo = (enc[c] || '').trim();
         if (/^(no\.?\s*)?imagen|^ref$|^#$/i.test(titulo)) titulo = 'Ref';
         return titulo;
@@ -386,6 +422,7 @@
     }
 
     function claseFilaCompras(f) {
+        if (celdaApartadoMarcada(f)) return ' class="admin-compras-row--apartado-manual"';
         if (filaApartadaMayoreo(f)) return ' class="admin-compras-row--apartado-mayoreo"';
         if (f.earlyAccess) return ' class="admin-compras-row--early"';
         return '';
@@ -467,11 +504,16 @@
         return false;
     }
 
-    /** Solo early access libres (verdes). Apartados/vendidos mayoreo no se publican. */
+    /**
+     * Candidatas a inventario: filas activas en Compras.
+     * Las marcadas en AB (Apartado) también suben; no salen en la web.
+     * Se excluyen solo las reservadas por pedido mayoreo (aún en flujo Naty).
+     */
     function filtrarCandidatasSubirInventario(lista) {
         return (lista || []).filter(function (f) {
-            if (!f || f.enTienda || !f.earlyAccess) return false;
-            return !filaReservadaMayoreo(f);
+            if (!f || f.enTienda) return false;
+            if (filaReservadaMayoreo(f) && !celdaApartadoMarcada(f)) return false;
+            return true;
         });
     }
 
@@ -670,9 +712,8 @@
     function renderComprasToolbar() {
         var on = editandoZona === ZONA_COMPRAS;
         var btnEarly = hayComprasPendientesEarly() ? botonComprasEarlyAccess() : '';
-        var postEarly = hayEarlyAccessEnCompras()
-            ? botonSubirInventario() + botonesComprasExtrasEarly()
-            : '';
+        var btnSubir = filasActivasEnCompras().length ? botonSubirInventario() : '';
+        var postEarly = hayEarlyAccessEnCompras() ? botonesComprasExtrasEarly() : '';
         if (on) {
             return '<div class="admin-compras-zone-toolbar admin-compras-zone-toolbar--edit">' +
                 '<div class="admin-compras-zone-toolbar-grp admin-compras-zone-toolbar-grp--izq">' +
@@ -681,7 +722,7 @@
                 '<button type="button" class="admin-btn admin-btn-danger admin-btn-compact admin-compras-borrar">Eliminar</button>' +
                 '</div>' +
                 '<div class="admin-compras-zone-toolbar-grp admin-compras-zone-toolbar-grp--der">' +
-                postEarly + botonExportarCompras() +
+                btnSubir + postEarly + botonExportarCompras() +
                 '<button type="button" class="admin-btn admin-btn-ghost admin-btn-compact" id="adminComprasCancelar">Cancelar</button>' +
                 '<button type="button" class="admin-btn admin-btn-primary admin-btn-compact" id="adminComprasGuardar">Guardar</button>' +
                 '</div></div>';
@@ -692,7 +733,7 @@
             btnEarly +
             '</div>' +
             '<div class="admin-compras-zone-toolbar-grp admin-compras-zone-toolbar-grp--der">' +
-            postEarly + botonExportarCompras() +
+            btnSubir + postEarly + botonExportarCompras() +
             '</div></div>';
     }
 
@@ -704,7 +745,8 @@
         var thLetters = '';
         var thSheet = '';
         cols.forEach(function (c) {
-            var letra = c === COL_CLIENTE_MAYOREO ? 'AA' : ObebeAdminData.colLetter(c);
+            var letra = c === COL_AA_APARTADO ? 'AA'
+                : (c === COL_AB_APARTADO ? 'AB' : ObebeAdminData.colLetter(c));
             thLetters += '<th class="admin-inv-th-letter">' + esc(letra) + '</th>';
             thSheet += '<th class="admin-inv-th-title">' + esc(tituloCol(enc, c)) + '</th>';
         });
@@ -877,6 +919,18 @@
         if (editandoZona && global.ObebeAdminCamposUi) {
             ObebeAdminCamposUi.bindSelectOtros(root);
         }
+        root.querySelectorAll('.admin-compras-apartado-cb').forEach(function (cb) {
+            if (cb._comprasApartadoBound) return;
+            cb._comprasApartadoBound = true;
+            cb.addEventListener('change', function () {
+                var f = filaPorId(cb.getAttribute('data-id'));
+                if (!f) return;
+                setApartadoManual(f, !!cb.checked);
+                f.actualizadoEn = Date.now();
+                persistir();
+                pintar(root);
+            });
+        });
         root.querySelectorAll('.admin-compras-cell').forEach(function (input) {
             if (input._comprasBound) return;
             input._comprasBound = true;
@@ -921,6 +975,12 @@
         for (i = celdas.length; i < 29; i++) celdas.push('');
         var foto = String(celdas[9] || '');
         if (foto.indexOf('compras/') === 0) celdas[9] = '';
+        if (celdaApartadoMarcada(fila)) {
+            celdas[COL_AA_APARTADO] = 'Apartado';
+            celdas[COL_AB_APARTADO] = '1';
+            var idxCarr = idxCols();
+            if (idxCarr.carrusel != null) celdas[idxCarr.carrusel] = '';
+        }
         return celdas;
     }
 
@@ -1038,148 +1098,39 @@
         return Promise.resolve();
     }
 
-    var KEY_REPARO_VERDES_EARLY = 'obebe_compras_reparo_verdes_early_20261127b';
-    var KEY_REPARO_VERDES_UNDO = 'obebe_compras_reparo_verdes_undo_20261127c';
+    var KEY_QUITAR_VERDE_TODO = 'obebe_compras_quitar_verde_todo_20261127g';
 
-    function refDesdeFilaComprasCloud(c) {
-        if (!c) return 0;
-        var col = idxCols().imagen != null ? idxCols().imagen : 0;
-        var r = parseInt(c.celdas && c.celdas[col], 10);
-        if (!isNaN(r) && r > 0) return r;
-        return parseInt(c.ref, 10) || 0;
-    }
-
-    /** Refs early legítimas: earlyAccessEn anterior al reparo masivo, o nube previa. */
-    function cargarRefsEarlyLegitimas(tRepair) {
-        var margen = 60000;
-        var corte = tRepair > 0 ? tRepair - margen : 0;
-        var fromApi = Promise.resolve([]);
-        if (global.ObebeAdminBackend && ObebeAdminBackend.callAdminApi) {
-            var pMay = ObebeAdminBackend.callAdminApi('getAdminModuloBlob', { moduleKey: 'mayoreo_naty' })
-                .then(function (res) {
-                    var arr = (res && res.payload) || [];
-                    var hit = arr.find(function (x) {
-                        return x && (x.id === 'obebe-mayoreo-pack-naty' || x._modulo === 'mayoreo_naty');
-                    });
-                    return (hit && hit.comprasEarly) || [];
-                })
-                .catch(function () { return []; });
-            var pEnt = ObebeAdminBackend.callAdminApi('getAdminModuloBlob', { moduleKey: 'entregas' })
-                .then(function (res) {
-                    var arr = (res && res.payload) || [];
-                    var hit = arr.find(function (x) {
-                        return x && (x.id === 'obebe-compras-blob' || x._modulo === 'compras');
-                    });
-                    return (hit && hit.lineas) || [];
-                })
-                .catch(function () { return []; });
-            fromApi = Promise.all([pMay, pEnt]).then(function (packs) {
-                return (packs[0] || []).concat(packs[1] || []);
-            });
-        }
-        return fromApi.then(function (cloudRows) {
-            var set = {};
-            (cloudRows || []).forEach(function (c) {
-                if (!c || c.enTienda || !c.earlyAccess) return;
-                var en = Number(c.earlyAccessEn || 0);
-                /* Si el lote de la nube se pisó con el reparo masivo, ignora esos. */
-                if (corte > 0 && en >= corte) return;
-                var r = refDesdeFilaComprasCloud(c);
-                if (r > 0) set[String(r)] = true;
-            });
-            /* Local: solo conservan verde si earlyAccessEn es claramente anterior al reparo. */
-            filas.forEach(function (f) {
-                if (!f || f.enTienda) return;
-                var en = Number(f.earlyAccessEn || 0);
-                if (!(en > 0)) return;
-                if (corte > 0 && en >= corte) return;
-                var r = refNumeroFila(f);
-                if (!isNaN(r) && r > 0) set[String(r)] = true;
-            });
-            return set;
-        });
-    }
-
-    /**
-     * Deshace el marcado verde masivo: solo quedan en early access los que ya lo eran
-     * (timestamp anterior / nube). Apartados mayoreo nunca en verde.
-     */
-    function repararMarcadoVerdeEarlyAccess(root) {
+    /** Por ahora: quita todo el early access (verde) de Compras. */
+    function desmarcarTodoVerdeEarlyAccess(root) {
         try {
-            if (localStorage.getItem(KEY_REPARO_VERDES_UNDO)) {
+            if (localStorage.getItem(KEY_QUITAR_VERDE_TODO)) {
                 return Promise.resolve({ ok: true, omitido: true });
             }
         } catch (e0) { /* ignore */ }
-
-        var tRepair = 0;
-        try {
-            tRepair = parseInt(localStorage.getItem(KEY_REPARO_VERDES_EARLY), 10) || 0;
-        } catch (e1) { /* ignore */ }
-        if (!tRepair) tRepair = Date.now();
-
-        if (global.ObebeMayoreoPedidosStore &&
-            ObebeMayoreoPedidosStore.sincronizarFilasComprasConPedidos) {
-            try {
-                ObebeMayoreoPedidosStore.sincronizarFilasComprasConPedidos(filas);
-                filas = global.ObebeComprasStore ? ObebeComprasStore.getAll() : filas;
-            } catch (eSync) { /* ignore */ }
-        }
-
-        return cargarRefsEarlyLegitimas(tRepair).then(function (refsLegit) {
-            var verdes = 0;
-            var quitados = 0;
-            var reservadas = 0;
-            var refsKeep = [];
-            filas.forEach(function (f) {
-                if (!f || f.enTienda) return;
-                var r = refNumeroFila(f);
-                var rKey = !isNaN(r) && r > 0 ? String(r) : '';
-                if (filaReservadaMayoreo(f)) {
-                    if (f.earlyAccess) {
-                        f.earlyAccess = false;
-                        f.earlyAccessEn = null;
-                        quitados += 1;
-                    }
-                    f.earlyAccessSuspendidoPorPedido = true;
-                    reservadas += 1;
-                    return;
-                }
-                var debeVerde = !!(rKey && refsLegit[rKey]);
-                if (debeVerde) {
-                    f.earlyAccess = true;
-                    if (!f.earlyAccessEn || f.earlyAccessEn >= tRepair - 60000) {
-                        /* Conserva marca, con timestamp “viejo” para no confundir. */
-                        f.earlyAccessEn = Math.min(Number(f.earlyAccessEn) || tRepair - 120000, tRepair - 120000);
-                    }
-                    f.earlyAccessSuspendidoPorPedido = false;
-                    verdes += 1;
-                    refsKeep.push(r);
-                } else {
-                    if (f.earlyAccess) quitados += 1;
-                    f.earlyAccess = false;
-                    f.earlyAccessEn = null;
-                    f.earlyAccessSuspendidoPorPedido = false;
-                }
-            });
-
-            if (global.ObebeComprasEarlyStore && ObebeComprasEarlyStore.reemplazarRefs) {
-                ObebeComprasEarlyStore.reemplazarRefs(refsKeep, tRepair - 120000);
-            } else if (global.ObebeComprasEarlyStore) {
-                var todas = Object.keys(ObebeComprasEarlyStore.leerTodos() || {});
-                ObebeComprasEarlyStore.quitarRefs(todas);
-                if (refsKeep.length) ObebeComprasEarlyStore.marcarRefs(refsKeep);
-            }
-
-            persistir();
-            try { localStorage.setItem(KEY_REPARO_VERDES_UNDO, String(Date.now())); } catch (e2) { /* */ }
-
-            aviso = 'Verde corregido: ' + verdes + ' early access original(es). Se quitó el verde de ' +
-                quitados + ' artículo(s) marcados por error.' +
-                (reservadas ? ' ' + reservadas + ' apartado(s) mayoreo sin verde.' : '');
-            document.dispatchEvent(new CustomEvent('obebe-compras-early-access'));
-            pintar(root);
-            return { ok: true, verdes: verdes, quitados: quitados, reservadas: reservadas };
+        var n = 0;
+        var refs = [];
+        filas.forEach(function (f) {
+            if (!f || f.enTienda) return;
+            if (f.earlyAccess || f.earlyAccessEn) n += 1;
+            f.earlyAccess = false;
+            f.earlyAccessEn = null;
+            f.earlyAccessSuspendidoPorPedido = !!f.earlyAccessSuspendidoPorPedido;
+            var r = refNumeroFila(f);
+            if (!isNaN(r) && r > 0) refs.push(r);
         });
+        if (global.ObebeComprasEarlyStore) {
+            if (ObebeComprasEarlyStore.reemplazarRefs) ObebeComprasEarlyStore.reemplazarRefs([]);
+            else if (refs.length) ObebeComprasEarlyStore.quitarRefs(refs);
+        }
+        persistir();
+        try { localStorage.setItem(KEY_QUITAR_VERDE_TODO, String(Date.now())); } catch (e1) { /* */ }
+        try { localStorage.setItem('obebe_compras_reparo_verdes_undo_20261127c', 'replaced'); } catch (e2) { /* */ }
+        aviso = n
+            ? 'Se quitó el marcado verde (early access) de Compras. Usa la casilla AB · Apartado si aplica.'
+            : '';
+        document.dispatchEvent(new CustomEvent('obebe-compras-early-access'));
+        pintar(root);
+        return Promise.resolve({ ok: true, n: n });
     }
 
     function quitarDelInventario(root, listaFilas) {
@@ -1318,21 +1269,20 @@
     function subirComprasAInventario(root) {
         if (subiendo || !global.ObebeAdminDialog || !global.ObebeAdminBackend) return;
         var candidatas = filtrarCandidatasSubirInventario(filasActivasEnCompras());
-        if (!hayEarlyAccessEnCompras()) {
-            aviso = 'Primero usa «Subir a early access» para que Naty vea el stock en Pedidos.';
-            pintar(root);
-            return;
-        }
         if (!candidatas.length) {
-            aviso = 'No hay early access libres para subir (los apartados/vendidos mayoreo no se publican).';
+            aviso = 'No hay artículos en Compras para subir a inventario.';
             pintar(root);
             return;
         }
         var n = candidatas.length;
+        var nApart = candidatas.filter(celdaApartadoMarcada).length;
+        var msg = 'Se publican ' + n + ' artículo(s) en inventario y salen de Compras.';
+        if (nApart) {
+            msg += ' ' + nApart + ' marcado(s) como Apartado (columna AB): entran al stock con AA = «Apartado» y no aparecen en la página web.';
+        }
         ObebeAdminDialog.confirm({
             title: '¿Subir a inventario?',
-            message: 'Se publican ' + n + ' artículo(s) en early access libres. ' +
-                'Los apartados/vendidos mayoreo se quedan en Compras (no se suben). Salen de Compras al terminar.',
+            message: msg,
             confirmText: 'Sí, subir',
             cancelText: 'Cancelar',
             variant: 'ok',
@@ -1461,7 +1411,7 @@
                 recuperarComprasDesdeInventario().then(function () {
                     if (sesion !== mountSesion || !container) return;
                     pintar(container);
-                    return repararMarcadoVerdeEarlyAccess(container);
+                    return desmarcarTodoVerdeEarlyAccess(container);
                 });
             } catch (err) {
                 container.innerHTML = '<p class="admin-banner">No se pudo mostrar Compras. ' +

@@ -35,7 +35,7 @@
 
     cargarExtra('obebe-data-config.js', function() {
         cargarExtra('inventario-columnas.js', function() {
-            cargarExtra('stock-sheet.js?v=20261126c', arrancarInventarioYTienda);
+            cargarExtra('stock-sheet.js?v=20261127g', arrancarInventarioYTienda);
         });
     });
     cargarExtra('mercadolibre-web.js', function() {

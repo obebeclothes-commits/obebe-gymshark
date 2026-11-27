@@ -7,7 +7,9 @@
 
     var COL_FALTANTE = 18; // S · no se muestra en admin
     var COL_AUDITORIA = 25; // Z · comentario auditoría stock (OBEBE)
-    var COL_VISTA_MAX = 26; // A–Z (índice 0..25)
+    var COL_AA_APARTADO = 26; // AA · texto "Apartado" / cliente mayoreo
+    var COL_AB_APARTADO = 27; // AB · casilla apartado (oculto en web)
+    var COL_VISTA_MAX = 28; // A–AB (índice 0..27)
 
     var TITULOS_DEFAULT = [
         'NO. IMAGEN',
@@ -35,7 +37,9 @@
         '%MAYOREO +50',
         'COLECCION',
         'OFERTA SEMANAL',
-        'COMENTARIO AUDITORIA'
+        'COMENTARIO AUDITORIA',
+        'APARTADO',
+        'APARTADO'
     ];
 
     var DEFAULT_IDX = {
@@ -65,7 +69,9 @@
         coleccion: 23,
         ofertaSemanal: 24,
         auditoria: COL_AUDITORIA,
-        ubicacion: 27
+        apartadoLabel: COL_AA_APARTADO,
+        apartado: COL_AB_APARTADO,
+        ubicacion: COL_AB_APARTADO
     };
 
     function normTitulo(s) {
@@ -139,8 +145,15 @@
             else if (/coleccion|colecci\u00f3n/.test(t)) idx.coleccion = c;
             else if (/oferta\s*semanal/.test(t)) idx.ofertaSemanal = c;
             else if (/auditoria|comentario\s*auditoria|revisi[oó]n\s*stock/.test(t)) idx.auditoria = c;
-            else if (/ubicacion|ubicaci\u00f3n/.test(t)) idx.ubicacion = c;
+            else if (/^apartado$/.test(t) && c === COL_AB_APARTADO) {
+                idx.apartado = c;
+                idx.ubicacion = c;
+            } else if (/^apartado$/.test(t) && c === COL_AA_APARTADO) {
+                idx.apartadoLabel = c;
+            } else if (/ubicacion|ubicaci\u00f3n/.test(t)) idx.ubicacion = c;
         }
+        if (idx.apartado == null) idx.apartado = COL_AB_APARTADO;
+        if (idx.apartadoLabel == null) idx.apartadoLabel = COL_AA_APARTADO;
         return idx;
     }
 
@@ -154,6 +167,8 @@
         TITULOS_DEFAULT: TITULOS_DEFAULT,
         COL_FALTANTE: COL_FALTANTE,
         COL_AUDITORIA: COL_AUDITORIA,
+        COL_AA_APARTADO: COL_AA_APARTADO,
+        COL_AB_APARTADO: COL_AB_APARTADO,
         COL_VISTA_MAX: COL_VISTA_MAX,
         titulosDefault: titulosDefault,
         combinarEncabezados: combinarEncabezados,

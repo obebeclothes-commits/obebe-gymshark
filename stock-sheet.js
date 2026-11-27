@@ -18,7 +18,8 @@
     var IDX_COLECCION = 23; // columna X
     var IDX_OFERTA_SEMANAL = 24; // columna Y
     var IDX_FECHA_STOCK = 10; // columna K
-    var IDX_UBICACION = 27; // columna AB
+    var IDX_UBICACION = 27; // columna AB (casilla apartado)
+    var IDX_AA_APARTADO = 26; // columna AA (texto Apartado)
 
     function indicesInventarioDesdeFilas(filas) {
         var enc = filas && filas.length > 1 ? filas[1] : [];
@@ -44,6 +45,8 @@
             ofertaSemanal: IDX_OFERTA_SEMANAL,
             fechaStock: IDX_FECHA_STOCK,
             segmento: IDX_SEGMENTO,
+            apartadoLabel: IDX_AA_APARTADO,
+            apartado: IDX_UBICACION,
             ubicacion: IDX_UBICACION
         };
     }
@@ -512,6 +515,13 @@
             var nombre = String(celdaInv(f, IX, 'nombre') || '').trim();
             if (!nombre || nombre.toUpperCase() === 'NOMBRE' || nombre.toUpperCase() === 'ARTICULO') continue;
             if (!filaPerteneceCategoria(f, categoria, usarSegmento, IX)) continue;
+            /* Apartados (AA/AB): en inventario admin sí; en la tienda web no. */
+            var aaApart = String(celdaInv(f, IX, 'apartadoLabel') || '').trim().toLowerCase();
+            var abApart = String(celdaInv(f, IX, 'apartado') || '').trim().toLowerCase();
+            if (aaApart === 'apartado' || abApart === '1' || abApart === 'si' || abApart === 'sí' ||
+                abApart === 'true' || abApart === 'x' || abApart === 'apartado') {
+                continue;
+            }
             var stock = parsearStock(celdaInv(f, IX, 'stock'));
             var talla = normalizarTalla(celdaInv(f, IX, 'talla'));
             var color = normalizarColor(celdaInv(f, IX, 'color'));
