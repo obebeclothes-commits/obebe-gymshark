@@ -1039,17 +1039,83 @@
     }
 
     var KEY_REPARO_VERDES_EARLY = 'obebe_compras_reparo_verdes_early_20261127b';
+    var KEY_REPARO_VERDES_UNDO = 'obebe_compras_reparo_verdes_undo_20261127c';
+
+    function refDesdeFilaComprasCloud(c) {
+        if (!c) return 0;
+        var col = idxCols().imagen != null ? idxCols().imagen : 0;
+        var r = parseInt(c.celdas && c.celdas[col], 10);
+        if (!isNaN(r) && r > 0) return r;
+        return parseInt(c.ref, 10) || 0;
+    }
+
+    /** Refs early legítimas: earlyAccessEn anterior al reparo masivo, o nube previa. */
+    function cargarRefsEarlyLegitimas(tRepair) {
+        var margen = 60000;
+        var corte = tRepair > 0 ? tRepair - margen : 0;
+        var fromApi = Promise.resolve([]);
+        if (global.ObebeAdminBackend && ObebeAdminBackend.callAdminApi) {
+            var pMay = ObebeAdminBackend.callAdminApi('getAdminModuloBlob', { moduleKey: 'mayoreo_naty' })
+                .then(function (res) {
+                    var arr = (res && res.payload) || [];
+                    var hit = arr.find(function (x) {
+                        return x && (x.id === 'obebe-mayoreo-pack-naty' || x._modulo === 'mayoreo_naty');
+                    });
+                    return (hit && hit.comprasEarly) || [];
+                })
+                .catch(function () { return []; });
+            var pEnt = ObebeAdminBackend.callAdminApi('getAdminModuloBlob', { moduleKey: 'entregas' })
+                .then(function (res) {
+                    var arr = (res && res.payload) || [];
+                    var hit = arr.find(function (x) {
+                        return x && (x.id === 'obebe-compras-blob' || x._modulo === 'compras');
+                    });
+                    return (hit && hit.lineas) || [];
+                })
+                .catch(function () { return []; });
+            fromApi = Promise.all([pMay, pEnt]).then(function (packs) {
+                return (packs[0] || []).concat(packs[1] || []);
+            });
+        }
+        return fromApi.then(function (cloudRows) {
+            var set = {};
+            (cloudRows || []).forEach(function (c) {
+                if (!c || c.enTienda || !c.earlyAccess) return;
+                var en = Number(c.earlyAccessEn || 0);
+                /* Si el lote de la nube se pisó con el reparo masivo, ignora esos. */
+                if (corte > 0 && en >= corte) return;
+                var r = refDesdeFilaComprasCloud(c);
+                if (r > 0) set[String(r)] = true;
+            });
+            /* Local: solo conservan verde si earlyAccessEn es claramente anterior al reparo. */
+            filas.forEach(function (f) {
+                if (!f || f.enTienda) return;
+                var en = Number(f.earlyAccessEn || 0);
+                if (!(en > 0)) return;
+                if (corte > 0 && en >= corte) return;
+                var r = refNumeroFila(f);
+                if (!isNaN(r) && r > 0) set[String(r)] = true;
+            });
+            return set;
+        });
+    }
 
     /**
-     * Restaura el marcado verde (early access) en Compras.
-     * No sube nada a inventario: ni verdes libres ni apartados/vendidos mayoreo.
+     * Deshace el marcado verde masivo: solo quedan en early access los que ya lo eran
+     * (timestamp anterior / nube). Apartados mayoreo nunca en verde.
      */
     function repararMarcadoVerdeEarlyAccess(root) {
         try {
-            if (localStorage.getItem(KEY_REPARO_VERDES_EARLY)) {
+            if (localStorage.getItem(KEY_REPARO_VERDES_UNDO)) {
                 return Promise.resolve({ ok: true, omitido: true });
             }
         } catch (e0) { /* ignore */ }
+
+        var tRepair = 0;
+        try {
+            tRepair = parseInt(localStorage.getItem(KEY_REPARO_VERDES_EARLY), 10) || 0;
+        } catch (e1) { /* ignore */ }
+        if (!tRepair) tRepair = Date.now();
 
         if (global.ObebeMayoreoPedidosStore &&
             ObebeMayoreoPedidosStore.sincronizarFilasComprasConPedidos) {
@@ -1059,49 +1125,61 @@
             } catch (eSync) { /* ignore */ }
         }
 
-        var t = Date.now();
-        var verdes = 0;
-        var reservadas = 0;
-        var refsEarly = [];
-        filas.forEach(function (f) {
-            if (!f || f.enTienda) return;
-            if (filaReservadaMayoreo(f)) {
-                if (f.earlyAccess) {
+        return cargarRefsEarlyLegitimas(tRepair).then(function (refsLegit) {
+            var verdes = 0;
+            var quitados = 0;
+            var reservadas = 0;
+            var refsKeep = [];
+            filas.forEach(function (f) {
+                if (!f || f.enTienda) return;
+                var r = refNumeroFila(f);
+                var rKey = !isNaN(r) && r > 0 ? String(r) : '';
+                if (filaReservadaMayoreo(f)) {
+                    if (f.earlyAccess) {
+                        f.earlyAccess = false;
+                        f.earlyAccessEn = null;
+                        quitados += 1;
+                    }
+                    f.earlyAccessSuspendidoPorPedido = true;
+                    reservadas += 1;
+                    return;
+                }
+                var debeVerde = !!(rKey && refsLegit[rKey]);
+                if (debeVerde) {
+                    f.earlyAccess = true;
+                    if (!f.earlyAccessEn || f.earlyAccessEn >= tRepair - 60000) {
+                        /* Conserva marca, con timestamp “viejo” para no confundir. */
+                        f.earlyAccessEn = Math.min(Number(f.earlyAccessEn) || tRepair - 120000, tRepair - 120000);
+                    }
+                    f.earlyAccessSuspendidoPorPedido = false;
+                    verdes += 1;
+                    refsKeep.push(r);
+                } else {
+                    if (f.earlyAccess) quitados += 1;
                     f.earlyAccess = false;
                     f.earlyAccessEn = null;
+                    f.earlyAccessSuspendidoPorPedido = false;
                 }
-                f.earlyAccessSuspendidoPorPedido = true;
-                reservadas += 1;
-                return;
+            });
+
+            if (global.ObebeComprasEarlyStore && ObebeComprasEarlyStore.reemplazarRefs) {
+                ObebeComprasEarlyStore.reemplazarRefs(refsKeep, tRepair - 120000);
+            } else if (global.ObebeComprasEarlyStore) {
+                var todas = Object.keys(ObebeComprasEarlyStore.leerTodos() || {});
+                ObebeComprasEarlyStore.quitarRefs(todas);
+                if (refsKeep.length) ObebeComprasEarlyStore.marcarRefs(refsKeep);
             }
-            /* Libres: volver a early access (verde). */
-            if (!f.earlyAccess) {
-                f.earlyAccess = true;
-                f.earlyAccessEn = f.earlyAccessEn || t;
-                f.earlyAccessSuspendidoPorPedido = false;
-                f.mayoreoPublicarPendiente = false;
-                asignarFotoColJ(f);
-                verdes += 1;
-            } else {
-                verdes += 1;
-            }
-            var r = refNumeroFila(f);
-            if (!isNaN(r) && r > 0) refsEarly.push(r);
+
+            persistir();
+            try { localStorage.setItem(KEY_REPARO_VERDES_UNDO, String(Date.now())); } catch (e2) { /* */ }
+
+            aviso = 'Verde corregido: ' + verdes + ' early access original(es). Se quitó el verde de ' +
+                quitados + ' artículo(s) marcados por error.' +
+                (reservadas ? ' ' + reservadas + ' apartado(s) mayoreo sin verde.' : '');
+            document.dispatchEvent(new CustomEvent('obebe-compras-early-access'));
+            pintar(root);
+            return { ok: true, verdes: verdes, quitados: quitados, reservadas: reservadas };
         });
-
-        if (global.ObebeComprasEarlyStore && refsEarly.length) {
-            ObebeComprasEarlyStore.marcarRefs(refsEarly);
-        }
-        persistir();
-        try { localStorage.setItem(KEY_REPARO_VERDES_EARLY, String(Date.now())); } catch (e1) { /* */ }
-        /* Anula el reparo anterior que proponía subir vendidos a inventario. */
-        try { localStorage.setItem('obebe_compras_reparo_inv_apartados_20261127', 'replaced:' + Date.now()); } catch (e2) { /* */ }
-
-        aviso = 'Early access restaurado: ' + verdes + ' en verde (no se suben). ' +
-            (reservadas ? reservadas + ' apartado(s)/vendido(s) mayoreo quedan fuera del verde.' : '');
-        document.dispatchEvent(new CustomEvent('obebe-compras-early-access'));
-        pintar(root);
-        return Promise.resolve({ ok: true, verdes: verdes, reservadas: reservadas });
     }
 
     function quitarDelInventario(root, listaFilas) {

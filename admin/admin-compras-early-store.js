@@ -58,6 +58,18 @@
         if (dirty) guardar(map);
     }
 
+    /** Sustituye el mapa completo (p. ej. tras corregir un marcado masivo). */
+    function reemplazarRefs(refs, ts) {
+        var map = {};
+        var t = ts || Date.now();
+        (refs || []).forEach(function (ref) {
+            var r = parseInt(ref, 10);
+            if (!isNaN(r) && r > 0) map[String(r)] = t;
+        });
+        guardar(map);
+        return Object.keys(map).length;
+    }
+
     function tieneRef(ref) {
         if (ref == null || ref === '') return false;
         return !!leer()[String(ref)];
@@ -71,6 +83,7 @@
     global.ObebeComprasEarlyStore = {
         marcarRefs: marcarRefs,
         quitarRefs: quitarRefs,
+        reemplazarRefs: reemplazarRefs,
         refsDesdeFilas: refsDesdeFilas,
         tieneRef: tieneRef,
         esEarlyAccessFila: esEarlyAccessFila,
