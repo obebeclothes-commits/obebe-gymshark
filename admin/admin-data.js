@@ -2479,15 +2479,46 @@
         });
     }
 
+    function parseRefMetaDesdeLink(link) {
+        var m = String(link || '').match(/\[\[ref:(\d+)\]\]/);
+        if (!m) return 0;
+        var n = parseInt(m[1], 10);
+        return n > 0 ? n : 0;
+    }
+
+    function linkConMetaRef(link, ref) {
+        link = String(link || '').replace(/\[\[ref:\d+\]\]/g, '').trim();
+        var n = parseInt(ref, 10) || 0;
+        if (n > 0) {
+            link = (link ? link + ' ' : '') + '[[ref:' + n + ']]';
+        }
+        return link;
+    }
+
+    function filaInventarioPorDbId(dbId) {
+        dbId = parseInt(dbId, 10) || 0;
+        if (!dbId) return null;
+        return (estado.filas || []).find(function (x) {
+            return parseInt(x.inventarioDbId, 10) === dbId;
+        }) || null;
+    }
+
     function decorarVentaPrecioOriginal(v) {
         if (!v) return v;
         var raw = String(v.link || '');
         var m = raw.match(/\[\[orig:([\d.]+)\]\]/);
         if (m) v.precioOriginal = parseNum(m[1]);
         else if (!v.precioOriginal) v.precioOriginal = 0;
+        var refMeta = parseRefMetaDesdeLink(raw);
+        if (refMeta > 0 && !(parseInt(v.ref, 10) > 0)) v.ref = refMeta;
+        var stockMeta = metaStockDesdeLinkVenta(raw);
+        if (stockMeta && stockMeta.inventarioId && !(parseInt(v.inventarioDbId, 10) > 0)) {
+            v.inventarioDbId = stockMeta.inventarioId;
+        }
         v.linkVisible = raw
             .replace(/\[\[orig:[\d.]+\]\]/g, '')
             .replace(/\[\[stock:\d+:-?\d+\]\]/g, '')
+            .replace(/\[\[ref:\d+\]\]/g, '')
             .trim();
         return v;
     }
@@ -2499,6 +2530,8 @@
         if (meta.stockDelta) {
             link = linkConMetaStock(link, meta.inventarioDbId || (f && f.inventarioDbId), meta.stockDelta);
         }
+        var ref = parseInt(meta.ref, 10) || parseInt(f && f.ref, 10) || 0;
+        if (ref > 0) link = linkConMetaRef(link, ref);
         return link;
     }
 
@@ -2541,7 +2574,8 @@
             link: linkVentaDesdeMeta(f, meta),
             telefono: meta.telefono || '',
             filaSheet: 0,
-            inventarioDbId: f.inventarioDbId || meta.inventarioDbId || 0
+            inventarioDbId: f.inventarioDbId || meta.inventarioDbId || 0,
+            ref: parseInt(f.ref, 10) || parseInt(meta.ref, 10) || 0
         };
     }
 
@@ -3037,12 +3071,28 @@
         if (!nn) return null;
         var nt = norm(talla);
         var nc = norm(color);
+        var exactos = [];
+        var porNombre = [];
         for (var i = 0; i < estado.filas.length; i++) {
             var f = estado.filas[i];
             if (norm(f.nombre) !== nn) continue;
+            porNombre.push(f);
             if (nt && norm(f.talla) !== nt) continue;
             if (nc && norm(f.color) !== nc) continue;
-            return f;
+            exactos.push(f);
+        }
+        if (exactos.length) return exactos[0];
+        // Si solo hay una variante con ese nombre, úsala (evita "—" en ventas).
+        if (porNombre.length === 1) return porNombre[0];
+        // Misma talla, cualquier color (o viceversa) si queda un único candidato.
+        if (nt) {
+            var porTalla = porNombre.filter(function (f) { return norm(f.talla) === nt; });
+            if (porTalla.length === 1) return porTalla[0];
+            if (!nc && porTalla.length) return porTalla[0];
+        }
+        if (nc) {
+            var porColor = porNombre.filter(function (f) { return norm(f.color) === nc; });
+            if (porColor.length === 1) return porColor[0];
         }
         return null;
     }
@@ -5302,9 +5352,30 @@
         var directo = parseInt(obj.ref, 10);
         if (directo > 0) return directo;
         if (obj.fila && parseInt(obj.fila.ref, 10) > 0) return parseInt(obj.fila.ref, 10);
+
+        var fromLink = parseRefMetaDesdeLink(obj.link || obj.linkVisible || '');
+        if (fromLink > 0) return fromLink;
+
+        var dbId = parseInt(obj.inventarioDbId, 10) || 0;
+        if (!dbId) {
+            var stockMeta = metaStockDesdeLinkVenta(obj.link || '');
+            if (stockMeta) dbId = stockMeta.inventarioId;
+        }
+        if (dbId) {
+            var porId = filaInventarioPorDbId(dbId);
+            if (porId) {
+                var refId = parseInt(porId.ref, 10) || parseRef(porId.celdas && porId.celdas[0]);
+                if (refId > 0) return refId;
+            }
+        }
+
         var nombre = obj.nombre || obj.nombreMostrar || obj.nombreSheet || '';
         var hit = buscarFilaInventarioPorVenta(nombre, obj.talla, obj.color);
-        return hit && hit.ref ? hit.ref : 0;
+        if (hit) {
+            var refHit = parseInt(hit.ref, 10) || parseRef(hit.celdas && hit.celdas[0]);
+            if (refHit > 0) return refHit;
+        }
+        return 0;
     }
 
     function htmlRef(ref) {
