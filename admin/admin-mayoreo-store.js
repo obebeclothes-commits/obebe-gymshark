@@ -169,6 +169,13 @@
         ].join('::');
     }
 
+    function unidadesSiPedido(pedido) {
+        return (pedido && pedido.items || []).reduce(function (s, it) {
+            if (!it || it.disponibilidad !== 'si') return s;
+            return s + (it.cantidad || 1);
+        }, 0);
+    }
+
     function itemsSiPedidoSinLinea(pedido) {
         var k = claveCliente(pedido && pedido.clienteKey);
         var lineas = getLineas();
@@ -184,16 +191,35 @@
         return faltan;
     }
 
+    function resolverImagenPedidoItem(it) {
+        if (!it) return '';
+        if (it.imagenUrl) return it.imagenUrl;
+        if (global.ObebeAdminData && ObebeAdminData.imagenParaLineaMayoreo) {
+            var filas = (global.ObebeAdminData.getEstado && ObebeAdminData.getEstado().filas) || [];
+            return ObebeAdminData.imagenParaLineaMayoreo({
+                ref: it.ref,
+                nombre: it.nombre,
+                talla: it.talla,
+                color: it.color,
+                tipo: it.tipo,
+                marca: it.marca
+            }, filas) || '';
+        }
+        return '';
+    }
+
     function ingresarInventarioDesdePedido(pedido, opts) {
         opts = opts || {};
         if (!pedido || pedido.estado !== 'revisado') {
             return { ok: false, error: 'Pedido no confirmado.' };
         }
+        var esperadas = unidadesSiPedido(pedido);
+        var aplicadasPrev = Number(pedido.inventarioUnidadesAplicadas || 0);
         var soloFaltantes = false;
         if (pedido.inventarioAplicado && !opts.forzar) {
             var faltanPrev = itemsSiPedidoSinLinea(pedido);
             if (!faltanPrev.length) {
-                return { ok: true, omitido: true };
+                return { ok: true, omitido: true, stampUnidades: aplicadasPrev < esperadas ? esperadas : 0 };
             }
             /* Venta confirmada pero líneas perdidas en sync: solo reponer faltantes. */
             soloFaltantes = true;
@@ -202,11 +228,13 @@
         var fecha = fechaLocalIso(new Date(pedido.revisadoEn || pedido.ventaRetailRegistradaEn || Date.now()));
         var lineas = getLineas();
         var nuevas = 0;
+        var unidadesSumadas = 0;
         var ahora = Date.now();
         (pedido.items || []).forEach(function (it) {
             if (it.disponibilidad !== 'si') return;
             var id = idLineaDesdePedidoItem(it, k);
             var qty = it.cantidad || 1;
+            var img = resolverImagenPedidoItem(it);
             var hit = lineas.find(function (l) {
                 return l.id === id && l.clienteKey === k;
             });
@@ -215,9 +243,11 @@
                 hit.cantidad = (hit.cantidad || 0) + qty;
                 hit.fechaStockIso = fecha;
                 hit.actualizadoEn = ahora;
-                if (it.imagenUrl) hit.imagenUrl = it.imagenUrl;
+                if (img) hit.imagenUrl = img;
+                else if (it.imagenUrl) hit.imagenUrl = it.imagenUrl;
                 if (it.precioCliente != null) hit.precioMayoreo = it.precioCliente;
                 if (it.precioRetail != null) hit.precioRetail = it.precioRetail;
+                unidadesSumadas += qty;
             } else {
                 lineas.push({
                     id: id,
@@ -234,13 +264,15 @@
                     precioRetail: it.precioRetail || 0,
                     precioVentaPlaneado: 0,
                     precioVentaNatyManual: false,
-                    imagenUrl: it.imagenUrl || '',
+                    imagenUrl: img || '',
                     filaSheet: 0,
                     fechaStockIso: fecha,
                     importadoEn: ahora,
-                    actualizadoEn: ahora
+                    actualizadoEn: ahora,
+                    pedidoOrigenId: pedido.id || ''
                 });
                 nuevas += 1;
+                unidadesSumadas += qty;
             }
         });
         lineas.forEach(function (l) {
@@ -255,13 +287,17 @@
             if (pi >= 0) {
                 todos[pi].inventarioAplicado = true;
                 todos[pi].inventarioAplicadoEn = ahora;
+                todos[pi].inventarioUnidadesAplicadas = Math.max(
+                    aplicadasPrev + unidadesSumadas,
+                    esperadas
+                );
                 guardarJson('obebe_mayoreo_pedidos_v1', todos);
                 if (global.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.notifyMayoreoNatySaved) {
                     ObebeAdminMayoreoCloud.notifyMayoreoNatySaved();
                 }
             }
         }
-        return { ok: true, nuevas: nuevas, reparado: soloFaltantes };
+        return { ok: true, nuevas: nuevas, unidades: unidadesSumadas, reparado: soloFaltantes };
     }
 
     /** Reaplica stock mayoreo de pedidos con venta confirmada si faltan líneas (p. ej. sync viejo). */
@@ -283,10 +319,15 @@
         if (Array.isArray(todos)) {
             todos.forEach(function (p) {
                 if (!p || !p.ventaRetailRegistradaEn || p.estado !== 'revisado') return;
-                if (p.inventarioAplicado) return;
+                var esperadas = unidadesSiPedido(p);
+                var aplicadas = Number(p.inventarioUnidadesAplicadas || 0);
+                if (p.inventarioAplicado && aplicadas >= esperadas && esperadas > 0) return;
                 if (itemsSiPedidoSinLinea(p).length) return;
                 p.inventarioAplicado = true;
                 p.inventarioAplicadoEn = p.inventarioAplicadoEn || Date.now();
+                if (esperadas > 0 && aplicadas < esperadas) {
+                    p.inventarioUnidadesAplicadas = esperadas;
+                }
                 dirtyFlags = true;
                 reparados += 1;
             });

@@ -394,7 +394,8 @@
             if (!datosCache) datosCache = baseDatosMayoreoCliente(inv);
             else datosCache.filas = inv.filas || [];
             if (vistaActual === 'ventas_mayoreo' || vistaActual === 'registrar_venta_mayoreo' ||
-                vistaActual === 'dashboard_mayoreo' || vistaActual === 'pedidos_mayoreo') {
+                vistaActual === 'dashboard_mayoreo' || vistaActual === 'pedidos_mayoreo' ||
+                vistaActual === 'mayoreo') {
                 renderModulo(vistaActual);
             }
         }).catch(function () { /* fotos opcionales */ });
@@ -756,6 +757,10 @@
 
     function renderInventarioMayoreoCliente() {
         var key = clienteMayoreoKey();
+        if (window.ObebeMayoreoStore &&
+            ObebeMayoreoStore.asegurarInventarioDesdePedidosConfirmados) {
+            try { ObebeMayoreoStore.asegurarInventarioDesdePedidosConfirmados(); } catch (eA) { /* ignore */ }
+        }
         var dm = datosMayoreoParaVista();
         var rm = dm.resumenMayoreo || {};
         var gan = ObebeMayoreoStore.resumenGananciaCliente(key);
@@ -771,6 +776,20 @@
         var filas = ObebeAdminMayoreoVentas.filasInventarioDesdeMayoreoCliente(key, filasInv);
         var enc = datosCache.encabezadosFila2 || [];
         function pintarInv() {
+            dm = datosMayoreoParaVista();
+            rm = dm.resumenMayoreo || {};
+            gan = ObebeMayoreoStore.resumenGananciaCliente(key);
+            pzas = gan.piezasVendidas || 0;
+            kpis =
+                '<div class="admin-kpi-grid" id="adminMayoreoKpisInv" style="margin-bottom:1rem">' +
+                kpi('Unidades', rm.articulos || 0) +
+                kpi('Total invertido', ObebeAdminData.formatoMoney(rm.totalCobrado || 0)) +
+                kpi('Lo vendido', ObebeAdminData.formatoMoney(gan.totalVendido || 0), pzas + ' pzas.') +
+                kpi('Utilidad total', ObebeAdminData.formatoMoney(gan.utilidadTotal || 0), pzas + ' pzas.') +
+                '</div>';
+            filasInv = datosCache.filas || [];
+            filas = ObebeAdminMayoreoVentas.filasInventarioDesdeMayoreoCliente(key, filasInv);
+            enc = datosCache.encabezadosFila2 || [];
             elContent.innerHTML = kpis + '<div id="adminInvMount"></div>';
             ObebeAdminInventario.mount(
                 document.getElementById('adminInvMount'),
@@ -804,6 +823,16 @@
             return Promise.resolve();
         }
         pintarInv();
+        if (!(filasInv || []).length) {
+            ObebeAdminData.cargarInventario(false).then(function (inv) {
+                if (!datosCache) datosCache = baseDatosMayoreoCliente(inv);
+                else {
+                    datosCache.filas = inv.filas || [];
+                    datosCache.encabezadosFila2 = inv.encabezadosFila2 || datosCache.encabezadosFila2;
+                }
+                if (vistaActual === 'mayoreo') pintarInv();
+            }).catch(function () { /* fotos opcionales */ });
+        }
     }
 
     function renderDashboard() {
@@ -1408,7 +1437,6 @@
     }
 
     function iniciarAppTrasLogin(user) {
-        mantenimientoMayoreoLocal();
         var inicio = ObebeAdminAuth.esMayoreoCliente(user) ? 'dashboard_mayoreo' : 'dashboard';
         if (ObebeAdminAuth.esMayoreoCliente(user)) {
             datosCache = baseDatosMayoreoCliente({ filas: [] });
@@ -1421,12 +1449,27 @@
                 ? ObebeAdminModulosCloud.syncComprasParaMayoreoCliente()
                 : Promise.resolve({ ok: false });
             Promise.all([cargarDatos(false), syncMay, syncEarly]).then(function () {
-                renderModulo(vistaActual);
+                /* Sync primero; luego mantenimiento y reparación de stock de ventas confirmadas. */
+                mantenimientoMayoreoLocal();
+                var reparo = { reparados: 0 };
+                if (window.ObebeMayoreoStore &&
+                    ObebeMayoreoStore.asegurarInventarioDesdePedidosConfirmados) {
+                    reparo = ObebeMayoreoStore.asegurarInventarioDesdePedidosConfirmados() || reparo;
+                }
+                var pushP = (reparo.reparados > 0 && window.ObebeAdminMayoreoCloud &&
+                    ObebeAdminMayoreoCloud.pushMayoreoNatyNow)
+                    ? ObebeAdminMayoreoCloud.pushMayoreoNatyNow()
+                    : Promise.resolve({ ok: true });
+                return pushP.then(function () {
+                    renderModulo(vistaActual);
+                });
             }).catch(function () {
+                mantenimientoMayoreoLocal();
                 renderModulo(vistaActual);
             });
             return;
         }
+        mantenimientoMayoreoLocal();
         cargarDatos(true).then(function (d) {
             if (window.ObebeAdminModulosCloud) {
                 ObebeAdminModulosCloud.syncApartados().catch(function () { /* ignore */ });
@@ -1436,7 +1479,17 @@
                 }
             }
             if (window.ObebeAdminMayoreoCloud && ObebeAdminMayoreoCloud.syncMayoreoNaty) {
-                ObebeAdminMayoreoCloud.syncMayoreoNaty().catch(function () { /* ignore */ });
+                ObebeAdminMayoreoCloud.syncMayoreoNaty().then(function () {
+                    if (!window.ObebeMayoreoStore ||
+                        !ObebeMayoreoStore.asegurarInventarioDesdePedidosConfirmados) {
+                        return;
+                    }
+                    var reparoAdm = ObebeMayoreoStore.asegurarInventarioDesdePedidosConfirmados();
+                    if (reparoAdm && reparoAdm.reparados > 0 &&
+                        ObebeAdminMayoreoCloud.pushMayoreoNatyNow) {
+                        return ObebeAdminMayoreoCloud.pushMayoreoNatyNow();
+                    }
+                }).catch(function () { /* ignore */ });
             }
             irModulo(inicio);
             if (!d || !(d.filas || []).length) {

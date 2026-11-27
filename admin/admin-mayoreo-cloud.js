@@ -117,6 +117,9 @@
     function elegirPedidoMayoreo(prev, next) {
         if (!prev) return next;
         if (!next) return prev;
+        /* Venta retail confirmada gana siempre sobre un borrador local más reciente. */
+        if (next.ventaRetailRegistradaEn && !prev.ventaRetailRegistradaEn) return next;
+        if (prev.ventaRetailRegistradaEn && !next.ventaRetailRegistradaEn) return prev;
         var tPrev = tsPedidoMayoreo(prev);
         var tNext = tsPedidoMayoreo(next);
         if (tNext > tPrev) return next;
@@ -127,12 +130,88 @@
         return cuentaItemsPedido(next) >= cuentaItemsPedido(prev) ? next : prev;
     }
 
+    function fusionarItemsPedidoMayoreo(aItems, bItems) {
+        var map = Object.create(null);
+        function poner(it) {
+            if (!it) return;
+            var id = it.itemId || [
+                String(it.inventarioId || ''),
+                String(it.ref || ''),
+                String(it.nombre || ''),
+                String(it.talla || ''),
+                String(it.color || '')
+            ].join('::');
+            var prev = map[id];
+            if (!prev) {
+                map[id] = it;
+                return;
+            }
+            var out = Object.assign({}, prev, it);
+            if (prev.disponibilidad === 'si' || it.disponibilidad === 'si') {
+                out.disponibilidad = 'si';
+            } else if (prev.disponibilidad === 'no' || it.disponibilidad === 'no') {
+                out.disponibilidad = 'no';
+            }
+            if (prev.stockObebeAplicado || it.stockObebeAplicado) out.stockObebeAplicado = true;
+            map[id] = out;
+        }
+        (aItems || []).forEach(poner);
+        (bItems || []).forEach(poner);
+        return Object.keys(map).map(function (k) { return map[k]; });
+    }
+
+    /** Une dos versiones del mismo pedido sin perder venta/inventario confirmados. */
+    function fusionarDosPedidosMayoreo(prev, next) {
+        if (!prev) return next;
+        if (!next) return prev;
+        var base = elegirPedidoMayoreo(prev, next);
+        var other = base === prev ? next : prev;
+        var out = Object.assign({}, base);
+        if (other.ventaRetailRegistradaEn) {
+            if (!out.ventaRetailRegistradaEn) {
+                out.ventaRetailRegistradaEn = other.ventaRetailRegistradaEn;
+            } else {
+                out.ventaRetailRegistradaEn = Math.min(
+                    Number(out.ventaRetailRegistradaEn),
+                    Number(other.ventaRetailRegistradaEn)
+                );
+            }
+        }
+        if (other.inventarioAplicado) {
+            out.inventarioAplicado = true;
+            out.inventarioAplicadoEn = Math.max(
+                Number(out.inventarioAplicadoEn || 0),
+                Number(other.inventarioAplicadoEn || 0)
+            ) || other.inventarioAplicadoEn || Date.now();
+        }
+        if (other.inventarioUnidadesAplicadas != null) {
+            out.inventarioUnidadesAplicadas = Math.max(
+                Number(out.inventarioUnidadesAplicadas || 0),
+                Number(other.inventarioUnidadesAplicadas || 0)
+            );
+        }
+        if (other.stockInventarioObebeAplicado) out.stockInventarioObebeAplicado = true;
+        if (other.estado === 'revisado' && out.estado !== 'cancelado') {
+            out.estado = 'revisado';
+            out.revisadoEn = Math.max(Number(out.revisadoEn || 0), Number(other.revisadoEn || 0)) ||
+                out.revisadoEn || other.revisadoEn;
+        }
+        out.items = fusionarItemsPedidoMayoreo(base.items, other.items);
+        out.pedidoActualizadoEn = Math.max(
+            Number(out.pedidoActualizadoEn || 0),
+            Number(other.pedidoActualizadoEn || 0),
+            Number(out.ventaRetailRegistradaEn || 0),
+            Number(other.ventaRetailRegistradaEn || 0)
+        );
+        return out;
+    }
+
     function fusionarPorId(localArr, cloudArr) {
         var map = Object.create(null);
         function poner(item) {
             if (!item || !item.id) return;
             var prev = map[item.id];
-            map[item.id] = elegirPedidoMayoreo(prev, item);
+            map[item.id] = fusionarDosPedidosMayoreo(prev, item);
         }
         (localArr || []).forEach(poner);
         (cloudArr || []).forEach(poner);

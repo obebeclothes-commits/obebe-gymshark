@@ -258,8 +258,12 @@
             if (!ref && hitObebe && hitObebe.ref) ref = hitObebe.ref;
             if (!ref) ref = parseInt(String(l.filaSheet || '0'), 10) || 0;
             var img = row.imagenUrl;
+            if (!img && hitObebe && ObebeAdminData.urlImagenFilaInventario) {
+                img = ObebeAdminData.urlImagenFilaInventario(hitObebe) || '';
+            }
             if (!img && ObebeAdminData.imagenParaLineaMayoreo) {
                 img = ObebeAdminData.imagenParaLineaMayoreo({
+                    ref: ref,
                     nombre: row.nombreSheet || row.nombre,
                     talla: row.talla,
                     color: row.color,
@@ -272,6 +276,16 @@
                 segmento = hitObebe.segmento;
             } else {
                 segmento = inferirSegmentoMayoreo(row);
+            }
+            if (!img && ref && ObebeAdminData.urlsFotosTiendaObebe) {
+                var packImg = ObebeAdminData.urlsFotosTiendaObebe({
+                    ref: ref,
+                    segmento: segmento,
+                    marca: row.marca,
+                    nombre: row.nombre,
+                    fotoUrl: ''
+                });
+                img = (packImg && packImg.foto1) || '';
             }
             var valorLinea = precioRetailNaty > 0 && stock > 0 ? precioRetailNaty * stock : 0;
             var refMargen = precioRetailNaty > 0 ? precioRetailNaty : costoNeto;
