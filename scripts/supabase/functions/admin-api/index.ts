@@ -404,23 +404,76 @@ async function buscarInventarioPorVenta(
   return null;
 }
 
-async function aplicarDeltaStockInventario(
-  sb: ReturnType<typeof createClient>,
-  invId: number,
-  celdas: string[],
-  delta: number,
-) {
-  let stock = parseInt(celdas[IDX_INV_STOCK], 10);
-  if (isNaN(stock)) stock = 0;
-  if (delta < 0 && stock <= 0) return { ok: false, stock: 0 };
-  stock = Math.max(0, stock + delta);
-  celdas[IDX_INV_STOCK] = String(stock);
-  const { error } = await sb
-    .from("inventario_filas")
-    .update({ celdas, updated_at: new Date().toISOString() })
-    .eq("id", invId);
+type AjusteStockOpts = {
+  inventarioFilaId: number;
+  delta?: number | null;
+  stockAbsoluto?: number | null;
+  tipo: string;
+  referencia?: string;
+  usuario?: string;
+  userId?: string | null;
+  idempotencyKey?: string | null;
+  allowNegative?: boolean;
+};
+
+/** Ajuste atómico vía RPC PostgreSQL (FOR UPDATE + bitácora + idempotencia). */
+async function rpcAjustarStock(opts: AjusteStockOpts) {
+  const sb = adminClient();
+  const { data, error } = await sb.rpc("ajustar_inventario_stock", {
+    p_inventario_fila_id: opts.inventarioFilaId,
+    p_delta: opts.delta == null ? null : opts.delta,
+    p_stock_absoluto: opts.stockAbsoluto == null ? null : opts.stockAbsoluto,
+    p_tipo_movimiento: opts.tipo,
+    p_referencia: opts.referencia || "",
+    p_usuario: opts.usuario || "",
+    p_user_id: opts.userId || null,
+    p_idempotency_key: opts.idempotencyKey || null,
+    p_allow_negative: !!opts.allowNegative,
+  });
   if (error) throw error;
-  return { ok: true, stock, row: invId };
+  const out = (data || {}) as Record<string, unknown>;
+  if (out.ok === false) {
+    return {
+      ok: false as const,
+      error: String(out.error || "No se pudo ajustar stock"),
+      stock: out.stock,
+      stock_anterior: out.stock_anterior,
+      disponible: out.disponible,
+    };
+  }
+  return {
+    ok: true as const,
+    stock: Number(out.stock) || 0,
+    stockAntes: Number(out.stock_anterior) || 0,
+    delta: Number(out.delta) || 0,
+    row: opts.inventarioFilaId,
+    inventarioDbId: opts.inventarioFilaId,
+    idempotent: !!out.idempotent,
+    movimientoId: out.movimiento_id,
+  };
+}
+
+/** @deprecated Usar rpcAjustarStock. Se mantiene solo como nombre interno claro. */
+async function aplicarDeltaStockInventario(
+  invId: number,
+  delta: number,
+  meta: {
+    tipo: string;
+    referencia?: string;
+    usuario?: string;
+    userId?: string | null;
+    idempotencyKey?: string | null;
+  },
+) {
+  return rpcAjustarStock({
+    inventarioFilaId: invId,
+    delta,
+    tipo: meta.tipo,
+    referencia: meta.referencia,
+    usuario: meta.usuario,
+    userId: meta.userId,
+    idempotencyKey: meta.idempotencyKey,
+  });
 }
 
 function parseStockMetaDesdeLink(link: unknown): { inventarioId: number; delta: number } | null {
@@ -433,28 +486,34 @@ function parseStockMetaDesdeLink(link: unknown): { inventarioId: number; delta: 
 }
 
 async function ajustarStockPorLineaVenta(
-  sb: ReturnType<typeof createClient>,
-  linea: { nombre?: string; talla?: string; color?: string; link?: string },
-  delta: number,
+  linea: { nombre?: string; talla?: string; color?: string; link?: string; id?: number },
+  sentido: number,
+  auth?: AuthOk | null,
 ) {
   // Solo devolver/descontar si la venta registró meta [[stock:id:delta]].
-  // Evita inventarios fantasma al borrar ventas que nunca bajaron stock en DB.
   const meta = parseStockMetaDesdeLink(linea.link);
   if (!meta) {
     return { ok: false, matched: false, skipped: true, reason: "sin_meta_stock" };
   }
   const invId = meta.inventarioId;
-  const aplicar = delta > 0 ? -meta.delta : meta.delta;
-  const { data, error } = await sb
-    .from("inventario_filas")
-    .select("id, celdas")
-    .eq("id", invId)
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) return { ok: false, matched: false, reason: "inventario_no_encontrado" };
-  const celdas = padCeldas((data.celdas as unknown[]) || []);
-  const r = await aplicarDeltaStockInventario(sb, invId, celdas, aplicar);
-  return { ok: r.ok, matched: true, stock: r.stock, row: invId };
+  const aplicar = sentido > 0 ? -meta.delta : meta.delta;
+  const tipo = aplicar < 0 ? "venta_showroom" : "devolucion";
+  const r = await aplicarDeltaStockInventario(invId, aplicar, {
+    tipo,
+    referencia: linea.id ? `venta_linea:${linea.id}` : `venta_meta:${invId}:${aplicar}`,
+    usuario: auth?.profile.display_name || auth?.email || "",
+    userId: auth?.userId || null,
+    idempotencyKey: linea.id
+      ? `venta_linea:${linea.id}:${sentido > 0 ? "dev" : "out"}`
+      : null,
+  });
+  return {
+    ok: r.ok,
+    matched: true,
+    stock: r.ok ? r.stock : undefined,
+    row: invId,
+    error: r.ok ? undefined : r.error,
+  };
 }
 
 async function updateVentaLine(body: Record<string, unknown>) {
@@ -474,7 +533,7 @@ async function updateVentaLine(body: Record<string, unknown>) {
   return { ok: true, venta: ventaDbToApi(data) };
 }
 
-async function deleteVentaLine(body: Record<string, unknown>) {
+async function deleteVentaLine(body: Record<string, unknown>, auth?: AuthOk | null) {
   const ventaId = parseInt(String(body.ventaId), 10);
   if (!ventaId) return { ok: false, error: "ventaId inválido." };
   const ajustarStock = body.ajustarStock !== false;
@@ -490,12 +549,16 @@ async function deleteVentaLine(body: Record<string, unknown>) {
   if (e1) throw e1;
   let stockInfo: Record<string, unknown> | null = null;
   if (ajustarStock) {
-    stockInfo = await ajustarStockPorLineaVenta(sb, prev, 1);
+    stockInfo = await ajustarStockPorLineaVenta(
+      { ...prev, id: ventaId },
+      1,
+      auth,
+    );
   }
   return { ok: true, deleted: 1, stock: stockInfo };
 }
 
-async function createVentaLine(body: Record<string, unknown>) {
+async function createVentaLine(body: Record<string, unknown>, auth?: AuthOk | null) {
   const venta = (body.venta || {}) as Record<string, unknown>;
   const ajustarStock = body.ajustarStock !== false;
   const sb = adminClient();
@@ -504,18 +567,48 @@ async function createVentaLine(body: Record<string, unknown>) {
   if (error) throw error;
   let stockInfo: Record<string, unknown> | null = null;
   if (ajustarStock) {
-    stockInfo = await ajustarStockPorLineaVenta(sb, row, -1);
+    stockInfo = await ajustarStockPorLineaVenta(
+      { ...row, id: data.id as number },
+      -1,
+      auth,
+    );
   }
   return { ok: true, venta: ventaDbToApi(data), stock: stockInfo };
 }
 
-async function registrarVentaRetail(body: Record<string, unknown>) {
+async function resolverInventarioId(
+  inventarioDbId?: number,
+  rowRef?: number,
+): Promise<number | null> {
+  const dbHint = parseInt(String(inventarioDbId ?? ""), 10);
+  if (dbHint && !isNaN(dbHint)) {
+    const sb = adminClient();
+    const { data, error } = await sb
+      .from("inventario_filas")
+      .select("id")
+      .eq("id", dbHint)
+      .maybeSingle();
+    if (error) throw error;
+    if (data) return data.id as number;
+  }
+  const ref = parseInt(String(rowRef ?? ""), 10);
+  if (ref && !isNaN(ref)) {
+    const fila = await inventarioFilaPorRef(ref);
+    if (fila) return fila.id as number;
+  }
+  return null;
+}
+
+async function registrarVentaRetail(body: Record<string, unknown>, auth?: AuthOk | null) {
   const ventas = (body.ventas || []) as unknown[][];
   const stockUpdates = (body.stockUpdates || []) as {
     row?: number;
-    stock: number;
+    stock?: number;
+    delta?: number;
     inventarioDbId?: number;
   }[];
+  const saleKey = String(body.idempotencyKey || "").trim() ||
+    `retail:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`;
   if (!ventas.length) return { ok: false, error: "Sin líneas de venta." };
 
   const sb = adminClient();
@@ -524,50 +617,91 @@ async function registrarVentaRetail(body: Record<string, unknown>) {
     inventarioDbId: number;
     stock: number;
     stockAntes: number;
+    delta: number;
   }[] = [];
+  const usuario = auth?.profile.display_name || auth?.email || "";
 
-  // Primero stock (si falla, no se registran ventas).
+  // Primero stock atómico por delta (si falla, no se registran ventas).
   for (const u of stockUpdates) {
-    const stock = parseInt(String(u.stock), 10);
-    if (isNaN(stock) || stock < 0) {
-      return { ok: false, error: "Stock inválido en actualización de inventario." };
-    }
-    const dbHint = parseInt(String(u.inventarioDbId ?? ""), 10);
-    let fila: { id: number; celdas: unknown } | null = null;
-    if (dbHint && !isNaN(dbHint)) {
-      const { data, error } = await sb
-        .from("inventario_filas")
-        .select("id, celdas")
-        .eq("id", dbHint)
-        .maybeSingle();
-      if (error) throw error;
-      if (data) fila = data as { id: number; celdas: unknown };
-    }
-    if (!fila) {
-      const rowRef = parseInt(String(u.row), 10);
-      if (rowRef && !isNaN(rowRef)) fila = await inventarioFilaPorRef(rowRef);
-    }
-    if (!fila) {
+    const dbId = await resolverInventarioId(u.inventarioDbId, u.row);
+    if (!dbId) {
       return {
         ok: false,
         error:
           "No se pudo ubicar el artículo en inventario para bajar stock (falta inventarioDbId).",
       };
     }
-    const dbId = fila.id as number;
-    const celdas = padCeldas((fila.celdas as unknown[]) || []);
-    const stockAntes = parseInt(celdas[IDX_INV_STOCK], 10);
-    celdas[IDX_INV_STOCK] = String(stock);
-    const { error: eUp } = await sb
-      .from("inventario_filas")
-      .update({ celdas, updated_at: new Date().toISOString() })
-      .eq("id", dbId);
-    if (eUp) throw eUp;
+    let delta = u.delta != null ? parseInt(String(u.delta), 10) : NaN;
+    if (isNaN(delta) && u.stock != null) {
+      // Compat: absoluto → el RPC calcula el delta con bloqueo.
+      const abs = parseInt(String(u.stock), 10);
+      if (isNaN(abs) || abs < 0) {
+        return { ok: false, error: "Stock inválido en actualización de inventario." };
+      }
+      const rAbs = await rpcAjustarStock({
+        inventarioFilaId: dbId,
+        stockAbsoluto: abs,
+        tipo: "venta_showroom",
+        referencia: saleKey,
+        usuario,
+        userId: auth?.userId || null,
+        idempotencyKey: `${saleKey}:inv:${dbId}`,
+      });
+      if (!rAbs.ok) {
+        for (const a of aplicados.slice().reverse()) {
+          await rpcAjustarStock({
+            inventarioFilaId: a.inventarioDbId,
+            delta: -a.delta,
+            tipo: "ajuste_manual",
+            referencia: `${saleKey}:rollback`,
+            usuario,
+            userId: auth?.userId || null,
+            idempotencyKey: `${saleKey}:rollback:${a.inventarioDbId}`,
+          });
+        }
+        return { ok: false, error: rAbs.error || "Stock insuficiente." };
+      }
+      aplicados.push({
+        row: dbId,
+        inventarioDbId: dbId,
+        stock: rAbs.stock,
+        stockAntes: rAbs.stockAntes,
+        delta: rAbs.delta,
+      });
+      continue;
+    }
+    if (isNaN(delta) || delta === 0) {
+      return { ok: false, error: "Delta de stock inválido." };
+    }
+    const r = await rpcAjustarStock({
+      inventarioFilaId: dbId,
+      delta,
+      tipo: "venta_showroom",
+      referencia: saleKey,
+      usuario,
+      userId: auth?.userId || null,
+      idempotencyKey: `${saleKey}:inv:${dbId}`,
+    });
+    if (!r.ok) {
+      for (const a of aplicados.slice().reverse()) {
+        await rpcAjustarStock({
+          inventarioFilaId: a.inventarioDbId,
+          delta: -a.delta,
+          tipo: "ajuste_manual",
+          referencia: `${saleKey}:rollback`,
+          usuario,
+          userId: auth?.userId || null,
+          idempotencyKey: `${saleKey}:rollback:${a.inventarioDbId}`,
+        });
+      }
+      return { ok: false, error: r.error || "Stock insuficiente." };
+    }
     aplicados.push({
       row: dbId,
       inventarioDbId: dbId,
-      stock,
-      stockAntes: isNaN(stockAntes) ? 0 : stockAntes,
+      stock: r.stock,
+      stockAntes: r.stockAntes,
+      delta: r.delta,
     });
   }
 
@@ -575,18 +709,15 @@ async function registrarVentaRetail(body: Record<string, unknown>) {
   const { error: eV } = await sb.from("ventas_lineas").insert(rows);
   if (eV) {
     for (const a of aplicados.slice().reverse()) {
-      const { data } = await sb
-        .from("inventario_filas")
-        .select("id, celdas")
-        .eq("id", a.inventarioDbId)
-        .maybeSingle();
-      if (!data) continue;
-      const celdas = padCeldas((data.celdas as unknown[]) || []);
-      celdas[IDX_INV_STOCK] = String(a.stockAntes);
-      await sb
-        .from("inventario_filas")
-        .update({ celdas, updated_at: new Date().toISOString() })
-        .eq("id", a.inventarioDbId);
+      await rpcAjustarStock({
+        inventarioFilaId: a.inventarioDbId,
+        delta: -a.delta,
+        tipo: "ajuste_manual",
+        referencia: `${saleKey}:rollback`,
+        usuario,
+        userId: auth?.userId || null,
+        idempotencyKey: `${saleKey}:rollback:${a.inventarioDbId}`,
+      });
     }
     throw eV;
   }
@@ -596,7 +727,7 @@ async function registrarVentaRetail(body: Record<string, unknown>) {
     ventas: ventas.length,
     stockUpdates: aplicados.length,
     stockAplicados: aplicados,
-    apiVersion: 4,
+    apiVersion: 6,
   };
 }
 
@@ -622,42 +753,67 @@ async function inventarioFilaPorRef(rowRef: number) {
 }
 
 async function actualizarStock(
-  filaSheet: number,
-  stock: number,
-  inventarioDbId?: number
+  body: Record<string, unknown>,
+  auth?: AuthOk | null,
 ) {
-  const ref = parseInt(String(filaSheet), 10);
-  const n = parseInt(String(stock), 10);
-  const dbIdHint = parseInt(String(inventarioDbId ?? ""), 10);
+  const ref = parseInt(String(body.filaSheet ?? ""), 10);
+  const dbIdHint = parseInt(String(body.inventarioDbId ?? ""), 10);
+  const deltaRaw = body.delta;
+  const stockRaw = body.stock;
+  const hasDelta = deltaRaw != null && String(deltaRaw) !== "";
+  const hasStock = stockRaw != null && String(stockRaw) !== "";
+
+  const dbId = await resolverInventarioId(dbIdHint, ref);
+  if (!dbId) return { ok: false, error: "Fila no encontrada." };
+
+  const tipo = String(body.tipoMovimiento || "ajuste_manual");
+  const referencia = String(body.referencia || "").trim();
+  const idem = String(body.idempotencyKey || "").trim() || null;
+  const usuario = auth?.profile.display_name || auth?.email || "";
+
+  if (hasDelta) {
+    const delta = parseInt(String(deltaRaw), 10);
+    if (isNaN(delta) || delta === 0) {
+      return { ok: false, error: "Delta de stock inválido." };
+    }
+    const r = await rpcAjustarStock({
+      inventarioFilaId: dbId,
+      delta,
+      tipo: tipo || "ajuste_manual",
+      referencia,
+      usuario,
+      userId: auth?.userId || null,
+      idempotencyKey: idem,
+    });
+    if (!r.ok) return { ok: false, error: r.error };
+    return { ok: true, row: ref || dbId, stock: r.stock, delta: r.delta, inventarioDbId: dbId };
+  }
+
+  if (!hasStock) return { ok: false, error: "Fila o stock inválido." };
+  const n = parseInt(String(stockRaw), 10);
   if (isNaN(n) || n < 0) return { ok: false, error: "Fila o stock inválido." };
-  const sb = adminClient();
-  let fila: { id: number; celdas: unknown } | null = null;
-  if (dbIdHint && !isNaN(dbIdHint)) {
-    const { data, error } = await sb
-      .from("inventario_filas")
-      .select("id, celdas")
-      .eq("id", dbIdHint)
-      .maybeSingle();
-    if (!error && data) fila = data as { id: number; celdas: unknown };
-  }
-  if (!fila && ref && !isNaN(ref)) {
-    fila = await inventarioFilaPorRef(ref);
-  }
-  if (!fila) return { ok: false, error: "Fila no encontrada." };
-  const dbId = fila.id as number;
-  const celdas = padCeldas((fila.celdas as unknown[]) || []);
-  celdas[COL_STOCK - 1] = String(n);
-  const { error } = await sb
-    .from("inventario_filas")
-    .update({ celdas, updated_at: new Date().toISOString() })
-    .eq("id", dbId);
-  if (error) throw error;
-  return { ok: true, row: ref || dbId, stock: n };
+
+  // Absoluto: el RPC calcula el delta con bloqueo (seguro ante concurrencia).
+  const r = await rpcAjustarStock({
+    inventarioFilaId: dbId,
+    stockAbsoluto: n,
+    tipo: tipo || "ajuste_manual",
+    referencia,
+    usuario,
+    userId: auth?.userId || null,
+    idempotencyKey: idem,
+  });
+  if (!r.ok) return { ok: false, error: r.error };
+  return { ok: true, row: ref || dbId, stock: r.stock, delta: r.delta, inventarioDbId: dbId };
 }
 
-async function updateCells(updates: { row: number; col: number; value: string }[]) {
+async function updateCells(
+  updates: { row: number; col: number; value: string }[],
+  auth?: AuthOk | null,
+) {
   const sb = adminClient();
   let n = 0;
+  const usuario = auth?.profile.display_name || auth?.email || "";
   for (const u of updates) {
     const rowRef = parseInt(String(u.row), 10);
     const col = parseInt(String(u.col), 10);
@@ -665,6 +821,23 @@ async function updateCells(updates: { row: number; col: number; value: string }[
     const fila = await inventarioFilaPorRef(rowRef);
     if (!fila) continue;
     const dbId = fila.id as number;
+
+    // Columna C (stock): siempre por RPC atómico.
+    if (col === COL_STOCK) {
+      const abs = parseInt(String(u.value ?? "0"), 10);
+      if (isNaN(abs) || abs < 0) continue;
+      const r = await rpcAjustarStock({
+        inventarioFilaId: dbId,
+        stockAbsoluto: abs,
+        tipo: "ajuste_manual",
+        referencia: "updateCells",
+        usuario,
+        userId: auth?.userId || null,
+      });
+      if (r.ok) n++;
+      continue;
+    }
+
     const celdas = padCeldas((fila.celdas as unknown[]) || []);
     celdas[col - 1] = u.value == null ? "" : String(u.value);
     const { error } = await sb
@@ -1167,25 +1340,22 @@ Deno.serve(async (req) => {
     }
 
     if (action === "registrarVentaRetail") {
-      return json(req, await registrarVentaRetail(body));
+      return json(req, await registrarVentaRetail(body, session));
     }
     if (action === "updateVentaLine") {
       return json(req, await updateVentaLine(body));
     }
     if (action === "deleteVentaLine") {
-      return json(req, await deleteVentaLine(body));
+      return json(req, await deleteVentaLine(body, session));
     }
     if (action === "createVentaLine") {
-      return json(req, await createVentaLine(body));
+      return json(req, await createVentaLine(body, session));
     }
     if (action === "actualizarStock") {
-      return json(
-        req,
-        await actualizarStock(body.filaSheet, body.stock, body.inventarioDbId),
-      );
+      return json(req, await actualizarStock(body, session));
     }
     if (action === "updateCells") {
-      return json(req, await updateCells(body.updates || []));
+      return json(req, await updateCells(body.updates || [], session));
     }
     if (action === "appendRow") {
       return json(req, await appendRow(body.celdas || []));

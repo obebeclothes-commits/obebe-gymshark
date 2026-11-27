@@ -2764,7 +2764,6 @@
             if (!dbId && !filaSheet) return;
             var key = dbId ? ('id:' + dbId) : ('sheet:' + filaSheet);
             var qty = c.cantidad || 1;
-            if (stockByKey[key] == null) stockByKey[key] = live.stock || 0;
             filasPorKey[key] = live;
             var precioU = c.precioUnitario != null ? c.precioUnitario : precioVentaRetailFila(live);
             var lineMeta = Object.assign({}, meta, {
@@ -2777,18 +2776,20 @@
                 ventas.push(lineaVentaDesdeFila(live, lineMeta));
                 ventasLocal.push(ventaObjetoDesdeFila(live, lineMeta));
             }
-            stockByKey[key] = Math.max(0, stockByKey[key] - qty);
+            stockByKey[key] = (stockByKey[key] || 0) + qty;
         });
         if (!ventas.length) {
             return Promise.resolve({ ok: false, error: 'No se pudo identificar el artículo en inventario.' });
         }
+        // Etapa B: enviar deltas (no stock absoluto calculado en el navegador).
         var stockUpdates = moverStock ? Object.keys(stockByKey).map(function (k) {
             var live = filasPorKey[k];
             var dbId = parseInt(live && live.inventarioDbId, 10) || 0;
             var filaSheet = parseInt(live && live.filaSheet, 10) || 0;
+            var qtyTotal = stockByKey[k] || 0;
             return {
                 row: dbId || filaSheet,
-                stock: stockByKey[k],
+                delta: -qtyTotal,
                 inventarioDbId: dbId
             };
         }) : [];
@@ -2802,8 +2803,20 @@
             }
         }
         if (escrituraLocalHabilitada()) {
-            aplicarVentaRetailEnEstado(stockUpdates, ventasLocal);
-            registrarPendienteTrasVentaLocal(stockUpdates, ventasLocal);
+            var localesAbs = stockUpdates.map(function (u) {
+                var live = (estado.filas || []).find(function (x) {
+                    return u.inventarioDbId && x.inventarioDbId === u.inventarioDbId;
+                });
+                var actual = live ? (live.stock || 0) : 0;
+                return {
+                    row: u.row,
+                    inventarioDbId: u.inventarioDbId,
+                    stock: Math.max(0, actual + (u.delta || 0)),
+                    delta: u.delta
+                };
+            });
+            aplicarVentaRetailEnEstado(localesAbs, ventasLocal);
+            registrarPendienteTrasVentaLocal(localesAbs, ventasLocal);
             return Promise.resolve({
                 ok: true,
                 soloLocal: true,
@@ -2811,41 +2824,22 @@
                 clientes: calcularPerfilesClientes(estado.ventas)
             });
         }
-        return apiAdminScript('registrarVentaRetail', { ventas: ventas, stockUpdates: stockUpdates })
+        var saleIdem = 'retail:' + Date.now() + ':' + Math.random().toString(36).slice(2, 10);
+        return apiAdminScript('registrarVentaRetail', {
+            ventas: ventas,
+            stockUpdates: stockUpdates,
+            idempotencyKey: saleIdem
+        })
             .then(function (res) {
                 if (!res || res.ok === false) {
                     throw new Error((res && res.error) || 'Error al registrar venta');
                 }
-                // Cinturón: aunque la Edge Function antigua ignore fallos de stock,
-                // forzar cada baja con actualizarStock (exige inventarioDbId).
-                var chain = Promise.resolve(res);
-                var aplicadosApi = Array.isArray(res.stockAplicados) ? res.stockAplicados.length : (res.stockUpdates || 0);
-                var requiereCinturon = moverStock && stockUpdates.length &&
-                    (!aplicadosApi || aplicadosApi < stockUpdates.length);
-                if (requiereCinturon) {
-                    stockUpdates.forEach(function (u) {
-                        chain = chain.then(function () {
-                            return apiAdminScript('actualizarStock', {
-                                filaSheet: u.inventarioDbId || u.row,
-                                stock: u.stock,
-                                inventarioDbId: u.inventarioDbId
-                            }).then(function (r) {
-                                if (!r || r.ok === false) {
-                                    throw new Error((r && r.error) || 'No se pudo bajar el stock en inventario.');
-                                }
-                                return r;
-                            });
-                        });
-                    });
-                }
-                return chain.then(function () {
-                    limpiarPendienteSync();
-                    aplicarVentaRetailEnEstado(
-                        Array.isArray(res.stockAplicados) && res.stockAplicados.length ? res.stockAplicados : stockUpdates,
-                        ventasLocal
-                    );
-                    return { ok: true, ventas: ventasLocal.length, clientes: calcularPerfilesClientes(estado.ventas) };
-                });
+                limpiarPendienteSync();
+                aplicarVentaRetailEnEstado(
+                    Array.isArray(res.stockAplicados) && res.stockAplicados.length ? res.stockAplicados : stockUpdates,
+                    ventasLocal
+                );
+                return { ok: true, ventas: ventasLocal.length, clientes: calcularPerfilesClientes(estado.ventas) };
             });
     }
 
@@ -2969,11 +2963,15 @@
                 if (u.inventarioDbId && x.inventarioDbId === u.inventarioDbId) return true;
                 return x.filaSheet === u.row || (x.inventarioDbId && x.inventarioDbId === u.row);
             });
-            if (hit) {
-                hit.stock = u.stock;
-                if (hit.celdas) hit.celdas[IDX.stock] = String(u.stock);
+            var stockFinal = u.stock;
+            if ((stockFinal == null || isNaN(stockFinal)) && u.delta != null && hit) {
+                stockFinal = Math.max(0, (hit.stock || 0) + parseInt(u.delta, 10));
             }
-            notificarCambioStockInventario(hit ? hit.filaSheet : u.row, u.stock);
+            if (hit && stockFinal != null && !isNaN(stockFinal)) {
+                hit.stock = stockFinal;
+                if (hit.celdas) hit.celdas[IDX.stock] = String(stockFinal);
+            }
+            notificarCambioStockInventario(hit ? hit.filaSheet : u.row, stockFinal);
         });
         sincronizarHistoricoInventario(estado.filas);
         guardarCacheInventarioLocal();
@@ -3221,6 +3219,7 @@
     function calcularUpdatesStockPedidoMayoreo(pedido, signo) {
         signo = signo < 0 ? -1 : 1;
         var porFila = {};
+        var filas = {};
         var vistosRef = {};
         (pedido.items || []).forEach(function (it) {
             if (it.disponibilidad !== 'si') return;
@@ -3234,11 +3233,17 @@
             var f = resolverFilaInventarioDesdeItemPedido(it);
             var row = filaSheetInventario(f);
             if (!f || !row) return;
-            if (porFila[row] == null) porFila[row] = f.stock || 0;
-            porFila[row] = Math.max(0, porFila[row] + signo * qty);
+            if (porFila[row] == null) porFila[row] = 0;
+            porFila[row] += signo * qty;
+            filas[row] = f;
         });
         return Object.keys(porFila).map(function (k) {
-            return { row: parseInt(k, 10), stock: porFila[k] };
+            var f = filas[k];
+            return {
+                row: parseInt(k, 10),
+                delta: porFila[k],
+                inventarioDbId: parseInt(f && f.inventarioDbId, 10) || 0
+            };
         });
     }
 
@@ -3251,7 +3256,15 @@
                 return Promise.resolve({ ok: true, count: updates.length });
             }
             var u = updates[i++];
-            return actualizarStockFila(u.row, u.stock, opts).then(next);
+            var callOpts = Object.assign({}, opts, {
+                inventarioDbId: u.inventarioDbId,
+                tipoMovimiento: opts.tipoMovimiento || 'mayoreo'
+            });
+            if (u.delta != null) {
+                callOpts.delta = u.delta;
+                return actualizarStockFila(u.row, null, callOpts).then(next);
+            }
+            return actualizarStockFila(u.row, u.stock, callOpts).then(next);
         }
         return next();
     }
@@ -4106,9 +4119,14 @@
 
     function actualizarStockFila(filaSheet, stock, opts) {
         opts = opts || {};
-        stock = parseInt(stock, 10);
-        if (isNaN(stock) || stock < 0) {
+        var hasDelta = opts.delta != null && !isNaN(parseInt(opts.delta, 10));
+        var delta = hasDelta ? parseInt(opts.delta, 10) : null;
+        stock = stock == null || stock === '' ? NaN : parseInt(stock, 10);
+        if (!hasDelta && (isNaN(stock) || stock < 0)) {
             return Promise.resolve({ ok: false, error: 'Stock inválido.' });
+        }
+        if (hasDelta && delta === 0) {
+            return Promise.resolve({ ok: true, noop: true, stock: stock });
         }
         var filaRef = refApiInventarioFila(filaSheet, opts.fila || null);
         var hitFila = opts.fila || null;
@@ -4122,49 +4140,60 @@
                 return x.filaSheet === filaSheet || (x.inventarioDbId && x.inventarioDbId === filaRef);
             });
             if (!hitL) hitL = buscarFilaInventarioPorSheetOId(filaRef);
+            var stockLocal = stock;
             if (hitL) {
-                hitL.stock = stock;
-                if (hitL.celdas) hitL.celdas[colStockL] = String(stock);
+                if (hasDelta) stockLocal = Math.max(0, (hitL.stock || 0) + delta);
+                hitL.stock = stockLocal;
+                if (hitL.celdas) hitL.celdas[colStockL] = String(stockLocal);
             }
             var claveAgot = hitL ? filaSheetInventario(hitL) : (parseInt(filaSheet, 10) || 0);
-            notificarCambioStockInventario(claveAgot || filaSheet, stock);
+            notificarCambioStockInventario(claveAgot || filaSheet, stockLocal);
             sincronizarHistoricoInventario(estado.filas);
             var pend = leerPendienteSync();
             var rowKey = hitL ? String(filaSheetInventario(hitL) || filaSheet) : String(filaSheet);
-            pend.stockByRow[rowKey] = stock;
+            pend.stockByRow[rowKey] = stockLocal;
             guardarPendienteSync(pend);
             guardarCacheInventarioLocal();
-            return Promise.resolve({ ok: true, stock: stock, soloLocal: true });
+            return Promise.resolve({ ok: true, stock: stockLocal, soloLocal: true });
         }
         var legacyRow = hitFila ? (parseInt(hitFila.filaSheet, 10) || 0) : (parseInt(filaSheet, 10) || 0);
         var dbId = hitFila ? (parseInt(hitFila.inventarioDbId, 10) || 0) : 0;
+        if (!dbId && opts.inventarioDbId) dbId = parseInt(opts.inventarioDbId, 10) || 0;
         if (!dbId) dbId = filaRef;
-        return apiAdminScript('actualizarStock', {
+        var payload = {
             filaSheet: legacyRow || filaRef,
-            stock: stock,
-            inventarioDbId: dbId || undefined
-        }, { silent: !!opts.silent }).then(function (res) {
+            inventarioDbId: dbId || undefined,
+            tipoMovimiento: opts.tipoMovimiento || 'ajuste_manual',
+            referencia: opts.referencia || '',
+            idempotencyKey: opts.idempotencyKey || undefined
+        };
+        if (hasDelta) payload.delta = delta;
+        else payload.stock = stock;
+        return apiAdminScript('actualizarStock', payload, { silent: !!opts.silent }).then(function (res) {
             if (!res || res.ok === false) {
                 throw new Error((res && res.error) || 'No se pudo actualizar stock');
             }
+            var stockFinal = res.stock != null ? parseInt(res.stock, 10) : stock;
+            if (isNaN(stockFinal)) stockFinal = stock;
             var idxInv = idxInventario();
             var colStock = idxInv.stock != null ? idxInv.stock : IDX.stock;
             var hit = estado.filas.find(function (x) {
-                return x.filaSheet === filaSheet || (x.inventarioDbId && x.inventarioDbId === filaRef);
+                return x.filaSheet === filaSheet || (x.inventarioDbId && x.inventarioDbId === filaRef) ||
+                    (dbId && x.inventarioDbId === dbId);
             });
             if (!hit) {
                 hit = buscarFilaInventarioPorSheetOId(filaRef);
             }
             if (hit) {
-                hit.stock = stock;
-                if (hit.celdas) hit.celdas[colStock] = String(stock);
-                notificarCambioStockInventario(filaSheetInventario(hit) || filaSheet, stock);
+                hit.stock = stockFinal;
+                if (hit.celdas) hit.celdas[colStock] = String(stockFinal);
+                notificarCambioStockInventario(filaSheetInventario(hit) || filaSheet, stockFinal);
             } else {
-                notificarCambioStockInventario(filaSheet, stock);
+                notificarCambioStockInventario(filaSheet, stockFinal);
             }
             sincronizarHistoricoInventario(estado.filas);
             guardarCacheInventarioLocal();
-            return { ok: true, stock: stock };
+            return { ok: true, stock: stockFinal, delta: res.delta };
         }).catch(function (err) {
             return { ok: false, error: (err && err.message) || String(err) };
         });
@@ -4541,14 +4570,14 @@
             if (!dbId && !filaSheet) return;
             var key = dbId ? ('id:' + dbId) : ('sheet:' + filaSheet);
             if (porKey[key] == null) {
+                porKey[key] = 0;
                 var hit = (estado.filas || []).find(function (x) {
                     if (dbId && x.inventarioDbId === dbId) return true;
                     return filaSheet && x.filaSheet === filaSheet;
                 });
-                porKey[key] = hit ? (hit.stock || 0) : (f.stock || 0);
                 filasPorKey[key] = hit || f;
             }
-            porKey[key] = Math.max(0, porKey[key] + signo * (c.cantidad || 1));
+            porKey[key] += signo * (c.cantidad || 1);
         });
         return Object.keys(porKey).map(function (k) {
             var live = filasPorKey[k];
@@ -4556,7 +4585,7 @@
             var filaSheet = parseInt(live && live.filaSheet, 10) || 0;
             return {
                 row: dbId || filaSheet,
-                stock: porKey[k],
+                delta: porKey[k],
                 inventarioDbId: dbId
             };
         });
