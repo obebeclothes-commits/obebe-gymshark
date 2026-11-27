@@ -1474,25 +1474,37 @@ function guardarCarrito(carrito) {
     localStorage.setItem('carrito', JSON.stringify(carrito));
 }
 
-// Comparación normalizada para id+talla+color (evita que tipo string/number impida encontrar la misma línea)
+function inventarioFilaIdDe(obj) {
+    var n = parseInt(obj && (obj.inventarioFilaId || obj.inventario_fila_id), 10);
+    return n > 0 ? n : 0;
+}
+
+// Preferir inventario_filas.id; si falta, id de imagen + talla + color.
 function mismoProductoEnCarrito(item, producto) {
+    var idFilaItem = inventarioFilaIdDe(item);
+    var idFilaProd = inventarioFilaIdDe(producto);
+    if (idFilaItem && idFilaProd) return idFilaItem === idFilaProd;
     return Number(item.id) === Number(producto.id) &&
         String(item.talla) === String(producto.talla) &&
         (item.color || '') === (producto.color || '');
 }
 
 // Agregar producto al carrito (opciones: { button: elemento } para mostrar palomita en el botón)
-// Un mismo artículo puede estar varias veces si difiere en talla o color (id + talla + color identifican la línea)
+// Identidad estable: inventarioFilaId (inventario_filas.id). Fallback: id imagen + talla + color.
 // Respeta el stock: no permite agregar más unidades de las disponibles
 function agregarAlCarrito(producto, opciones) {
     const stockNum = Number(producto.stock);
     const stockDisponible = (typeof producto.stock === 'number' && !isNaN(stockNum)) ? stockNum : Infinity;
     if (stockDisponible <= 0) return;
 
+    const filaId = inventarioFilaIdDe(producto);
+    if (!filaId && typeof console !== 'undefined') {
+        console.warn('[carrito] Producto sin inventarioFilaId; se usará fallback id+talla+color.', producto && producto.nombre);
+    }
+
     const carrito = obtenerCarrito();
     const colorProducto = producto.color || '';
 
-    // Cantidad ya en el carrito para este producto (misma id+talla+color), sumando todas las líneas por si hubiera duplicados
     const cantidadEnCarrito = carrito.reduce(function (sum, item) {
         return mismoProductoEnCarrito(item, producto) ? sum + (item.cantidad || 0) : sum;
     }, 0);
@@ -1508,9 +1520,11 @@ function agregarAlCarrito(producto, opciones) {
     
     if (itemExistente) {
         itemExistente.cantidad += 1;
+        if (filaId) itemExistente.inventarioFilaId = filaId;
     } else {
         carrito.push({
             id: producto.id,
+            inventarioFilaId: filaId || undefined,
             nombre: producto.nombre,
             precio: precioVigenteProducto(producto),
             precioMenudeo: producto.precio,
@@ -1677,8 +1691,30 @@ function obtenerCatalogoPorCategoria(categoria) {
     return [];
 }
 
+function catalogosTiendaTodos() {
+    var out = [];
+    if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) out = out.concat(productosHombre);
+    if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) out = out.concat(productosMujer);
+    if (typeof productos !== 'undefined' && Array.isArray(productos)) {
+        productos.forEach(function(p) {
+            if (out.indexOf(p) < 0) out.push(p);
+        });
+    }
+    return out;
+}
+
 function resolverProductoCarrito(item) {
     if (!item) return null;
+    var filaId = inventarioFilaIdDe(item);
+    if (filaId) {
+        var porId = catalogosTiendaTodos().find(function(p) {
+            return inventarioFilaIdDe(p) === filaId;
+        });
+        if (porId) return porId;
+        // Tenía id de inventario pero ya no existe en catálogo → inválido
+        return null;
+    }
+
     var categoria = item.categoria || 'Hombre';
     var catalogo = obtenerCatalogoPorCategoria(categoria);
     var tallaItem = String(item.talla || '');
@@ -1706,11 +1742,34 @@ function resolverProductoCarrito(item) {
     return producto || null;
 }
 
+function varianteCoincideConItem(producto, item) {
+    if (!producto || !item) return false;
+    if (inventarioFilaIdDe(item) && inventarioFilaIdDe(producto)) {
+        return inventarioFilaIdDe(item) === inventarioFilaIdDe(producto);
+    }
+    return String(producto.talla || '') === String(item.talla || '') &&
+        (producto.color || '') === (item.color || '');
+}
+
 function normalizarItemCarrito(item) {
     var producto = resolverProductoCarrito(item);
-    if (!producto) return item;
+    if (!producto) {
+        // Línea con inventarioFilaId huérfano: quitar del carrito
+        if (inventarioFilaIdDe(item)) return null;
+        return item;
+    }
+    if (inventarioFilaIdDe(item) && !varianteCoincideConItem(producto, item)) {
+        return null;
+    }
+    var stockDisp = Number(producto.stock);
+    if (isNaN(stockDisp)) stockDisp = Infinity;
+    var qty = item.cantidad || 1;
+    if (stockDisp <= 0) return null;
+    if (qty > stockDisp) qty = stockDisp;
+    var filaId = inventarioFilaIdDe(producto) || inventarioFilaIdDe(item) || undefined;
     return {
         id: producto.id,
+        inventarioFilaId: filaId,
         nombre: producto.nombre,
         precio: precioVigenteProducto(producto),
         precioMenudeo: producto.precio,
@@ -1720,7 +1779,7 @@ function normalizarItemCarrito(item) {
         color: producto.color || '',
         marca: producto.marca || item.marca || '',
         imagen1: producto.imagen1 || item.imagen1,
-        cantidad: item.cantidad || 1,
+        cantidad: qty,
         categoria: producto.categoria || item.categoria || 'Hombre'
     };
 }
@@ -1728,12 +1787,33 @@ function normalizarItemCarrito(item) {
 function sincronizarCarritoConCatalogo() {
     var carrito = obtenerCarrito();
     if (!carrito.length) return;
-    var actualizado = carrito.map(normalizarItemCarrito);
-    var cambio = actualizado.some(function(item, index) {
+    var actualizado = carrito.map(normalizarItemCarrito).filter(function(x) { return !!x; });
+    var cambio = actualizado.length !== carrito.length || actualizado.some(function(item, index) {
         return JSON.stringify(item) !== JSON.stringify(carrito[index]);
     });
     if (cambio) guardarCarrito(actualizado);
 }
+
+/** Payload listo para checkout / Edge Functions (Etapa D+). Solo ítems con id de inventario. */
+function itemsCarritoParaCheckout() {
+    sincronizarCarritoConCatalogo();
+    return obtenerCarrito()
+        .map(function(item) {
+            return {
+                inventarioFilaId: inventarioFilaIdDe(item),
+                cantidad: item.cantidad || 1,
+                id: item.id,
+                nombre: item.nombre,
+                talla: item.talla,
+                color: item.color || '',
+                marca: item.marca || '',
+                categoria: item.categoria || 'Hombre'
+            };
+        })
+        .filter(function(item) { return item.inventarioFilaId > 0 && item.cantidad > 0; });
+}
+
+window.itemsCarritoParaCheckout = itemsCarritoParaCheckout;
 
 // Enviar mensaje a WhatsApp (incluye link de cada producto)
 function enviarMensajeWhatsApp() {

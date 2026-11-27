@@ -495,8 +495,8 @@
         };
     }
 
-    function leerFilasSheet(csvTexto, categoria) {
-        var filas = parseCSV(csvTexto);
+    function leerFilasDesdeArray(filas, categoria) {
+        filas = filas || [];
         var IX = indicesInventarioDesdeFilas(filas);
         var usarSegmento = hojaUsaColumnaSegmento(filas, IX);
         var mapa = new Map();
@@ -535,6 +535,7 @@
                 if (marca) opciones.marcas.add(marca);
             }
             var clave = claveProducto(nombre, talla, color, marca, refImagen);
+            var inventarioFilaId = parseInt(f && f.__inventarioFilaId, 10) || 0;
             var datosFila = {
                 nombre: nombre,
                 stock: stock,
@@ -552,7 +553,8 @@
                 talla: talla,
                 refImagen: refImagen,
                 coleccion: coleccion,
-                precioOfertaSemanal: precioOfertaSemanal
+                precioOfertaSemanal: precioOfertaSemanal,
+                inventarioFilaId: inventarioFilaId
             };
             var previo = mapa.get(clave);
             if (previo) {
@@ -571,6 +573,7 @@
                 if (talla) previo.talla = talla;
                 if (coleccion) previo.coleccion = coleccion;
                 if (precioOfertaSemanal > 0) previo.precioOfertaSemanal = precioOfertaSemanal;
+                if (inventarioFilaId && !previo.inventarioFilaId) previo.inventarioFilaId = inventarioFilaId;
             } else {
                 mapa.set(clave, datosFila);
             }
@@ -580,6 +583,77 @@
             }
         }
         return { mapa: mapa, mapaPorRef: mapaPorRef, opciones: setsToSortedArrays(opciones) };
+    }
+
+    function leerFilasSheet(csvTexto, categoria) {
+        return leerFilasDesdeArray(parseCSV(csvTexto), categoria);
+    }
+
+    /**
+     * Filas Supabase → mismo layout que el CSV cacheado
+     * (fila 0 vacía, fila 1 títulos, datos desde FILA_INICIO=2)
+     * con __inventarioFilaId = inventario_filas.id.
+     */
+    function filasDesdeSupabaseRows(rows) {
+        var titulos = (typeof window !== 'undefined' && window.ObebeInventarioColumnas)
+            ? window.ObebeInventarioColumnas.titulosDefault()
+            : [];
+        var out = [[], titulos.slice()];
+        (rows || []).forEach(function(r) {
+            var c = r && r.celdas ? r.celdas : [];
+            var f = [];
+            for (var i = 0; i < 29; i++) {
+                f.push(i < c.length && c[i] != null ? c[i] : '');
+            }
+            f.__inventarioFilaId = parseInt(r && r.id, 10) || 0;
+            out.push(f);
+        });
+        return out;
+    }
+
+    function sincronizarDesdeFilasArray(filas) {
+        if (typeof window.preservarColeccionesCatalogo === 'function') {
+            window.preservarColeccionesCatalogo();
+        }
+        window.__obebeSheetSyncOk = true;
+        var IXF = indicesInventarioDesdeFilas(filas);
+        var maxTime = 0;
+        var maxFecha = '';
+        for (var fi = FILA_INICIO; fi < (filas || []).length; fi++) {
+            var ff = filas[fi];
+            var nomF = String(celdaInv(ff, IXF, 'nombre') || '').trim();
+            if (!nomF || nomF.toUpperCase() === 'ARTICULO') continue;
+            var fechaF = parsearFechaStock(celdaInv(ff, IXF, 'fechaStock'));
+            if (!fechaF) continue;
+            var timeF = new Date(fechaF + 'T00:00:00').getTime();
+            if (!isNaN(timeF) && timeF >= maxTime) {
+                maxTime = timeF;
+                maxFecha = fechaF;
+            }
+        }
+        var fechaReciente = maxFecha;
+        window.fechaStockMasReciente = fechaReciente;
+        window.fechaStockMasRecienteEtiqueta = formatearFechaStockEtiqueta(fechaReciente);
+
+        var opcionesSheet = {};
+        if (typeof productosHombre !== 'undefined' && Array.isArray(productosHombre)) {
+            var datosHombre = leerFilasDesdeArray(filas, 'Hombre');
+            sincronizarCatalogo(productosHombre, datosHombre.mapa, datosHombre.mapaPorRef);
+            inyectarProductosFaltantesDesdeMapa(productosHombre, datosHombre.mapa, 'Hombre');
+            podarCatalogoSegunSheet(productosHombre, datosHombre.mapa, datosHombre.mapaPorRef);
+            dedupeCatalogoTrasSync(productosHombre);
+            opcionesSheet.Hombre = datosHombre.opciones;
+        }
+        if (typeof productosMujer !== 'undefined' && Array.isArray(productosMujer)) {
+            var datosMujer = leerFilasDesdeArray(filas, 'Mujer');
+            sincronizarCatalogo(productosMujer, datosMujer.mapa, datosMujer.mapaPorRef);
+            inyectarProductosFaltantesDesdeMapa(productosMujer, datosMujer.mapa, 'Mujer');
+            podarCatalogoSegunSheet(productosMujer, datosMujer.mapa, datosMujer.mapaPorRef);
+            dedupeCatalogoTrasSync(productosMujer);
+            opcionesSheet.Mujer = datosMujer.opciones;
+        }
+        window.opcionesInventarioSheet = opcionesSheet;
+        return opcionesSheet;
     }
 
     function buscarEnMapa(mapa, nombre, talla, color, marca, refImagen) {
@@ -664,6 +738,7 @@
         if (datos.coleccion) p.coleccionCatalogo = datos.coleccion;
         p.precioOfertaSemanal = Number(datos.precioOfertaSemanal) || 0;
         p.ofertaSemanal = p.precioOfertaSemanal > 0;
+        if (datos.inventarioFilaId) p.inventarioFilaId = datos.inventarioFilaId;
     }
 
     function nombresParecidos(nombreA, nombreB) {
@@ -903,7 +978,8 @@
             coleccionCatalogo: datosFila.coleccion || '',
             precioOfertaSemanal: datosFila.precioOfertaSemanal || 0,
             ofertaSemanal: (datosFila.precioOfertaSemanal || 0) > 0,
-            fechaStock: datosFila.fechaStock || ''
+            fechaStock: datosFila.fechaStock || '',
+            inventarioFilaId: datosFila.inventarioFilaId || 0
         };
     }
 
@@ -958,6 +1034,7 @@
     }
 
     var CACHE_INVENTARIO_CSV_KEY = 'obebe_inventario_csv_v2';
+    var CACHE_INVENTARIO_ROWS_KEY = 'obebe_inventario_rows_v1';
 
     function guardarInventarioCacheTienda(csv) {
         if (!csv || typeof localStorage === 'undefined') return;
@@ -967,9 +1044,27 @@
         localStorage.setItem(CACHE_INVENTARIO_CSV_KEY + '_ts', String(Date.now()));
     }
 
+    function guardarInventarioCacheTiendaRows(rows) {
+        if (!rows || !rows.length || typeof localStorage === 'undefined') return;
+        try {
+            var payload = JSON.stringify(rows);
+            if (payload.length < 20 || payload.length > 4500000) return;
+            localStorage.setItem(CACHE_INVENTARIO_ROWS_KEY, payload);
+            localStorage.setItem(CACHE_INVENTARIO_ROWS_KEY + '_ts', String(Date.now()));
+        } catch (e) { /* quota */ }
+    }
+
     function aplicarInventarioCacheTienda() {
         if (typeof localStorage === 'undefined') return false;
         try {
+            var rawRows = localStorage.getItem(CACHE_INVENTARIO_ROWS_KEY);
+            if (rawRows && rawRows.length > 20) {
+                var rows = JSON.parse(rawRows);
+                if (Array.isArray(rows) && rows.length) {
+                    sincronizarDesdeFilasArray(filasDesdeSupabaseRows(rows));
+                    return true;
+                }
+            }
             var csv = localStorage.getItem(CACHE_INVENTARIO_CSV_KEY);
             if (!csv || csv.length < 20) return false;
             sincronizarDesdeCsv(csv);
@@ -1028,7 +1123,11 @@
             if (!res.ok) throw new Error('HTTP ' + res.status);
             return res.json();
         }).then(function(rows) {
-            sincronizarDesdeCsv(csvDesdeFilasSupabase(rows));
+            guardarInventarioCacheTiendaRows(rows);
+            try {
+                guardarInventarioCacheTienda(csvDesdeFilasSupabase(rows));
+            } catch (eCsv) { /* ignore */ }
+            sincronizarDesdeFilasArray(filasDesdeSupabaseRows(rows));
         });
     }
 
